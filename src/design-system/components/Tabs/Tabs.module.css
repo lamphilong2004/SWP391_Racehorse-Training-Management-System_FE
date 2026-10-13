@@ -1,0 +1,28 @@
+.bar {
+  display: flex;
+  gap: var(--space-sm);
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 var(--space-lg);
+  margin-bottom: -1px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.active {
+  font-weight: 500;
+  color: var(--color-text-primary);
+  border-bottom-color: var(--color-primary-600);
+}
