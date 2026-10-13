@@ -1,0 +1,58 @@
+/*
+ * Design tokens — mirrored 1:1 from the Figma "Design Tokens" variables
+ * (file tm7dpgAQbHReZ7tlQeQJlc, page "01 - Design System", frame Foundations 4:2).
+ * Figma `color/bg/page` → CSS `--color-bg-page`. Do not add values that are not in Figma.
+ */
+:root {
+  /* Semantic colours (4:196) */
+  --color-bg-page: #f7f8fa;
+  --color-bg-surface: #ffffff;
+  --color-bg-subtle: #f1f3f7;
+  --color-border-default: #e3e6ec;
+  --color-border-strong: #c6cbd5;
+  --color-text-primary: #131a26;
+  --color-text-secondary: #5a6478;
+  --color-text-disabled: #98a0b0;
+  --color-text-on-primary: #ffffff;
+  --color-primary-50: #eaf1fc;
+  --color-primary-600: #2f6dd9;
+  --color-primary-700: #2456b0;
+  --color-success-50: #e7f5ee;
+  --color-success-600: #17864b;
+  --color-warning-50: #fdf3e3;
+  --color-warning-600: #b26a00;
+  --color-danger-50: #fbebe9;
+  --color-danger-600: #c0362c;
+  --color-info-600: #2f6dd9;
+  --color-neutral-50: #f1f3f7;
+  --color-neutral-600: #5a6478;
+
+  /* Spacing scale (4:73) — 4px baseline grid */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+  --space-3xl: 48px;
+  --space-4xl: 64px;
+
+  /* Border radius (4:117) */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 999px;
+
+  /* Elevation (4:138) */
+  --elev-1: 0 1px 2px 0 #1018280f, 0 1px 3px 0 #1018281a;
+  --elev-2: 0 4px 8px -2px #1018281a, 0 2px 4px -2px #1018280f;
+  --elev-3: 0 12px 16px -4px #10182814, 0 4px 6px -2px #10182808;
+  --elev-focus: 0 0 0 4px #2f6dd93d;
+
+  /* Typography (4:3) — Inter */
+  --font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* Layout (4:159) — desktop-first */
+  --layout-sidebar-width: 240px;
+  --layout-header-height: 64px;
+}
