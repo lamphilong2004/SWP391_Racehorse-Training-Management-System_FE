@@ -27,3 +27,4 @@ export { EmptyState, type EmptyStateProps } from './components/EmptyState/EmptyS
 export { Modal, type ModalProps } from './components/Overlay/Modal';
 export { Drawer, type DrawerProps } from './components/Overlay/Drawer';
 export { cx } from './utils/cx';
+export { TextAreaField, type TextAreaFieldProps } from './components/TextAreaField/TextAreaField';

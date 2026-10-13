@@ -144,6 +144,7 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
         heading: 'My Work',
         items: [
           { label: 'Care Tasks', icon: 'clipboard-list', to: ROUTES.careTasks },
+          { label: 'Treatment Tasks', icon: 'stethoscope', to: ROUTES.treatmentTasks },
           { label: 'Daily Care', icon: 'check-circle', to: ROUTES.dailyCare },
           { label: 'Preventive Healthcare', icon: 'calendar', to: ROUTES.preventiveHealthcare },
           { label: 'Incidents', icon: 'alert-triangle', to: ROUTES.incidents },
