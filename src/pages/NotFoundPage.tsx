@@ -1,5 +1,3 @@
-import { Link } from 'react-router';
-import { ROUTES } from '../app/routePaths';
 import { EmptyState } from '../design-system';
 import styles from './NotFoundPage.module.css';
 
@@ -8,9 +6,6 @@ export function NotFoundPage() {
   return (
     <div className={styles.page}>
       <EmptyState title="Page not found." description="This screen is not available yet." />
-      <Link to={ROUTES.designSystem} className={styles.link}>
-        Back to the design system
-      </Link>
     </div>
   );
 }

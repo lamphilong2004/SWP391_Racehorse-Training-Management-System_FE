@@ -2,10 +2,18 @@ import { ROUTES } from '../app/routePaths';
 import type { IconName } from '../design-system/icons/Icon';
 import type { RoleCode } from '../shared/auth/roles';
 
+/** Why a Figma module is not shown in the current delivery scope (traceable to the decision records). */
+export const DEFERRED_REASON = 'Deferred from the current scope (DEC-007, DEC-008 §3.5)';
+
 export interface NavItem {
   label: string;
   icon: IconName;
   to: string;
+  /**
+   * Set when the module exists in Figma but is out of the current scope. The item stays in this config so the Figma
+   * mapping remains traceable, but it is never rendered (see `visibleSections`).
+   */
+  deferred?: string;
 }
 
 export interface NavSection {
@@ -22,6 +30,7 @@ export interface RoleNavigation {
 /**
  * Role-filtered sidebar, copied from Figma Sidebar (74:110) for all 7 roles: modules a role cannot access are
  * ABSENT, never disabled. Labels, order, section headings and icons follow the Figma frames exactly.
+ * Items marked `deferred` are kept for traceability and filtered out by `visibleSections`.
  */
 export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
   HEAD_TRAINER: {
@@ -41,7 +50,7 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
           { label: 'Training Schedule', icon: 'calendar', to: ROUTES.trainingSchedule },
           { label: 'Performance', icon: 'trending-up', to: ROUTES.performance },
           { label: 'Realtime Monitoring', icon: 'activity', to: ROUTES.realtimeMonitoring },
-          { label: 'Races', icon: 'target', to: ROUTES.races },
+          { label: 'Races', icon: 'target', to: ROUTES.races, deferred: DEFERRED_REASON },
         ],
       },
       {
@@ -100,7 +109,12 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
         items: [
           { label: 'Medical / Health', icon: 'stethoscope', to: ROUTES.medical },
           { label: 'Herd Health', icon: 'activity', to: ROUTES.herdHealth },
-          { label: 'Preventive Healthcare', icon: 'calendar', to: ROUTES.preventiveHealthcare },
+          {
+            label: 'Preventive Healthcare',
+            icon: 'calendar',
+            to: ROUTES.preventiveHealthcare,
+            deferred: DEFERRED_REASON,
+          },
           { label: 'Incidents', icon: 'alert-triangle', to: ROUTES.incidents },
         ],
       },
@@ -113,7 +127,7 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
         items: [
           { label: 'Dashboard', icon: 'dashboard', to: ROUTES.dashboard },
           { label: 'Horses', icon: 'horseshoe', to: ROUTES.horses },
-          { label: 'Stable', icon: 'warehouse', to: ROUTES.stable },
+          { label: 'Stable', icon: 'warehouse', to: ROUTES.stable, deferred: DEFERRED_REASON },
         ],
       },
       {
@@ -126,9 +140,9 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
       {
         heading: 'Operations',
         items: [
-          { label: 'Races', icon: 'target', to: ROUTES.races },
-          { label: 'Inventory', icon: 'package', to: ROUTES.inventory },
-          { label: 'Reports', icon: 'bar-chart', to: ROUTES.reports },
+          { label: 'Races', icon: 'target', to: ROUTES.races, deferred: DEFERRED_REASON },
+          { label: 'Inventory', icon: 'package', to: ROUTES.inventory, deferred: DEFERRED_REASON },
+          { label: 'Reports', icon: 'bar-chart', to: ROUTES.reports, deferred: DEFERRED_REASON },
           { label: 'Audit Log', icon: 'history', to: ROUTES.auditLog },
         ],
       },
@@ -143,9 +157,14 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
       {
         heading: 'My Work',
         items: [
-          { label: 'Care Tasks', icon: 'clipboard-list', to: ROUTES.careTasks },
-          { label: 'Daily Care', icon: 'check-circle', to: ROUTES.dailyCare },
-          { label: 'Preventive Healthcare', icon: 'calendar', to: ROUTES.preventiveHealthcare },
+          { label: 'Care Tasks', icon: 'clipboard-list', to: ROUTES.careTasks, deferred: DEFERRED_REASON },
+          { label: 'Daily Care', icon: 'check-circle', to: ROUTES.dailyCare, deferred: DEFERRED_REASON },
+          {
+            label: 'Preventive Healthcare',
+            icon: 'calendar',
+            to: ROUTES.preventiveHealthcare,
+            deferred: DEFERRED_REASON,
+          },
           { label: 'Incidents', icon: 'alert-triangle', to: ROUTES.incidents },
         ],
       },
@@ -163,3 +182,17 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
     ],
   },
 };
+
+/**
+ * The sidebar as rendered for a role: deferred items removed, and a section dropped when none of its items remain,
+ * so no orphan heading is shown.
+ */
+export function visibleSections(role: RoleCode): NavSection[] {
+  return withoutDeferred(NAVIGATION[role].sections);
+}
+
+export function withoutDeferred(sections: NavSection[]): NavSection[] {
+  return sections
+    .map((section) => ({ ...section, items: section.items.filter((item) => !item.deferred) }))
+    .filter((section) => section.items.length > 0);
+}

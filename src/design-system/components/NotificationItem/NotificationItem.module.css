@@ -1,0 +1,98 @@
+/* Figma Notification Item 239:566 */
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+  width: 100%;
+  padding: var(--space-md) var(--space-lg);
+  border: 0;
+  border-bottom: 1px solid var(--color-border-default);
+  text-align: left;
+  font: inherit;
+  line-height: normal;
+}
+
+button.item {
+  cursor: pointer;
+}
+
+.unread {
+  background: var(--color-primary-50);
+}
+
+.read {
+  background: var(--color-bg-surface);
+}
+
+.iconHolder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+}
+
+.unread .iconHolder {
+  background: var(--color-bg-surface);
+  color: var(--color-primary-600);
+}
+
+.read .iconHolder {
+  background: var(--color-bg-subtle);
+  color: var(--color-text-secondary);
+}
+
+.content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--color-text-primary);
+}
+
+.unread .title {
+  font-weight: 600;
+}
+
+.read .title {
+  font-weight: 500;
+}
+
+.time {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-600);
+}
+
+.body {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.context {
+  font-size: 11px;
+  color: var(--color-text-disabled);
+}

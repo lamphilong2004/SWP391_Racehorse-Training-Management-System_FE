@@ -4,25 +4,36 @@ import {
   AlertBanner,
   Breadcrumb,
   Button,
+  CandidateCard,
   Card,
+  ChartContainer,
+  Checkbox,
   DataTable,
   Drawer,
   EmptyState,
+  ErrorState,
+  HorseCard,
   Icon,
   ICON_NAMES,
   KeyValue,
+  LoadingState,
   MetricCard,
   Modal,
+  NotificationItem,
+  PhotoAttachmentTile,
   SelectField,
+  StableBoxTile,
   StatusBadge,
   STATUS_REGISTRY,
   Tabs,
   TextField,
+  ValidationNotice,
   WizardStepper,
   type StatusFamily,
 } from '../../design-system';
+import { devShellPath } from '../../app/routePaths';
 import { ROLE_CODES, ROLE_LABELS } from '../../shared/auth/roles';
-import styles from './DesignSystemPage.module.css';
+import styles from './ComponentsPage.module.css';
 
 const COLOR_TOKENS = [
   'bg-page',
@@ -61,6 +72,15 @@ const TEXT_STYLES = [
   ['text-metric-l', 'Metric L', '40 / 48 · Semi Bold'],
 ] as const;
 
+const LANDING_STYLES = [
+  ['text-landing-display-xl', 'Landing / Display XL', 'Instrument Serif 112 / 104 · −2%'],
+  ['text-landing-display-l', 'Landing / Display L', 'Instrument Serif 56 / 60 · −1%'],
+  ['text-landing-display-m', 'Landing / Display M', 'Instrument Serif 40 / 46 · −0.5%'],
+] as const;
+
+/** Values that reproduce the series drawn in Figma 73:229 on the 110–190 axis. */
+const HEART_RATE = [124.5, 128.2, 135.5, 139.1, 146.4, 144.5, 153.6, 159.1, 164.5, 170, 177.3, 179.1];
+
 const SPACING = ['xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl', '4xl'];
 const RADII = ['sm', 'md', 'lg', 'full'];
 const ELEVATIONS = ['1', '2', '3', 'focus'];
@@ -93,11 +113,13 @@ function Section({ id, title, figma, children }: { id: string; title: string; fi
 }
 
 /** Reference page for the shared Design System. Used for visual review against Figma, not a product screen. */
-export function DesignSystemPage() {
+export function ComponentsPage() {
   const [tab, setTab] = useState('overview');
   const [modalOpen, setModalOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState<string | undefined>('s3');
+  const [selectedBox, setSelectedBox] = useState('A-14');
+  const [acknowledged, setAcknowledged] = useState(false);
 
   return (
     <div className={styles.page}>
@@ -128,6 +150,16 @@ export function DesignSystemPage() {
               <span className={styles.typeName}>{name}</span>
               <span className={styles.typeSpec}>{spec}</span>
               <span className={className}>Thunder Bolt · 142 bpm</span>
+            </div>
+          ))}
+        </div>
+        <p className={styles.figmaRef}>Landing styles — page 00 LP-01 400:6 / LP-02 400:7 (landing & login only)</p>
+        <div className={styles.stack}>
+          {LANDING_STYLES.map(([className, name, spec]) => (
+            <div key={name} className={styles.typeRow}>
+              <span className={styles.typeName}>{name}</span>
+              <span className={styles.typeSpec}>{spec}</span>
+              <span className={className}>Racehorse Ops</span>
             </div>
           ))}
         </div>
@@ -369,10 +401,228 @@ export function DesignSystemPage() {
         </Drawer>
       </Section>
 
+      <Section id="checkbox" title="Checkbox" figma="327:6160 · 327:6184 · 327:6304 · LP-02 409:62">
+        <div className={styles.row}>
+          <Checkbox label="Remember me" defaultChecked />
+          <Checkbox label="I acknowledge this warning" />
+          <Checkbox label="Not available" disabled />
+        </div>
+      </Section>
+
+      <Section id="validation" title="Validation Notice" figma="70:138">
+        <div className={styles.narrow}>
+          <ValidationNotice
+            category="a"
+            title="Exercise not permitted — Gallop"
+            meta="Restriction set by Dr. Le · 2026-09-14 · Review due 2026-09-28"
+            lockNote="Only the Veterinarian can change this restriction (Flow 3)."
+            actions={<Button variant="tertiary">View restriction</Button>}
+          >
+            This horse is under a LIMITED restriction. The Veterinarian&apos;s restriction forbids Gallop and Sprint; Walk
+            and Trot remain allowed. This exercise cannot be scheduled.
+          </ValidationNotice>
+          <ValidationNotice
+            category="b"
+            title="Schedule conflict — this Work Rider is already booked"
+            meta="Conflict detected at save time"
+            actions={
+              <>
+                <Button variant="secondary">Choose another rider</Button>
+                <Button variant="tertiary">Change time</Button>
+              </>
+            }
+          >
+            Already assigned to Storm · Interval Training, 2026-09-25 07:00–07:45. Resolve the conflict to continue —
+            this block cannot be bypassed.
+          </ValidationNotice>
+          <ValidationNotice
+            category="c"
+            title="Previous workload was HIGH"
+            meta="Allowed with acknowledgement"
+            actions={
+              <>
+                <Checkbox
+                  label="I acknowledge this warning"
+                  checked={acknowledged}
+                  onChange={(event) => setAcknowledged(event.target.checked)}
+                />
+                <TextField
+                  label="Reason (required for serious warnings)"
+                  placeholder="e.g. Reduced distance planned for this session"
+                  className={styles.reasonField}
+                />
+              </>
+            }
+          >
+            The last 3 sessions exceeded the planned workload band and recovery is below baseline. You may continue after
+            acknowledging.
+          </ValidationNotice>
+          <ValidationNotice
+            category="d"
+            title="Does not support the program goal: Sprint fitness"
+            meta="System recommendation — the Trainer decides"
+            actions={
+              <>
+                <TextField
+                  label="Override reason *"
+                  placeholder="Why is this exercise still appropriate?"
+                  className={styles.reasonField}
+                />
+                <Button variant="tertiary">Override with reason</Button>
+              </>
+            }
+          >
+            Endurance Ride does not strongly support the current training goal. You may override with a reason.
+          </ValidationNotice>
+        </div>
+      </Section>
+
+      <Section id="chart" title="Chart Container" figma="73:272">
+        <div className={styles.charts}>
+          <ChartContainer
+            title="Heart rate over time"
+            seriesLabel="Heart rate"
+            values={HEART_RATE}
+            yTicks={[190, 170, 150, 130, 110]}
+            xLabels={['0 min', '4', '8', '12', '16 min']}
+            threshold={{ value: 180, label: 'Threshold 180 bpm' }}
+          />
+          <ChartContainer
+            title="Heart rate over time"
+            seriesLabel="Heart rate"
+            values={[]}
+            yTicks={[190, 170, 150, 130, 110]}
+            xLabels={['0 min', '4', '8', '12', '16 min']}
+            threshold={{ value: 180, label: 'Threshold 180 bpm' }}
+          />
+        </div>
+      </Section>
+
+      <Section id="horse-card" title="Horse Card" figma="75:360">
+        <div className={styles.row}>
+          <HorseCard
+            name="Thunder Bolt"
+            meta="TB-001 · Thoroughbred · 4 yrs · Box A-12"
+            availability="AVAILABLE"
+            facts={[
+              { label: 'Weight', value: '512 kg' },
+              { label: 'Next session', value: 'Tue 07:00' },
+            ]}
+            action={<Button variant="tertiary">View profile</Button>}
+          />
+          <HorseCard
+            name="Storm"
+            meta="ST-014 · Thoroughbred · 5 yrs · Box B-03"
+            availability="LIMITED"
+            facts={[
+              { label: 'Weight', value: '512 kg' },
+              { label: 'Next session', value: 'Tue 07:00' },
+            ]}
+            action={<Button variant="tertiary">View profile</Button>}
+          />
+          <HorseCard
+            name="Night Runner"
+            meta="NR-007 · Arabian · 6 yrs · Box C-11"
+            availability="LOCKED"
+            facts={[
+              { label: 'Weight', value: '512 kg' },
+              { label: 'Next session', value: 'None — blocked' },
+            ]}
+            action={<Button variant="tertiary">View profile</Button>}
+          />
+        </div>
+      </Section>
+
+      <Section id="candidate-card" title="Candidate Card" figma="75:418">
+        <div className={styles.row}>
+          <CandidateCard
+            name="Tran Minh Khoa"
+            subtitle="Trainer · 6 yrs experience"
+            tags={['Sprint', 'Speed work']}
+            facts={[
+              { label: 'Active programs', value: '2' },
+              { label: 'Worked with this horse', value: 'Yes — 1 program' },
+              { label: 'Availability', value: 'Tue–Sat' },
+            ]}
+            actions={
+              <>
+                <Button variant="tertiary">View profile</Button>
+                <Button>Select</Button>
+              </>
+            }
+          />
+          <CandidateCard
+            name="Nguyen Van An"
+            subtitle="Work Rider · 4 yrs experience"
+            tags={['Flat', 'Interval']}
+            facts={[
+              { label: 'Rides this week', value: '3' },
+              { label: 'Rode this horse', value: '12 times' },
+              { label: 'Free at session time', value: '07:00–09:00' },
+            ]}
+            actions={
+              <>
+                <Button variant="tertiary">View profile</Button>
+                <Button>Select</Button>
+              </>
+            }
+          />
+        </div>
+      </Section>
+
+      <Section id="tiles" title="Photo Attachment Tile & Stable Box Tile" figma="239:499 · 239:539">
+        <div className={styles.row}>
+          <PhotoAttachmentTile state="empty" onAdd={() => undefined} />
+          <PhotoAttachmentTile state="attached" fileName="photo_01.jpg" onRemove={() => undefined} />
+        </div>
+        <div className={styles.row}>
+          <StableBoxTile boxId="A-12" state="occupied" horseName="Thunder Bolt" />
+          {['A-13', 'A-14'].map((boxId) => (
+            <StableBoxTile
+              key={boxId}
+              boxId={boxId}
+              state={selectedBox === boxId ? 'selected' : 'free'}
+              onSelect={setSelectedBox}
+            />
+          ))}
+        </div>
+      </Section>
+
+      <Section id="notifications" title="Notification Item" figma="239:566">
+        <div className={styles.notifications}>
+          <NotificationItem
+            read={false}
+            title="Preventive task due"
+            time="08:00"
+            body="Vaccination for Thunder Bolt is due today."
+            context="Thunder Bolt · TB-001 · Preventive Healthcare"
+          />
+          <NotificationItem
+            read
+            title="Preventive task due"
+            time="08:00"
+            body="Vaccination for Thunder Bolt is due today."
+            context="Thunder Bolt · TB-001 · Preventive Healthcare"
+          />
+        </div>
+      </Section>
+
+      <Section id="states" title="Loading, Empty & Error states" figma="EmptyState 329:6273 · Alert 70:50 (no dedicated loading/error frame)">
+        <div className={styles.narrow}>
+          <LoadingState label="Loading horses…" />
+          <EmptyState title="No race history yet." description="Results appear here after the club records them." />
+          <ErrorState
+            title="Horses could not be loaded"
+            description="Check your connection and try again."
+            onRetry={() => undefined}
+          />
+        </div>
+      </Section>
+
       <Section id="shell" title="App shell — 7 roles" figma="74:110 · 74:367 · 288:3192">
         <div className={styles.row}>
           {ROLE_CODES.map((role) => (
-            <Link key={role} to={`/design-system/shell/${role}`} className={styles.shellLink}>
+            <Link key={role} to={devShellPath(role)} className={styles.shellLink}>
               {ROLE_LABELS[role]}
             </Link>
           ))}

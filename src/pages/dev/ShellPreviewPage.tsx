@@ -3,6 +3,7 @@ import { Button, Card, EmptyState } from '../../design-system';
 import { AppShell } from '../../layout/AppShell';
 import { PageHeader } from '../../layout/PageHeader';
 import { isRoleCode, ROLE_LABELS, type RoleCode } from '../../shared/auth/roles';
+import { ROUTES } from '../../app/routePaths';
 import { NotFoundPage } from '../NotFoundPage';
 import styles from './ShellPreviewPage.module.css';
 
@@ -24,7 +25,7 @@ export function ShellPreviewPage() {
   return (
     <AppShell
       user={{ fullName: PREVIEW_USERS[role], role }}
-      breadcrumb={[{ label: 'Design System', to: '/design-system' }, { label: ROLE_LABELS[role] }]}
+      breadcrumb={[{ label: 'Components', to: ROUTES.devComponents }, { label: ROLE_LABELS[role] }]}
       searchPlaceholder="Search horses…"
       unreadCount={3}
     >

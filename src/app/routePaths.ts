@@ -9,8 +9,9 @@
  */
 export const ROUTES = {
   root: '/',
-  designSystem: '/design-system',
-  shellPreview: '/design-system/shell/:role',
+  /** DEV ONLY (DEC-010): component gallery and per-role shell preview. Not registered in production builds. */
+  devComponents: '/dev/components',
+  devShell: '/dev/shell/:role',
 
   dashboard: '/dashboard',
   horses: '/horses',
@@ -43,3 +44,7 @@ export const ROUTES = {
   myHorses: '/owner/horses',
   notifications: '/notifications',
 } as const;
+
+export function devShellPath(role: string): string {
+  return ROUTES.devShell.replace(':role', role);
+}

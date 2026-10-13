@@ -51,6 +51,8 @@
 
   /* Typography (4:3) — Inter */
   --font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Landing/Display text styles only (page 00 · LP-01 400:6, LP-02 400:7) */
+  --font-family-display: 'Instrument Serif', Georgia, 'Times New Roman', serif;
 
   /* Layout (4:159) — desktop-first */
   --layout-sidebar-width: 240px;

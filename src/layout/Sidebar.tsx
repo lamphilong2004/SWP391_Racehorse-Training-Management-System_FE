@@ -2,7 +2,7 @@ import { NavLink } from 'react-router';
 import { Icon } from '../design-system/icons/Icon';
 import { cx } from '../design-system/utils/cx';
 import type { RoleCode } from '../shared/auth/roles';
-import { NAVIGATION } from './navigation';
+import { NAVIGATION, visibleSections } from './navigation';
 import styles from './Sidebar.module.css';
 
 export interface SidebarProps {
@@ -21,7 +21,7 @@ export function Sidebar({ role }: SidebarProps) {
       <p className={styles.workspace}>{nav.workspaceLabel}</p>
       <div className={styles.spacer} />
       <nav aria-label="Main" className={styles.nav}>
-        {nav.sections.map((section, sectionIndex) => (
+        {visibleSections(role).map((section, sectionIndex) => (
           <div key={section.heading ?? sectionIndex} className={styles.section}>
             {section.heading && <p className={styles.heading}>{section.heading}</p>}
             {section.items.map((item) => (

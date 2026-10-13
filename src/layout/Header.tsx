@@ -1,5 +1,6 @@
 import { Breadcrumb, type BreadcrumbItem } from '../design-system/components/Breadcrumb/Breadcrumb';
 import { Icon } from '../design-system/icons/Icon';
+import { initials } from '../design-system/utils/initials';
 import { ROLE_LABELS, type RoleCode } from '../shared/auth/roles';
 import styles from './Header.module.css';
 
@@ -17,13 +18,6 @@ export interface HeaderProps {
   unreadCount?: number;
   onNotificationsClick?: () => void;
   onUserMenuClick?: () => void;
-}
-
-function initials(fullName: string): string {
-  const parts = fullName.trim().split(/\s+/);
-  const first = parts[0]?.[0] ?? '';
-  const last = parts.length > 1 ? parts[parts.length - 1][0] : '';
-  return (first + last).toUpperCase();
 }
 
 /** Figma Header (74:367): 64px; breadcrumb, global search, notification bell with count, user + role. */

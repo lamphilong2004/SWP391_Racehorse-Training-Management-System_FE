@@ -216,3 +216,21 @@
   color: var(--color-primary-600);
   text-decoration: none;
 }
+
+.charts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  width: 760px;
+}
+
+.notifications {
+  width: 400px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.reasonField {
+  width: 420px;
+}
