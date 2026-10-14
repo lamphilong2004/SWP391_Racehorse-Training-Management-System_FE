@@ -13,6 +13,7 @@ export function HorseDetailPage() {
   const id = Number(useParams().id);
   const { user } = useAuth();
   const role = user ? primaryRole(user) : null;
+  const navigate = useNavigate();
   const horse = useApi(() => horsesApi.get(id), [id]);
   const activation = useApi(() => horsesApi.activation(id), [id]);
   const availability = useApi(() => horsesApi.availability(id), [id]);
@@ -68,6 +69,14 @@ export function HorseDetailPage() {
           </Grid>
           {role === 'CLUB_MANAGER' && h.lifecycle === 'DRAFT' && <ManagerSteps horse={h} onDone={refresh} />}
           {role === 'VETERINARIAN' && <BaselineCard horse={h} onDone={refresh} />}
+          {role === 'VETERINARIAN' && h.lifecycle === 'ACTIVE' && (
+            <Card title="Training restriction (Veterinarian)">
+              <Row>
+                <Button variant="secondary" onClick={() => navigate('/medical/restrictions')}>Set or lift training restriction</Button>
+                <Button variant="secondary" onClick={() => navigate('/medical')}>Medical cases & incidents</Button>
+              </Row>
+            </Card>
+          )}
           {role === 'HEAD_TRAINER' && <ReadinessCard horseId={h.id} onDone={refresh} />}
         </Stack>
       )}

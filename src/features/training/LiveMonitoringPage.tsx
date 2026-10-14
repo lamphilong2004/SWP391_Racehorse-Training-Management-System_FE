@@ -51,8 +51,10 @@ export function LiveMonitoringPage() {
   const [simRunning, setSimRunning] = useState(false);
 
   const samples = useMemo(() => {
-    const past = (history.data?.samples ?? []).filter((s) => s.heartRate !== '').map((s) => Number(s.heartRate));
-    return [...past, ...stream.metrics.filter((m) => m.heartRate != null).map((m) => m.heartRate as number)].slice(-60);
+    const pastSamples = (history.data?.samples ?? []).filter((s) => s.heartRate !== '');
+    const lastPast = pastSamples.length ? new Date(pastSamples[pastSamples.length - 1].recordedAt).getTime() : 0;
+    const live = stream.metrics.filter((m) => m.heartRate != null && new Date(m.recordedAt).getTime() > lastPast);
+    return [...pastSamples.map((s) => Number(s.heartRate)), ...live.map((m) => m.heartRate as number)].slice(-60);
   }, [history.data, stream.metrics]);
   const last = stream.metrics[stream.metrics.length - 1];
   const openAlert = useMemo(() => {
@@ -120,7 +122,7 @@ export function LiveMonitoringPage() {
               <MetricCard label="Intensity" value={INTENSITY_LABEL[s.intensity ?? ''] ?? '—'} caption={`Phase range ${INTENSITY_LABEL[d.phaseIntensityMin ?? ''] ?? '—'} → ${INTENSITY_LABEL[d.phaseIntensityMax ?? ''] ?? '—'}`} />
             </Grid>
             <ChartContainer title="Heart rate — this session" seriesLabel="Heart rate (bpm)" values={samples} yTicks={[200, 180, 160, 140, 120, 100]}
-              xLabels={['earlier', '', '', '', 'now']} threshold={critical ? { value: critical, label: `Critical ${critical} bpm` } : undefined}
+              xLabels={['oldest', '25%', '50%', '75%', 'latest']} threshold={critical ? { value: critical, label: `Critical ${critical} bpm` } : undefined}
               emptyTitle="No samples yet" emptyDescription="Start the simulator or wait for the Work Rider's manual input." />
             <Grid cols={2}>
               <Card title="Trainer controls">

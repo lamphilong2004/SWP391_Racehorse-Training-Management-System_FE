@@ -6,6 +6,7 @@ import { useAction, useApi } from '../../shared/hooks/useApi';
 import { ActionError, Grid, Resource, Row, Stack } from '../../shared/ui/common';
 import { INTENSITY_LABEL, INTENSITY_OPTIONS, localInputNow } from '../../shared/ui/format';
 import { trainingApi, type Suitability } from '../demoApi';
+import styles from './training.module.css';
 
 interface ExerciseRow { exerciseDefinitionId: string; distanceM: string; durationMin: string; repetitions: string; restIntervalMin: string; intensity: string }
 
@@ -100,7 +101,7 @@ export function SessionCreatePage() {
                   {(ex) => (
                     <Stack>
                       {rows.map((r, i) => (
-                        <Row key={i}>
+                        <div key={i} className={styles.exerciseRow}>
                           <SelectField label={`Exercise ${i + 1}`} value={r.exerciseDefinitionId} onChange={(e) => setRow(i, 'exerciseDefinitionId', e.target.value)}
                             placeholder="Select" options={ex.map((x) => ({ value: String(x.id), label: x.name }))} />
                           <TextField label="Distance (m)" type="number" min="0" value={r.distanceM} onChange={(e) => setRow(i, 'distanceM', e.target.value)} />
@@ -109,20 +110,25 @@ export function SessionCreatePage() {
                           <TextField label="Rest (min)" type="number" min="0" value={r.restIntervalMin} onChange={(e) => setRow(i, 'restIntervalMin', e.target.value)} />
                           <SelectField label="Intensity" value={r.intensity} onChange={(e) => setRow(i, 'intensity', e.target.value)} placeholder="—" options={INTENSITY_OPTIONS} />
                           <Button type="button" variant="tertiary" onClick={() => { setSuitability(null); setRows((rs) => rs.filter((_, j) => j !== i)); }}>Remove</Button>
-                        </Row>
+                        </div>
                       ))}
                       <Row>
                         <Button type="button" variant="secondary" onClick={() => setRows((rs) => [...rs, emptyRow()])}>Add exercise</Button>
                         <Button type="button" variant="secondary" onClick={check} disabled={action.busy}>Run suitability check</Button>
                       </Row>
-                      {suitability?.exercises.map((s, i) => (
-                        <ValidationNotice key={`${s.exerciseDefinitionId}-${i}`} category={s.category === 'A' ? 'a' : 'd'}
-                          title={`${s.exerciseName}: ${s.label.replaceAll('_', ' ')}`}
-                          lockNote={s.category === 'A' ? 'Only the Veterinarian can change the restriction' : undefined}>
+                      {suitability?.exercises.filter((s) => s.category === 'A').map((s, i) => (
+                        <ValidationNotice key={`${s.exerciseDefinitionId}-${i}`} category="a"
+                          title={`${s.exerciseName}: MEDICAL HARD BLOCK`}
+                          lockNote="Only the Veterinarian can change the restriction">
                           {s.messages.join(' ')}
                         </ValidationNotice>
                       ))}
-                      {suitability && suitability.canSchedule && <AlertBanner type="success" title="All exercises can be scheduled" />}
+                      {suitability && suitability.exercises.some((s) => s.category !== 'A') && (
+                        <AlertBanner type="success" title="Suitable">
+                          {suitability.exercises.filter((s) => s.category !== 'A').map((s) => `${s.exerciseName} — ${s.messages.join(' ')}`).join(' · ')}
+                        </AlertBanner>
+                      )}
+                      {suitability && !suitability.canSchedule && <AlertBanner type="danger" title="Cannot schedule">Remove or replace every MEDICAL HARD BLOCK exercise.</AlertBanner>}
                     </Stack>
                   )}
                 </Resource>
