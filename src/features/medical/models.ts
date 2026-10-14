@@ -33,7 +33,7 @@ export interface CaseView extends MedicalCase {
 }
 export interface TaskView extends TreatmentTask { completionNotes?: string }
 export interface MedicalService {
-  readonly mode: 'mock' | 'unavailable';
+  readonly mode: 'mock' | 'unavailable' | 'http'; // DEMO INTEGRATION: http = real BE adapter
   listCases(): Promise<MedicalCase[]>;
   getCase(id: string): Promise<CaseView>;
   createCase(input: MedicalCaseCreateRequest): Promise<MedicalCase>;

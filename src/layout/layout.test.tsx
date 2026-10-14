@@ -52,7 +52,7 @@ describe('deferred sidebar modules', () => {
       </MemoryRouter>,
     );
     const nav = screen.getByRole('navigation', { name: 'Main' });
-    expect(within(nav).getAllByRole('link').map((link) => link.textContent)).toEqual(['Today', 'Incidents']);
+    expect(within(nav).getAllByRole('link').map((link) => link.textContent)).toEqual(['Today', 'Treatment Tasks', 'Incidents']); // DEMO INTEGRATION: CORE-036 Treatment Tasks item
     expect(within(nav).getByText('My Work')).toBeInTheDocument();
     expect(visibleSections('CLUB_MANAGER')[2].items.map((item) => item.label)).toEqual(['Audit Log']);
   });

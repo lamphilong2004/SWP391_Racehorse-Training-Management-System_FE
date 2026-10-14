@@ -13,6 +13,17 @@ export const ROUTES = {
   devComponents: '/dev/components',
   devShell: '/dev/shell/:role',
 
+  /** DEMO INTEGRATION (demo/main-flow-hour1) */
+  login: '/login',
+  horseNew: '/horses/new',
+  horseDetail: '/horses/:id',
+  programNew: '/training/programs/new',
+  programDetail: '/training/programs/:id',
+  sessionNew: '/training/programs/:id/sessions/new',
+  sessionDetail: '/training/sessions/:id',
+  monitoringSession: '/training/monitoring/:id',
+  riderSession: '/rides/sessions/:id',
+
   dashboard: '/dashboard',
   horses: '/horses',
   stable: '/stable',
