@@ -1,0 +1,83 @@
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+button.step {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: var(--radius-full);
+}
+
+.marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+}
+
+.marker-done,
+.marker-current {
+  background: var(--color-primary-600);
+  color: var(--color-text-on-primary);
+}
+
+.marker-todo {
+  background: var(--color-bg-surface);
+  border: 1.5px solid var(--color-border-strong);
+  color: var(--color-text-secondary);
+}
+
+.label {
+  font-size: 14px;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.label-done {
+  font-weight: 400;
+  color: var(--color-text-primary);
+}
+
+.label-current {
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.label-todo {
+  font-weight: 400;
+  color: var(--color-text-secondary);
+}
+
+.connector {
+  width: 24px;
+  height: 2px;
+  background: var(--color-border-strong);
+}
+
+.connectorDone {
+  background: var(--color-primary-600);
+}

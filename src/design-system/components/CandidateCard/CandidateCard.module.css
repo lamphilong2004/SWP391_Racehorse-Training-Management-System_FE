@@ -1,0 +1,97 @@
+/* Figma Candidate Card 75:418 */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  width: 320px;
+  padding: 20px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elev-1);
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-50);
+  color: var(--color-primary-600);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+}
+
+.name {
+  display: flex;
+  flex-direction: column;
+}
+
+.fullName {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.subtitle,
+.factLabel,
+.tag {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--color-text-secondary);
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tag {
+  padding: 2px var(--space-sm);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-subtle);
+}
+
+.facts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+}
+
+.fact {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.factValue {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  text-align: right;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}

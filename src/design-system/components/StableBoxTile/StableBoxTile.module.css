@@ -1,0 +1,73 @@
+/* Figma Stable Box Tile 239:539 — 128 × 88, padding 12, gap 6 */
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 128px;
+  height: 88px;
+  padding: var(--space-md);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface);
+  text-align: left;
+  font: inherit;
+  line-height: normal;
+}
+
+button.tile {
+  cursor: pointer;
+}
+
+.occupied {
+  background: var(--color-bg-subtle);
+}
+
+.selected {
+  background: var(--color-primary-50);
+  border: 2px solid var(--color-primary-600);
+  padding: 11px;
+}
+
+.header,
+.status {
+  display: flex;
+  align-items: center;
+}
+
+.header {
+  gap: 6px;
+}
+
+.status {
+  gap: var(--space-xs);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-success-600);
+}
+
+.boxIcon {
+  color: var(--color-text-secondary);
+}
+
+.boxId {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.selected .boxIcon,
+.selected .status {
+  color: var(--color-primary-600);
+}
+
+.horse {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.occupiedLabel {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}

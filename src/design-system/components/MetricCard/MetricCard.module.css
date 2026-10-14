@@ -1,0 +1,96 @@
+/* Figma Metric Card 71:60 */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 20px;
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elev-1);
+}
+
+.default {
+  border: 1px solid var(--color-border-default);
+}
+
+.realtime {
+  border-left: 4px solid;
+}
+
+.labelRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.label {
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: currentColor;
+}
+
+.value {
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.realtime .value {
+  font-size: 40px;
+  line-height: 48px;
+}
+
+.normal {
+  border-left-color: var(--color-success-600);
+}
+.normal .dot {
+  color: var(--color-success-600);
+}
+
+.warning {
+  border-left-color: var(--color-warning-600);
+}
+.warning .dot,
+.warning .value {
+  color: var(--color-warning-600);
+}
+
+.critical {
+  border-left-color: var(--color-danger-600);
+}
+.critical .dot,
+.critical .value {
+  color: var(--color-danger-600);
+}
+
+.caption {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.tone-success {
+  color: var(--color-success-600);
+}
+.tone-warning {
+  color: var(--color-warning-600);
+}
+.tone-danger {
+  color: var(--color-danger-600);
+}
+.tone-secondary {
+  color: var(--color-text-secondary);
+}

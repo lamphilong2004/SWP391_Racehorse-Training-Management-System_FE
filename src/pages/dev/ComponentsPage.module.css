@@ -1,0 +1,236 @@
+/* Layout of the reference page only. Components carry their own styles. */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xl);
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: var(--space-3xl) var(--space-2xl);
+}
+
+.pageHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  color: var(--color-text-primary);
+}
+
+.pageHeader :global(.text-overline) {
+  color: var(--color-text-secondary);
+}
+
+.lead {
+  max-width: 760px;
+  color: var(--color-text-secondary);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: var(--space-2xl);
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elev-1);
+}
+
+.sectionHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.figmaRef,
+.caption,
+.typeSpec,
+.iconName {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--color-text-secondary);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.narrow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  max-width: 720px;
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-lg);
+}
+
+.swatch {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  width: 200px;
+}
+
+.swatchColor {
+  height: 64px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+}
+
+.typeRow,
+.spaceRow,
+.badgeRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xl);
+}
+
+.typeName {
+  width: 120px;
+  flex-shrink: 0;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+}
+
+.typeSpec {
+  width: 180px;
+  flex-shrink: 0;
+}
+
+.spaceBar {
+  height: 16px;
+  border-radius: 2px;
+  background: var(--color-primary-600);
+}
+
+.radiusBox,
+.elevationBox {
+  display: flex;
+  align-items: flex-end;
+  width: 120px;
+  height: 72px;
+  padding: var(--space-sm);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.radiusBox {
+  background: var(--color-primary-50);
+  border: 1.5px solid var(--color-primary-600);
+}
+
+.elevationBox {
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-md);
+}
+
+.icons {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: var(--space-lg);
+  color: var(--color-text-secondary);
+}
+
+.iconCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(3, 320px);
+  gap: var(--space-xl);
+}
+
+.card {
+  width: 400px;
+}
+
+.secondaryText {
+  color: var(--color-text-secondary);
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 264px);
+  gap: var(--space-lg);
+}
+
+.horseCell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.horseThumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-subtle);
+  color: var(--color-text-disabled);
+}
+
+.horseName {
+  display: flex;
+  flex-direction: column;
+}
+
+.slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 160px;
+  background: var(--color-bg-subtle);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--color-text-secondary);
+}
+
+.slotFill {
+  height: 100%;
+}
+
+.shellLink {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  color: var(--color-primary-600);
+  text-decoration: none;
+}
+
+.charts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  width: 760px;
+}
+
+.notifications {
+  width: 400px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.reasonField {
+  width: 420px;
+}
