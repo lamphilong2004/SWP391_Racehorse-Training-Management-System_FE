@@ -1,3 +1,5 @@
+import { MedicalRoute } from '../features/medical/runtime';
+import { CaseListPage, CreateCasePage, CaseDetailPage, IncidentListPage, TreatmentTaskListPage, TreatmentTaskDetailPage } from '../features/medical/pages';
 import { createBrowserRouter, Navigate, type RouteObject } from 'react-router';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { ROUTES } from './routePaths';

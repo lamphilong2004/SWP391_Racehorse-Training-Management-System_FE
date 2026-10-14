@@ -45,3 +45,4 @@ export { LoadingState, type LoadingStateProps } from './components/LoadingState/
 export { ErrorState, type ErrorStateProps } from './components/ErrorState/ErrorState';
 export { cx } from './utils/cx';
 export { initials } from './utils/initials';
+export { TextAreaField, type TextAreaFieldProps } from './components/TextAreaField/TextAreaField';
