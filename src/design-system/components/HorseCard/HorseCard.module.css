@@ -1,0 +1,59 @@
+/* Figma Horse Card 75:360 */
+.card {
+  display: flex;
+  flex-direction: column;
+  width: 280px;
+  overflow: hidden;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elev-1);
+}
+
+.photo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 160px;
+  background: var(--color-bg-subtle);
+  color: var(--color-text-disabled);
+}
+
+.noPhoto {
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+}
+
+.name {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.meta {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--color-text-secondary);
+}
+
+.divider {
+  align-self: stretch;
+  height: 1px;
+  background: var(--color-border-default);
+}
+
+.facts {
+  display: flex;
+  gap: var(--space-xl);
+}

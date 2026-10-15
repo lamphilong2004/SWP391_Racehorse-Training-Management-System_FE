@@ -1,0 +1,84 @@
+/* Text styles (Figma Foundations · Typography 4:3). Use these classes instead of local font sizes. */
+.text-display {
+  font-size: 32px;
+  line-height: 40px;
+  font-weight: 600;
+}
+.text-h1 {
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 600;
+}
+.text-h2 {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 600;
+}
+.text-h3 {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+}
+.text-body-l {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+}
+.text-body {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+}
+.text-body-strong {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+}
+.text-caption {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+}
+.text-overline {
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.text-metric {
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 600;
+}
+.text-metric-l {
+  font-size: 40px;
+  line-height: 48px;
+  font-weight: 600;
+}
+
+/*
+ * Landing text styles (Figma "Landing/Display XL|L|M", page 00 LP-01 400:6 / LP-02 400:7).
+ * Instrument Serif Regular. Only for the public landing/login pages (CORE-010, CORE-008) — never inside the app shell.
+ */
+.text-landing-display-xl {
+  font-family: var(--font-family-display);
+  font-size: 112px;
+  line-height: 104px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+.text-landing-display-l {
+  font-family: var(--font-family-display);
+  font-size: 56px;
+  line-height: 60px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+.text-landing-display-m {
+  font-family: var(--font-family-display);
+  font-size: 40px;
+  line-height: 46px;
+  font-weight: 400;
+  letter-spacing: -0.005em;
+}

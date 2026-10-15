@@ -1,0 +1,119 @@
+/* Figma Validation Notice 70:138 */
+.notice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-lg) var(--space-lg) var(--space-lg) 20px;
+  border-radius: var(--radius-md);
+  border-left: 4px solid;
+}
+
+.a {
+  background: var(--color-danger-50);
+  border: 1px solid var(--color-danger-600);
+  border-left: 4px solid var(--color-danger-600);
+}
+
+.b {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-danger-600);
+  border-left: 4px solid var(--color-danger-600);
+}
+
+/* Category C has only the left accent. */
+.c {
+  background: var(--color-warning-50);
+  border-left-color: var(--color-warning-600);
+}
+
+.d {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-warning-600);
+  border-left: 4px solid var(--color-warning-600);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+}
+
+.a .icon,
+.b .icon,
+.a .category,
+.b .category {
+  color: var(--color-danger-600);
+}
+
+.c .icon,
+.d .icon,
+.c .category,
+.d .category {
+  color: var(--color-warning-600);
+}
+
+.heading {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.category {
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.title {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.body {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--color-text-primary);
+}
+
+.meta {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--color-text-secondary);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.actionsRow {
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.actionsColumn {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.lockPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: var(--space-xs) 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-danger-600);
+  color: var(--color-text-on-primary);
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
