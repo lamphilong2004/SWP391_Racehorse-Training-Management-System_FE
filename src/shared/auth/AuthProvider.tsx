@@ -77,6 +77,10 @@ export function AuthProvider({ children, api = authApi }: { children: ReactNode;
     setState({ status: 'loading', user: null, expiresAt: stored.expiresAt, message: null });
     try {
       const user = await api.currentUser(stored.accessToken, () => clearLocalSession(sessionExpiredMessage()));
+      if (user.accountStatus === 'INACTIVE') {
+        clearLocalSession(inactiveAccountMessage());
+        return;
+      }
       if (!isCurrentUser(user)) throw new Error('The current-user response does not match the approved auth contract.');
       setState({ status: 'authenticated', user, expiresAt: stored.expiresAt, message: null });
     } catch (error) {
