@@ -28,7 +28,7 @@ describe('router', () => {
 
   it('does not register the dev-only routes in production', async () => {
     const paths = buildRoutes(false).map((route) => route.path);
-    expect(paths).toEqual(['/', '/login', '/dashboard', '/training/programs/new', '*']);
+    expect(paths).toEqual(['/', '/login', '/dashboard', '/training/programs/new', '/training/sessions/:id/evaluation', '*']);
     const router = renderAt('/dev/components', false);
     expect(await screen.findByRole('heading', { name: 'Sign in to Racehorse Ops' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/login');

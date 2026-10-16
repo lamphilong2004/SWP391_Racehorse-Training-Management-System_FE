@@ -24,6 +24,7 @@ export const ROUTES = {
   trainingCalendar: '/training/calendar',
   exerciseLibrary: '/training/exercises',
   performance: '/training/performance',
+  sessionEvaluation: '/training/sessions/:id/evaluation',
   realtimeMonitoring: '/training/monitoring',
   myRides: '/rides',
   assignments: '/rides/assignments',
@@ -49,4 +50,8 @@ export const ROUTES = {
 
 export function devShellPath(role: string): string {
   return ROUTES.devShell.replace(':role', role);
+}
+
+export function evaluationPath(id: number): string {
+  return ROUTES.sessionEvaluation.replace(':id', String(id));
 }

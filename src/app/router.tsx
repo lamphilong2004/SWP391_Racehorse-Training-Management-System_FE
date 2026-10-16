@@ -3,6 +3,7 @@ import { NotFoundPage } from '../pages/NotFoundPage';
 import { LoginPage } from '../pages/LoginPage';
 import { WorkspacePage } from '../pages/WorkspacePage';
 import { ProgramCreationPage } from '../features/program-creation/ProgramCreationPage';
+import { SessionEvaluationPage } from '../features/evaluation/SessionEvaluationPage';
 import { PublicOnly, RequireAuth } from './RequireAuth';
 import { ROUTES } from './routePaths';
 
@@ -35,6 +36,7 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
     { path: ROUTES.login, element: <PublicOnly><LoginPage /></PublicOnly> },
     { path: ROUTES.dashboard, element: <RequireAuth><WorkspacePage /></RequireAuth> },
     { path: ROUTES.trainingProgramCreate, element: <RequireAuth allowedRoles={['HEAD_TRAINER']}><ProgramCreationPage /></RequireAuth> },
+    { path: ROUTES.sessionEvaluation, element: <RequireAuth><SessionEvaluationPage /></RequireAuth> },
     { path: '*', element: <RequireAuth><NotFoundPage /></RequireAuth> },
   ];
 }
