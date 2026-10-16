@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { AlertBanner, Button, Card, TextField } from '../../design-system';
-import { MedicalTextArea } from './MedicalTextArea';
+import { AlertBanner, Button, Card, TextAreaField, TextField } from '../../design-system';
 import type { GroomTaskInstruction, TreatmentPlanRequest } from './models';
+import { medicalErrorMessage } from './errors';
 
 export function TreatmentPlanEditor({ initial, onSave }: {
   initial?: Partial<TreatmentPlanRequest>; onSave: (input: TreatmentPlanRequest) => Promise<void>;
@@ -28,17 +28,17 @@ export function TreatmentPlanEditor({ initial, onSave }: {
     }
     setSaving(true);
     try { await onSave({ ...plan, treatmentMedicationInstructions: plan.treatmentMedicationInstructions.trim(), groomTasks: tasks }); }
-    catch (failure) { setError(failure instanceof Error ? failure.message : 'Unable to save treatment plan.'); }
+    catch (failure) { setError(medicalErrorMessage(failure, 'Unable to save treatment plan.')); }
     finally { setSaving(false); }
   }}>
-    <Card title="Treatment & care instructions"><MedicalTextArea label="Care instructions" value={plan.careInstructions ?? ''} disabled={saving} onChange={(event) => setPlan({ ...plan, careInstructions: event.target.value })} /></Card>
+    <Card title="Treatment & care instructions"><TextAreaField label="Care instructions" value={plan.careInstructions ?? ''} disabled={saving} onChange={(event) => setPlan({ ...plan, careInstructions: event.target.value })} /></Card>
     <Card title="Rest"><TextField label="Rest instructions" value={plan.restInstructions ?? ''} disabled={saving} onChange={(event) => setPlan({ ...plan, restInstructions: event.target.value })} /></Card>
-    <Card title="Medication"><MedicalTextArea label="Treatment and medication instructions" required value={plan.treatmentMedicationInstructions} disabled={saving} onChange={(event) => setPlan({ ...plan, treatmentMedicationInstructions: event.target.value })} /></Card>
+    <Card title="Medication"><TextAreaField label="Treatment and medication instructions" required value={plan.treatmentMedicationInstructions} disabled={saving} onChange={(event) => setPlan({ ...plan, treatmentMedicationInstructions: event.target.value })} /></Card>
     <Card title="Care tasks for the Groom"><fieldset disabled={saving} className="medical-form">
       <legend className="text-h3">Assigned Groom tasks</legend>
       {tasks.map((task, index) => <div className="medical-form" key={index}>
         <TextField label={`Groom user ID ${index + 1}`} type="number" min={1} step={1} value={task.assignedGroomUserId || ''} onChange={(event) => changeTask(index, { assignedGroomUserId: Number(event.target.value) })} />
-        <MedicalTextArea label={`Groom-safe instruction ${index + 1}`} value={task.instruction} onChange={(event) => changeTask(index, { instruction: event.target.value })} />
+        <TextAreaField label={`Groom-safe instruction ${index + 1}`} value={task.instruction} onChange={(event) => changeTask(index, { instruction: event.target.value })} />
         <TextField label={`Task date ${index + 1}`} type="date" value={task.taskDate} onChange={(event) => changeTask(index, { taskDate: event.target.value })} />
         <TextField label={`Scheduled slot ${index + 1}`} value={task.scheduledSlot ?? ''} onChange={(event) => changeTask(index, { scheduledSlot: event.target.value || undefined })} />
         <Button type="button" variant="secondary" onClick={() => setPlan({ ...plan, groomTasks: tasks.filter((_, i) => i !== index) })}>Remove task</Button>

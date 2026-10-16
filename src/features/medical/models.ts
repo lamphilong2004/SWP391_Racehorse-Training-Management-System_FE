@@ -1,13 +1,10 @@
-import type { RoleCode } from '../../shared/auth/roles';
-
-// CORE-006, docs/api/flow3-medical.openapi.yaml on origin/dev.
+// CORE-006, backend docs/api/flow3-medical.openapi.yaml.
 export type RecoveryStatus = 'NOT_RECOVERED' | 'IMPROVING' | 'RECOVERED';
 export type ClinicalSeverity = 'MILD' | 'MODERATE' | 'SEVERE';
 export type HealthStatus = 'FIT' | 'MONITORING' | 'INJURED' | 'QUARANTINED';
 export type Availability = 'AVAILABLE' | 'LIMITED' | 'LOCKED';
 export type IncidentType = 'OFF_FEED' | 'COLIC_SIGNS' | 'FEVER' | 'HOOF_OR_LEG_PROBLEM' | 'OTHER';
 export type ObservedSeverity = 'LOW' | 'MEDIUM' | 'HIGH';
-export interface MedicalActor { id: number; fullName: string; roles: RoleCode[]; accountStatus: 'ACTIVE' | 'INACTIVE' }
 export interface Page<T> { items: T[]; page: number; size: number; totalElements: number }
 export interface MedicalCaseCreateRequest { horseId: number; reason: string }
 export interface ExaminationRequest { symptoms: string; diagnosis?: string; severity?: ClinicalSeverity; examinedAt: string; healthStatus?: HealthStatus; bodyCondition?: string }

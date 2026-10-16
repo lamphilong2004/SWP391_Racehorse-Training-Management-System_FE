@@ -1,9 +1,6 @@
 ﻿.medical-stack { display: flex; flex-direction: column; gap: var(--space-xl); min-width: 0; }
 .medical-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-xl); align-items: start; }
 .medical-form { display: flex; flex-direction: column; gap: var(--space-lg); }
-.medical-textarea-field { display: flex; flex-direction: column; gap: var(--space-xs); }
-.medical-textarea-field textarea { min-height: 112px; width: 100%; padding: var(--space-md); border: 1px solid var(--color-border-default); border-radius: var(--radius-md); color: var(--color-text-primary); background: var(--color-bg-surface); font: inherit; }
-.medical-textarea-field textarea:focus-visible { outline: 2px solid var(--color-primary-600); outline-offset: 2px; }
 .medical-actions { display: flex; flex-wrap: wrap; gap: var(--space-md); align-items: center; }
 .medical-table { overflow-x: auto; }
 .medical-history { display: flex; flex-direction: column; gap: var(--space-md); padding: 0; list-style: none; }

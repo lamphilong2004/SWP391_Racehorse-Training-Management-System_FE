@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react';
-import type { MedicalActor, MedicalService } from './models';
-export interface MedicalRuntime { actor: MedicalActor; service: MedicalService }
+import type { MedicalService } from './models';
+import type { CurrentUser } from '../../shared/auth/authApi';
+export interface MedicalRuntime { actor: CurrentUser; service: MedicalService }
 export const RuntimeContext = createContext<MedicalRuntime | null>(null);
 export function useMedicalRuntime() {
   const value = useContext(RuntimeContext);

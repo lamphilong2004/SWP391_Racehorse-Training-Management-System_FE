@@ -9,6 +9,7 @@ import { InjuryMap } from './InjuryMap';
 import { BODY_REGIONS } from './bodyRegions';
 import type { ClinicalSeverity, Incident, MedicalCase, RecoveryStatus, TrainingAvailability } from './models';
 import { useMedicalRuntime } from './runtimeContext';
+import { medicalErrorMessage } from './errors';
 import './medical.css';
 
 const casePath = (id: number) => ROUTES.medicalCaseDetail.replace(':caseId', String(id));
@@ -24,7 +25,7 @@ function useResource<T>(load: () => Promise<T>) {
   useEffect(() => {
     let active = true;
     load().then((data) => { if (active) setState({ data, source: load }); })
-      .catch((error: unknown) => { if (active) setState({ error: error instanceof Error ? error.message : 'Unable to load data.', source: load }); });
+      .catch((error: unknown) => { if (active) setState({ error: medicalErrorMessage(error, 'Unable to load data.'), source: load }); });
     return () => { active = false; };
   }, [load, revision]);
   return { ...(state.source === load ? state : {}), reload: () => { setState({}); setRevision((value) => value + 1); } };
@@ -133,7 +134,7 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
         {closeError && <AlertBanner type="danger" title={closeError} />}
         {confirmClose ? <div className="medical-actions"><span>Close case {item.id}?</span><Button disabled={closing} onClick={async () => {
           setClosing(true); setCloseError('');
-          try { await service.closeCase(item.id); reload(); } catch (failure) { setCloseError(failure instanceof Error ? failure.message : 'Unable to close case.'); } finally { setClosing(false); }
+          try { await service.closeCase(item.id); reload(); } catch (failure) { setCloseError(medicalErrorMessage(failure, 'Unable to close case.')); } finally { setClosing(false); }
         }}>{closing ? 'Closing…' : 'Confirm close'}</Button><Button variant="secondary" onClick={() => setConfirmClose(false)}>Cancel</Button></div> :
           <Button variant="secondary" onClick={() => setConfirmClose(true)}>Close case</Button>}</Card>}
     </div>
@@ -217,7 +218,7 @@ export function TreatmentPlanPage() {
   const { medicalCase, tasks } = data;
   const initial = {
     ...medicalCase.treatmentPlan,
-    groomTasks: tasks.map((task) => ({ assignedGroomUserId: task.assignedGroomUserId, instruction: task.instruction, taskDate: task.taskDate, scheduledSlot: task.scheduledSlot })),
+    groomTasks: tasks.filter((task) => task.status === 'PENDING').map((task) => ({ assignedGroomUserId: task.assignedGroomUserId, instruction: task.instruction, taskDate: task.taskDate, scheduledSlot: task.scheduledSlot })),
   };
   return <><Link to={casePath(id)}>Back to medical case</Link>
     <PageHeader title={'Treatment Plan · Horse ' + medicalCase.horseId} description={'Medical case ' + id} />
@@ -287,7 +288,7 @@ export function VetIncidentReview() {
       const updated = await service.reviewIncident(data.id, action, action === 'LINK_CASE' ? positiveId(linkCaseId) : undefined);
       if (action === 'OPEN_CASE' && updated.medicalCaseId) navigate(casePath(updated.medicalCaseId));
       else reload();
-    } catch (failure) { setActionError(failure instanceof Error ? failure.message : 'Unable to review incident.'); }
+    } catch (failure) { setActionError(medicalErrorMessage(failure, 'Unable to review incident.')); }
     finally { setBusy(false); }
   };
   return <><Link to={ROUTES.incidents}>Back to incidents</Link><PageHeader title={'Incident · ' + data.incidentCode} description={'Horse ' + data.horseId} />

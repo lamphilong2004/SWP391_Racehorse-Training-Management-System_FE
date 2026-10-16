@@ -1,28 +1,20 @@
 import type { MedicalService } from './models';
+import { ApiError, requestApi } from '../../shared/auth/authApi';
 
-type Envelope<T> = { success: true; data: T } | { success: false; error: { code: string; message: string } };
-type Fetcher = typeof fetch;
-
-export function createMedicalService(baseUrl: string, accessToken: string, fetcher: Fetcher = fetch): MedicalService {
+export function createMedicalService(accessToken: string, onApiError?: (error: unknown) => boolean, options: { baseUrl?: string; fetcher?: typeof fetch } = {}): MedicalService {
   if (!accessToken.trim()) throw new Error('A signed-in session is required for medical requests.');
-  const base = baseUrl.replace(/\/$/, '');
   async function request<T>(path: string, method = 'GET', payload?: unknown): Promise<T> {
-    let response: Response;
     try {
-      response = await fetcher(base + path, {
-        method, credentials: 'omit',
-        headers: { Accept: 'application/json', ...(payload !== undefined ? { 'Content-Type': 'application/json' } : {}), Authorization: `Bearer ${accessToken}` },
+      const data = await requestApi<T>(path, {
+        method, headers: { Accept: 'application/json' },
         ...(payload !== undefined ? { body: JSON.stringify(payload) } : {}),
-      });
-    } catch { throw new Error('Cannot connect to the medical service. Check the API connection and retry.'); }
-    const envelope = await response.json().catch(() => null) as Envelope<T> | null;
-    if (response.status === 401) throw new Error('Sign in to continue.');
-    if (response.status === 403) throw new Error('You do not have access to this record.');
-    if (!response.ok || !envelope || envelope.success !== true || envelope.data == null) {
-      if (envelope?.success === false && envelope.error?.message) throw new Error(envelope.error.message);
-      throw new Error(`Medical request failed (${response.status}): invalid API response.`);
+      }, { token: accessToken, ...options });
+      if (data == null) throw new ApiError(200, 'INVALID_RESPONSE', 'The server returned no medical data.');
+      return data;
+    } catch (error) {
+      onApiError?.(error);
+      throw error;
     }
-    return envelope.data;
   }
   const positiveId = (id: number) => {
     if (!Number.isSafeInteger(id) || id < 1) throw new Error('A valid numeric ID is required.');
