@@ -1,64 +1,120 @@
-# CORE-022 — Program Creation, contract and state slice
+# CORE-022 — Program Creation UI and API delivery
 
-Status: In Progress. Base: FE dev `501ae112c6ef8f578cb681a228fb13a28af9ea7d`.
+Branch: `feat/CORE-022-program-creation`. Target: `dev`.
+FE base fetched and merged without reset/force: `f7c290d100c77ba6d33cf781aed9102f73c8a1bc`.
+Earlier adapter/state slice: `5b7e0bbaa1836bfe760ca5c1d083d2a565cb543c`.
 
-## Implemented
+**LIVE INTEGRATION NOT VERIFIED.** All verification below uses test-only HTTP fixtures.
 
-- Feature DTOs and endpoint adapter for ACTIVE horse/template lookup, template recommendations, explicit version reads,
-  Trainer candidates for the pinned template version ID, and `POST /api/training-programs`.
-- `copyTemplateForHorse` copies supported fields and phase lineage into an independent draft. It does not derive dates
-  or intensity enums by parsing the template's textual guidance, and never writes a template endpoint.
-- Validation covers selections, schema lengths, calendar dates, phase dates inside the program, non-overlap, ordered
-  intensity range, Trainer selection and candidate warning acknowledgement. BE remains authoritative for lifecycle,
-  availability, permissions, and transactional checks at submission time.
-- `useProgramCreation` supports horse → template/version → draft edits → Trainer → validate → submit. It exposes
-  `created`, `error`, field `issues` and `pending` for a UI host. Changing horse invalidates old template requests;
-  creation is guarded against duplicate submissions.
-- Explicit payload serialization excludes UI-only fields, generated phase IDs, status, target race and surface fields.
+## Working flow
 
-## Runtime binding
+Head Trainer workspace → **Create program** → `/training/programs/new`:
 
-`createProgramCreationApi` requires an authenticated `ProgramTransport`. The transport accepts `(path, RequestInit)`
-and returns the unwrapped CORE-001 envelope `data`, rejecting with the app's existing API error on failure. Bind the
-shared auth `requestApi` at the host and pass its errors to `useAuth().handleApiError` so 401/deactivation handling
-stays centralized. No transport, mock data, test credentials, or fallback mode is created implicitly by this feature.
+1. Search/page ACTIVE horses; view profile and AVAILABLE/LIMITED/LOCKED state. LOCKED choices are disabled.
+2. Review the horse's real profile fields and availability. Missing values are shown as not provided.
+3. Select an ACTIVE template from recommendations/catalog, then pin a returned version. Trainer candidates use the
+   actual version ID, not the display version number.
+4. Customize a separate draft: name, goals, program period, target metrics, notes and source-derived phases.
+   Edit phase order/name/dates/objective while retaining the source phase lineage.
+5. Set optional per-phase intensity min/max and workload. Template text guidance stays read-only.
+6. Select a Trainer candidate, set effectiveFrom/reason, and explicitly acknowledge its warnings.
+7. Review → validate → POST `/api/training-programs` → show the returned program ID/status/summary.
+   **Reload saved program** calls GET `/api/training-programs/{id}`. Success stays on the existing route.
 
-The CORE-008 transport is on a separate review branch; this CORE-022 branch starts directly from dev and does not
-copy or merge that implementation. Network binding, rendered UI, route registration and live BE calls are pending.
+The UI reuses `useProgramCreation`, draft/adapter and canonical Design System controls/AppShell. The optional
+`RequireAuth.allowedRoles` permits HEAD_TRAINER and prevents other roles from mounting the feature/loading its data.
+Existing RequireAuth consumers retain their behavior. A multi-role user qualifies if any role is HEAD_TRAINER.
 
-## Sources read
+## Transport and correctness
 
-- CORE-005: `docs/api/flow2-training.openapi.yaml` at BE
-  `bbe3677b24c04d8d708483f72b7927fb448961f4` (`feat/CORE-005-contract-flow2`).
-- CORE-004 horse list: `docs/api/flow1-horse.openapi.yaml` at BE `ac4e3a0`.
-- Execution workbook: local `project-context/Racehorse_Core_Flow_Execution.xlsx`, sheet `Core Flow Execution`, CORE-022
-  row. This is execution ownership evidence, not the Task Playbook. The actual Playbook was not found locally or in a
-  connected document session; its canonical link/path was requested before implementing the UI.
-- Live Figma file `tm7dpgAQbHReZ7tlQeQJlc`, section `457:10853`, SCR-TRAIN-003 wizard:
-  S1 `84:286`, S2 `87:684`, S3 `87:1188`, S4 `88:286`, S5 `88:764`, S6 `90:415`, S7 `91:299`.
-  Design context/screenshots were retrieved for S3 body `87:1202` and S4 body `88:300`; remaining bodies need design
-  context before their UI is implemented.
+- `useProgramCreationApi` binds canonical `requestApi`, `authSession` and `useAuth().handleApiError`. Login and program
+  requests share `VITE_API_BASE_URL` (existing default `http://localhost:8080`). No extra provider/token store,
+  feature API base, automatic retry, runtime fixture import or mock fallback.
+- 400 details map to fields, including `phases.0.name` / `phases[0].name`, and return to the matching step.
+  409 displays the BE message and detail reasons. Errors preserve the draft for correction/manual retry.
+- 401 and the existing inactive-account 403 signature use shared session handling. Other 403 errors retain the
+  session. No new error codes or deactivation heuristics.
+- Validate required fields, schema lengths, calendar dates, program period, phase containment/non-overlap,
+  intensity enums/range and Trainer warnings. BE remains authoritative for lifecycle, LOCKED reasons, current
+  template/Trainer state, permissions and the create transaction.
+- Horse/template/version changes clear dependent draft/phases/Trainer selection. Selection/catalog requests abort
+  and ignore late responses. A synchronous submission guard prevents overlapping POSTs; success removes the form.
+- Explicit serialization sends only CreateProgramRequest fields: no generated phase IDs/status, template mutation,
+  race, separate targetDate or program phase surface.
+- Native labeled controls, keyboard-operable buttons/selects/checkboxes, field error associations and heading focus
+  on step/error transitions. No custom keyboard protocol.
 
-## Source differences requiring confirmation for the UI
+## Sources and approved mapping
 
-S4 still displays Target race/Target date and per-phase preferred surface. CORE-005 explicitly hides target race
-(DEC-007 §3.3); `ProgramPhaseInput` has no surface field, and `CreateProgramRequest` has no separate target-date field.
-The adapter omits these fields and does not encode them into `targetMetrics`, notes, or workload as a workaround.
-Use the Task Playbook and approved scope to settle the UI mapping before adding those controls.
+CORE-005 read from BE `origin/dev` at `8b2e22a2aee710cc2ac9b3d1c372cb444ac9e21a`:
+[flow2-training.openapi.yaml](https://github.com/lamphilong2004/SWP391_Racehorse-Training-Management-System_BE/blob/8b2e22a2aee710cc2ac9b3d1c372cb444ac9e21a/docs/api/flow2-training.openapi.yaml).
+It matches the earlier CORE-005 branch source. Horse selection also uses previously read CORE-004
+`flow1-horse.openapi.yaml` at `ac4e3a0`.
 
-The shared TextAreaField support revision `da1ed9a` is separate from dev. UI work should reuse its canonical export
-when available rather than add another local textarea implementation.
+Figma file `tm7dpgAQbHReZ7tlQeQJlc`, SCR-TRAIN-003 wizard. Design context/screenshots read for all bodies:
 
-## Verification
+| UI step | Frame | Body/content read | Implementation |
+| --- | --- | --- | --- |
+| Horse | `84:286` | `84:374` / `84:423` | Catalog, selected HorseCard, availability |
+| Profile | `87:684` | `87:688` / `87:698` | Real profile fields and availability guidance |
+| Template | `87:1188` | `87:1192` / `87:1202` | Recommendations, catalog, version pinning |
+| Customize | `88:286` | `88:290` / `88:300` | Program fields, independent phase edits |
+| Workload | `88:764` | `88:768` / `88:778` | Intensity range, workload, source guidance |
+| Trainer | `90:415` | `90:419` / `90:429` | CandidateCard, effectiveFrom, warning acknowledgement |
+| Review | `91:299` | `91:303` / `91:313` | Summary/edit actions, availability, activation |
 
-- Full feature/base suite: 86/86 tests PASS using `vitest run --maxWorkers 2`.
-- ESLint, TypeScript and production build PASS.
-- Tests use fixtures and injected request mocks; they do not prove rendered UI, E2E, BE integration or persistence.
-- No new production route is registered in this slice.
+[Open Figma wizard](https://www.figma.com/design/tm7dpgAQbHReZ7tlQeQJlc?node-id=84-286).
 
-## Next
+Leader's scope decision on 2026-10-17 removes Target race, separate Target date and program phase preferred surface.
+They are not encoded into notes, targetMetrics, workload or periodEnd. periodStart/periodEnd remain the program period.
+No template authoring, business dashboard, unsupported performance charts/data or mobile expansion.
 
-1. Read the canonical CORE-022 Task Playbook and resolve the specific Figma/DTO differences above.
-2. Retrieve design context for each remaining wizard body, then compose canonical Design System controls and AppShell
-   around the state flow. Add the approved route through the auth guard when its integration is available.
-3. Bind the real auth transport and run create/read-back smoke tests when CORE-021 runtime/test data are supplied.
+**Missing source:** the actual Task Playbook has not been found. The execution workbook is not the Playbook. Leader
+authorized this scope with CORE-005/Figma; this handoff does not claim full Playbook/DoD review.
+
+## Verification — final code, 2026-10-17
+
+| Check | Result |
+| --- | --- |
+| `vitest run --maxWorkers 2` | **128/128 PASS**, 13 files, 27.66s |
+| `npm run lint` | PASS, no warnings |
+| `npm run typecheck` | PASS |
+| `npm run build` | PASS, 153 modules |
+| `git diff --check` | PASS |
+| Chrome 155.0.8059.41, 1440×1000 | Workspace → wizard → one POST → result 1001 → GET read-back PASS; no page errors |
+
+The 128 tests belong to this CORE-022 working tree with merged dev, not the old adapter HEAD or a separate combined
+branch. HTTP fixtures exercise the actual router/AuthProvider/requestApi: Head Trainer full flow/payload; six other
+roles blocked before feature requests; horse/template/version invalidation; late template response; phase/intensity
+validation; warning acknowledgement; duplicate submit; 400 field errors; 409 reasons/details; network/permission
+retry; expired/inactive session handling; forbidden payload fields.
+
+Screenshots use fixture data only:
+
+- [Horse selection](evidence/CORE-022/01-horse.png)
+- [Customize](evidence/CORE-022/04-customize.png)
+- [Trainer](evidence/CORE-022/06-trainer.png)
+- [Review](evidence/CORE-022/07-review.png)
+- [Created result](evidence/CORE-022/08-created.png)
+
+These results do not prove live E2E integration, persistence, actual candidate availability or a live transaction.
+
+## Router overlap
+
+Fetched CORE-036 `5ce3684f8043b0344b40b8997e27ad66d8456307` also changes `src/app/router.tsx` and
+`src/app/routePaths.ts`; its router derives from the older design-system router. CORE-022 adds one canonical
+route/constant, an optional shared role guard and a Head Trainer workspace action. Keep the current auth/buildRoutes
+structure when porting CORE-036 routes. This delivery does not merge/cherry-pick or change CORE-036.
+There are no Design System component/export changes in this diff.
+
+## Live smoke prerequisites
+
+Missing external inputs: reachable BE runtime URL/CORS; safe local Head Trainer account; seeded ACTIVE horses,
+ACTIVE template/version/phases and Trainer candidates; restriction/warning scenarios and another-role account.
+Set `VITE_API_BASE_URL` in ignored `.env.local` and restart Vite. Enter credentials locally; no passwords/tokens in
+committed files, PR text, screenshots or chat.
+
+When supplied: login → GET /me → refresh/restore → Head Trainer workspace → wizard → POST → GET read-back
+→ forbidden/expired/inactive scenarios → logout. Verify persistence, pinned version/lineage/assignment and current
+availability enforcement. POST /api/auth/logout returns 204; verify local cleanup. A server logout failure must
+remain reported as unconfirmed by shared auth.

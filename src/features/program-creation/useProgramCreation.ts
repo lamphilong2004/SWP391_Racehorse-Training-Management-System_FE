@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ProgramCreationApi } from './programApi';
 import { copyTemplateForHorse, validateProgramCreation, type ProgramValidationIssue } from './programDraft';
+import { programFieldErrors } from './programErrors';
 import type {
   CandidateList, CreateProgramRequest, HorseSelection, ProgramDetail, TemplateDetail, TemplateRecommendation,
 } from './programTypes';
@@ -95,7 +96,7 @@ export function useProgramCreation(api: ProgramCreationApi) {
     if (!selectedTrainer) issues.push({ field: 'trainer.trainerUserId', message: 'Select a Trainer from the current candidates.' });
     if (issues.length > 0) {
       setState((previous) => ({ ...previous, issues, error: null }));
-      return;
+      return { kind: 'invalid' as const, issues };
     }
     submitting.current = true;
     setState((previous) => ({ ...previous, pending: 'create', issues: [], error: null }));
@@ -103,8 +104,11 @@ export function useProgramCreation(api: ProgramCreationApi) {
       const program = await api.create(state.draft);
       created.current = program;
       setState((previous) => ({ ...previous, created: program, pending: null }));
+      return { kind: 'created' as const, program };
     } catch (error) {
-      setState((previous) => ({ ...previous, error, pending: null }));
+      const issues = programFieldErrors(error);
+      setState((previous) => ({ ...previous, error, issues, pending: null }));
+      return { kind: 'error' as const, error, issues };
     } finally {
       submitting.current = false;
     }
@@ -112,3 +116,5 @@ export function useProgramCreation(api: ProgramCreationApi) {
 
   return { ...state, selectHorse, selectTemplate, updateDraft, submit };
 }
+
+export type ProgramCreationFlow = ReturnType<typeof useProgramCreation>;

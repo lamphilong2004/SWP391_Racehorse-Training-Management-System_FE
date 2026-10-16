@@ -18,6 +18,7 @@ export const ROUTES = {
   horses: '/horses',
   stable: '/stable',
   trainingPrograms: '/training/programs',
+  trainingProgramCreate: '/training/programs/new',
   programTemplates: '/training/templates',
   trainingSchedule: '/training/schedule',
   trainingCalendar: '/training/calendar',

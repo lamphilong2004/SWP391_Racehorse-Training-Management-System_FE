@@ -1,4 +1,4 @@
-/** CORE-005 flow2-training.openapi.yaml @ bbe3677; horse selection uses CORE-004 @ ac4e3a0. */
+/** CORE-005 flow2-training.openapi.yaml on BE dev @ 8b2e22a; horse selection uses CORE-004 @ ac4e3a0. */
 export type Intensity = 'LOW' | 'MEDIUM' | 'MEDIUM_HIGH' | 'HIGH';
 export type RecommendationLabel = 'RECOMMENDED' | 'SUITABLE' | 'SUITABLE_WITH_CAUTION' | 'NOT_RECOMMENDED';
 export type TrainingAvailability = 'AVAILABLE' | 'LIMITED' | 'LOCKED';

@@ -65,6 +65,8 @@ export function validateProgramCreation(input: CreateProgramRequest, candidate?:
     text(`${prefix}.workload`, phase.workload, 500);
     date(`${prefix}.startDate`, phase.startDate);
     date(`${prefix}.endDate`, phase.endDate);
+    if (phase.intensityMin != null && !intensities.includes(phase.intensityMin)) add(`${prefix}.intensityMin`, 'Select a contract intensity value.');
+    if (phase.intensityMax != null && !intensities.includes(phase.intensityMax)) add(`${prefix}.intensityMax`, 'Select a contract intensity value.');
     if (validDate(phase.startDate) && validDate(phase.endDate)) {
       if (phase.endDate < phase.startDate) add(`${prefix}.endDate`, 'End date must be on or after the start date.');
       if (validDate(input.periodStart) && phase.startDate < input.periodStart) add(`${prefix}.startDate`, 'Phase must be inside the program period.');

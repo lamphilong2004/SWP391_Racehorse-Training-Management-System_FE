@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate, type RouteObject } from 'react-router';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { LoginPage } from '../pages/LoginPage';
 import { WorkspacePage } from '../pages/WorkspacePage';
+import { ProgramCreationPage } from '../features/program-creation/ProgramCreationPage';
 import { PublicOnly, RequireAuth } from './RequireAuth';
 import { ROUTES } from './routePaths';
 
@@ -33,6 +34,7 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
       : [{ path: ROUTES.root, element: <Navigate to={ROUTES.dashboard} replace /> }]),
     { path: ROUTES.login, element: <PublicOnly><LoginPage /></PublicOnly> },
     { path: ROUTES.dashboard, element: <RequireAuth><WorkspacePage /></RequireAuth> },
+    { path: ROUTES.trainingProgramCreate, element: <RequireAuth allowedRoles={['HEAD_TRAINER']}><ProgramCreationPage /></RequireAuth> },
     { path: '*', element: <RequireAuth><NotFoundPage /></RequireAuth> },
   ];
 }

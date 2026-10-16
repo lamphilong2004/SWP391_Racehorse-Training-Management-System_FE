@@ -15,6 +15,7 @@ function fixtureApi(): ProgramCreationApi {
     template: vi.fn().mockResolvedValue(structuredClone(template)),
     trainerRecommendations: vi.fn().mockResolvedValue({ candidates: [candidate] }),
     create: vi.fn().mockResolvedValue(createdProgram),
+    read: vi.fn().mockResolvedValue(createdProgram),
   };
 }
 

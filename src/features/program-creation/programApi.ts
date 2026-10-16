@@ -68,6 +68,7 @@ export function createProgramCreationApi(request: ProgramTransport) {
         method: 'POST',
         body: JSON.stringify(programCreationPayload(input)),
       }),
+    read: (programId: number) => request<ProgramDetail>(`/api/training-programs/${programId}`),
   };
 }
 
