@@ -1,12 +1,14 @@
-import { Navigate, useLocation } from 'react-router';
+import { Navigate, useLocation, useNavigate } from 'react-router';
 import { Button } from '../design-system/components/Button/Button';
 import { ErrorState } from '../design-system/components/ErrorState/ErrorState';
 import { ROUTES } from './routePaths';
 import { useAuth } from '../shared/auth/AuthProvider';
+import type { RoleCode } from '../shared/auth/roles';
 
-export function RequireAuth({ children }: { children: React.ReactNode }) {
+export function RequireAuth({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: readonly RoleCode[] }) {
   const auth = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   if (auth.status === 'loading') return <p role="status">Restoring your session…</p>;
   if (auth.status === 'anonymous') {
@@ -19,6 +21,14 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
         <Button variant="secondary" onClick={() => void auth.logout()}>
           Sign out
         </Button>
+      </main>
+    );
+  }
+  if (allowedRoles && !auth.user?.roles.some((role) => allowedRoles.includes(role))) {
+    return (
+      <main className="auth-problem">
+        <ErrorState title="Access denied" description="Your account does not have permission to access this page." />
+        <Button variant="secondary" onClick={() => navigate(ROUTES.dashboard)}>Back to workspace</Button>
       </main>
     );
   }

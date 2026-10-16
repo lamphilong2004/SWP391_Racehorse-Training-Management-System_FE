@@ -24,6 +24,9 @@ export function WorkspacePage() {
           Sign out
         </Button>
       </div>
+      {user.roles.includes('HEAD_TRAINER') && (
+        <Button onClick={() => navigate(ROUTES.trainingProgramCreate)}>Create program</Button>
+      )}
       <Card title="Signed in">
         <p className="text-body">{user.fullName}</p>
         <p className="text-body">{user.email} · {user.userCode}</p>
