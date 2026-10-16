@@ -6,11 +6,22 @@
   width: 100%;
 }
 
+.fieldset {
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
 .label {
   font-size: 14px;
   line-height: 20px;
   font-weight: 500;
   color: var(--color-text-primary);
+}
+
+.requiredMark {
+  margin-left: var(--space-xs);
 }
 
 .message {
@@ -66,4 +77,12 @@
 
 .control::placeholder {
   color: var(--color-text-disabled);
+}
+
+.multiline {
+  display: block;
+  height: auto;
+  min-height: 72px;
+  padding: 10px var(--space-md);
+  resize: none;
 }

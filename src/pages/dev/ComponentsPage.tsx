@@ -21,11 +21,13 @@ import {
   Modal,
   NotificationItem,
   PhotoAttachmentTile,
+  RadioGroup,
   SelectField,
   StableBoxTile,
   StatusBadge,
   STATUS_REGISTRY,
   Tabs,
+  TextAreaField,
   TextField,
   ValidationNotice,
   WizardStepper,
@@ -120,6 +122,7 @@ export function ComponentsPage() {
   const [selectedRow, setSelectedRow] = useState<string | undefined>('s3');
   const [selectedBox, setSelectedBox] = useState('A-14');
   const [acknowledged, setAcknowledged] = useState(false);
+  const [assessment, setAssessment] = useState('below');
 
   return (
     <div className={styles.page}>
@@ -242,6 +245,33 @@ export function ComponentsPage() {
             options={ROLE_CODES.map((role) => ({ value: role, label: ROLE_LABELS[role] }))}
           />
           <SelectField label="Role" placeholder="Select role" defaultValue="" helperText="Helper text" disabled options={[]} />
+        </div>
+      </Section>
+
+      <Section id="multiline-choice" title="Textarea & Radio Group" figma="165:7932 · 165:7921">
+        <div className={styles.narrow}>
+          <RadioGroup
+            label="Assessment"
+            required
+            name="session-assessment"
+            value={assessment}
+            onChange={setAssessment}
+            options={[
+              { value: 'met', label: 'Met target' },
+              { value: 'partially-met', label: 'Partially met target' },
+              { value: 'below', label: 'Did not meet target' },
+            ]}
+          />
+          <TextAreaField
+            label="Professional notes"
+            required
+            rows={3}
+            defaultValue="Reps 1–2 were on pace (41.6–42.1 km/h). Heart rate climbed through rep 3, crossed 180 bpm and did not settle after reducing to Medium, so I stopped the session. This matches the slower recovery since 17 Oct."
+          />
+          <RadioGroup label="Disabled choices" options={[
+            { value: 'yes', label: 'Yes' },
+            { value: 'no', label: 'No' },
+          ]} defaultValue="yes" disabled />
         </div>
       </Section>
 
