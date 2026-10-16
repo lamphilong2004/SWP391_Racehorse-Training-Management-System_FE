@@ -81,7 +81,7 @@ authorized this scope with CORE-005/Figma; this handoff does not claim full Play
 | `npm run typecheck` | PASS |
 | `npm run build` | PASS, 153 modules |
 | `git diff --check` | PASS |
-| Chrome 155.0.8059.41, 1440×1000 | Workspace → wizard → one POST → result 1001 → GET read-back PASS; no page errors |
+| Chrome 155.0.8059.41, 1440×1000, production preview | Workspace → wizard → one POST → result 1001 → GET read-back PASS; no page/console/request errors |
 
 The 128 tests belong to this CORE-022 working tree with merged dev, not the old adapter HEAD or a separate combined
 branch. HTTP fixtures exercise the actual router/AuthProvider/requestApi: Head Trainer full flow/payload; six other
@@ -90,6 +90,9 @@ validation; warning acknowledgement; duplicate submit; 400 field errors; 409 rea
 retry; expired/inactive session handling; forbidden payload fields.
 
 Screenshots use fixture data only:
+
+The screenshots were refreshed against the production build so bundled font assets load without the local dev
+server's node_modules-junction allow-list restriction. No application source changed after the final code checks.
 
 - [Horse selection](evidence/CORE-022/01-horse.png)
 - [Customize](evidence/CORE-022/04-customize.png)
