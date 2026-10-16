@@ -13,6 +13,7 @@ export const ROUTES = {
   devComponents: '/dev/components',
   devShell: '/dev/shell/:role',
 
+  login: '/login',
   dashboard: '/dashboard',
   horses: '/horses',
   stable: '/stable',

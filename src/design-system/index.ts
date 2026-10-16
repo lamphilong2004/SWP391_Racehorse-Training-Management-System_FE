@@ -6,7 +6,9 @@ export { Icon, type IconName, type IconProps } from './icons/Icon';
 export { ICON_NAMES } from './icons/iconNames';
 export { Button, type ButtonProps, type ButtonVariant, type ButtonSize } from './components/Button/Button';
 export { TextField, type TextFieldProps } from './components/TextField/TextField';
+export { TextAreaField, type TextAreaFieldProps } from './components/TextAreaField/TextAreaField';
 export { SelectField, type SelectFieldProps, type SelectOption } from './components/SelectField/SelectField';
+export { RadioGroup, type RadioGroupProps, type RadioOption } from './components/RadioGroup/RadioGroup';
 export { StatusBadge, type StatusBadgeProps } from './components/StatusBadge/StatusBadge';
 export {
   STATUS_REGISTRY,
