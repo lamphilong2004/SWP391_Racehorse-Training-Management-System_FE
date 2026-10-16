@@ -4,4 +4,5 @@ import styles from './Field.module.css';
 export const fieldControlClasses = {
   control: styles.control,
   error: styles.controlError,
+  multiline: styles.multiline,
 };
