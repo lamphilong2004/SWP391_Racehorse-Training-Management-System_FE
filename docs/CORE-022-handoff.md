@@ -2,6 +2,7 @@
 
 Branch: `feat/CORE-022-program-creation`. Target: `dev`.
 FE base fetched and merged without reset/force: `f7c290d100c77ba6d33cf781aed9102f73c8a1bc`.
+Published author-verification revision: `26aad8db815a72565ad7970451acc745dde4962a`.
 Earlier adapter/state slice: `5b7e0bbaa1836bfe760ca5c1d083d2a565cb543c`.
 
 **LIVE INTEGRATION NOT VERIFIED.** All verification below uses test-only HTTP fixtures.
@@ -72,7 +73,7 @@ No template authoring, business dashboard, unsupported performance charts/data o
 **Missing source:** the actual Task Playbook has not been found. The execution workbook is not the Playbook. Leader
 authorized this scope with CORE-005/Figma; this handoff does not claim full Playbook/DoD review.
 
-## Verification — final code, 2026-10-17
+## Author verification — published CORE-022 code, 2026-10-17
 
 | Check | Result |
 | --- | --- |
@@ -83,8 +84,8 @@ authorized this scope with CORE-005/Figma; this handoff does not claim full Play
 | `git diff --check` | PASS |
 | Chrome 155.0.8059.41, 1440×1000, production preview | Workspace → wizard → one POST → result 1001 → GET read-back PASS; no page/console/request errors |
 
-The 128 tests belong to this CORE-022 working tree with merged dev, not the old adapter HEAD or a separate combined
-branch. HTTP fixtures exercise the actual router/AuthProvider/requestApi: Head Trainer full flow/payload; six other
+The 128 tests are author verification of the source published at `26aad8d`, not Independent Gate or live BE evidence.
+They include merged dev, not the old adapter HEAD or a separate combined branch. HTTP fixtures exercise the actual router/AuthProvider/requestApi: Head Trainer full flow/payload; six other
 roles blocked before feature requests; horse/template/version invalidation; late template response; phase/intensity
 validation; warning acknowledgement; duplicate submit; 400 field errors; 409 reasons/details; network/permission
 retry; expired/inactive session handling; forbidden payload fields.
@@ -104,15 +105,28 @@ These results do not prove live E2E integration, persistence, actual candidate a
 
 ## Router overlap
 
-Fetched CORE-036 `5ce3684f8043b0344b40b8997e27ad66d8456307` also changes `src/app/router.tsx` and
-`src/app/routePaths.ts`; its router derives from the older design-system router. CORE-022 adds one canonical
-route/constant, an optional shared role guard and a Head Trainer workspace action. Keep the current auth/buildRoutes
-structure when porting CORE-036 routes. This delivery does not merge/cherry-pick or change CORE-036.
-There are no Design System component/export changes in this diff.
+Current comparison source: **clean CORE-036 PR #8**, `51525af2065041d336ec52d6f6b6d0329e8106c9`.
+Files overlapping CORE-022 are `src/app/RequireAuth.tsx`, `src/app/routePaths.ts`, `src/app/router.tsx` and
+`src/app/router.test.tsx`. There is no Design System/navigation conflict evidence from this clean branch.
+
+Actual composition was performed in separate worktree `CORE-022-integration`, branch `integration/CORE-022-033-036`,
+from dev `f7c290d` + CORE-022 `26aad8d` + CORE-033 `324d51126745ae1f8d9121d939ff93076c004cdb` + PR #8 `51525af`.
+Both feature merges conflicted in router.tsx/router.test.tsx. Resolution keeps all feature routes and their production
+route-list assertion. RequireAuth/routePaths merged automatically: CORE-022 allowedRoles and CORE-036 post-login
+return behavior are retained. One canonical AuthProvider, API base and token store remain. No feature code from
+CORE-033/036 is added to the CORE-022 PR. See the separate integration handoff for combination checks/patches.
 
 ## Live smoke prerequisites
 
-Missing external inputs: reachable BE runtime URL/CORS; safe local Head Trainer account; seeded ACTIVE horses,
+Endpoint-by-endpoint implementation gaps and concrete requests for Tiến/Dũng are in
+[CORE-022-BE-endpoints.md](CORE-022-BE-endpoints.md). BE dev has no wizard implementation. Demo-only implementations
+were inspected and have incompatible DTOs; they are not treated as the approved implementation.
+
+Live probe executed: GET `http://localhost:8080/api/health` and GET `/api/auth/me` both failed with
+`No connection could be made because the target machine actively refused it. (localhost:8080)`.
+Login/create/read-back/DB persistence/LOCKED/template immutability have therefore not been verified live.
+
+Missing external inputs: a contract-compatible endpoint implementation/runtime URL/CORS; safe local Head Trainer account; seeded ACTIVE horses,
 ACTIVE template/version/phases and Trainer candidates; restriction/warning scenarios and another-role account.
 Set `VITE_API_BASE_URL` in ignored `.env.local` and restart Vite. Enter credentials locally; no passwords/tokens in
 committed files, PR text, screenshots or chat.
