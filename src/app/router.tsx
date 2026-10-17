@@ -6,6 +6,9 @@ import { ProgramCreationPage } from '../features/program-creation/ProgramCreatio
 import { SessionEvaluationPage } from '../features/evaluation/SessionEvaluationPage';
 import { PublicOnly, RequireAuth } from './RequireAuth';
 import { ROUTES } from './routePaths';
+import { Core046Route } from '../features/core046/auth';
+import { TreatmentTasksPage } from '../features/core046/pages';
+import { IncidentLayout, IncidentListRoute, IncidentDetailRoute } from './IncidentRoutes';
 import { MedicalAccess } from '../features/medical/runtime';
 import { CaseListPage, CreateCasePage, CaseDetailPage, TreatmentPlanPage, HerdHealthPage } from '../features/medical/pages';
 
@@ -44,6 +47,11 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
     { path: ROUTES.medicalCaseDetail, element: <RequireAuth><MedicalAccess><CaseDetailPage /></MedicalAccess></RequireAuth> },
     { path: ROUTES.treatmentPlan, element: <RequireAuth><MedicalAccess><TreatmentPlanPage /></MedicalAccess></RequireAuth> },
     { path: ROUTES.herdHealth, element: <RequireAuth><MedicalAccess><HerdHealthPage /></MedicalAccess></RequireAuth> },
+    { element: <RequireAuth><Core046Route allowedRoles={['GROOM']} /></RequireAuth>, children: [{ path: ROUTES.treatmentTasks, element: <TreatmentTasksPage /> }] },
+    { element: <RequireAuth><IncidentLayout /></RequireAuth>, children: [
+      { path: ROUTES.incidents, element: <IncidentListRoute /> },
+      { path: ROUTES.incidentDetail, element: <IncidentDetailRoute /> },
+    ] },
     { path: '*', element: <RequireAuth><NotFoundPage /></RequireAuth> },
   ];
 }
