@@ -18,6 +18,11 @@ export async function sampleRequest<T>(path: string, init: RequestInit, user: Cu
   const method = (init.method ?? 'GET').toUpperCase();
   const body = init.body && !(init.body instanceof FormData) ? JSON.parse(String(init.body)) : {};
   const data = readSamples();
+  if (user.accountStatus !== 'ACTIVE') throw new ApiError(403, 'FORBIDDEN', 'An active sample actor is required.');
+  if (user.roles.includes('GROOM') && !data.groomUserIds?.includes(user.id)) {
+    data.groomUserIds = [...new Set([sampleUser('GROOM').id, ...(data.groomUserIds ?? []), user.id])];
+    saveSamples(data);
+  }
   const now = new Date().toISOString();
   const fail = (status: number, message: string): never => { throw new ApiError(status, status === 403 ? 'FORBIDDEN' : status === 409 ? 'CONFLICT' : status === 404 ? 'NOT_FOUND' : 'VALIDATION_ERROR', message); };
   const allow = (...roles: RoleCode[]) => { if (!roles.some((role) => user.roles.includes(role))) fail(403, 'This action is unavailable for this signed-in role.'); };
@@ -83,8 +88,9 @@ export async function sampleRequest<T>(path: string, init: RequestInit, user: Cu
   }
   if (route === '/api/incidents' || /^\/api\/incidents\/\d+(\/review)?$/.test(route)) {
     allow('GROOM', 'VETERINARIAN', 'TRAINER', 'HEAD_TRAINER', 'WORK_RIDER', 'CLUB_MANAGER');
+    const ownReportsOnly = user.roles.includes('GROOM') && !user.roles.some((role) => ['VETERINARIAN', 'CLUB_MANAGER', 'HEAD_TRAINER'].includes(role));
     if (route === '/api/incidents') {
-      if (method === 'GET') return respond(page(user.roles.includes('GROOM') ? data.incidents.filter((item) => item.reportedByUserId === user.id || item.reportedByUserId === 16) : data.incidents));
+      if (method === 'GET') return respond(page(ownReportsOnly ? data.incidents.filter((item) => item.reportedByUserId === user.id) : data.incidents));
       if (method === 'POST') {
         allow('GROOM', 'TRAINER', 'HEAD_TRAINER', 'WORK_RIDER');
         if (body.horseId !== 7 || !['LOW', 'MEDIUM', 'HIGH'].includes(body.observedSeverity) || !['OFF_FEED', 'COLIC_SIGNS', 'FEVER', 'HOOF_OR_LEG_PROBLEM', 'OTHER'].includes(body.incidentType) || !Number.isFinite(Date.parse(body.observedAt))) fail(400, 'Choose the sample horse and valid incident fields.');
@@ -96,12 +102,14 @@ export async function sampleRequest<T>(path: string, init: RequestInit, user: Cu
       }
     } else {
       const incident = find(data.incidents, Number(route.split('/')[3]));
-      if (user.roles.includes('GROOM') && incident.reportedByUserId !== user.id && incident.reportedByUserId !== 16) fail(403, 'This sample incident belongs to another reporter.');
+      if (ownReportsOnly && incident.reportedByUserId !== user.id) fail(403, 'This sample incident belongs to another reporter.');
       if (method === 'GET' && !route.endsWith('/review')) return respond(incident);
       if (method === 'POST' && route.endsWith('/review')) {
         allow('VETERINARIAN');
+        if (incident.status === 'RESOLVED') fail(409, 'Resolved incidents cannot be reviewed again.');
         if (body.action === 'RESOLVE') incident.status = 'RESOLVED';
         else if (body.action === 'OPEN_CASE' || body.action === 'LINK_CASE') {
+          if (incident.status !== 'REPORTED') fail(409, 'Only a reported incident can be opened or linked to a case.');
           if (incident.medicalCaseId) fail(409, 'This incident is already linked to a case.');
           const item = body.action === 'LINK_CASE' ? find(data.cases, Number(body.medicalCaseId)) : { id: data.nextId++, horseId: 7, status: 'OPEN' as const, openedAt: now, reason: incident.description, incidentIds: [], examinations: [], injuries: [], reexaminations: [] };
           if (item.status !== 'OPEN' || item.horseId !== incident.horseId) fail(409, 'Choose an open case for the same horse.');
@@ -114,7 +122,7 @@ export async function sampleRequest<T>(path: string, init: RequestInit, user: Cu
   }
   if (route.startsWith('/api/groom/treatment-tasks')) {
     allow('GROOM');
-    const tasks = data.tasks.filter((item) => item.assignedGroomUserId === user.id || item.assignedGroomUserId === 16);
+    const tasks = data.tasks.filter((item) => item.assignedGroomUserId === user.id);
     const safe = (task: typeof tasks[number]) => ({ id: task.id, horseId: task.horseId, assignedGroomUserId: task.assignedGroomUserId, instruction: task.instruction, taskDate: task.taskDate, scheduledSlot: task.scheduledSlot, status: task.status, completedAt: task.completedAt });
     if (route === '/api/groom/treatment-tasks' && method === 'GET') return respond(page(tasks.map(safe)));
     const match = route.match(/^\/api\/groom\/treatment-tasks\/(\d+)\/complete$/);
@@ -158,7 +166,9 @@ export async function sampleRequest<T>(path: string, init: RequestInit, user: Cu
       }
       if (method === 'PUT' && action === 'treatment-plan') {
         const input = body as TreatmentPlanRequest;
-        if (!input.treatmentMedicationInstructions?.trim() || input.groomTasks?.some((task) => task.assignedGroomUserId !== 16 || !task.instruction.trim() || !task.taskDate)) fail(400, 'Complete the plan and assign sample Groom 16.');
+        const knownGroom = (id: number) => Number.isSafeInteger(id) && id > 0 &&
+          (id === sampleUser('GROOM').id || data.groomUserIds?.includes(id) || data.tasks.some((task) => task.assignedGroomUserId === id));
+        if (!input.treatmentMedicationInstructions?.trim() || input.groomTasks?.some((task) => !knownGroom(task.assignedGroomUserId) || !task.instruction.trim() || !task.taskDate)) fail(400, 'Complete the plan and choose a known active Groom.');
         item.treatmentPlan = { id: item.treatmentPlan?.id ?? data.nextId++, caseId: item.id, treatmentMedicationInstructions: input.treatmentMedicationInstructions, restInstructions: input.restInstructions, careInstructions: input.careInstructions, reexaminationDate: input.reexaminationDate, createdAt: now };
         data.tasks = data.tasks.filter((task) => task.caseId !== item.id || task.status === 'COMPLETED');
         data.tasks.push(...(input.groomTasks ?? []).map((task) => ({ ...task, id: data.nextId++, caseId: item.id, treatmentPlanId: item.treatmentPlan!.id, horseId: item.horseId, status: 'PENDING' as const })));

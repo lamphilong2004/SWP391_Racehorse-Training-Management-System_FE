@@ -3,7 +3,7 @@ import type { HorseDetail, StableBox, ActivationStatus, HorseIdentityRequest, Ow
 import { readSamples, saveSamples, horse, sampleUser } from './sampleStore';
 
 export interface HorseSampleState { records: HorseDetail[]; boxes: StableBox[]; photos: Record<number, { id: number; url: string; uploadedAt: string }[]>; baselineHorseIds: number[] }
-function initialHorses(): HorseSampleState {
+export function initialHorses(): HorseSampleState {
   const now = new Date().toISOString();
   return { records: [{ ...horse, breed: horse.breed ?? null, sex: horse.sex ?? null, foaledDate: horse.foaledDate ?? null, healthStatus: 'MONITORING', currentBoxCode: 'A-12', primaryPhotoUrl: null, countryOfOrigin: 'Ireland', registrationNo: null, activatedAt: now,
     pedigree: { sire: { horseId: null, name: 'Northern Star' }, dam: { horseId: null, name: 'Silver Mist' } }, currentOwnerships: [{ id: 101, owner: sampleUser('HORSE_OWNER'), sharePercentage: 100, effectiveFrom: now.slice(0, 10), effectiveTo: null, isManagingOwner: true }],

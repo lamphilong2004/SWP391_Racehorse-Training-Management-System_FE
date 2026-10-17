@@ -3,7 +3,7 @@ import type { RoleCode } from '../auth/roles';
 import type { SessionResultView } from '../../features/evaluation/models';
 import type { MedicalCase, CaseTreatmentTask, Incident, HealthStatus } from '../../features/medical/models';
 import type { ProgramDetail, TemplateDetail, HorseSelection } from '../../features/program-creation/programTypes';
-import type { HorseSampleState } from './horseSamples';
+import { initialHorses, type HorseSampleState } from './horseSamples';
 import type { PreSessionCheck } from '../../features/precheck/types';
 export type SampleSession = SessionResultView & { session: SessionResultView['session'] & { blocked?: boolean; blockedReasons?: string[]; blockedMessage?: string | null; trainingAvailability?: 'AVAILABLE' | 'LIMITED' | 'LOCKED'; preCheckResult?: 'ALL_NORMAL' | 'ABNORMAL' | null; preSessionCheck?: PreSessionCheck | null; hasRiderFeedback?: boolean } };
 
@@ -36,6 +36,8 @@ const SAMPLE_PEOPLE: Record<RoleCode, { fullName: string; login: string }> = {
 };
 export interface SampleData {
   horseRegistry?: HorseSampleState;
+  /** Validated Groom identities seen through the shared sample transport, not API credentials. */
+  groomUserIds?: number[];
   version: 1;
   nextId: number;
   healthStatus: HealthStatus;
@@ -49,6 +51,7 @@ export interface SampleData {
 function seed(): SampleData {
   const now = new Date().toISOString();
   const day = now.slice(0, 10);
+  const groomId = sampleUser('GROOM').id;
   const sessions = (['INTERRUPTED', 'COMPLETED'] as const).map((status, index): SessionResultView => ({
     session: { id: 42 + index, sessionCode: `SES-00${42 + index}`, horse, programId: 1001, phaseName: 'Foundation',
       scheduledStart: now, scheduledEnd: now, actualStart: now, actualEnd: now, status,
@@ -61,25 +64,34 @@ function seed(): SampleData {
     alerts: [], evaluation: null,
     riderFeedback: { id: 81 + index, sessionId: 42 + index, submittedBy: sampleUser('WORK_RIDER'), submittedAt: now, responses: { horseResponse: index ? 'Settled and responsive' : 'Uneven response; stopped for review', notes: 'Sample observation, not a clinical diagnosis.' } },
   }));
-  return { version: 1, nextId: 2000, healthStatus: 'MONITORING',
+  return { version: 1, nextId: 2000, healthStatus: 'MONITORING', groomUserIds: [groomId],
     programs: [{ id: 1001, horse, name: 'Thunder Bolt · Foundation', status: 'ACTIVE', periodStart: day, periodEnd: '2026-12-31', sourceTemplateId: 3, sourceTemplateVersion: 1, activatedAt: now, currentTrainer: sampleUser('TRAINER'), phases: [{ id: 101, phaseOrder: 1, name: 'Foundation', startDate: day, endDate: '2026-12-31', isCustomized: true }] }],
     sessions,
     cases: [{ id: 501, horseId: 7, status: 'OPEN', openedAt: now, reason: 'Review observation from interrupted session SES-0042', incidentIds: [601],
       examinations: [{ id: 511, caseId: 501, horseId: 7, symptoms: 'Mild stiffness after exercise', diagnosis: 'Sample veterinary observation', severity: 'MILD', healthStatus: 'MONITORING', examinedAt: now }],
       injuries: [], reexaminations: [], treatmentPlan: { id: 521, caseId: 501, treatmentMedicationInstructions: 'Sample plan — observe response; no actual medication instruction', careInstructions: 'Observe and report changes', restInstructions: 'Follow the veterinary plan', createdAt: now } }],
-    tasks: [{ id: 701, caseId: 501, treatmentPlanId: 521, horseId: 7, assignedGroomUserId: 16, instruction: 'Observe Thunder Bolt and report changes to the Veterinarian', taskDate: day, scheduledSlot: 'Morning', status: 'PENDING' }],
-    incidents: [{ id: 601, incidentCode: 'INC-0601', horseId: 7, reportedByUserId: 16, medicalCaseId: 501, trainingSessionId: 42, incidentType: 'HOOF_OR_LEG_PROBLEM', observedSeverity: 'LOW', description: 'Sample observation linked to interrupted session and case 501', observedAt: now, reportedAt: now, status: 'UNDER_REVIEW' }],
+    tasks: [{ id: 701, caseId: 501, treatmentPlanId: 521, horseId: 7, assignedGroomUserId: groomId, instruction: 'Observe Thunder Bolt and report changes to the Veterinarian', taskDate: day, scheduledSlot: 'Morning', status: 'PENDING' }],
+    incidents: [{ id: 601, incidentCode: 'INC-0601', horseId: 7, reportedByUserId: groomId, medicalCaseId: 501, trainingSessionId: 42, incidentType: 'HOOF_OR_LEG_PROBLEM', observedSeverity: 'LOW', description: 'Sample observation linked to interrupted session and case 501', observedAt: now, reportedAt: now, status: 'UNDER_REVIEW' }],
   };
 }
 export function readSamples(): SampleData {
   const raw = localStorage.getItem(STATE_KEY);
   if (raw) {
-    try { const data = JSON.parse(raw) as SampleData; if (data.version === 1 && Array.isArray(data.sessions) && Array.isArray(data.cases)) { seedOperationalSessions(data); return data; } } catch { /* Recover only sample data, never auth. */ }
+    try { const data = JSON.parse(raw) as SampleData; if (data.version === 1 && Array.isArray(data.sessions) && Array.isArray(data.cases)) { seedOperationalSessions(data); ensureHorseRegistry(data); return data; } } catch { /* Recover only sample data, never auth. */ }
   }
-  const data = seed(); seedOperationalSessions(data); saveSamples(data); return data;
+  const data = seed(); seedOperationalSessions(data); ensureHorseRegistry(data); saveSamples(data); return data;
 }
 export function saveSamples(data: SampleData) { localStorage.setItem(STATE_KEY, JSON.stringify(data)); }
-export function resetSamples() { const data = seed(); seedOperationalSessions(data); saveSamples(data); return data; }
+export function resetSamples() { const data = seed(); seedOperationalSessions(data); ensureHorseRegistry(data); saveSamples(data); return data; }
+
+/** Initialize missing registry only; never replace persisted Horse/Medical/Session data. */
+function ensureHorseRegistry(data: SampleData) {
+  if (data.horseRegistry) return;
+  data.horseRegistry = initialHorses();
+  const sharedHorse = data.horseRegistry.records.find((record) => record.id === horse.id);
+  if (sharedHorse) sharedHorse.healthStatus = data.healthStatus;
+  saveSamples(data);
+}
 
 function seedOperationalSessions(data: SampleData) {
   if (data.flow2Seeded) return;
