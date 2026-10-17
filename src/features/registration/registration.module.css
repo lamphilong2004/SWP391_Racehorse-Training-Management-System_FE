@@ -1,0 +1,16 @@
+.stack { display: flex; flex-direction: column; gap: var(--space-lg); min-width: 0; }
+.registerPanel { padding: var(--space-3xl) clamp(24px, 5vw, 64px); }
+.registerContent { width: min(400px, 100%); margin: 0 auto; padding-top: var(--space-xl); display: flex; flex-direction: column; gap: var(--space-lg); }
+.back { color: var(--color-primary-600); text-decoration: none; font-size: 14px; }
+.back:hover { text-decoration: underline; }
+.back:focus-visible { outline: 2px solid var(--color-primary-600); outline-offset: 4px; }
+.note, .secondary { color: var(--color-text-secondary); font-size: 12px; line-height: 18px; margin: 0; }
+.secondary { display: block; margin-top: var(--space-xs); }
+.filters, .actions, .pagination { display: flex; gap: var(--space-md); align-items: center; flex-wrap: wrap; }
+.filters { align-items: end; }
+.filters > div { width: 220px; }
+.tableScroll { width: 100%; overflow-x: auto; }
+.tableScroll table { min-width: 880px; }
+.tableScroll td { overflow-wrap: anywhere; max-width: 280px; vertical-align: top; }
+.pagination { justify-content: space-between; color: var(--color-text-secondary); font-size: 13px; }
+@media (max-width: 900px) { .registerPage { grid-template-columns: minmax(0, 1fr); } .registerPage > section:first-child { display: none; } .registerPanel { min-height: 100vh; } }
