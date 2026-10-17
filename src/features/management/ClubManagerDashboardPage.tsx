@@ -1,12 +1,13 @@
 import { useContext, useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link } from 'react-router';
 import { ROUTES } from '../../app/routePaths';
-import { Button, Card, EmptyState, ErrorState, Icon, LoadingState, MetricCard, StatusBadge, type StatusOf } from '../../design-system';
+import { Card, EmptyState, ErrorState, LoadingState, MetricCard, StatusBadge, type StatusOf } from '../../design-system';
 import { AppShell } from '../../layout/AppShell';
 import { useAuth } from '../../shared/auth/AuthProvider';
-import { AuditTable } from './AuditTable';
+import { RecentAudit } from './RecentAudit';
+import { ManagementShortcuts } from './ManagementShortcuts';
 import { ManagementAccess } from './ManagementAccess';
-import { ManagementContext } from './ManagementProvider';
+import { ManagementContext, ManagementDestinationsContext } from './ManagementProvider';
 import { useManagementResource } from './useManagementResource';
 import type { CountByKey } from './types';
 import styles from './Management.module.css';
@@ -26,33 +27,34 @@ function Breakdown({ rows, empty, family }: { rows: CountByKey[]; empty: string;
 
 function DashboardContent() {
   const auth = useAuth();
-  const navigate = useNavigate();
+  const destinations = useContext(ManagementDestinationsContext);
+  const [localTime] = useState(() => new Date());
   const service = useContext(ManagementContext);
   const [revision, setRevision] = useState(0);
   const resource = useManagementResource(service.dashboard, revision);
   const data = resource.status === 'ready' ? resource.data : null;
-  return <AppShell user={{ fullName: auth.user!.fullName, role: 'CLUB_MANAGER' }} breadcrumb={[{ label: 'Dashboard' }]}>
+  return <AppShell user={{ fullName: auth.user!.fullName, role: 'CLUB_MANAGER' }} breadcrumb={[{ label: 'Dashboard' }, { label: 'Club overview' }]} searchPlaceholder="Search horses, users…">
     <div className={styles.page}>
       <header className={styles.heading}>
-        <div><h1 className="text-h1">Club Manager Dashboard</h1><p className={styles.subtitle}>Management overview · Core modules · Read-only summary</p></div>
-        <div className={styles.actions}><Link className={styles.linkButton} to={ROUTES.auditLog}><Icon name="history" size={16} /> View Audit Log</Link><Button variant="secondary" disabled={resource.status === 'loading'} onClick={() => setRevision((value) => value + 1)}>Refresh</Button><Button variant="tertiary" onClick={() => { void auth.logout().then(() => navigate(ROUTES.login, { replace: true })); }}>Sign out</Button></div>
+        <div className={styles.title}><h1 className="text-h1">Club Manager Dashboard</h1><p className={styles.subtitle}>Management overview · <time dateTime={localTime.toISOString()} title="Current local time, not a data refresh timestamp">{new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).format(localTime)}</time> · summaries from each module — open a module to make changes</p></div>
+        <div className={styles.actions}><Link className={styles.linkButton} to={ROUTES.auditLog}>View Audit Log</Link>{destinations.registerHorse === '/horses/new' && <Link className={`${styles.linkButton} ${styles.primaryLink}`} to={destinations.registerHorse}>+ Register Horse</Link>}</div>
       </header>
       {resource.status === 'loading' && <LoadingState label="Loading management overview…" />}
       {resource.status === 'error' && <ErrorState title={resource.forbidden ? 'Access denied' : 'Dashboard unavailable'} description={resource.message} onRetry={resource.forbidden ? undefined : () => setRevision((value) => value + 1)} />}
       {data && <>
         <div className={styles.metrics}>
-          <MetricCard label="Horses" value={total(data.horsesByLifecycle).toLocaleString()} caption={`${count(data.horsesByLifecycle, 'ACTIVE')} active · ${count(data.horsesByLifecycle, 'DRAFT')} draft · ${count(data.horsesByLifecycle, 'INACTIVE')} inactive`} />
-          <MetricCard label="Pending activation" value={String(data.needsAttention.pendingActivations)} caption="Draft horses awaiting activation" captionTone="warning" captionIcon="clock" />
+          <MetricCard label="Horses" value={total(data.horsesByLifecycle).toLocaleString()} caption={`${count(data.horsesByLifecycle, 'ACTIVE')} ACTIVE · ${count(data.horsesByLifecycle, 'DRAFT')} DRAFT · ${count(data.horsesByLifecycle, 'INACTIVE')} INACTIVE`} />
+          <MetricCard label="Pending activation" value={String(data.needsAttention.pendingActivations)} caption="Draft horses awaiting activation" />
           <MetricCard label="Stable occupancy" value={`${data.boxOccupancy.occupied} / ${data.boxOccupancy.total}`} caption={`${data.boxOccupancy.free} free boxes`} />
-          <MetricCard label="Staff & users" value={total(data.accountsByStatus).toLocaleString()} caption={`${count(data.accountsByStatus, 'ACTIVE')} active · ${count(data.accountsByStatus, 'INACTIVE')} inactive`} />
+          <MetricCard label="Staff & user accounts" value={total(data.accountsByStatus).toLocaleString()} caption={`${count(data.accountsByStatus, 'ACTIVE')} active · ${count(data.accountsByStatus, 'INACTIVE')} inactive`} />
         </div>
         <div className={styles.twoColumns}>
-          <Card title="Horses by status">
+          <Card title="Horses by status" className={styles.figmaCard}>
             <div className={styles.statusGroup}><h4 className={styles.overline}>Lifecycle</h4><Breakdown rows={data.horsesByLifecycle} family="lifecycle" empty="No horses registered" /></div>
-            <div className={styles.statusGroup}><h4 className={styles.overline}>Availability · active horses only</h4><Breakdown rows={data.horsesByAvailability} family="availability" empty="No active horse availability" /></div>
-            <p className={styles.note}>Availability is derived from active medical restrictions. Clinical details are restricted to medical roles.</p>
+            <div className={styles.statusGroup}><h4 className={styles.overline}>Training availability (set by the Veterinarian — read-only here)</h4><Breakdown rows={data.horsesByAvailability} family="availability" empty="No active horse availability" /></div>
+            <p className={styles.note}>Counts cover the {total(data.horsesByLifecycle)} horses in the club register. Health Status and Training Availability are always shown separately from lifecycle. Availability counts cover ACTIVE horses only.</p>
           </Card>
-          <Card title="Needs attention">
+          <Card title="Needs attention" className={styles.figmaCard}>
             <dl className={styles.stats}>
               <div><dt>Pending horse activations</dt><dd>{data.needsAttention.pendingActivations}</dd></div>
               <div><dt>Pending registrations</dt><dd>{data.needsAttention.pendingRegistrations}</dd></div>
@@ -63,13 +65,17 @@ function DashboardContent() {
           </Card>
         </div>
         <div className={styles.threeColumns}>
-          <Card title="Training today"><p className={styles.number}>{total(data.trainingToday.byStatus)} <span className={styles.note}>scheduled sessions</span></p><Breakdown rows={data.trainingToday.byStatus} empty="No sessions scheduled today" /></Card>
-          <Card title="Incidents"><p className={styles.number}>{data.openIncidents}</p><p className={styles.subtitle}>Reported or under review</p><p className={styles.note}>Management summary only.</p></Card>
-          <Card title="Stable boxes"><dl className={styles.stats}><div><dt>Total boxes</dt><dd>{data.boxOccupancy.total}</dd></div><div><dt>Occupied</dt><dd>{data.boxOccupancy.occupied}</dd></div><div><dt>Free</dt><dd>{data.boxOccupancy.free}</dd></div></dl></Card>
+          <Card title="Training today" className={styles.figmaCard}><p className={styles.number}>{total(data.trainingToday.byStatus)} <span className={styles.note}>scheduled sessions</span></p><Breakdown rows={data.trainingToday.byStatus} empty="No sessions scheduled today" /></Card>
+          <Card title="Incidents" className={styles.figmaCard}><p className={styles.number}>{data.openIncidents}</p><p className={styles.subtitle}>Reported or under review</p><p className={styles.note}>Management summary only.</p></Card>
+          <Card title="Stable boxes" className={styles.figmaCard}><dl className={styles.stats}><div><dt>Total boxes</dt><dd>{data.boxOccupancy.total}</dd></div><div><dt>Occupied</dt><dd>{data.boxOccupancy.occupied}</dd></div><div><dt>Free</dt><dd>{data.boxOccupancy.free}</dd></div></dl></Card>
         </div>
-        <Card title="Recent audit activity" action={<Link to={ROUTES.auditLog}>View all audit records</Link>}>
-          {data.recentAudit.length ? <AuditTable compact entries={data.recentAudit} caption="Recent audit activity, newest first" /> : <EmptyState title="No recent audit activity" description="System activity will appear here when records are available." />}
-        </Card>
+        <div className={styles.auditAndShortcuts}>
+          <Card title="Recent audit activity" className={styles.figmaCard} action={<Link to={ROUTES.auditLog}>View Audit Log →</Link>}>
+            <RecentAudit entries={data.recentAudit} />
+            <p className={styles.note}>Written automatically by the system · read-only</p>
+          </Card>
+          <ManagementShortcuts />
+        </div>
       </>}
     </div>
   </AppShell>;

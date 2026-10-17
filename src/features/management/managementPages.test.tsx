@@ -8,14 +8,15 @@ import { authSession } from '../../shared/auth/authSession';
 import { ROLE_CODES, type RoleCode } from '../../shared/auth/roles';
 import { AuditLogPage } from './AuditLogPage';
 import { ClubManagerDashboardPage } from './ClubManagerDashboardPage';
-import { ManagementProvider } from './ManagementProvider';
+import { ManagementProvider, type ManagementDestinations } from './ManagementProvider';
+import { ManagementAccess } from './ManagementAccess';
 import { ClubManagerDashboardEntry, core052AuditRoute } from './routes';
 import { auditEntry, auditPageFixture, dashboardFixture } from './management.fixtures';
 import type { AuditPage, ManagementService } from './types';
 
 const manager: CurrentUser = { id: 12, userCode: 'U-012', fullName: 'Manager Test', email: 'manager@example.test', roles: ['CLUB_MANAGER'], accountStatus: 'ACTIVE' };
 
-function mount({ path = '/dashboard', roles = ['CLUB_MANAGER'], service, signedIn = true }: { path?: string; roles?: RoleCode[]; service?: ManagementService; signedIn?: boolean } = {}) {
+function mount({ path = '/dashboard', roles = ['CLUB_MANAGER'], service, signedIn = true, destinations = {} }: { path?: string; roles?: RoleCode[]; service?: ManagementService; signedIn?: boolean; destinations?: ManagementDestinations } = {}) {
   localStorage.clear(); sessionStorage.clear();
   if (signedIn) authSession.save('test-only-session', 3600, false);
   const api: AuthApi = { currentUser: vi.fn().mockResolvedValue({ ...manager, roles }), login: vi.fn(), logout: vi.fn().mockResolvedValue(undefined) };
@@ -26,8 +27,10 @@ function mount({ path = '/dashboard', roles = ['CLUB_MANAGER'], service, signedI
     { path: '/direct-dashboard', element: <ClubManagerDashboardPage /> },
     { path: '/direct-audit', element: <AuditLogPage /> },
     { path: '/login', element: <h1>Sign in required</h1> },
+    { path: '/horses/new', element: <ManagementAccess><h1>Registered horse destination fixture</h1></ManagementAccess> },
+    { path: '/admin/roles', element: <ManagementAccess><h1>Read-only roles destination fixture</h1></ManagementAccess> },
   ], { initialEntries: [path] });
-  render(<AuthProvider api={api}><ManagementProvider service={selected}><RouterProvider router={router} /></ManagementProvider></AuthProvider>);
+  render(<AuthProvider api={api}><ManagementProvider service={selected} destinations={destinations}><RouterProvider router={router} /></ManagementProvider></AuthProvider>);
   return { router, service: selected, api };
 }
 
@@ -79,12 +82,13 @@ describe('CORE-052 role and session integration', () => {
     expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
   });
 
-  it('signs out using shared authentication', async () => {
+  it('keeps standalone refresh/sign-out out of the Figma dashboard without modifying the shared session', async () => {
     const { api } = mount();
-    await userEvent.click(await screen.findByRole('button', { name: 'Sign out' }));
-    expect(await screen.findByRole('heading', { name: 'Sign in required' })).toBeInTheDocument();
-    expect(api.logout).toHaveBeenCalledWith('test-only-session');
-    expect(authSession.read()).toBeNull();
+    await screen.findByText('9 / 18');
+    expect(screen.queryByRole('button', { name: 'Sign out' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Refresh$/ })).not.toBeInTheDocument();
+    expect(api.logout).not.toHaveBeenCalled();
+    expect(authSession.read()).not.toBeNull();
   });
 });
 
@@ -93,7 +97,7 @@ describe('CORE-052 dashboard', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const { router } = mount();
     expect(await screen.findByText('9 / 18')).toBeInTheDocument();
-    expect(screen.getByText('8 active · 1 draft · 0 inactive')).toBeInTheDocument();
+    expect(screen.getByText('8 ACTIVE · 1 DRAFT · 0 INACTIVE')).toBeInTheDocument();
     expect(screen.getByText('12 active · 1 inactive')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Training today' })).toBeInTheDocument();
     expect(screen.queryByText(/Deworming due|Re-exams overdue|Revenue|Inventory value/)).not.toBeInTheDocument();
@@ -120,6 +124,48 @@ describe('CORE-052 dashboard', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByText('9 / 18')).toBeInTheDocument();
     expect(dashboard).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not expose unintegrated or deferred shortcut buttons', async () => {
+    mount();
+    expect(await screen.findByText('No shortcuts available')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Register Horse|Create User|Management Reports/ })).not.toBeInTheDocument();
+    // The existing shell menu is outside this module; shortcut checks are scoped to its card.
+    const shortcuts = screen.getByRole('heading', { name: 'Shortcuts' }).closest('section')!;
+    expect(within(shortcuts).queryByRole('link', { name: 'Roles & Permissions' })).not.toBeInTheDocument();
+  });
+
+  it('enables Register Horse only through the integrated canonical destination and retains CM access', async () => {
+    const { router } = mount({ destinations: { registerHorse: '/horses/new' } });
+    await screen.findByText('9 / 18');
+    const links = screen.getAllByRole('link', { name: '+ Register Horse' });
+    expect(links).toHaveLength(2);
+    expect(links.every((link) => link.getAttribute('href') === '/horses/new')).toBe(true);
+    await userEvent.click(links[0]);
+    expect(await screen.findByRole('heading', { name: 'Registered horse destination fixture' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/horses/new');
+  });
+
+  it('requires a read-only roles destination and never promotes Reports from deferred scope', async () => {
+    const { router } = mount({ destinations: { rolesPermissions: { to: '/admin/roles', readOnly: true } } });
+    await screen.findByText('9 / 18');
+    const shortcuts = screen.getByRole('heading', { name: 'Shortcuts' }).closest('section')!;
+    await userEvent.click(within(shortcuts).getByRole('link', { name: 'Roles & Permissions' }));
+    expect(await screen.findByRole('heading', { name: 'Read-only roles destination fixture' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/admin/roles');
+    expect(screen.queryByRole('link', { name: 'Management Reports' })).not.toBeInTheDocument();
+  });
+
+  it('renders recent audit as a chronological text list with only approved display fields', async () => {
+    const recentAudit = [{ ...auditEntry, id: 89, occurredAt: '2026-10-16T00:00:00Z', safeSummary: 'Older action.' }, { ...auditEntry, safeSummary: '<img src=x onerror=privateAction()>', passwordHash: 'must-not-render' }];
+    mount({ service: { dashboard: vi.fn().mockResolvedValue({ ...dashboardFixture, recentAudit }), audit: vi.fn() } });
+    const list = await screen.findByRole('list', { name: 'Recent audit activity, newest first' });
+    const rows = within(list).getAllByRole('listitem');
+    expect(rows[0]).toHaveTextContent('<img src=x onerror=privateAction()>');
+    expect(rows[1]).toHaveTextContent('Older action.');
+    expect(list.querySelector('img')).toBeNull();
+    expect(screen.queryByText('must-not-render')).not.toBeInTheDocument();
+    expect(screen.queryByRole('table', { name: /Recent audit/ })).not.toBeInTheDocument();
   });
 });
 
@@ -223,5 +269,44 @@ describe('CORE-052 audit viewer', () => {
     mount({ path: '/admin/audit-log', service: { dashboard: vi.fn(), audit: vi.fn().mockResolvedValue({ ...auditPageFixture, items: [{ ...auditEntry, safeSummary: '<script>privateScript()</script>' }] }) } });
     expect(await screen.findByText('<script>privateScript()</script>')).toBeInTheDocument();
     expect(document.querySelector('td script')).toBeNull();
+  });
+
+  it('keeps the date-range popover keyboard operable without inventing preset options', async () => {
+    const { service } = mount({ path: '/admin/audit-log' });
+    await screen.findByRole('table');
+    await userEvent.click(screen.getByText('Date: All'));
+    expect(screen.getByLabelText('From (local time)')).toBeVisible();
+    await userEvent.keyboard('{Escape}');
+    expect(screen.getByLabelText('From (local time)')).not.toBeVisible();
+    expect(service.audit).toHaveBeenCalledOnce();
+  });
+
+  it('retains native date-picker input events when closing the popover and applying filters', async () => {
+    const { service } = mount({ path: '/admin/audit-log' });
+    await screen.findByRole('table');
+    await userEvent.click(screen.getByText('Date: All'));
+    fireEvent.input(screen.getByLabelText('From (local time)'), { target: { value: '2026-10-17T00:00' } });
+    fireEvent.input(screen.getByLabelText('To (local time)'), { target: { value: '2026-10-17T23:59' } });
+    await userEvent.click(screen.getByRole('button', { name: 'Close date filter' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Apply filters' }));
+    await waitFor(() => expect(service.audit).toHaveBeenLastCalledWith(expect.objectContaining({ from: new Date('2026-10-17T00:00').toISOString(), to: new Date('2026-10-17T23:59').toISOString() }), expect.anything()));
+  });
+
+  it('keeps page size in the audit footer and resets the server page while preserving filters', async () => {
+    const audit = vi.fn().mockImplementation(async (query) => ({ ...auditPageFixture, size: query.size, page: query.page }));
+    mount({ path: '/admin/audit-log?actor=12', service: { dashboard: vi.fn(), audit } });
+    await screen.findByRole('table');
+    await userEvent.selectOptions(screen.getByLabelText('Records per page'), '10');
+    await waitFor(() => expect(audit).toHaveBeenLastCalledWith(expect.objectContaining({ actor: 12, size: 10, page: 0 }), expect.anything()));
+    expect(screen.getByLabelText('Records per page')).toHaveValue('10');
+  });
+
+  it('allows recovery from an invalid page-size URL without requesting data or fabricating a page', async () => {
+    const { service } = mount({ path: '/admin/audit-log?size=101' });
+    expect(await screen.findByText('Invalid page size')).toBeInTheDocument();
+    expect(service.audit).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', { name: 'Reset filters' }));
+    expect(await screen.findByRole('table')).toBeInTheDocument();
+    expect(service.audit).toHaveBeenCalledOnce();
   });
 });

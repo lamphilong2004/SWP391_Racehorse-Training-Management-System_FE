@@ -1,7 +1,7 @@
 import { useCallback, useContext, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { ROUTES } from '../../app/routePaths';
-import { AlertBanner, Button, Card, ErrorState, Icon, LoadingState, SelectField, TextField } from '../../design-system';
+import { AlertBanner, Button, Card, ErrorState, LoadingState, SelectField, TextField } from '../../design-system';
 import { AppShell } from '../../layout/AppShell';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { ROLE_CODES, ROLE_LABELS } from '../../shared/auth/roles';
@@ -31,11 +31,12 @@ function AuditResults({ query, pageSearch, role }: { query: AuditQuery; pageSear
   };
   const start = data.items.length ? data.page * data.size + 1 : 0;
   const end = data.items.length ? data.page * data.size + data.items.length : 0;
-  return <Card>
+  return <Card className={styles.auditCard}>
     <AuditTable entries={entries} emptyTitle={data.totalItems === 0 ? 'No audit records match these filters' : 'No records on this page match'} />
     <footer className={styles.pagination}>
       <p aria-live="polite">{search || role ? `${entries.length} visible on this page · ` : ''}Showing {start}–{end} of {data.totalItems} records</p>
       <div className={styles.actions}>
+        <SelectField className={styles.pageSize} label="Records per page" value={String(query.size)} options={[...new Set([10, 20, 50, 100, query.size])].sort((a, b) => a - b).map((size) => ({ value: String(size), label: String(size) }))} onChange={(event) => { const next = new URLSearchParams(params); next.set('size', event.target.value); next.set('page', '0'); setParams(next); }} />
         <Button variant="secondary" size="sm" onClick={() => setRevision((value) => value + 1)}>Refresh records</Button>
         {data.items.length === 0 && data.page > 0 && <Button variant="secondary" size="sm" onClick={() => navigatePage(0)}>First page</Button>}
         <Button variant="secondary" size="sm" disabled={data.page <= 0} onClick={() => navigatePage(data.page - 1)}>Previous</Button>
@@ -53,41 +54,51 @@ function AuditContent({ query }: { query: AuditQuery }) {
   const [errors, setErrors] = useState<AuditFilterErrors>(() => validateAuditQuery(query));
   const [pageSearch, setPageSearch] = useState(params.get('pageSearch') ?? '');
   const [role, setRole] = useState(params.get('pageRole') ?? '');
+  const [datesOpen, setDatesOpen] = useState(Boolean(errors.from || errors.to));
   const queryErrors = validateAuditQuery(query);
   const apply = (event: FormEvent) => {
     event.preventDefault();
     const next = queryFromFilters(filters, query.size);
     const validation = validateAuditQuery(next);
     setErrors(validation);
-    if (Object.keys(validation).length) return;
+    if (Object.keys(validation).length) {
+      if (validation.from || validation.to) setDatesOpen(true);
+      return;
+    }
     const nextParams = auditSearchParams(next);
     if (pageSearch.trim()) nextParams.set('pageSearch', pageSearch.trim());
     if (role) nextParams.set('pageRole', role);
     setParams(nextParams);
   };
   const field = (key: keyof typeof filters, value: string) => setFilters((current) => ({ ...current, [key]: value }));
-  return <AppShell user={{ fullName: user!.fullName, role: 'CLUB_MANAGER' }} breadcrumb={[{ label: 'Administration' }, { label: 'Audit Log' }]}>
+  const reset = () => { setFilters(filtersFromQuery({ page: 0, size: 20 })); setErrors({}); setPageSearch(''); setRole(''); setDatesOpen(false); setParams({}); };
+  return <AppShell user={{ fullName: user!.fullName, role: 'CLUB_MANAGER' }} breadcrumb={[{ label: 'Administration' }, { label: 'Audit Log' }]} searchPlaceholder="Search audit log…">
     <div className={styles.page}>
-      <Link to={ROUTES.dashboard} className={styles.back}>← Back to Dashboard</Link>
-      <header className={styles.heading}><div><h1 className="text-h1">Audit Log <span className={styles.readOnly}><Icon name="lock" size={14} /> Read-only</span></h1><p className={styles.subtitle}>Who did what, and when · Written automatically by the system · Newest first</p></div></header>
+      <Link to={ROUTES.dashboard} className={styles.back}>← Dashboard</Link>
+      <header className={styles.heading}><div><h1 className="text-h1">Audit Log <span className={styles.readOnly}>Read-only</span></h1><p className={styles.subtitle}>Who did what, and when · written automatically by the system · newest first</p></div></header>
       <AlertBanner type="info" title="Audit records are historical — they cannot be created, edited or deleted">
-        Records remain available for deactivated accounts. Passwords, hashes, tokens and secrets must never be included in audit records.
+        Records remain available for deactivated accounts. Entries are written automatically when people act in the system. Passwords, hashes, tokens and secrets must never be included in audit records.
       </AlertBanner>
-      <Card>
         <form className={styles.filters} onSubmit={apply} noValidate>
-          <TextField label="Search this page" type="search" placeholder="Actor, action or ID…" value={pageSearch} onChange={(event) => setPageSearch(event.target.value)} />
-          <TextField label="Actor ID" inputMode="numeric" placeholder="All actors" value={filters.actor} error={errors.actor} onChange={(event) => field('actor', event.target.value)} />
-          <SelectField label="Role on this page" placeholder="All roles" value={role} options={ROLE_CODES.map((value) => ({ value, label: ROLE_LABELS[value] }))} onChange={(event) => setRole(event.target.value)} />
-          <TextField label="Action" placeholder="Exact action code" maxLength={100} value={filters.action} error={errors.action} onChange={(event) => field('action', event.target.value)} />
-          <TextField label="Entity type" placeholder="Exact entity type" maxLength={50} value={filters.targetType} error={errors.targetType} onChange={(event) => field('targetType', event.target.value)} />
-          <TextField label="From (local time)" type="datetime-local" value={filters.from} error={errors.from} onChange={(event) => field('from', event.target.value)} />
-          <TextField label="To (local time)" type="datetime-local" value={filters.to} error={errors.to} onChange={(event) => field('to', event.target.value)} />
-          <SelectField label="Records per page" value={String(query.size)} options={[...new Set([10, 20, 50, 100, ...(Number.isInteger(query.size) && query.size >= 1 && query.size <= 100 ? [query.size] : [])])].sort((a, b) => a - b).map((size) => ({ value: String(size), label: String(size) }))} error={errors.size} onChange={(event) => { const next = new URLSearchParams(params); next.set('size', event.target.value); next.set('page', '0'); setParams(next); }} />
-          <div className={styles.filterActions}><Button type="submit">Apply filters</Button><Button variant="secondary" type="button" onClick={() => { setFilters(filtersFromQuery({ page: 0, size: 20 })); setErrors({}); setPageSearch(''); setRole(''); setParams({}); }}>Reset filters</Button></div>
+          <TextField className={`${styles.compactField} ${styles.searchField}`} label="Search this page" title="Search actor, action or ID on the current page only" type="search" placeholder="Search actor, action or ID…" value={pageSearch} onChange={(event) => setPageSearch(event.target.value)} />
+          <TextField className={`${styles.compactField} ${styles.actorField}`} label="Actor ID" title="Actor user ID · all records" inputMode="numeric" placeholder="Actor ID: All" value={filters.actor} error={errors.actor} onChange={(event) => field('actor', event.target.value)} />
+          <SelectField className={`${styles.compactField} ${styles.roleField}`} label="Role on this page" title="Role filter applies to the current page only" placeholder="Role: All · page" value={role} options={ROLE_CODES.map((value) => ({ value, label: ROLE_LABELS[value] }))} onChange={(event) => setRole(event.target.value)} />
+          <TextField className={`${styles.compactField} ${styles.codeField}`} label="Action" title="Exact action code · all records" placeholder="Action: All" maxLength={100} value={filters.action} error={errors.action} onChange={(event) => field('action', event.target.value)} />
+          <TextField className={`${styles.compactField} ${styles.codeField}`} label="Entity type" title="Exact entity type · all records" placeholder="Entity: All" maxLength={50} value={filters.targetType} error={errors.targetType} onChange={(event) => field('targetType', event.target.value)} />
+          <details className={styles.dateFilter} open={datesOpen} onToggle={(event) => setDatesOpen(event.currentTarget.open)} onKeyDown={(event) => { if (event.key === 'Escape') { setDatesOpen(false); event.currentTarget.querySelector('summary')?.focus(); } }}>
+            <summary>Date: {filters.from || filters.to ? `${filters.from.slice(0, 10) || 'Any start'} – ${filters.to.slice(0, 10) || 'Any end'}` : 'All'}</summary>
+            <div className={styles.datePopover}>
+              <TextField label="From (local time)" type="datetime-local" value={filters.from} error={errors.from} onInput={(event) => field('from', event.currentTarget.value)} onChange={(event) => field('from', event.target.value)} />
+              <TextField label="To (local time)" type="datetime-local" value={filters.to} error={errors.to} onInput={(event) => field('to', event.currentTarget.value)} onChange={(event) => field('to', event.target.value)} />
+              <p className={styles.note}>Enter local time. The selected range is sent as UTC when you apply filters.</p>
+              <Button variant="secondary" size="sm" onClick={() => setDatesOpen(false)}>Close date filter</Button>
+            </div>
+          </details>
+          <div className={styles.filterActions}><Button type="submit" size="sm">Apply filters</Button><Button variant="secondary" type="button" size="sm" onClick={reset}>Reset filters</Button></div>
           <p className={styles.filterNote}>Actor, action, entity and date filters search all records. Search and role filter the current page only. Dates are entered in your local time and sent as UTC.</p>
         </form>
-      </Card>
       {(errors.page || queryErrors.page) && <ErrorState title="Invalid page" description={errors.page ?? queryErrors.page} />}
+      {(errors.size || queryErrors.size) && <ErrorState title="Invalid page size" description={errors.size ?? queryErrors.size} />}
       {!Object.keys(queryErrors).length && <AuditResults query={query} pageSearch={pageSearch} role={role} />}
       <p className={styles.note}>The audited action vocabulary is maintained by the backend (CORE-051). This viewer does not create or modify records.</p>
     </div>
