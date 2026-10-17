@@ -1,0 +1,57 @@
+CORE-046 Flow 3 verified batch
+
+Feature branch: feat/CORE-046-treatment-groom-fe-stacked
+Parent HEAD: d19cb354f8599f100edf85a2a5d54827ba783d34
+Official integration reference tested: ef696d7f86e41232ba7a7a1b0121c489b541ba0a
+CORE-036 retained at a605a7db7b43c36885c948d520007c428fdcd1a3.
+
+Changed implementation: src/features/core046/pages.tsx and core046.module.css only.
+Today retains completed work dated today and existing overdue pending work.
+POST completion is validated by matching ID/COMPLETED status; no invented timestamp or actor.
+Successful completion remains confirmed if subsequent GET fails, with separate refresh warning.
+Refresh reads newly assigned tasks without a second completion POST.
+Actor/detail-keyed content removes previous Groom/reporter data during navigation/account changes.
+The task/guidance grid follows Figma's 2:1 desktop proportion; existing narrow-screen stacking remains.
+
+Verification:
+- Baseline PR branch: 98/98 tests passed.
+- New regressions: 7; five original tests reproduced failures before the fix.
+- Final feature branch: 105/105 full suite; 32 tests under src/features/core046.
+- Official integration snapshot plus only this module overlay: 486/486 full suite.
+- Both compositions: npm run lint, npm run typecheck, npm test, npm run build PASS.
+- Integration includes 2 additional cross-role UI fixtures described below.
+- These are author/sample checks, not Independent Gate or real BE/SQL/RBAC proof.
+
+Independent reproducibility:
+1. Start an isolated checkout of the official integration reference (or reassess against a newer HEAD).
+2. Copy only this batch's pages.tsx, core046.module.css and taskFlow.test.tsx to src/features/core046/.
+3. Copy the adjacent flow3.integration.test.tsx.txt to src/features/core046/flow3.integration.test.tsx.
+4. Run npm test -- src/features/core046/flow3.integration.test.tsx and the normal full checks.
+The .txt fixture stays outside the feature branch's runnable suite because that stacked branch
+does not include the Integration Owner's src/shared/data modules. Do not add a second adapter.
+Do not copy the old feature auth.tsx/client.ts/session.ts over the official versions.
+
+Cross-role coverage uses the existing AuthProvider/LoginPage/router with a test-only AuthApi
+boundary, plus the original businessData/sampleTransport/sampleStore implementation unchanged:
+- Vet creates case, records exam/injury, assigns task to the canonical sample Groom actor.
+- A different Groom sees no assignment and cannot complete it (404; state remains PENDING).
+- Assigned Groom sees safe instructions only, completes task, remount/session restore preserves it.
+- Vet reads COMPLETED progress, records recovery and closes the eligible case.
+- Groom reports Incident from task context; Vet sees and resolves the same persisted report.
+- Only racehorse.business-samples.v1 exists; no racehorse.medical-demo.v2 and no network calls.
+
+Figma references: 252:843 (Groom), 256:1015 (Incidents), 257:1112 (Incident detail).
+Remaining deviations/dependencies: Horse name/code/box, health/availability projection, reviewer,
+photos and richer timeline are not in Groom/Incident DTOs. Keep IDs/unavailable states; do not
+invent them or expose clinical records to Groom. Existing Mark complete action remains in place
+of Figma's checkbox; full visual fidelity is not claimed. Reporter detail does not expose Vet actions.
+
+Fresh browser QA is BLOCKED by the browser kernel startup failure
+CreateProcessSecurityEnvironment failed (HRESULT = 0x80070020), including retry.
+No fresh screenshot/browser PASS is claimed. Re-run desktop browser QA after runtime recovery.
+
+Dependencies still pending: CORE-036 Independent Gate, approved incident/modal stacked base,
+Integration Owner reconciliation of router/auth/client, fresh browser/Figma QA and CORE-046 Gate.
+PR #5 remains Draft with its existing stacked base; no retarget/merge/force push in this batch.
+API mode/client, shared router/auth/navigation/store, CORE-036 and other owners' modules unchanged.
+Backend deployment, SQL Server persistence and real RBAC remain NOT VERIFIED.
