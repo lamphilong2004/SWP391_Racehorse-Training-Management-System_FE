@@ -10,6 +10,7 @@ import { AuditLogPage } from './AuditLogPage';
 import { ClubManagerDashboardPage } from './ClubManagerDashboardPage';
 import { ManagementProvider, type ManagementDestinations } from './ManagementProvider';
 import { ManagementAccess } from './ManagementAccess';
+import { auditClock, auditDate } from './auditPresentation';
 import { ClubManagerDashboardEntry, core052AuditRoute } from './routes';
 import { auditEntry, auditPageFixture, dashboardFixture } from './management.fixtures';
 import type { AuditPage, ManagementService } from './types';
@@ -29,6 +30,10 @@ function mount({ path = '/dashboard', roles = ['CLUB_MANAGER'], service, signedI
     { path: '/login', element: <h1>Sign in required</h1> },
     { path: '/horses/new', element: <ManagementAccess><h1>Registered horse destination fixture</h1></ManagementAccess> },
     { path: '/admin/roles', element: <ManagementAccess><h1>Read-only roles destination fixture</h1></ManagementAccess> },
+    // Destination fixtures exercise navigation and existing shared guards, not other modules' implementations.
+    { path: '/horses', element: <ManagementAccess><h1>Horse list destination fixture</h1></ManagementAccess> },
+    { path: '/horses/pending-activation', element: <ManagementAccess><h1>Pending activation destination fixture</h1></ManagementAccess> },
+    { path: '/incidents', element: <ManagementAccess><h1>Incident list destination fixture</h1></ManagementAccess> },
   ], { initialEntries: [path] });
   render(<AuthProvider api={api}><ManagementProvider service={selected} destinations={destinations}><RouterProvider router={router} /></ManagementProvider></AuthProvider>);
   return { router, service: selected, api };
@@ -93,6 +98,28 @@ describe('CORE-052 role and session integration', () => {
 });
 
 describe('CORE-052 dashboard', () => {
+  it.each([
+    ['View horses', '/horses', 'Horse list destination fixture'],
+    ['View pending activations', '/horses/pending-activation', 'Pending activation destination fixture'],
+    ['Open incidents', '/incidents', 'Incident list destination fixture'],
+  ])('opens %s through a keyboard-accessible canonical link', async (name, path, heading) => {
+    const { router } = mount();
+    const link = await screen.findByRole('link', { name });
+    expect(link).toHaveAttribute('href', path);
+    link.focus();
+    await userEvent.keyboard('{Enter}');
+    expect(await screen.findByRole('heading', { name: heading })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe(path);
+  });
+
+  it('does not expose unintegrated Users or Registrations destinations from dashboard content', async () => {
+    mount();
+    await screen.findByText('9 / 18');
+    const main = screen.getByRole('main');
+    expect(within(main).queryByRole('link', { name: /Users|Registrations|Reports/ })).not.toBeInTheDocument();
+    expect(within(main).getByText('Pending registrations')).toBeInTheDocument();
+  });
+
   it('shows contract-backed management widgets and opens the audit viewer', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const { router } = mount();
@@ -170,6 +197,21 @@ describe('CORE-052 dashboard', () => {
 });
 
 describe('CORE-052 audit viewer', () => {
+  it('uses the Figma date format and local 24-hour time without changing the original instant or Action code', async () => {
+    // Construct a local midnight boundary and serialize to UTC; presentation must return to local time.
+    const occurredAt = new Date(2026, 9, 20, 0, 5).toISOString();
+    mount({ path: '/admin/audit-log', service: { dashboard: vi.fn(), audit: vi.fn().mockResolvedValue({ ...auditPageFixture, items: [{ ...auditEntry, occurredAt }] }) } });
+    const table = await screen.findByRole('table');
+    const time = table.querySelector('time')!;
+    expect(time).toHaveTextContent('20 Oct 2026');
+    expect(time).toHaveTextContent('00:05');
+    expect(time).toHaveAttribute('datetime', occurredAt);
+    expect(time).toHaveAttribute('title', occurredAt);
+    expect(auditDate(occurredAt)).toBe('20 Oct 2026');
+    expect(auditClock(occurredAt)).toBe('00:05');
+    expect(within(table).getByText(auditEntry.action)).toBeInTheDocument();
+  });
+
   it('renders append-only records, handles automatic/deactivated historical actors and sorts newest first', async () => {
     const records = [{ ...auditEntry, id: 90, occurredAt: '2026-10-16T01:00:00Z', actor: null, actorRole: null }, auditEntry];
     mount({ path: '/admin/audit-log', service: { dashboard: vi.fn(), audit: vi.fn().mockResolvedValue({ ...auditPageFixture, items: records, totalItems: 2 }) } });

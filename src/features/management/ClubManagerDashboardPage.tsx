@@ -15,6 +15,8 @@ import styles from './Management.module.css';
 const total = (rows: CountByKey[]) => rows.reduce((sum, row) => sum + row.count, 0);
 const count = (rows: CountByKey[], key: string) => rows.find((row) => row.key === key)?.count ?? 0;
 const label = (key: string) => key.replaceAll('_', ' ').toLowerCase();
+// Existing CM-guarded route in the FE integration harness; do not add shared routes here.
+const pendingActivationPath = `${ROUTES.horses}/pending-activation`;
 
 function Breakdown({ rows, empty, family }: { rows: CountByKey[]; empty: string; family?: 'lifecycle' | 'availability' }) {
   const sum = total(rows);
@@ -43,8 +45,8 @@ function DashboardContent() {
       {resource.status === 'error' && <ErrorState title={resource.forbidden ? 'Access denied' : 'Dashboard unavailable'} description={resource.message} onRetry={resource.forbidden ? undefined : () => setRevision((value) => value + 1)} />}
       {data && <>
         <div className={styles.metrics}>
-          <MetricCard label="Horses" value={total(data.horsesByLifecycle).toLocaleString()} caption={`${count(data.horsesByLifecycle, 'ACTIVE')} ACTIVE · ${count(data.horsesByLifecycle, 'DRAFT')} DRAFT · ${count(data.horsesByLifecycle, 'INACTIVE')} INACTIVE`} />
-          <MetricCard label="Pending activation" value={String(data.needsAttention.pendingActivations)} caption="Draft horses awaiting activation" />
+          <Link className={styles.metricLink} to={ROUTES.horses} aria-label="View horses"><MetricCard label="Horses" value={total(data.horsesByLifecycle).toLocaleString()} caption={`${count(data.horsesByLifecycle, 'ACTIVE')} ACTIVE · ${count(data.horsesByLifecycle, 'DRAFT')} DRAFT · ${count(data.horsesByLifecycle, 'INACTIVE')} INACTIVE`} /></Link>
+          <Link className={styles.metricLink} to={pendingActivationPath} aria-label="View pending activations"><MetricCard label="Pending activation" value={String(data.needsAttention.pendingActivations)} caption="Draft horses awaiting activation" /></Link>
           <MetricCard label="Stable occupancy" value={`${data.boxOccupancy.occupied} / ${data.boxOccupancy.total}`} caption={`${data.boxOccupancy.free} free boxes`} />
           <MetricCard label="Staff & user accounts" value={total(data.accountsByStatus).toLocaleString()} caption={`${count(data.accountsByStatus, 'ACTIVE')} active · ${count(data.accountsByStatus, 'INACTIVE')} inactive`} />
         </div>
@@ -56,9 +58,9 @@ function DashboardContent() {
           </Card>
           <Card title="Needs attention" className={styles.figmaCard}>
             <dl className={styles.stats}>
-              <div><dt>Pending horse activations</dt><dd>{data.needsAttention.pendingActivations}</dd></div>
+              <div><dt><Link to={pendingActivationPath}>Pending horse activations</Link></dt><dd>{data.needsAttention.pendingActivations}</dd></div>
               <div><dt>Pending registrations</dt><dd>{data.needsAttention.pendingRegistrations}</dd></div>
-              <div><dt>Open incidents</dt><dd>{data.openIncidents}</dd></div>
+              <div><dt><Link to={ROUTES.incidents}>Open incidents</Link></dt><dd>{data.openIncidents}</dd></div>
             </dl>
             {data.needsAttention.pendingActivations + data.needsAttention.pendingRegistrations + data.openIncidents === 0 && <EmptyState title="Nothing needs attention" />}
             <p className={styles.note}>Open incidents include reported and under-review records.</p>
@@ -66,7 +68,7 @@ function DashboardContent() {
         </div>
         <div className={styles.threeColumns}>
           <Card title="Training today" className={styles.figmaCard}><p className={styles.number}>{total(data.trainingToday.byStatus)} <span className={styles.note}>scheduled sessions</span></p><Breakdown rows={data.trainingToday.byStatus} empty="No sessions scheduled today" /></Card>
-          <Card title="Incidents" className={styles.figmaCard}><p className={styles.number}>{data.openIncidents}</p><p className={styles.subtitle}>Reported or under review</p><p className={styles.note}>Management summary only.</p></Card>
+          <Card title="Incidents" className={styles.figmaCard} action={<Link to={ROUTES.incidents}>View Incidents →</Link>}><p className={styles.number}>{data.openIncidents}</p><p className={styles.subtitle}>Reported or under review</p><p className={styles.note}>Management summary only.</p></Card>
           <Card title="Stable boxes" className={styles.figmaCard}><dl className={styles.stats}><div><dt>Total boxes</dt><dd>{data.boxOccupancy.total}</dd></div><div><dt>Occupied</dt><dd>{data.boxOccupancy.occupied}</dd></div><div><dt>Free</dt><dd>{data.boxOccupancy.free}</dd></div></dl></Card>
         </div>
         <div className={styles.auditAndShortcuts}>

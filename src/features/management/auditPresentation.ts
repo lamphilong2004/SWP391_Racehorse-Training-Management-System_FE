@@ -2,11 +2,13 @@ import { ROLE_LABELS } from '../../shared/auth/roles';
 import type { AuditEntry } from './types';
 
 export function auditDate(iso: string): string {
-  return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(iso));
+  // Figma 313:5232 uses "20 Oct 2026". Locale controls presentation only;
+  // keep the viewer's local timezone and the original instant in <time dateTime/title>.
+  return new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(iso));
 }
 
 export function auditClock(iso: string): string {
-  return new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(iso));
+  return new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(iso));
 }
 
 export function auditActor(entry: AuditEntry): string {
