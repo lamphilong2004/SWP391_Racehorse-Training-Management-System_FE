@@ -18,17 +18,22 @@ export const ROUTES = {
   horses: '/horses',
   stable: '/stable',
   trainingPrograms: '/training/programs',
+  trainingProgramCreate: '/training/programs/new',
   programTemplates: '/training/templates',
   trainingSchedule: '/training/schedule',
   trainingCalendar: '/training/calendar',
   exerciseLibrary: '/training/exercises',
   performance: '/training/performance',
+  sessionEvaluation: '/training/sessions/:id/evaluation',
   realtimeMonitoring: '/training/monitoring',
   myRides: '/rides',
   assignments: '/rides/assignments',
   ridingHistory: '/rides/history',
   reportIssue: '/rides/report-issue',
   medical: '/medical',
+  medicalCaseNew: '/medical/cases/new',
+  medicalCaseDetail: '/medical/cases/:caseId',
+  treatmentPlan: '/medical/cases/:caseId/treatment-plan',
   medicalSummary: '/medical/summary',
   herdHealth: '/medical/herd-health',
   preventiveHealthcare: '/medical/preventive',
@@ -48,4 +53,8 @@ export const ROUTES = {
 
 export function devShellPath(role: string): string {
   return ROUTES.devShell.replace(':role', role);
+}
+
+export function evaluationPath(id: number): string {
+  return ROUTES.sessionEvaluation.replace(':id', String(id));
 }
