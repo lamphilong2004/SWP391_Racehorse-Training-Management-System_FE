@@ -1,5 +1,5 @@
 import type { CurrentUser } from '../auth/authApi';
-import { ROLE_LABELS, type RoleCode } from '../auth/roles';
+import type { RoleCode } from '../auth/roles';
 import type { SessionResultView } from '../../features/evaluation/models';
 import type { MedicalCase, CaseTreatmentTask, Incident, HealthStatus } from '../../features/medical/models';
 import type { ProgramDetail, TemplateDetail, HorseSelection } from '../../features/program-creation/programTypes';
@@ -18,8 +18,22 @@ export const template: TemplateDetail = {
 };
 export function sampleUser(role: RoleCode): CurrentUser {
   const ids: Record<RoleCode, number> = { CLUB_MANAGER: 10, HEAD_TRAINER: 11, TRAINER: 12, WORK_RIDER: 13, VETERINARIAN: 15, GROOM: 16, HORSE_OWNER: 17 };
-  return { id: ids[role], userCode: `PREVIEW-${ids[role]}`, fullName: `${ROLE_LABELS[role]} · Sample`, email: `${role.toLowerCase()}@sample.invalid`, roles: [role], accountStatus: 'ACTIVE' };
+  const person = SAMPLE_PEOPLE[role];
+  return { id: ids[role], userCode: `USR-${String(ids[role]).padStart(4, '0')}`, fullName: person.fullName, email: `${person.login}@racehorse.test`, roles: [role], accountStatus: 'ACTIVE' };
 }
+/**
+ * Fictitious illustrative people (names follow the approved Figma examples). Emails use the reserved `.test` domain:
+ * they are local sample identities, not SQL accounts, and carry no password.
+ */
+const SAMPLE_PEOPLE: Record<RoleCode, { fullName: string; login: string }> = {
+  CLUB_MANAGER: { fullName: 'Hoang Minh Tuan', login: 'club.manager' },
+  HEAD_TRAINER: { fullName: 'Vo Thanh Son', login: 'head.trainer' },
+  TRAINER: { fullName: 'Nguyen Minh Khoa', login: 'trainer' },
+  WORK_RIDER: { fullName: 'Pham Quang Huy', login: 'work.rider' },
+  VETERINARIAN: { fullName: 'Dr. Nguyen Thu Ha', login: 'veterinarian' },
+  GROOM: { fullName: 'Bui Van Hai', login: 'groom' },
+  HORSE_OWNER: { fullName: 'Tran Quoc Bao', login: 'horse.owner' },
+};
 export interface SampleData {
   horseRegistry?: HorseSampleState;
   version: 1;

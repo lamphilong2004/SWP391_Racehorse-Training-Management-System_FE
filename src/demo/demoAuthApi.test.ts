@@ -19,8 +19,10 @@ it('simulates each of the 7 roles locally with a non-JWT marker and no network c
   fetchSpy.mockRestore();
 });
 
-it('rejects unknown identities and markers with 401', async () => {
-  await expect(demoAuthApi.login({ email: 'someone@example.com', password: 'x' })).rejects.toMatchObject({ status: 401 });
+it('rejects unknown identities, empty passwords and foreign markers with a generic 401', async () => {
+  await expect(demoAuthApi.login({ email: 'someone@example.com', password: 'x' })).rejects.toMatchObject({ status: 401, message: 'Invalid email or password.' });
+  await expect(demoAuthApi.login({ email: demoEmail('TRAINER'), password: '' })).rejects.toMatchObject({ status: 401, message: 'Invalid email or password.' });
+  expect(demoEmail('CLUB_MANAGER')).toBe('club.manager@racehorse.test');
   await expect(demoAuthApi.currentUser('eyJhbGciOi.fake.jwt', () => undefined)).rejects.toMatchObject({ status: 401 });
   await expect(demoAuthApi.currentUser('ui-demo-session:SYSTEM', () => undefined)).rejects.toMatchObject({ status: 401 });
 });

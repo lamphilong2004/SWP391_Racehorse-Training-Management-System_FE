@@ -3,13 +3,15 @@ import { ROLE_CODES, type RoleCode } from '../shared/auth/roles';
 import { sampleUser } from '../shared/data/sampleStore';
 
 /**
- * UI DEMO ONLY. Simulated identity for presenting screens without the backend.
+ * DEVELOPMENT HARNESS ONLY. Simulated identity for UI-first work without the backend.
  * - No network call and no JWT: the stored value is a plain marker `ui-demo-session:<ROLE>`, which is never sent to any
- *   server because demo mode routes every `/api/**` call to the local sample store.
- * - Identities are the existing sample users (`sampleUser`), not SQL accounts.
+ *   server because harness mode routes every `/api/**` call to the local sample adapter.
+ * - The 7 local presentation accounts are the sample users (`sampleUser`): one fictitious account per approved role.
+ *   They are not SQL accounts. No password is stored anywhere: any non-empty password is accepted locally.
  */
 const MARKER = 'ui-demo-session:';
 const SESSION_SECONDS = 8 * 60 * 60;
+const INVALID = () => new ApiError(401, 'UNAUTHORIZED', 'Invalid email or password.');
 
 export function demoEmail(role: RoleCode): string {
   return sampleUser(role).email;
@@ -21,17 +23,17 @@ function roleFromEmail(email: string): RoleCode | undefined {
 }
 
 export const demoAuthApi: AuthApi = {
-  async login({ email }) {
+  async login({ email, password }) {
     const role = roleFromEmail(email);
-    if (!role) throw new ApiError(401, 'UNAUTHORIZED', 'UI demo: choose a role from the demo bar.');
+    if (!role || !password) throw INVALID();
     return { accessToken: `${MARKER}${role}`, tokenType: 'Bearer', expiresIn: SESSION_SECONDS, user: sampleUser(role) };
   },
   async currentUser(token) {
     const role = token.startsWith(MARKER) ? (token.slice(MARKER.length) as RoleCode) : undefined;
-    if (!role || !ROLE_CODES.includes(role)) throw new ApiError(401, 'UNAUTHORIZED', 'UI demo session not recognised.');
+    if (!role || !ROLE_CODES.includes(role)) throw new ApiError(401, 'UNAUTHORIZED', 'Your session expired. Sign in again to continue.');
     return sampleUser(role) as CurrentUser;
   },
   async logout() {
-    /* Nothing to call: demo mode has no server session. */
+    /* Nothing to call: harness mode has no server session. */
   },
 };

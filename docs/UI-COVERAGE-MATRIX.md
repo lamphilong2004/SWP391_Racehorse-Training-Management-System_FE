@@ -13,12 +13,14 @@ All "RUNS" entries are fixture/sample evidence only. Real API wiring is Phase 3 
 ## How to run (development harness)
 
 ```bash
-npm run dev:harness        # vite --mode harness on http://localhost:5190
+npm run dev:present        # presentation view on http://localhost:5190 (official Login, no dev toolbar)
+npm run dev:harness        # developer view on http://localhost:5192 (yellow DEV HARNESS bar)
 ```
 
-- Pick a role in the yellow **DEV HARNESS — SAMPLE DATA** bar at the bottom. There are 7 roles, the identity is simulated and no JWT is issued.
+- Presentation view: sign in on the official Login page with the local presentation accounts listed in docs/PRESENTATION-GUIDE.md.
+- Developer view: pick a role in the yellow **DEV HARNESS — SAMPLE DATA** bar at the bottom. There are 7 roles, the identity is simulated and no JWT is issued.
 - In harness mode every `/api/**` call is answered by the browser-local sample adapter (`src/shared/data/*`). No backend is called.
-- **Reset sample data** restores the starting scenario (sample store only).
+- Reset: dev bar **Reset sample data**, or http://localhost:5190/presenter-tools (dev only, not in navigation). Both affect only the browser sample store.
 - Harness code is dev-only. `npm run build` output contains none of it.
 
 ## Flow 1 — Horse Management

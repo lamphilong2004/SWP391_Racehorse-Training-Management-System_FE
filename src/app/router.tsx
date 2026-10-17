@@ -14,6 +14,7 @@ import { GroomTodayPage, PrecheckPage } from '../features/precheck/pages';
 import { RiderDashboardPage, RiderAssignmentsPage, RiderAssignmentPage, RiderSessionPage, RiderFeedbackPage, RiderHistoryPage } from '../features/rider/pages';
 import { PublicOnly, RequireAuth } from './RequireAuth';
 import { ROUTES } from './routePaths';
+import { DEMO_UI_ONLY } from '../demo/demoMode';
 import { Core046Route } from '../features/core046/auth';
 import { TreatmentTasksPage } from '../features/core046/pages';
 import { IncidentLayout, IncidentListRoute, IncidentDetailRoute } from './IncidentRoutes';
@@ -37,6 +38,11 @@ const devRoutes: RouteObject[] = import.meta.env.DEV
     ]
   : [];
 
+/** Development harness only (dead code in production builds): hidden presenter page, never linked from navigation. */
+const presenterRoutes: RouteObject[] = import.meta.env.DEV && DEMO_UI_ONLY
+  ? [{ path: '/presenter-tools', lazy: async () => ({ Component: (await import('../demo/PresenterToolsPage')).PresenterToolsPage }) }]
+  : [];
+
 /**
  * CORE-008 owns public sign-in and the authenticated role workspace entry. Other feature screens remain with their
  * owning CORE tasks and continue to use the canonical ROUTES/AppShell configuration.
@@ -46,6 +52,7 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
     ...(includeDevRoutes
       ? [{ path: ROUTES.root, element: <Navigate to={ROUTES.devComponents} replace /> }, ...devRoutes]
       : [{ path: ROUTES.root, element: <Navigate to={ROUTES.dashboard} replace /> }]),
+    ...presenterRoutes,
     { path: ROUTES.login, element: <PublicOnly><LoginPage /></PublicOnly> },
     { path: ROUTES.dashboard, element: <RequireAuth><WorkspacePage /></RequireAuth> },
     { path: ROUTES.account, element: <RequireAuth><AccountPage /></RequireAuth> },

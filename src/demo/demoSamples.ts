@@ -24,7 +24,8 @@ export function handleDemoSample(path: string, init: RequestInit, actor: Current
     const horseId = Number(availability[1]);
     const record = data.horseRegistry?.records.find((item) => item.id === horseId);
     if (!record) throw new ApiError(404, 'NOT_FOUND', 'Horse not found in sample data.');
-    return { handled: true, data: { horseId, availability: record.trainingAvailability ?? 'AVAILABLE', reason: 'Sample data — no active medical restriction is recorded in the demo store.' } };
+    // No restriction editor exists yet (CORE-020), so the sample store has no active restriction to report.
+    return { handled: true, data: { horseId, availability: record.trainingAvailability ?? 'AVAILABLE' } };
   }
 
   const baseline = route.match(/^\/api\/horses\/(\d+)\/baseline-examinations$/);
