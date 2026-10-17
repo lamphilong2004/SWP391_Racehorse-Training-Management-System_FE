@@ -4,6 +4,8 @@ import type { SessionResultView } from '../../features/evaluation/models';
 import type { MedicalCase, CaseTreatmentTask, Incident, HealthStatus } from '../../features/medical/models';
 import type { ProgramDetail, TemplateDetail, HorseSelection } from '../../features/program-creation/programTypes';
 import type { HorseSampleState } from './horseSamples';
+import type { PreSessionCheck } from '../../features/precheck/types';
+export type SampleSession = SessionResultView & { session: SessionResultView['session'] & { blocked?: boolean; blockedReasons?: string[]; blockedMessage?: string | null; trainingAvailability?: 'AVAILABLE' | 'LIMITED' | 'LOCKED'; preCheckResult?: 'ALL_NORMAL' | 'ABNORMAL' | null; preSessionCheck?: PreSessionCheck | null; hasRiderFeedback?: boolean } };
 
 const STATE_KEY = 'racehorse.business-samples.v1';
 export const horse: HorseSelection = { id: 7, horseCode: 'RH-007', name: 'Thunder Bolt', lifecycle: 'ACTIVE', trainingAvailability: 'AVAILABLE', breed: 'Thoroughbred', sex: 'GELDING', foaledDate: '2021-03-12' };
@@ -24,7 +26,8 @@ export interface SampleData {
   nextId: number;
   healthStatus: HealthStatus;
   programs: ProgramDetail[];
-  sessions: SessionResultView[];
+  sessions: SampleSession[];
+  flow2Seeded?: boolean;
   cases: MedicalCase[];
   tasks: CaseTreatmentTask[];
   incidents: Incident[];
@@ -57,9 +60,23 @@ function seed(): SampleData {
 export function readSamples(): SampleData {
   const raw = localStorage.getItem(STATE_KEY);
   if (raw) {
-    try { const data = JSON.parse(raw) as SampleData; if (data.version === 1 && Array.isArray(data.sessions) && Array.isArray(data.cases)) return data; } catch { /* Reset only this preview's state. */ }
+    try { const data = JSON.parse(raw) as SampleData; if (data.version === 1 && Array.isArray(data.sessions) && Array.isArray(data.cases)) { seedOperationalSessions(data); return data; } } catch { /* Recover only sample data, never auth. */ }
   }
-  const data = seed(); saveSamples(data); return data;
+  const data = seed(); seedOperationalSessions(data); saveSamples(data); return data;
 }
 export function saveSamples(data: SampleData) { localStorage.setItem(STATE_KEY, JSON.stringify(data)); }
-export function resetSamples() { const data = seed(); saveSamples(data); return data; }
+export function resetSamples() { const data = seed(); seedOperationalSessions(data); saveSamples(data); return data; }
+
+function seedOperationalSessions(data: SampleData) {
+  if (data.flow2Seeded) return;
+  for (const item of data.sessions) Object.assign(item.session, { blocked: false, blockedReasons: [], trainingAvailability: 'AVAILABLE', preCheckResult: 'ALL_NORMAL', hasRiderFeedback: Boolean(item.riderFeedback) });
+  const baseline = data.sessions[0];
+  for (const [id, status] of [[44, 'SCHEDULED'], [45, 'SCHEDULED'], [46, 'PAUSED'], [47, 'IN_PROGRESS'], [48, 'SCHEDULED']] as const) {
+    const item: SampleSession = structuredClone(baseline);
+    Object.assign(item.session, { id, sessionCode: `SES-00${id}`, status, focus: id === 48 ? 'Upcoming canter' : 'Foundation canter', scheduledStart: new Date(Date.now() + (id === 48 ? 3600000 : -300000)).toISOString(), scheduledEnd: new Date(Date.now() + 5400000).toISOString(), actualStart: status === 'SCHEDULED' ? null : new Date(Date.now() - 180000).toISOString(), actualEnd: null, interruptionReason: null, preCheckResult: status === 'SCHEDULED' ? null : 'ALL_NORMAL', preSessionCheck: null, blocked: status === 'SCHEDULED', blockedReasons: status === 'SCHEDULED' ? ['PRE_CHECK_MISSING'] : [], hasRiderFeedback: false, hasEvaluation: false });
+    item.evaluation = null; item.riderFeedback = null; item.actual = { durationMin: null, totalDistanceM: null, maxHeartRate: null, avgSpeedKmh: null, sampleCount: 0 }; item.samples = []; item.alerts = [];
+    data.sessions.push(item);
+  }
+  data.flow2Seeded = true;
+  saveSamples(data);
+}

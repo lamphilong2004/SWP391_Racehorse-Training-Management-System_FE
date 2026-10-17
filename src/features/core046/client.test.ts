@@ -1,7 +1,8 @@
 import { afterEach, vi } from 'vitest';
 import { ApiError, collectPages, Core046Client } from './client';
 
-afterEach(() => vi.unstubAllGlobals());
+beforeEach(() => vi.stubEnv('VITE_BUSINESS_DATA_SOURCE', 'api'));
+afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 
 function ok(data: unknown, status = 200) { return new Response(JSON.stringify({ success: true, data }), { status, headers: { 'Content-Type': 'application/json' } }); }
 
@@ -20,7 +21,8 @@ describe('CORE-046 Medical API adapter', () => {
       'https://api.example.test/api/groom/treatment-tasks/7/complete',
       'https://api.example.test/api/incidents',
     ]);
-    expect(fetcher.mock.calls[1][1]).toMatchObject({ method: 'POST', body: '{}', headers: { Authorization: 'Bearer token-from-host' } });
+    expect(fetcher.mock.calls[1][1]).toMatchObject({ method: 'POST', body: '{}' });
+    expect(new Headers(fetcher.mock.calls[1][1].headers).get('Authorization')).toBe('Bearer token-from-host');
     expect(JSON.parse(fetcher.mock.calls[2][1].body)).toEqual({ horseId: 2, incidentType: 'FEVER', observedSeverity: 'HIGH', observedAt: '2026-10-16T01:00:00.000Z', description: 'Fever observed' });
   });
 
@@ -30,7 +32,7 @@ describe('CORE-046 Medical API adapter', () => {
     vi.stubGlobal('fetch', fetcher);
     const client = new Core046Client('token');
     await expect(client.completeTreatmentTask(8)).rejects.toEqual(new ApiError('Assigned Groom only', 403));
-    await expect(client.listIncidents()).rejects.toEqual(new ApiError('Unexpected API response.', 200));
+    await expect(client.listIncidents()).rejects.toEqual(new ApiError('The request could not be completed. Try again.', 200));
   });
 
   it('rejects a 201 envelope without a usable incident code', async () => {

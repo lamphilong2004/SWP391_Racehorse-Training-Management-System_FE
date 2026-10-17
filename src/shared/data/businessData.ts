@@ -9,6 +9,7 @@ export function usesSampleData(path: string): boolean {
   if (businessDataMode() !== 'sample') return false;
   const route = path.split('?')[0];
   // Existing auth, health and restriction APIs always use the real backend, even in mixed mode.
+  if (/^\/api\/horses\/(?:\d+\/(?:training-availability|availability|medical-restrictions)|availability\/batch)$/.test(route)) return false;
   return /^\/api\/(horses(?:\/|$)|stable-boxes(?:\/|$)|program-templates(?:\/|$)|training-programs(?:\/|$)|training-sessions(?:\/|$)|groom(?:\/|$)|work-rider(?:\/|$)|incidents(?:\/|$)|medical\/(cases|herd-health)(?:\/|$))/.test(route)
     || route === '/api/admin/users';
 }

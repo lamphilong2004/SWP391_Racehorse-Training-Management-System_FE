@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { AlertBanner, Button, Card, StatusBadge, Icon, PhotoAttachmentTile, SelectField, TextField } from '../../../design-system';
+import { AlertBanner, Button, Card, StatusBadge, ErrorState, Icon, PhotoAttachmentTile, SelectField, TextField } from '../../../design-system';
 import { ApiRequestError } from '../api/horsesApi';
 import { useHorsesApi } from '../api/HorsesApiContext';
 import { useBreadcrumb } from '../shared/HorseManagementLayout';
@@ -11,7 +11,7 @@ type Field = 'name' | 'horseCode' | 'foaledDate' | 'sex' | 'breed' | 'registrati
 type Values = Record<Field, string>;
 
 const EMPTY: Values = { name: '', horseCode: '', foaledDate: '', sex: '', breed: '', registrationNo: '' };
-const REQUIRED: Field[] = ['name', 'horseCode', 'foaledDate', 'sex', 'breed'];
+const REQUIRED: Field[] = ['name', 'horseCode'];
 const REQUIRED_MESSAGE: Record<string, string> = {
   name: 'Enter the horse name.', horseCode: 'Enter the horse ID.', foaledDate: 'Enter the date of birth.',
   sex: 'Select the sex.', breed: 'Select the breed.',
@@ -34,9 +34,11 @@ export function RegisterHorsePage() {
   const editing = Number.isSafeInteger(editId) && editId > 0;
   const country = useRef<string | null>(null);
   const [loading, setLoading] = useState(editing);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   useBreadcrumb([{ label: 'Horses', to: '/horses' }, { label: editing ? 'Edit identity' : 'Register Horse' }]);
 
   const [values, setValues] = useState<Values>(EMPTY);
+  const [customSex, setCustomSex] = useState(false), [customBreed, setCustomBreed] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const [formError, setFormError] = useState<string>();
   const [photos, setPhotos] = useState<PendingPhoto[]>([]);
@@ -46,9 +48,9 @@ export function RegisterHorsePage() {
   useEffect(() => {
     if (!editing) return;
     let active = true;
-    api.getHorse(editId).then((horse) => { if (active) { country.current = horse.countryOfOrigin; setValues({ name: horse.name, horseCode: horse.horseCode, foaledDate: horse.foaledDate ?? '', sex: horse.sex ?? '', breed: horse.breed ?? '', registrationNo: horse.registrationNo ?? '' }); setLoading(false); } }, (error: unknown) => { if (active) { setFormError(error instanceof Error ? error.message : 'Horse unavailable.'); } });
+    api.getHorse(editId).then((horse) => { if (active) { country.current = horse.countryOfOrigin; setValues({ name: horse.name, horseCode: horse.horseCode, foaledDate: horse.foaledDate ?? '', sex: horse.sex ?? '', breed: horse.breed ?? '', registrationNo: horse.registrationNo ?? '' }); setCustomSex(Boolean(horse.sex && !SEX_OPTIONS.some((option) => option.value === horse.sex))); setCustomBreed(Boolean(horse.breed && !BREED_OPTIONS.some((option) => option.value === horse.breed))); setLoading(false); } }, (error: unknown) => { if (active) { setFormError(error instanceof Error ? error.message : 'Horse unavailable.'); } });
     return () => { active = false; };
-  }, [api, editId, editing]);
+  }, [api, editId, editing, loadAttempt]);
 
   const photosRef = useRef<PendingPhoto[]>([]);
   useEffect(() => {
@@ -90,8 +92,8 @@ export function RegisterHorsePage() {
     pending.current = true; setSaving(true);
     try {
       const input = {
-        horseCode: values.horseCode.trim(), name: values.name.trim(), breed: values.breed, sex: values.sex,
-        foaledDate: values.foaledDate, countryOfOrigin: country.current, registrationNo: values.registrationNo.trim() || null,
+        horseCode: values.horseCode.trim(), name: values.name.trim(), breed: values.breed.trim() || null, sex: values.sex.trim() || null,
+        foaledDate: values.foaledDate || null, countryOfOrigin: country.current, registrationNo: values.registrationNo.trim() || null,
       };
       const horse = editing ? await api.updateHorse(editId, input) : await api.createHorse(input);
       let photoFailed = false;
@@ -133,15 +135,15 @@ export function RegisterHorsePage() {
         </div>
       </div>
 
-      {formError && <AlertBanner type="danger" title="The horse was not saved">{formError}</AlertBanner>}
-      {loading && <p role="status">Loading horse identity…</p>}
+      {formError && (loading ? <ErrorState title="Horse identity unavailable" description={formError} onRetry={() => { setFormError(undefined); setLoadAttempt((value) => value + 1); }} /> : <AlertBanner type="danger" title="The horse was not saved">{formError}</AlertBanner>)}
+      {loading && !formError && <p role="status">Loading horse identity…</p>}
 
       <div className={styles.twoCol}>
         <div className={styles.colMain}>
           <Card>
             <div className={styles.cardBody}>
               <h2 className={styles.cardTitle}>Identification</h2>
-              <p className={styles.cardHelp}>Required fields are marked *. The horse is saved as DRAFT until activation.</p>
+              <p className={styles.cardHelp}>Name and ID are required to save a DRAFT. Complete the remaining identity information before activation.</p>
               <div className={styles.row}>
                 <TextField label="Horse name *" value={values.name} onChange={(e) => set('name')(e.target.value)}
                   error={errors.name} maxLength={150} autoComplete="off" />
@@ -149,13 +151,15 @@ export function RegisterHorsePage() {
                   error={errors.horseCode} maxLength={20} autoComplete="off" />
               </div>
               <div className={styles.row}>
-                <TextField label="Date of birth *" type="date" value={values.foaledDate}
+                <TextField label="Date of birth" type="date" value={values.foaledDate}
                   onChange={(e) => set('foaledDate')(e.target.value)} error={errors.foaledDate} />
-                <SelectField label="Sex *" placeholder="Select sex" options={SEX_OPTIONS} value={values.sex}
-                  onChange={(e) => set('sex')(e.target.value)} error={errors.sex} />
-                <SelectField label="Breed *" placeholder="Select breed" options={BREED_OPTIONS} value={values.breed}
-                  onChange={(e) => set('breed')(e.target.value)} error={errors.breed} />
+                <SelectField label="Sex" placeholder="Select or enter sex" options={[...SEX_OPTIONS, { value: '__CUSTOM__', label: 'Enter another value' }]} value={customSex ? '__CUSTOM__' : values.sex}
+                  onChange={(e) => { setCustomSex(e.target.value === '__CUSTOM__'); set('sex')(e.target.value === '__CUSTOM__' ? '' : e.target.value); }} error={errors.sex} />
+                <SelectField label="Breed" placeholder="Select or enter breed" options={[...BREED_OPTIONS, { value: '__CUSTOM__', label: 'Other / enter breed' }]} value={customBreed ? '__CUSTOM__' : values.breed}
+                  onChange={(e) => { setCustomBreed(e.target.value === '__CUSTOM__'); set('breed')(e.target.value === '__CUSTOM__' ? '' : e.target.value); }} error={errors.breed} />
               </div>
+              {customSex && <TextField label="Sex value" value={values.sex} maxLength={20} onChange={(event) => set('sex')(event.target.value)} />}
+              {customBreed && <TextField label="Breed value" value={values.breed} maxLength={100} onChange={(event) => set('breed')(event.target.value)} />}
               <TextField label="Microchip / registration number" placeholder="Enter microchip or registration number"
                 value={values.registrationNo} onChange={(e) => set('registrationNo')(e.target.value)} maxLength={50}
                 error={errors.registrationNo} helperText="Must be unique — checked against the register when you save." />

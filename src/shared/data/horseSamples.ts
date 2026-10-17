@@ -32,6 +32,9 @@ export async function handleHorseSample(path: string, init: RequestInit, actor: 
   const data = readSamples();
   const registry = data.horseRegistry ??= initialHorses();
   const fail = (status: number, message: string): never => { throw new ApiError(status, status === 409 ? 'CONFLICT' : status === 404 ? 'NOT_FOUND' : 'VALIDATION_ERROR', message); };
+  if (method !== 'GET' && (route === '/api/admin/users' || route === '/api/stable-boxes' || route === '/api/horses/pending-activation')) fail(404, 'No sample mutation is defined for this operation.');
+  const sharedHorse = registry.records.find((record) => record.id === 7);
+  if (sharedHorse) sharedHorse.healthStatus = data.healthStatus;
   const result = (value: unknown) => { saveSamples(data); return { handled: true, data: structuredClone(value) }; };
   const page = <T,>(items: T[]) => { const page = Math.max(0, Number(url.searchParams.get('page')) || 0), size = Math.max(1, Number(url.searchParams.get('size')) || 50); return { items: items.slice(page * size, (page + 1) * size), page, size, totalItems: items.length, totalPages: Math.ceil(items.length / size) }; };
   const input = init.body && !(init.body instanceof FormData) ? JSON.parse(String(init.body)) : {};

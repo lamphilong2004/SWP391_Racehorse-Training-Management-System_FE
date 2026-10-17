@@ -7,7 +7,7 @@ import { AuthProvider } from '../../shared/auth/AuthProvider';
 import { authSession } from '../../shared/auth/authSession';
 import { requestApi, createAuthApi, type CurrentUser } from '../../shared/auth/authApi';
 import { getBusinessActor, setBusinessActor } from '../../shared/data/businessData';
-import { resetSamples } from '../../shared/data/sampleStore';
+import { readSamples, resetSamples, saveSamples } from '../../shared/data/sampleStore';
 
 const manager: CurrentUser = { id: 201, userCode: 'TEST-CM', fullName: 'Test Manager', email: 'manager@example.test', roles: ['CLUB_MANAGER'], accountStatus: 'ACTIVE' };
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); vi.stubEnv('VITE_BUSINESS_DATA_SOURCE', 'sample'); setBusinessActor(null); resetSamples(); vi.stubGlobal('fetch', vi.fn(() => { throw new Error('Unexpected network request'); })); });
@@ -23,9 +23,9 @@ it('registers, declares ownership, assigns a FREE box and shows pending baseline
   await screen.findByRole('heading', { name: 'Register Horse' });
   await user.type(screen.getByLabelText('Horse name *'), 'River Dance');
   await user.type(screen.getByLabelText('Horse ID *'), 'RD-015');
-  fireEvent.change(screen.getByLabelText('Date of birth *'), { target: { value: '2023-03-14' } });
-  await user.selectOptions(screen.getByLabelText('Sex *'), 'Filly');
-  await user.selectOptions(screen.getByLabelText('Breed *'), 'Thoroughbred');
+  fireEvent.change(screen.getByLabelText('Date of birth'), { target: { value: '2023-03-14' } });
+  await user.selectOptions(screen.getByLabelText('Sex'), 'Filly');
+  await user.selectOptions(screen.getByLabelText('Breed'), 'Thoroughbred');
   await user.click(screen.getByRole('button', { name: 'Save Draft & Continue' }));
   await screen.findByRole('heading', { name: 'Pedigree & Ownership · River Dance' });
   const id = Number(router.state.location.pathname.split('/')[2]);
@@ -48,8 +48,8 @@ it('registers, declares ownership, assigns a FREE box and shows pending baseline
 it('keeps registration input on duplicate code and can retry with corrected code', async () => {
   open('/horses/new'); const user = userEvent.setup(); await screen.findByRole('heading', { name: 'Register Horse' });
   await user.type(screen.getByLabelText('Horse name *'), 'Retry Horse'); await user.type(screen.getByLabelText('Horse ID *'), 'RH-007');
-  fireEvent.change(screen.getByLabelText('Date of birth *'), { target: { value: '2021-03-01' } });
-  await user.selectOptions(screen.getByLabelText('Sex *'), 'Mare'); await user.selectOptions(screen.getByLabelText('Breed *'), 'Arabian');
+  fireEvent.change(screen.getByLabelText('Date of birth'), { target: { value: '2021-03-01' } });
+  await user.selectOptions(screen.getByLabelText('Sex'), 'Mare'); await user.selectOptions(screen.getByLabelText('Breed'), 'Arabian');
   await user.click(screen.getByRole('button', { name: 'Save Draft & Continue' }));
   expect(await screen.findByText('Horse code or registration number is already used.')).toBeInTheDocument();
   expect(screen.getByLabelText('Horse name *')).toHaveValue('Retry Horse');
@@ -86,4 +86,60 @@ it('API mode never falls back to samples on 404, 403 or network failure', async 
     await expect(requestApi('/api/horses', {}, { fetcher })).rejects.toMatchObject({ status, message: 'Real API error' });
   }
   await expect(requestApi('/api/horses', {}, { fetcher: vi.fn().mockRejectedValue(new Error('offline')) })).rejects.toMatchObject({ code: 'NETWORK_ERROR' });
+});
+it('preserves existing parent references and ownership when saving unchanged pedigree', async () => {
+  setBusinessActor(manager); await requestApi('/api/horses/7');
+  const data = readSamples(); data.horseRegistry!.records[0].pedigree.sire = { horseId: 91, name: 'Northern Star', horseCode: 'SIRE-91' }; saveSamples(data);
+  open('/horses/7/edit'); await screen.findByRole('heading', { name: 'Pedigree & Ownership · Thunder Bolt' });
+  await userEvent.click(screen.getByRole('button', { name: 'Save & Continue' }));
+  await screen.findByRole('heading', { name: 'Pending Activation' });
+  const horse = readSamples().horseRegistry!.records[0];
+  expect(horse.pedigree.sire).toEqual({ horseId: 91, name: null });
+  expect(horse.currentOwnerships).toHaveLength(1); expect(horse.currentOwnerships[0].sharePercentage).toBe(100);
+});
+it('preserves a server-supplied sex value outside the Figma suggestions while editing identity', async () => {
+  open('/horses/7/identity'); await screen.findByDisplayValue('Thunder Bolt');
+  expect(screen.getByLabelText('Sex value')).toHaveValue('GELDING');
+  await userEvent.clear(screen.getByLabelText('Horse name *')); await userEvent.type(screen.getByLabelText('Horse name *'), 'Thunder Bolt Updated');
+  await userEvent.click(screen.getByRole('button', { name: 'Save identity' }));
+  await screen.findByRole('heading', { name: 'Thunder Bolt Updated' });
+  expect(readSamples().horseRegistry!.records[0].sex).toBe('GELDING');
+});
+it('saves a minimal draft without inventing missing identity values', async () => {
+  open('/horses/new'); await screen.findByRole('heading', { name: 'Register Horse' });
+  fireEvent.change(screen.getByLabelText('Horse name *'), { target: { value: 'Draft Arrival' } });
+  fireEvent.change(screen.getByLabelText('Horse ID *'), { target: { value: 'DRAFT-009' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save Draft & Continue' }));
+  await screen.findByRole('heading', { name: 'Pedigree & Ownership · Draft Arrival' });
+  expect(readSamples().horseRegistry!.records.find((horse) => horse.horseCode === 'DRAFT-009')).toMatchObject({ lifecycle: 'DRAFT', breed: null, sex: null, foaledDate: null, activatedAt: null });
+});
+it('retains the actual custom breed rather than serializing the Other option', async () => {
+  open('/horses/new'); await screen.findByRole('heading', { name: 'Register Horse' });
+  fireEvent.change(screen.getByLabelText('Horse name *'), { target: { value: 'Custom Breed' } });
+  fireEvent.change(screen.getByLabelText('Horse ID *'), { target: { value: 'CUSTOM-01' } });
+  await userEvent.selectOptions(screen.getByLabelText('Breed'), '__CUSTOM__');
+  fireEvent.change(screen.getByLabelText('Breed value'), { target: { value: 'Akhal-Teke' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save Draft & Continue' }));
+  await screen.findByRole('heading', { name: 'Pedigree & Ownership · Custom Breed' });
+  expect(readSamples().horseRegistry!.records.find((horse) => horse.horseCode === 'CUSTOM-01')?.breed).toBe('Akhal-Teke');
+});
+it('makes pending horses after the first page reachable', async () => {
+  setBusinessActor(manager); await requestApi('/api/horses/7');
+  const data = readSamples(), base = data.horseRegistry!.records[0];
+  for (let index = 0; index < 51; index++) data.horseRegistry!.records.push({ ...structuredClone(base), id: 3000 + index, name: `Pending Horse ${index}`, horseCode: `P-${index}`, lifecycle: 'DRAFT', activatedAt: null });
+  saveSamples(data); open('/horses/pending-activation');
+  await screen.findByRole('heading', { name: 'Pending Horse 0 · P-0' });
+  expect(screen.getByText(/· 51 horses/)).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Next page' }));
+  expect(await screen.findByRole('heading', { name: 'Pending Horse 50 · P-50' })).toBeInTheDocument();
+  expect(screen.getByText('Page 2 of 2')).toBeInTheDocument();
+});
+it.each(['GROOM', 'WORK_RIDER'] as const)('provides shared header account logout for %s without a role chooser', async (role) => {
+  open(role === 'GROOM' ? '/groom/today' : '/rider', { ...manager, roles: [role] });
+  await screen.findByRole('heading', { name: 'Good morning, Test Manager' });
+  fireEvent.click(screen.getByRole('button', { name: 'Account menu' }));
+  await screen.findByRole('heading', { name: 'Your account' });
+  fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
+  expect(await screen.findByRole('heading', { name: 'Sign in to Racehorse Ops' })).toBeInTheDocument();
+  expect(authSession.read()).toBeNull(); expect(getBusinessActor()).toBeNull();
 });

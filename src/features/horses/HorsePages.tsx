@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router';
+import { Link, useLocation, useParams } from 'react-router';
 import { AlertBanner, Button, Card, DataTable, EmptyState, ErrorState, KeyValue, LoadingState, MetricCard, SelectField, StatusBadge, Tabs, TextField } from '../../design-system';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { businessDataMode } from '../../shared/data/businessData';
@@ -52,6 +52,7 @@ export function HorseListPage() {
 }
 export function HorseProfilePage() {
   const api = useHorsesApi(), { user } = useAuth();
+  const location = useLocation();
   const id = Number(useParams().id);
   const load = useCallback(() => api.getHorse(id), [api, id]);
   const { data: horse, error, reload } = useHorseResource(load);
@@ -62,6 +63,7 @@ export function HorseProfilePage() {
   if (!Number.isSafeInteger(id) || id < 1) return <EmptyState title="Horse not found" />;
   if (!horse) return <HorseState error={error} retry={reload} />;
   return <div className={styles.page}><Link to="/horses">← Back to Horses</Link>
+    {(location.state as { photoUploadFailed?: boolean } | null)?.photoUploadFailed && <AlertBanner type="warning" title="Some photos were not uploaded">Identity was saved. Add the missing photos again from this profile.</AlertBanner>}
     <div className={styles.titleRow}>{horse.primaryPhotoUrl ? <img className={styles.profilePhoto} src={horse.primaryPhotoUrl} alt={horse.name} /> : <div className={styles.profilePhoto}>No photo</div>}<div className={styles.titleBlock}><h1 className="text-h1">{horse.name}</h1><p>{horse.horseCode} · {horse.breed} · {horse.sex} · {horse.currentBoxCode ?? 'No stable box'}</p><div className={styles.row}><StatusBadge family="lifecycle" status={horse.lifecycle} />{horse.healthStatus && <StatusBadge family="health" status={horse.healthStatus} />}<StatusBadge family="availability" status={horse.trainingAvailability} /></div></div>{canManage && <Link to={`/horses/${id}/identity`}>Edit identity</Link>}</div>
     <Tabs label="Horse profile sections" idPrefix="horse-profile" value={tab} onChange={setTab} items={[{ value: 'overview', label: 'Overview' }, { value: 'pedigree', label: 'Pedigree & Ownership' }, { value: 'training', label: 'Training & Performance' }]} />
     {tab === 'overview' && <div className={styles.twoCol}><div className={styles.colMain}><Card title="Identity & Ownership"><div className={styles.cardBody}><KeyValue label="Horse code" value={horse.horseCode} /><KeyValue label="Foaled" value={formatDate(horse.foaledDate)} /><KeyValue label="Origin" value={horse.countryOfOrigin ?? 'Not recorded'} /><KeyValue label="Registration number" value={horse.registrationNo ?? 'Not recorded'} /><KeyValue label="Owners" value={horse.currentOwnerships?.map((o) => `${o.owner.fullName} · ${o.sharePercentage}%`).join(', ') || 'Not assigned'} /><KeyValue label="Box" value={horse.currentBoxCode ?? 'Not assigned'} /></div></Card>

@@ -90,7 +90,6 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
           { label: 'Assignments', icon: 'clipboard-list', to: ROUTES.assignments },
           { label: 'Riding History', icon: 'history', to: ROUTES.ridingHistory },
           { label: 'Report Issue', icon: 'alert-triangle', to: ROUTES.reportIssue },
-          { label: 'Horses', icon: 'horseshoe', to: ROUTES.horses },
         ],
       },
     ],
@@ -127,6 +126,7 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
         items: [
           { label: 'Dashboard', icon: 'dashboard', to: ROUTES.dashboard },
           { label: 'Horses', icon: 'horseshoe', to: ROUTES.horses },
+          { label: 'Pending Activation', icon: 'clipboard-list', to: ROUTES.pendingActivation },
           { label: 'Stable', icon: 'warehouse', to: ROUTES.stable, deferred: DEFERRED_REASON },
         ],
       },
@@ -152,11 +152,12 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
     workspaceLabel: 'Stable Care Workspace',
     sections: [
       {
-        items: [{ label: 'Today', icon: 'dashboard', to: ROUTES.dashboard }],
+        items: [{ label: 'Today', icon: 'dashboard', to: ROUTES.groomToday }],
       },
       {
         heading: 'My Work',
         items: [
+          { label: 'Treatment Tasks', icon: 'clipboard-list', to: ROUTES.treatmentTasks },
           { label: 'Care Tasks', icon: 'clipboard-list', to: ROUTES.careTasks, deferred: DEFERRED_REASON },
           { label: 'Daily Care', icon: 'check-circle', to: ROUTES.dailyCare, deferred: DEFERRED_REASON },
           {

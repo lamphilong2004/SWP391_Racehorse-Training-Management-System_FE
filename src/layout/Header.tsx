@@ -3,6 +3,8 @@ import { Icon } from '../design-system/icons/Icon';
 import { initials } from '../design-system/utils/initials';
 import { ROLE_LABELS, type RoleCode } from '../shared/auth/roles';
 import styles from './Header.module.css';
+import { useNavigate } from 'react-router';
+import { ROUTES } from '../app/routePaths';
 
 export interface HeaderUser {
   fullName: string;
@@ -30,6 +32,7 @@ export function Header({
   onNotificationsClick,
   onUserMenuClick,
 }: HeaderProps) {
+  const navigate = useNavigate();
   return (
     <header className={styles.header}>
       <div className={styles.left}>
@@ -57,7 +60,7 @@ export function Header({
           <Icon name="bell" size={22} />
           {unreadCount > 0 && <span className={styles.count}>{unreadCount > 99 ? '99+' : unreadCount}</span>}
         </button>
-        <button type="button" className={styles.user} onClick={onUserMenuClick} aria-label="Account menu">
+        <button type="button" className={styles.user} onClick={onUserMenuClick ?? (() => navigate(ROUTES.account))} aria-label="Account menu">
           <span className={styles.avatar} aria-hidden="true">
             {initials(user.fullName)}
           </span>

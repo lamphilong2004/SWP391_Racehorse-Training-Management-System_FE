@@ -103,7 +103,8 @@ export function PedigreeOwnershipPage() {
 
     pending.current = true; setSaving(true);
     try {
-      await api.setPedigree(horse.id, { sire: { horseId: null, name: sire.trim() }, dam: { horseId: null, name: dam.trim() } });
+      const parent = (name: string, existing: HorseDetail['pedigree']['sire']) => existing.horseId && name.trim() === (existing.name || existing.horseCode || '') ? { horseId: existing.horseId, name: null } : { horseId: null, name: name.trim() };
+      await api.setPedigree(horse.id, { sire: parent(sire, horse.pedigree.sire), dam: parent(dam, horse.pedigree.dam) });
       if (!horse.currentOwnerships.some((o) => o.owner.id === Number(ownerId))) {
         await api.addOwnership(horse.id, { ownerUserId: Number(ownerId), sharePercentage: Number(share), effectiveFrom, isManagingOwner: managing });
       }

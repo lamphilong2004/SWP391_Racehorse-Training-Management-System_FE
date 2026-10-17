@@ -37,22 +37,25 @@ export function PendingActivationPage() {
 
   const [pending, setPending] = useState<PendingHorse[]>();
   const [error, setError] = useState(false);
+  const [pageIndex, setPageIndex] = useState(0);
+  const [metadata, setMetadata] = useState({ totalItems: 0, totalPages: 0 });
 
-  const fetchPending = useCallback(async (): Promise<PendingHorse[]> => {
-    const page = await api.listPendingActivation();
+  const fetchPending = useCallback(async () => {
+    const page = await api.listPendingActivation(pageIndex);
     const horses = await Promise.all(page.items.map((status) => api.getHorse(status.horseId)));
-    return page.items.map((status, i) => ({ status, horse: horses[i] }));
-  }, [api]);
+    return { items: page.items.map((status, i) => ({ status, horse: horses[i] })), totalItems: page.totalItems, totalPages: page.totalPages };
+  }, [api, pageIndex]);
 
   useEffect(() => {
     let active = true;
-    fetchPending().then((items) => active && setPending(items), () => active && setError(true));
+    fetchPending().then((data) => { if (active) { setPending(data.items); setMetadata(data); } }, () => active && setError(true));
     return () => {
       active = false;
     };
   }, [fetchPending]);
 
-  const load = () => fetchPending().then(setPending, () => setError(true));
+  const load = () => fetchPending().then((data) => { setPending(data.items); setMetadata(data); }, () => setError(true));
+  const changePage = (page: number) => { setPending(undefined); setError(false); setPageIndex(page); };
 
   const completed = pending?.find((p) => p.horse.id === location.state?.completedHorseId);
 
@@ -63,7 +66,7 @@ export function PendingActivationPage() {
       <div className={shared.titleBlock}>
         <h1 className={shared.title}>Pending Activation</h1>
         <p className={shared.subtitle}>
-          {`Horses in DRAFT and what is still missing before they become ACTIVE${pending ? ` · ${pending.length} ${pending.length === 1 ? 'horse' : 'horses'}` : ''}`}
+          {`Horses in DRAFT and what is still missing before they become ACTIVE${pending ? ` · ${metadata.totalItems} ${metadata.totalItems === 1 ? 'horse' : 'horses'}` : ''}`}
         </p>
       </div>
 
@@ -86,6 +89,7 @@ export function PendingActivationPage() {
             </Card>
           )}
           {pending?.map((p) => <PendingHorseCard key={p.horse.id} {...p} onViewRegister={() => navigate('/horses')} />)}
+          {pending && metadata.totalPages > 1 && <div className={shared.footer}><Button variant="secondary" disabled={pageIndex === 0} onClick={() => changePage(pageIndex - 1)}>Previous page</Button><span>Page {pageIndex + 1} of {metadata.totalPages}</span><Button variant="secondary" disabled={pageIndex + 1 >= metadata.totalPages} onClick={() => changePage(pageIndex + 1)}>Next page</Button></div>}
         </div>
 
         <aside className={shared.colSide}>
@@ -150,7 +154,7 @@ function PendingHorseCard({ status, horse, onViewRegister }: PendingHorse & { on
           <span>
             {onlyBaseline
               ? 'Waiting for the Veterinarian’s baseline — the last open requirement. '
-              : `Waiting for: ${missing.map((m) => ITEMS[m].label.toLowerCase()).join(', ')}. `}
+              : `Waiting for: ${missing.map((m) => ITEMS[m]?.label.toLowerCase() ?? m).join(', ')}. `}
             {`${horse.name} becomes ACTIVE automatically once all mandatory requirements are met — no manual approval.`}
           </span>
         </div>

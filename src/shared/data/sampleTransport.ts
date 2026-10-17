@@ -2,13 +2,14 @@ import { ApiError } from '../auth/authApi';
 import type { RoleCode } from '../auth/roles';
 import type { CreateProgramRequest } from '../../features/program-creation/programTypes';
 import { validateProgramCreation } from '../../features/program-creation/programDraft';
-import { horse, template, sampleUser, readSamples, saveSamples } from './sampleStore';
+import { template, sampleUser, readSamples, saveSamples } from './sampleStore';
 import type { CurrentUser } from '../auth/authApi';
 import { handleHorseSample } from './horseSamples';
+import { handleSessionSample } from './sessionSamples';
 import type { ExaminationRequest, InjuryRequest, ReexaminationRequest, TreatmentPlanRequest, Incident } from '../../features/medical/models';
 import type { EvaluationRequest } from '../../features/evaluation/models';
 
-/** One transport for all preview features. Never calls fetch or falls through to the backend. */
+/** Explicit temporary business transport. Never calls fetch or falls through to the backend. */
 export async function sampleRequest<T>(path: string, init: RequestInit, user: CurrentUser): Promise<T> {
   if (init.signal?.aborted) throw new DOMException('Aborted', 'AbortError');
   const url = new URL(path, 'http://sample.invalid');
@@ -28,6 +29,8 @@ export async function sampleRequest<T>(path: string, init: RequestInit, user: Cu
   const find = <V extends { id: number }>(rows: V[], id: number): V => rows.find((item) => item.id === id) ?? fail(404, 'Sample record not found. Reload sample data to restore the starting scenario.');
   const horseResponse = await handleHorseSample(path, init, user);
   if (horseResponse.handled) return horseResponse.data as T;
+  const sessionResponse = handleSessionSample(path, init, user);
+  if (sessionResponse.handled) return sessionResponse.data as T;
   if (route.startsWith('/api/program-templates') || /\/(template|trainer)-recommendations$/.test(route)) {
     allow('HEAD_TRAINER');
     if (method !== 'GET') fail(404, 'Template mutations are outside this sample data.');
@@ -45,7 +48,7 @@ export async function sampleRequest<T>(path: string, init: RequestInit, user: Cu
     const issues = validateProgramCreation(input);
     if (issues.length) throw new ApiError(400, 'VALIDATION_ERROR', 'Check the program fields.', issues.map((issue) => ({ field: issue.field, message: issue.message })));
     if (input.horseId !== 7 || input.templateVersionId !== 301 || input.trainer.trainerUserId !== 12) fail(400, 'Select the sample horse, template and Trainer.');
-    const program = { ...input, id: data.nextId++, horse, status: 'ACTIVE' as const, sourceTemplateId: 3, sourceTemplateVersion: 1, activatedAt: now, currentTrainer: sampleUser('TRAINER'), phases: input.phases.map((phase) => ({ ...phase, id: data.nextId++, isCustomized: true })) };
+    const program = { ...input, id: data.nextId++, horse: data.sessions[0].session.horse, status: 'ACTIVE' as const, sourceTemplateId: 3, sourceTemplateVersion: 1, activatedAt: now, currentTrainer: sampleUser('TRAINER'), phases: input.phases.map((phase) => ({ ...phase, id: data.nextId++, isCustomized: true })) };
     data.programs.push(program);
     return respond(program);
   }
@@ -58,6 +61,7 @@ export async function sampleRequest<T>(path: string, init: RequestInit, user: Cu
     if (method === 'GET' && sessionMatch[2] === 'result') return respond(result);
     if (method === 'POST' && sessionMatch[2] === 'evaluation') {
       allow('TRAINER');
+      if (!['COMPLETED', 'INTERRUPTED'].includes(result.session.status)) fail(409, 'Only completed or interrupted sessions can be evaluated.');
       if (result.evaluation) fail(409, 'An evaluation is already recorded.');
       const input = body as EvaluationRequest;
       if (!['MET', 'PARTIALLY_MET', 'NOT_MET'].includes(input.result) || [input.evaluatedSummary, input.evaluationNotes, input.recommendation].some((value) => value != null && (typeof value !== 'string' || value.length > 2000))) fail(400, 'Invalid evaluation fields.');
@@ -115,7 +119,6 @@ export async function sampleRequest<T>(path: string, init: RequestInit, user: Cu
       return respond(safe(task));
     }
   }
-  if (route === '/api/horses/7/training-availability' && method === 'GET') { allow('VETERINARIAN'); return respond({ horseId: 7, availability: 'AVAILABLE', reason: 'Sample scenario: no active restriction. Health and availability are separate.' }); }
   if (route.startsWith('/api/medical/')) {
     allow('VETERINARIAN');
     if (route === '/api/medical/herd-health' && method === 'GET') return respond({ totalHorses: 1, fit: Number(data.healthStatus === 'FIT'), monitoring: Number((data.healthStatus ?? 'MONITORING') === 'MONITORING'), injured: Number(data.healthStatus === 'INJURED'), quarantined: Number(data.healthStatus === 'QUARANTINED'), unassessed: 0 });
@@ -167,5 +170,5 @@ export async function sampleRequest<T>(path: string, init: RequestInit, user: Cu
       }
     }
   }
-  return fail(404, `No sample scenario for ${method} ${route}. Preview never falls back to the backend.`);
+  return fail(404, `No sample scenario for ${method} ${route}. This mode never falls back to the backend.`);
 }

@@ -3,18 +3,20 @@ import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { afterEach, vi } from 'vitest';
 import { buildRoutes } from '../../app/router';
-import { configureCore046AccessTokenProvider } from './session';
+import { AuthProvider } from '../../shared/auth/AuthProvider';
+import { authSession } from '../../shared/auth/authSession';
 
-afterEach(() => { configureCore046AccessTokenProvider(null); vi.unstubAllGlobals(); });
+beforeEach(() => { authSession.clear(); vi.stubEnv('VITE_BUSINESS_DATA_SOURCE', 'api'); });
+afterEach(() => { authSession.clear(); vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 const ok = (data: unknown) => new Response(JSON.stringify({ success: true, data }), { status: 200 });
-function visit(path: string) { render(<RouterProvider router={createMemoryRouter(buildRoutes(false), { initialEntries: [path] })} />); }
+function visit(path: string) { render(<AuthProvider><RouterProvider router={createMemoryRouter(buildRoutes(false), { initialEntries: [path] })} /></AuthProvider>); }
 
 describe('CORE-046 pages', () => {
   it('shows assigned Groom tasks, completes with empty body and reloads server state', async () => {
-    configureCore046AccessTokenProvider(() => 'jwt');
+    authSession.save('jwt', 3600, false);
     let completed = false;
     const fetcher = vi.fn(async (url: string, init?: RequestInit) => {
-      if (url.endsWith('/api/auth/me')) return ok({ id: 5, fullName: 'Groom', roles: ['GROOM'], accountStatus: 'ACTIVE' });
+      if (url.endsWith('/api/auth/me')) return ok({ id: 5, userCode: 'GR-005', email: 'groom@example.test', fullName: 'Groom', roles: ['GROOM'], accountStatus: 'ACTIVE' });
       if (url.includes('/api/groom/treatment-tasks/7/complete')) { completed = true; expect(init).toMatchObject({ method: 'POST', body: '{}' }); return ok({ id: 7, status: 'COMPLETED' }); }
       if (url.includes('/api/groom/treatment-tasks?')) return ok({ items: [{ id: 7, horseId: 3, assignedGroomUserId: 5, instruction: 'Check left forelimb', taskDate: '2020-01-01', status: completed ? 'COMPLETED' : 'PENDING', ...(completed ? { completedAt: '2026-10-16T01:00:00.000Z' } : {}) }], page: 0, size: 100, totalElements: 1 });
       throw new Error(`Unexpected URL ${url}`);
@@ -31,18 +33,18 @@ describe('CORE-046 pages', () => {
   });
 
   it('shows the assigned task empty state', async () => {
-    configureCore046AccessTokenProvider(() => 'jwt');
+    authSession.save('jwt', 3600, false);
     vi.stubGlobal('fetch', vi.fn(async (url: string) => url.endsWith('/api/auth/me')
-      ? ok({ id: 5, fullName: 'Groom', roles: ['GROOM'], accountStatus: 'ACTIVE' })
+      ? ok({ id: 5, userCode: 'GR-005', email: 'groom@example.test', fullName: 'Groom', roles: ['GROOM'], accountStatus: 'ACTIVE' })
       : ok({ items: [], page: 0, size: 100, totalElements: 0 })));
     visit('/medical/my-tasks');
     expect(await screen.findByText('No treatment tasks')).toBeInTheDocument();
   });
 
   it('reports an incident explicitly from a Groom task with its horse and care-task context', async () => {
-    configureCore046AccessTokenProvider(() => 'jwt');
+    authSession.save('jwt', 3600, false);
     const fetcher = vi.fn(async (url: string, init?: RequestInit) => {
-      if (url.endsWith('/api/auth/me')) return ok({ id: 5, fullName: 'Groom', roles: ['GROOM'], accountStatus: 'ACTIVE' });
+      if (url.endsWith('/api/auth/me')) return ok({ id: 5, userCode: 'GR-005', email: 'groom@example.test', fullName: 'Groom', roles: ['GROOM'], accountStatus: 'ACTIVE' });
       if (url.includes('/api/groom/treatment-tasks?')) return ok({ items: [
         { id: 7, horseId: 3, assignedGroomUserId: 5, instruction: 'Check left forelimb', taskDate: '2020-01-01', status: 'PENDING' },
         { id: 8, horseId: 4, assignedGroomUserId: 5, instruction: 'Check right hindlimb', taskDate: '2020-01-01', status: 'PENDING' },
@@ -69,9 +71,9 @@ describe('CORE-046 pages', () => {
   });
 
   it('keeps the task-scoped Groom modal open on an incident POST conflict', async () => {
-    configureCore046AccessTokenProvider(() => 'jwt');
+    authSession.save('jwt', 3600, false);
     vi.stubGlobal('fetch', vi.fn(async (url: string) => {
-      if (url.endsWith('/api/auth/me')) return ok({ id: 5, fullName: 'Groom', roles: ['GROOM'], accountStatus: 'ACTIVE' });
+      if (url.endsWith('/api/auth/me')) return ok({ id: 5, userCode: 'GR-005', email: 'groom@example.test', fullName: 'Groom', roles: ['GROOM'], accountStatus: 'ACTIVE' });
       if (url.includes('/api/groom/treatment-tasks?')) return ok({ items: [{ id: 7, horseId: 3, assignedGroomUserId: 5, instruction: 'Check left forelimb', taskDate: '2020-01-01', status: 'PENDING' }], page: 0, size: 100, totalElements: 1 });
       return new Response(JSON.stringify({ success: false, error: { message: 'Incident conflict' } }), { status: 409 });
     }));
@@ -88,9 +90,9 @@ describe('CORE-046 pages', () => {
   });
 
   it('keeps a task pending and surfaces a completion conflict', async () => {
-    configureCore046AccessTokenProvider(() => 'jwt');
+    authSession.save('jwt', 3600, false);
     vi.stubGlobal('fetch', vi.fn(async (url: string) => {
-      if (url.endsWith('/api/auth/me')) return ok({ id: 5, fullName: 'Groom', roles: ['GROOM'], accountStatus: 'ACTIVE' });
+      if (url.endsWith('/api/auth/me')) return ok({ id: 5, userCode: 'GR-005', email: 'groom@example.test', fullName: 'Groom', roles: ['GROOM'], accountStatus: 'ACTIVE' });
       if (url.includes('/complete')) return new Response(JSON.stringify({ success: false, error: { message: 'Task already completed' } }), { status: 409 });
       return ok({ items: [{ id: 7, horseId: 3, assignedGroomUserId: 5, instruction: 'Check left forelimb', taskDate: '2020-01-01', status: 'PENDING' }], page: 0, size: 100, totalElements: 1 });
     }));
@@ -101,9 +103,9 @@ describe('CORE-046 pages', () => {
   });
 
   it('shows a forbidden incident list response without leaking rows', async () => {
-    configureCore046AccessTokenProvider(() => 'jwt');
+    authSession.save('jwt', 3600, false);
     vi.stubGlobal('fetch', vi.fn(async (url: string) => url.endsWith('/api/auth/me')
-      ? ok({ id: 5, fullName: 'Groom', roles: ['GROOM'], accountStatus: 'ACTIVE' })
+      ? ok({ id: 5, userCode: 'GR-005', email: 'groom@example.test', fullName: 'Groom', roles: ['GROOM'], accountStatus: 'ACTIVE' })
       : new Response(JSON.stringify({ success: false, error: { message: 'Forbidden incident scope' } }), { status: 403 })));
     visit('/incidents');
     expect(await screen.findByText('You do not have access to this data.')).toBeInTheDocument();
@@ -111,28 +113,30 @@ describe('CORE-046 pages', () => {
   });
 
   it('shows a session-expired state when incident loading returns 401', async () => {
-    configureCore046AccessTokenProvider(() => 'jwt');
+    authSession.save('jwt', 3600, false);
     vi.stubGlobal('fetch', vi.fn(async (url: string) => url.endsWith('/api/auth/me')
-      ? ok({ id: 5, fullName: 'Groom', roles: ['GROOM'], accountStatus: 'ACTIVE' })
+      ? ok({ id: 5, userCode: 'GR-005', email: 'groom@example.test', fullName: 'Groom', roles: ['GROOM'], accountStatus: 'ACTIVE' })
       : new Response(JSON.stringify({ success: false, error: { message: 'Unauthorized' } }), { status: 401 })));
     visit('/incidents');
-    expect(await screen.findByText('Your session has expired. Sign in again.')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Sign in to Racehorse Ops' })).toBeInTheDocument();
+    expect(screen.getByText('Your session expired. Sign in again to continue.')).toBeInTheDocument();
+    expect(authSession.read()).toBeNull();
   });
 
   it('shows the incident list empty state from an empty server-scoped page', async () => {
-    configureCore046AccessTokenProvider(() => 'jwt');
+    authSession.save('jwt', 3600, false);
     vi.stubGlobal('fetch', vi.fn(async (url: string) => url.endsWith('/api/auth/me')
-      ? ok({ id: 5, fullName: 'Groom', roles: ['GROOM'], accountStatus: 'ACTIVE' })
+      ? ok({ id: 5, userCode: 'GR-005', email: 'groom@example.test', fullName: 'Groom', roles: ['GROOM'], accountStatus: 'ACTIVE' })
       : ok({ items: [], page: 0, size: 100, totalElements: 0 })));
     visit('/incidents');
     expect(await screen.findByText('No incidents')).toBeInTheDocument();
   });
 
   it('keeps a successful incident submission successful when the list refresh fails', async () => {
-    configureCore046AccessTokenProvider(() => 'jwt');
+    authSession.save('jwt', 3600, false);
     let posted = false;
     const fetcher = vi.fn(async (url: string, init?: RequestInit) => {
-      if (url.endsWith('/api/auth/me')) return ok({ id: 5, fullName: 'Groom', roles: ['GROOM'], accountStatus: 'ACTIVE' });
+      if (url.endsWith('/api/auth/me')) return ok({ id: 5, userCode: 'GR-005', email: 'groom@example.test', fullName: 'Groom', roles: ['GROOM'], accountStatus: 'ACTIVE' });
       if (url.endsWith('/api/incidents') && init?.method === 'POST') {
         posted = true;
         return new Response(JSON.stringify({ success: true, data: { id: 901, incidentCode: 'INC-901' } }), { status: 201 });
@@ -153,16 +157,16 @@ describe('CORE-046 pages', () => {
     await userEvent.type(screen.getByLabelText('Description *'), 'Fever observed');
     await userEvent.click(screen.getByRole('button', { name: 'Submit Incident' }));
     expect(await screen.findByText('Incident INC-901 submitted.')).toBeInTheDocument();
-    expect(screen.getByText('Network unavailable')).toBeInTheDocument();
+    expect(screen.getByText('Cannot reach the server. Check your connection and try again.')).toBeInTheDocument();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(fetcher.mock.calls.filter(([url, init]) => String(url).endsWith('/api/incidents') && init?.method === 'POST')).toHaveLength(1);
   });
 
   it('filters only incident rows returned for the signed-in reporter', async () => {
-    configureCore046AccessTokenProvider(() => 'jwt');
+    authSession.save('jwt', 3600, false);
     const reportedAt = new Date().toISOString();
     vi.stubGlobal('fetch', vi.fn(async (url: string) => url.endsWith('/api/auth/me')
-      ? ok({ id: 5, fullName: 'Groom', roles: ['GROOM'], accountStatus: 'ACTIVE' })
+      ? ok({ id: 5, userCode: 'GR-005', email: 'groom@example.test', fullName: 'Groom', roles: ['GROOM'], accountStatus: 'ACTIVE' })
       : ok({ items: [
         { id: 1, incidentCode: 'INC-001', horseId: 3, reportedByUserId: 5, incidentType: 'FEVER', observedSeverity: 'HIGH', observedAt: reportedAt, reportedAt, status: 'REPORTED' },
         { id: 2, incidentCode: 'INC-002', horseId: 4, reportedByUserId: 5, incidentType: 'OFF_FEED', observedSeverity: 'LOW', observedAt: reportedAt, reportedAt, status: 'RESOLVED' },
@@ -176,8 +180,8 @@ describe('CORE-046 pages', () => {
   });
 
   it('renders reporter-safe incident detail without Vet review actions', async () => {
-    configureCore046AccessTokenProvider(() => 'jwt');
-    vi.stubGlobal('fetch', vi.fn(async (url: string) => url.endsWith('/api/auth/me') ? ok({ id: 5, fullName: 'Groom', roles: ['GROOM'], accountStatus: 'ACTIVE' }) : ok({ id: 12, incidentCode: 'INC-012', horseId: 3, reportedByUserId: 5, incidentType: 'FEVER', observedSeverity: 'HIGH', observedAt: '2026-10-16T01:00:00.000Z', reportedAt: '2026-10-16T01:05:00.000Z', status: 'REPORTED', description: 'Temperature high' })));
+    authSession.save('jwt', 3600, false);
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => url.endsWith('/api/auth/me') ? ok({ id: 5, userCode: 'GR-005', email: 'groom@example.test', fullName: 'Groom', roles: ['GROOM'], accountStatus: 'ACTIVE' }) : ok({ id: 12, incidentCode: 'INC-012', horseId: 3, reportedByUserId: 5, incidentType: 'FEVER', observedSeverity: 'HIGH', observedAt: '2026-10-16T01:00:00.000Z', reportedAt: '2026-10-16T01:05:00.000Z', status: 'REPORTED', description: 'Temperature high' })));
     visit('/incidents/12');
     expect(await screen.findByText('Incident INC-012')).toBeInTheDocument();
     expect(screen.getByText('Temperature high')).toBeInTheDocument();
@@ -186,17 +190,17 @@ describe('CORE-046 pages', () => {
   });
 
   it('shows an incident detail error when the server returns 404', async () => {
-    configureCore046AccessTokenProvider(() => 'jwt');
+    authSession.save('jwt', 3600, false);
     vi.stubGlobal('fetch', vi.fn(async (url: string) => url.endsWith('/api/auth/me')
-      ? ok({ id: 5, fullName: 'Groom', roles: ['GROOM'], accountStatus: 'ACTIVE' })
+      ? ok({ id: 5, userCode: 'GR-005', email: 'groom@example.test', fullName: 'Groom', roles: ['GROOM'], accountStatus: 'ACTIVE' })
       : new Response(JSON.stringify({ success: false, error: { message: 'Incident not found' } }), { status: 404 })));
     visit('/incidents/12');
     expect(await screen.findByText('Incident not found')).toBeInTheDocument();
   });
 
   it('rejects an invalid detail ID before requesting incident data', async () => {
-    configureCore046AccessTokenProvider(() => 'jwt');
-    const fetcher = vi.fn(async () => ok({ id: 5, fullName: 'Groom', roles: ['GROOM'], accountStatus: 'ACTIVE' }));
+    authSession.save('jwt', 3600, false);
+    const fetcher = vi.fn(async () => ok({ id: 5, userCode: 'GR-005', email: 'groom@example.test', fullName: 'Groom', roles: ['GROOM'], accountStatus: 'ACTIVE' }));
     vi.stubGlobal('fetch', fetcher);
     visit('/incidents/not-an-id');
     expect(await screen.findByText('Invalid incident ID')).toBeInTheDocument();

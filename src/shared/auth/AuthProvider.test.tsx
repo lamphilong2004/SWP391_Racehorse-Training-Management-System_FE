@@ -150,9 +150,9 @@ describe('CORE-008 auth flow', () => {
     ['CLUB_MANAGER', 'Club Manager Workspace', 'Staff & Users', '/admin/users'],
     ['HEAD_TRAINER', 'Head Trainer Workspace', 'Horse Training Programs', '/training/programs'],
     ['TRAINER', 'Trainer Workspace', 'Assigned Programs', '/training/programs'],
-    ['WORK_RIDER', 'Work Rider Workspace', 'My Rides', '/rides'],
+    ['WORK_RIDER', 'Work Rider Workspace', 'My Rides', '/rider'],
     ['VETERINARIAN', 'Veterinary Workspace', 'Medical / Health', '/medical'],
-    ['GROOM', 'Stable Care Workspace', 'Today', '/dashboard'],
+    ['GROOM', 'Stable Care Workspace', 'Today', '/groom/today'],
     ['HORSE_OWNER', 'Horse Owner Portal', 'My Horses', '/owner/horses'],
   ])('uses canonical workspace and navigation for %s', async (role, workspace, navItem, navPath) => {
     savedSession('sessionStorage');

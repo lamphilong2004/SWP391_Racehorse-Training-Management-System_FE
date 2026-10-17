@@ -28,7 +28,7 @@ describe('router', () => {
 
   it('does not register the dev-only routes in production', async () => {
     const paths = buildRoutes(false).map((route) => route.path);
-    expect(paths).toEqual(['/', '/login', '/dashboard', undefined, '/training/programs/new', '/training/sessions/:id/evaluation', '/medical', '/medical/cases/new', '/medical/cases/:caseId', '/medical/cases/:caseId/treatment-plan', '/medical/herd-health', undefined, undefined, '*']);
+    expect(paths).toEqual(['/', '/login', '/dashboard', '/account', undefined, '/training/programs/new', '/training/sessions/:id/evaluation', '/groom/today', '/training/my-sessions/:id/pre-check', '/rider', '/rider/assignments', '/rider/assignments/:id', '/rider/assignments/:id/start', '/rider/sessions/:id/active', '/rider/sessions/:id/feedback', '/rider/history', '/rides', '/rides/assignments', '/rides/history', '/rides/report-issue', '/medical', '/medical/cases/new', '/medical/cases/:caseId', '/medical/cases/:caseId/treatment-plan', '/medical/herd-health', undefined, undefined, '*']);
     const router = renderAt('/dev/components', false);
     expect(await screen.findByRole('heading', { name: 'Sign in to Racehorse Ops' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/login');

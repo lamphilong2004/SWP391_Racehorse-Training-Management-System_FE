@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate, type RouteObject } from 'react-router';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { LoginPage } from '../pages/LoginPage';
 import { WorkspacePage } from '../pages/WorkspacePage';
+import { AccountPage } from '../pages/AccountPage';
 import { ProgramCreationPage } from '../features/program-creation/ProgramCreationPage';
 import { SessionEvaluationPage } from '../features/evaluation/SessionEvaluationPage';
 import { HorseManagementLayout } from '../features/horses/shared/HorseManagementLayout';
@@ -9,6 +10,8 @@ import { HorseListPage, HorseProfilePage } from '../features/horses/HorsePages';
 import { RegisterHorsePage } from '../features/horses/create/RegisterHorsePage';
 import { PedigreeOwnershipPage } from '../features/horses/create/PedigreeOwnershipPage';
 import { PendingActivationPage } from '../features/horses/activation/PendingActivationPage';
+import { GroomTodayPage, PrecheckPage } from '../features/precheck/pages';
+import { RiderDashboardPage, RiderAssignmentsPage, RiderAssignmentPage, RiderSessionPage, RiderFeedbackPage, RiderHistoryPage } from '../features/rider/pages';
 import { PublicOnly, RequireAuth } from './RequireAuth';
 import { ROUTES } from './routePaths';
 import { Core046Route } from '../features/core046/auth';
@@ -45,6 +48,7 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
       : [{ path: ROUTES.root, element: <Navigate to={ROUTES.dashboard} replace /> }]),
     { path: ROUTES.login, element: <PublicOnly><LoginPage /></PublicOnly> },
     { path: ROUTES.dashboard, element: <RequireAuth><WorkspacePage /></RequireAuth> },
+    { path: ROUTES.account, element: <RequireAuth><AccountPage /></RequireAuth> },
     { element: <RequireAuth allowedRoles={['CLUB_MANAGER', 'HEAD_TRAINER', 'TRAINER', 'VETERINARIAN', 'GROOM']}><HorseManagementLayout /></RequireAuth>, children: [
       { path: ROUTES.horses, element: <HorseListPage /> },
       { path: '/horses/:id', element: <HorseProfilePage /> },
@@ -55,6 +59,19 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
     ] },
     { path: ROUTES.trainingProgramCreate, element: <RequireAuth allowedRoles={['HEAD_TRAINER']}><ProgramCreationPage /></RequireAuth> },
     { path: ROUTES.sessionEvaluation, element: <RequireAuth><SessionEvaluationPage /></RequireAuth> },
+    { path: ROUTES.groomToday, element: <RequireAuth allowedRoles={['GROOM']}><GroomTodayPage /></RequireAuth> },
+    { path: ROUTES.groomPrecheck, element: <RequireAuth allowedRoles={['GROOM']}><PrecheckPage /></RequireAuth> },
+    { path: ROUTES.myRides, element: <RequireAuth allowedRoles={['WORK_RIDER']}><RiderDashboardPage /></RequireAuth> },
+    { path: ROUTES.assignments, element: <RequireAuth allowedRoles={['WORK_RIDER']}><RiderAssignmentsPage /></RequireAuth> },
+    { path: ROUTES.riderAssignment, element: <RequireAuth allowedRoles={['WORK_RIDER']}><RiderAssignmentPage /></RequireAuth> },
+    { path: ROUTES.riderStart, element: <RequireAuth allowedRoles={['WORK_RIDER']}><RiderAssignmentPage /></RequireAuth> },
+    { path: ROUTES.riderSession, element: <RequireAuth allowedRoles={['WORK_RIDER']}><RiderSessionPage /></RequireAuth> },
+    { path: ROUTES.riderFeedback, element: <RequireAuth allowedRoles={['WORK_RIDER']}><RiderFeedbackPage /></RequireAuth> },
+    { path: ROUTES.ridingHistory, element: <RequireAuth allowedRoles={['WORK_RIDER']}><RiderHistoryPage /></RequireAuth> },
+    { path: '/rides', element: <Navigate to={ROUTES.myRides} replace /> },
+    { path: '/rides/assignments', element: <Navigate to={ROUTES.assignments} replace /> },
+    { path: '/rides/history', element: <Navigate to={ROUTES.ridingHistory} replace /> },
+    { path: '/rides/report-issue', element: <Navigate to={ROUTES.assignments} replace /> },
     { path: ROUTES.medical, element: <RequireAuth><MedicalAccess><CaseListPage /></MedicalAccess></RequireAuth> },
     { path: ROUTES.medicalCaseNew, element: <RequireAuth><MedicalAccess><CreateCasePage /></MedicalAccess></RequireAuth> },
     { path: ROUTES.medicalCaseDetail, element: <RequireAuth><MedicalAccess><CaseDetailPage /></MedicalAccess></RequireAuth> },

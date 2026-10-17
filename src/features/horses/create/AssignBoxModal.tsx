@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AlertBanner, Button, EmptyState, ErrorState, Icon, LoadingState, Modal, SelectField, StableBoxTile } from '../../../design-system';
 import { ApiRequestError } from '../api/horsesApi';
 import { useHorsesApi } from '../api/HorsesApiContext';
@@ -26,6 +26,7 @@ export function AssignBoxModal({ open, horse, onClose, onAssigned }: AssignBoxMo
   const [yard, setYard] = useState<string>('');
   const [selectedId, setSelectedId] = useState<number>();
   const [saving, setSaving] = useState(false);
+  const pending = useRef(false);
   const [saveError, setSaveError] = useState<string>();
 
   const apply = useCallback((all: StableBox[]) => {
@@ -62,8 +63,8 @@ export function AssignBoxModal({ open, horse, onClose, onAssigned }: AssignBoxMo
   const selected = boxes?.find((b) => b.id === selectedId);
 
   const assign = async () => {
-    if (!selected) return;
-    setSaving(true);
+    if (!selected || pending.current) return;
+    pending.current = true; setSaving(true);
     setSaveError(undefined);
     try {
       const assignment = await api.assignStableBox(horse.id, { stableBoxId: selected.id, effectiveFrom: todayIsoDate() });
@@ -75,12 +76,12 @@ export function AssignBoxModal({ open, horse, onClose, onAssigned }: AssignBoxMo
         reload();
       }
     } finally {
-      setSaving(false);
+      pending.current = false; setSaving(false);
     }
   };
 
   return (
-    <Modal open={open} size="lg" onClose={onClose} title={`Assign Stable Box · ${horse.name}`}
+    <Modal open={open} size="lg" onClose={saving ? () => undefined : onClose} title={`Assign Stable Box · ${horse.name}`}
       footer={<>
         <Button variant="secondary" onClick={onClose} disabled={saving}>Cancel</Button>
         <Button onClick={assign} disabled={!selected || saving}>Assign Box</Button>
