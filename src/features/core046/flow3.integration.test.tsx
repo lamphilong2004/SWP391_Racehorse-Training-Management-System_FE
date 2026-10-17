@@ -51,7 +51,8 @@ const localDay = () => { const d = new Date(); return `${d.getFullYear()}-${Stri
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); setBusinessActor(null); vi.clearAllMocks(); vi.stubGlobal('fetch', vi.fn(() => { throw new Error('Sample business requests must not reach the backend'); })); });
 afterEach(() => { setBusinessActor(null); authSession.clear(); vi.unstubAllGlobals(); });
 
-it('persists Vet case/exam/injury/assignment → Groom completion → Vet progress/recovery/close across logins and remount', async () => {
+// Two-actor journey with four sign-ins and a remount: ~5.2–5.6 s locally, so it gets an explicit limit instead of the 5 s default.
+it('persists Vet case/exam/injury/assignment → Groom completion → Vet progress/recovery/close across logins and remount', { timeout: 15_000 }, async () => {
   let view = mount(ROUTES.medicalCaseNew);
   await login(vet);
   const horseId = readSamples().horseRegistry!.records[0].id;
