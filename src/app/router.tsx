@@ -1,6 +1,11 @@
 import { createBrowserRouter, Navigate, type RouteObject } from 'react-router';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { ROUTES } from './routePaths';
+import { Core046Route } from '../features/core046/auth';
+import { TreatmentTasksPage, IncidentsPage, IncidentDetailPage } from '../features/core046/pages';
+
+const INCIDENT_READ_ROLES = ['CLUB_MANAGER', 'HEAD_TRAINER', 'TRAINER', 'WORK_RIDER', 'VETERINARIAN', 'GROOM'] as const;
+const GROOM_ROLE = ['GROOM'] as const;
 
 /**
  * Dev-only routes (DEC-010): the component gallery and the per-role shell preview. They are lazy-loaded inside an
@@ -29,6 +34,13 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
     ...(includeDevRoutes
       ? [{ path: ROUTES.root, element: <Navigate to={ROUTES.devComponents} replace /> }, ...devRoutes]
       : []),
+    { element: <Core046Route allowedRoles={[...GROOM_ROLE]} />, children: [
+      { path: ROUTES.treatmentTasks, element: <TreatmentTasksPage /> },
+    ] },
+    { element: <Core046Route allowedRoles={[...INCIDENT_READ_ROLES]} />, children: [
+      { path: ROUTES.incidents, element: <IncidentsPage /> },
+      { path: ROUTES.incidentDetail, element: <IncidentDetailPage /> },
+    ] },
     { path: '*', element: <NotFoundPage /> },
   ];
 }

@@ -27,7 +27,7 @@ describe('router', () => {
 
   it('does not register the dev-only routes in production', async () => {
     const paths = buildRoutes(false).map((route) => route.path);
-    expect(paths).toEqual(['*']);
+    expect(paths).toEqual([undefined, undefined, '*']);
     renderAt('/dev/components', false);
     expect(await screen.findByText('Page not found.')).toBeInTheDocument();
   });
