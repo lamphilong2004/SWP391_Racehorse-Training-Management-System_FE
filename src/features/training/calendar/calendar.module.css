@@ -1,8 +1,11 @@
 .tools { display: flex; align-items: center; gap: var(--space-md); flex-wrap: wrap; }
-.tools > :last-child { margin-left: auto; }
+.tools > :last-child { margin-left: 0; }
 .previous { transform: rotate(180deg); }
 .range { min-width: 190px; text-align: center; font-weight: 500; }
-.filters { display: grid; grid-template-columns: repeat(4, minmax(120px, 1fr)); gap: var(--space-md); }
+/* Figma 97:286: period navigation, view switch and filters share one toolbar row. */
+.toolbar { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-md); flex-wrap: wrap; }
+.filters { display: flex; align-items: flex-end; gap: var(--space-md); flex-wrap: wrap; }
+.filters > * { flex: 0 0 auto; width: 120px; }
 .calendar { border: 1px solid var(--color-border-default); background: var(--color-bg-surface); border-radius: var(--radius-md); overflow-x: auto; }
 .weekHead { display: grid; grid-template-columns: 56px repeat(7, minmax(110px, 1fr)); min-width: 870px; background: var(--color-bg-subtle); }
 .dayHead { padding: var(--space-md); font-size: 12px; color: var(--color-text-secondary); border-right: 1px solid var(--color-border-default); }
@@ -24,3 +27,7 @@
 .outside { color: var(--color-text-disabled); }
 .legend { display: flex; gap: var(--space-lg); flex-wrap: wrap; font-size: 12px; }
 @media (max-width: 900px) { .filters { grid-template-columns: repeat(2, 1fr); } }
+
+/* Figma 97:286 current-time indicator on today. */
+.nowLine { position: absolute; left: 0; right: 0; z-index: 2; height: 0; border-top: 2px solid var(--color-danger-600); pointer-events: none; }
+.nowLine::before { content: ""; position: absolute; left: -4px; top: -5px; width: 8px; height: 8px; border-radius: 50%; background: var(--color-danger-600); }

@@ -36,7 +36,9 @@ it('renders assigned programs, keeps locked/completed Add Session unavailable an
   await screen.findByRole('table', { name: 'My assigned programs' });
   expect(screen.getAllByRole('link', { name: '+ Add Session' })).toHaveLength(1);
   expect(screen.getByRole('link', { name: '+ Add Session' })).toHaveAttribute('href', '/training/schedule/session/new?programId=1001');
-  expect(screen.getAllByText('Add Session unavailable')).toHaveLength(2); expect(screen.queryByText(/58%/)).not.toBeInTheDocument();
+  // Figma 95:400 draws the unavailable action as a disabled "Add Session" (not a link).
+  expect(screen.getAllByText('Add Session').filter((element) => element.closest('[aria-disabled="true"]'))).toHaveLength(2); expect(screen.queryByText(/58%/)).not.toBeInTheDocument();
+  expect(screen.getByText('Add Session is available only for ACTIVE programs on horses that are not LOCKED.')).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Search horse or program'), { target: { value: 'Locked' } });
   expect(screen.queryByRole('link', { name: '+ Add Session' })).not.toBeInTheDocument();
 });

@@ -13,3 +13,10 @@
 .notice { display: inline-flex; gap: var(--space-sm); border: 1px solid var(--color-border-default); border-radius: var(--radius-full); padding: var(--space-sm) var(--space-md); font-size: 12px; color: var(--color-text-secondary); background: var(--color-bg-surface); }
 .actions { justify-content: flex-end; }
 @media (max-width: 1000px) { .header { align-items: flex-start; } }
+
+/* Figma 95:400: result count at the right of the filter bar, two-part table footer, disabled Add Session. */
+.count { margin-left: auto; color: var(--color-text-secondary); font-size: 12px; line-height: 16px; white-space: nowrap; }
+.footer { display: flex; justify-content: space-between; gap: var(--space-md); flex-wrap: wrap; padding-top: var(--space-md); border-top: 1px solid var(--color-border-default); }
+.footer p { margin: 0; }
+.cellStack { display: grid; gap: 2px; }
+.disabledAction { display: inline-flex; align-items: center; gap: var(--space-xs); color: var(--color-text-disabled); font-weight: 500; cursor: not-allowed; }
