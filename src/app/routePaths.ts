@@ -58,6 +58,8 @@ export const ROUTES = {
   inventory: '/inventory',
   reports: '/reports',
   auditLog: '/admin/audit-log',
+  register: '/register',
+  registrations: '/admin/registrations',
   myHorses: '/owner/horses',
   notifications: '/notifications',
 } as const;

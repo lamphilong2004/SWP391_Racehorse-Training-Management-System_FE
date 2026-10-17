@@ -20,6 +20,7 @@ import { AssignedProgramsPage } from '../features/training/assigned/AssignedProg
 import { TrainingCalendarPage } from '../features/training/calendar/TrainingCalendarPage';
 import { ExerciseLibraryPage } from '../features/training/exercises/ExerciseLibraryPage';
 import { OwnerHandoffPage } from './OwnerHandoffPage';
+import { registrationRoutes } from '../features/registration/routes';
 import { ROLE_CODES, type RoleCode } from '../shared/auth/roles';
 
 /** Route integration only. Owners: CORE-022 program list, CORE-041 templates, CORE-031 monitoring,
@@ -76,6 +77,8 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
     { path: ROUTES.dashboard, element: <RequireAuth><ManagementDashboardEntry /></RequireAuth> },
     { path: ROUTES.auditLog, element: <RequireAuth allowedRoles={['CLUB_MANAGER']}><ManagementAuditEntry /></RequireAuth> },
     { path: ROUTES.account, element: <RequireAuth><AccountPage /></RequireAuth> },
+    // CORE-048 (DEC-008): public access request and Club Manager review; each page enforces its own boundary.
+    ...registrationRoutes,
     { element: <RequireAuth allowedRoles={['CLUB_MANAGER', 'HEAD_TRAINER', 'TRAINER', 'VETERINARIAN', 'GROOM']}><HorseManagementLayout /></RequireAuth>, children: [
       { path: ROUTES.horses, element: <HorseListPage /> },
       { path: '/horses/:id', element: <HorseProfilePage /> },

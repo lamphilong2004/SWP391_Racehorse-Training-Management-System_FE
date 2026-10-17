@@ -134,6 +134,7 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
         heading: 'Administration',
         items: [
           { label: 'Staff & Users', icon: 'users', to: ROUTES.staffUsers },
+          { label: 'Registration Requests', icon: 'user', to: ROUTES.registrations },
           { label: 'Roles & Permissions', icon: 'shield-check', to: ROUTES.rolesPermissions },
         ],
       },

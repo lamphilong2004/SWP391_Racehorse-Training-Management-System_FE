@@ -28,7 +28,7 @@ describe('router', () => {
 
   it('does not register the dev-only routes in production', async () => {
     const paths = buildRoutes(false).map((route) => route.path);
-    expect(paths).toEqual(['/', '/login', '/dashboard', '/admin/audit-log', '/account', undefined, '/training/programs/new',
+    expect(paths).toEqual(['/', '/login', '/dashboard', '/admin/audit-log', '/account', '/register', '/admin/registrations', undefined, '/training/programs/new',
       '/training/programs/assigned', '/training/schedule', '/training/calendar', '/training/exercise-library', '/training/exercise-library/new', '/training/exercises',
       '/training/programs/:id', '/training/session/:id', '/training/schedule/session/new',
       '/training/sessions/:id/evaluation', '/training/performance', '/groom/today', '/training/my-sessions/:id/pre-check',
