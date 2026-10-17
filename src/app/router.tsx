@@ -3,24 +3,20 @@ import { NotFoundPage } from '../pages/NotFoundPage';
 import { LoginPage } from '../pages/LoginPage';
 import { ManagementDashboardEntry, ManagementAuditEntry } from './ManagementEntry';
 import { AccountPage } from '../pages/AccountPage';
-import { ProgramCreationPage } from '../features/program-creation/ProgramCreationPage';
-import { SessionEvaluationPage } from '../features/evaluation/SessionEvaluationPage';
-import { PerformancePage } from '../features/evaluation/PerformancePage';
+import { ProgramCreationPage, SessionEvaluationPage, PerformancePage, GroomTodayPage, PrecheckPage,
+  RiderDashboardPage, RiderAssignmentsPage, RiderAssignmentPage, RiderSessionPage, RiderFeedbackPage, RiderHistoryPage,
+  TreatmentTasksPage, CaseListPage, CreateCasePage, CaseDetailPage, TreatmentPlanPage, HerdHealthPage } from './DeferredPages';
 import { HorseManagementLayout } from '../features/horses/shared/HorseManagementLayout';
 import { HorseListPage, HorseProfilePage } from '../features/horses/HorsePages';
 import { RegisterHorsePage } from '../features/horses/create/RegisterHorsePage';
 import { PedigreeOwnershipPage } from '../features/horses/create/PedigreeOwnershipPage';
 import { PendingActivationPage } from '../features/horses/activation/PendingActivationPage';
-import { GroomTodayPage, PrecheckPage } from '../features/precheck/pages';
-import { RiderDashboardPage, RiderAssignmentsPage, RiderAssignmentPage, RiderSessionPage, RiderFeedbackPage, RiderHistoryPage } from '../features/rider/pages';
 import { PublicOnly, RequireAuth } from './RequireAuth';
 import { ROUTES } from './routePaths';
 import { DEMO_UI_ONLY } from '../demo/demoMode';
 import { Core046Route } from '../features/core046/auth';
-import { TreatmentTasksPage } from '../features/core046/pages';
 import { IncidentLayout, IncidentListRoute, IncidentDetailRoute } from './IncidentRoutes';
 import { MedicalAccess } from '../features/medical/runtime';
-import { CaseListPage, CreateCasePage, CaseDetailPage, TreatmentPlanPage, HerdHealthPage } from '../features/medical/pages';
 import { AssignedProgramsPage } from '../features/training/assigned/AssignedProgramsPage';
 import { TrainingCalendarPage } from '../features/training/calendar/TrainingCalendarPage';
 import { ExerciseLibraryPage } from '../features/training/exercises/ExerciseLibraryPage';
