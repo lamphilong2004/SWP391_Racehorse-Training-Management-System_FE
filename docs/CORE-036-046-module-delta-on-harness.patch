@@ -1,0 +1,309 @@
+diff --git a/src/features/medical/MedicalForm.tsx b/src/features/medical/MedicalForm.tsx
+--- a/src/features/medical/MedicalForm.tsx
++++ b/src/features/medical/MedicalForm.tsx
+@@ -2,10 +2,11 @@
+ import { AlertBanner, Button, SelectField, TextAreaField, TextField } from '../../design-system';
+ import { medicalErrorMessage } from './errors';
+
+-export interface FormField { name: string; label: string; required?: boolean; type?: string; options?: string[] }
+-export function MedicalForm({ fields, initial = {}, submitLabel, onSave }: {
++export interface FormField { name: string; label: string; required?: boolean; type?: string; options?: string[]; maxLength?: number }
++export function MedicalForm({ fields, initial = {}, submitLabel, onSave, onCancel }: {
+   fields: FormField[]; initial?: Record<string, string>; submitLabel: string;
+   onSave: (values: Record<string, string>) => Promise<void>;
++  onCancel?: () => void;
+ }) {
+   const [values, setValues] = useState(initial);
+   const [errors, setErrors] = useState<Record<string, string>>({});
+@@ -18,6 +19,7 @@
+     fields.forEach((field) => {
+       const value = values[field.name]?.trim() ?? '';
+       if (field.required && !value) validation[field.name] = field.label + ' is required';
++      if (field.maxLength && value.length > field.maxLength) validation[field.name] = `${field.label} must be ${field.maxLength} characters or fewer`;
+       if (field.type === 'number' && value && (!Number.isSafeInteger(Number(value)) || Number(value) < 1)) validation[field.name] = 'Enter a positive numeric ID';
+       if (field.type === 'date' && value && !/^\d{4}-\d{2}-\d{2}$/.test(value)) validation[field.name] = 'Enter a valid date';
+     });
+@@ -30,10 +32,13 @@
+   }}>
+     {fields.map((field) => field.options ?
+       <SelectField key={field.name} label={field.label} options={field.options.map((value) => ({ value, label: value }))} placeholder="Select…" value={values[field.name] ?? ''} error={errors[field.name]} disabled={pending} onChange={(event) => setValues({ ...values, [field.name]: event.target.value })} /> :
+-      field.type === 'textarea' ? <TextAreaField key={field.name} label={field.label} value={values[field.name] ?? ''} error={errors[field.name]} disabled={pending} onChange={(event) => setValues({ ...values, [field.name]: event.target.value })} /> :
+-      <TextField key={field.name} label={field.label} type={field.type ?? 'text'} min={field.type === 'number' ? 1 : undefined} step={field.type === 'number' ? 1 : undefined} value={values[field.name] ?? ''} error={errors[field.name]} disabled={pending} onChange={(event) => setValues({ ...values, [field.name]: event.target.value })} />)}
++      field.type === 'textarea' ? <TextAreaField key={field.name} label={field.label} maxLength={field.maxLength} value={values[field.name] ?? ''} error={errors[field.name]} disabled={pending} onChange={(event) => setValues({ ...values, [field.name]: event.target.value })} /> :
++      <TextField key={field.name} label={field.label} maxLength={field.maxLength} type={field.type ?? 'text'} min={field.type === 'number' ? 1 : undefined} step={field.type === 'number' ? 1 : undefined} value={values[field.name] ?? ''} error={errors[field.name]} disabled={pending} onChange={(event) => setValues({ ...values, [field.name]: event.target.value })} />)}
+     {result.error && <AlertBanner type="danger" title={result.error} />}
+     {result.success && <AlertBanner type="success" title={result.success} />}
+-    <Button type="submit" disabled={pending}>{pending ? 'Saving…' : submitLabel}</Button>
++    <div className="medical-actions">
++      <Button type="submit" disabled={pending}>{pending ? 'Saving…' : submitLabel}</Button>
++      {onCancel && <Button type="button" variant="secondary" disabled={pending} onClick={onCancel}>Cancel</Button>}
++    </div>
+   </form>;
+ }
+diff --git a/src/features/medical/MedicalForm.test.tsx b/src/features/medical/MedicalForm.test.tsx
+new file mode 100644
+--- /dev/null
++++ b/src/features/medical/MedicalForm.test.tsx
+@@ -0,0 +1,25 @@
++import { fireEvent, render, screen } from '@testing-library/react';
++import { MedicalForm } from './MedicalForm';
++
++it('does not submit invalid IDs and lets the user cancel without saving', async () => {
++  const save = vi.fn(), cancel = vi.fn();
++  render(<MedicalForm fields={[{ name: 'horseId', label: 'Horse ID', type: 'number', required: true }]} submitLabel="Create case" onSave={save} onCancel={cancel} />);
++  fireEvent.change(screen.getByLabelText('Horse ID'), { target: { value: '-1' } });
++  fireEvent.click(screen.getByRole('button', { name: 'Create case' }));
++  expect(await screen.findByText('Enter a positive numeric ID')).toBeInTheDocument();
++  expect(save).not.toHaveBeenCalled();
++  fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
++  expect(cancel).toHaveBeenCalledOnce();
++  expect(save).not.toHaveBeenCalled();
++});
++
++it('rejects overlong contract fields without discarding the input', async () => {
++  const save = vi.fn();
++  render(<MedicalForm fields={[{ name: 'reason', label: 'Reason', type: 'textarea', required: true, maxLength: 2000 }]} submitLabel="Create case" onSave={save} />);
++  const value = 'x'.repeat(2001);
++  fireEvent.change(screen.getByLabelText('Reason'), { target: { value } });
++  fireEvent.click(screen.getByRole('button', { name: 'Create case' }));
++  expect(await screen.findByText('Reason must be 2000 characters or fewer')).toBeInTheDocument();
++  expect(screen.getByLabelText('Reason')).toHaveValue(value);
++  expect(save).not.toHaveBeenCalled();
++});
+diff --git a/src/features/medical/TreatmentPlanEditor.tsx b/src/features/medical/TreatmentPlanEditor.tsx
+--- a/src/features/medical/TreatmentPlanEditor.tsx
++++ b/src/features/medical/TreatmentPlanEditor.tsx
+@@ -3,8 +3,9 @@
+ import type { GroomTaskInstruction, TreatmentPlanRequest } from './models';
+ import { medicalErrorMessage } from './errors';
+
+-export function TreatmentPlanEditor({ initial, onSave }: {
++export function TreatmentPlanEditor({ initial, onSave, onCancel }: {
+   initial?: Partial<TreatmentPlanRequest>; onSave: (input: TreatmentPlanRequest) => Promise<void>;
++  onCancel?: () => void;
+ }) {
+   const [plan, setPlan] = useState<TreatmentPlanRequest>({
+     treatmentMedicationInstructions: initial?.treatmentMedicationInstructions ?? '',
+@@ -23,8 +24,14 @@
+     if (saving) return;
+     setError('');
+     if (!plan.treatmentMedicationInstructions.trim()) return setError('Medication and treatment instructions are required.');
++    if ((plan.restInstructions?.trim().length ?? 0) > 100 || (plan.careInstructions?.trim().length ?? 0) > 2000) {
++      return setError('Rest instructions must be 100 characters or fewer and care instructions 2000 characters or fewer.');
++    }
+     if (tasks.some((task) => !Number.isSafeInteger(task.assignedGroomUserId) || task.assignedGroomUserId < 1 || !task.instruction.trim() || !task.taskDate)) {
+       return setError('Each Groom task needs an active Groom ID, instruction and task date.');
++    }
++    if (tasks.some((task) => task.instruction.trim().length > 2000 || (task.scheduledSlot?.trim().length ?? 0) > 50)) {
++      return setError('Groom instructions must be 2000 characters or fewer and scheduled slots 50 characters or fewer.');
+     }
+     setSaving(true);
+     try { await onSave({ ...plan, treatmentMedicationInstructions: plan.treatmentMedicationInstructions.trim(), groomTasks: tasks }); }
+@@ -47,6 +54,9 @@
+     </fieldset></Card>
+     <Card title="Next review"><TextField label="Re-examination date" type="date" value={plan.reexaminationDate ?? ''} disabled={saving} onChange={(event) => setPlan({ ...plan, reexaminationDate: event.target.value || undefined })} /></Card>
+     {error && <AlertBanner type="danger" title={error} />}
+-    <Button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save treatment plan'}</Button>
++    <div className="medical-actions">
++      <Button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save treatment plan'}</Button>
++      {onCancel && <Button type="button" variant="secondary" disabled={saving} onClick={onCancel}>Cancel</Button>}
++    </div>
+   </form>;
+ }
+diff --git a/src/features/medical/TreatmentPlanEditor.test.tsx b/src/features/medical/TreatmentPlanEditor.test.tsx
+--- a/src/features/medical/TreatmentPlanEditor.test.tsx
++++ b/src/features/medical/TreatmentPlanEditor.test.tsx
+@@ -13,3 +13,24 @@
+     groomTasks: [{ assignedGroomUserId: 6, instruction: 'Cold compress', taskDate: '2026-10-16' }],
+   })));
+ });
++
++it('keeps invalid treatment input and blocks a request exceeding the approved contract', async () => {
++  const onSave = vi.fn();
++  render(<TreatmentPlanEditor initial={{ treatmentMedicationInstructions: 'Vet instructions', restInstructions: 'x'.repeat(101) }} onSave={onSave} />);
++  fireEvent.click(screen.getByRole('button', { name: 'Save treatment plan' }));
++  expect(await screen.findByRole('alert')).toHaveTextContent('Rest instructions must be 100 characters or fewer');
++  expect(onSave).not.toHaveBeenCalled();
++  expect(screen.getByLabelText('Rest instructions')).toHaveValue('x'.repeat(101));
++});
++
++it('keeps a failed save editable and cancels without submitting', async () => {
++  const onSave = vi.fn().mockRejectedValue(new Error('Clinical state changed'));
++  const onCancel = vi.fn();
++  render(<TreatmentPlanEditor initial={{ treatmentMedicationInstructions: 'Vet instructions' }} onSave={onSave} onCancel={onCancel} />);
++  fireEvent.click(screen.getByRole('button', { name: 'Save treatment plan' }));
++  expect(await screen.findByRole('alert')).toHaveTextContent('Clinical state changed');
++  expect(screen.getByRole('textbox', { name: /Treatment and medication instructions/ })).toHaveValue('Vet instructions');
++  fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
++  expect(onCancel).toHaveBeenCalledOnce();
++  expect(onSave).toHaveBeenCalledOnce();
++});
+diff --git a/src/features/medical/pages.tsx b/src/features/medical/pages.tsx
+--- a/src/features/medical/pages.tsx
++++ b/src/features/medical/pages.tsx
+@@ -74,9 +74,9 @@
+   const { service } = useMedicalRuntime();
+   const navigate = useNavigate();
+   return <><Link to={ROUTES.medical}>Back to cases</Link><PageHeader title="Create Medical Case" />
+-    <Card title="Independent case"><MedicalForm submitLabel="Create case" fields={[
++    <Card title="Independent case"><MedicalForm submitLabel="Create case" onCancel={() => navigate(ROUTES.medical)} fields={[
+       { name: 'horseId', label: 'Horse ID', type: 'number', required: true },
+-      { name: 'reason', label: 'Reason', type: 'textarea', required: true },
++      { name: 'reason', label: 'Reason', type: 'textarea', required: true, maxLength: 2000 },
+     ]} onSave={async (values) => {
+       const item = await service.createCase({ horseId: positiveId(values.horseId), reason: values.reason });
+       navigate(casePath(item.id));
+@@ -102,7 +102,10 @@
+   const { caseId = '' } = useParams();
+   const { service } = useMedicalRuntime();
+   const id = Number(caseId);
+-  const load = useCallback(() => service.getCase(id), [service, id]);
++  const load = useCallback(async () => {
++    if (!Number.isSafeInteger(id) || id < 1) throw new Error('Invalid medical case ID.');
++    return service.getCase(id);
++  }, [service, id]);
+   const { data, error, reload } = useResource(load);
+   if (!Number.isSafeInteger(id) || id < 1) return <EmptyState title="Medical case not found" />;
+   if (!data) return <ResourceState error={error} retry={reload} />;
+@@ -143,7 +146,7 @@
+         <li key={exam.id}><strong>{exam.examinedAt}</strong><p>{exam.symptoms}</p><p>{exam.diagnosis || 'No diagnosis'} · {exam.severity || 'Severity not set'}</p></li>)}</History>
+         {!closed && <MedicalForm submitLabel="Save examination" fields={[
+           { name: 'symptoms', label: 'Symptoms and findings', type: 'textarea', required: true },
+-          { name: 'diagnosis', label: 'Diagnosis', type: 'textarea' },
++          { name: 'diagnosis', label: 'Diagnosis', type: 'textarea', maxLength: 1000 },
+           { name: 'severity', label: 'Severity', options: ['MILD', 'MODERATE', 'SEVERE'] },
+           { name: 'healthStatus', label: 'Horse health status', options: ['FIT', 'MONITORING', 'INJURED', 'QUARANTINED'] },
+         ]} onSave={async (values) => { await service.addExamination(item.id, {
+@@ -161,8 +164,8 @@
+           { name: 'bodyRegion', label: 'Body region', options: BODY_REGIONS, required: true },
+           { name: 'severity', label: 'Severity', options: ['MILD', 'MODERATE', 'SEVERE'], required: true },
+           { name: 'recoveryStatus', label: 'Recovery status', options: ['NOT_RECOVERED', 'IMPROVING', 'RECOVERED'], required: true },
+-          { name: 'position3d', label: 'Position marker (optional)' },
+-          { name: 'side', label: 'Side (optional)' },
++          { name: 'position3d', label: 'Position marker (optional)', maxLength: 100 },
++          { name: 'side', label: 'Side (optional)', maxLength: 20 },
+         ]} onSave={async (values) => { await service.addInjury(item.id, {
+           bodyRegion: values.bodyRegion, severity: values.severity as ClinicalSeverity,
+           recoveryStatus: values.recoveryStatus as RecoveryStatus,
+@@ -197,9 +200,12 @@
+ }
+ export function TreatmentPlanPage() {
+   const { caseId = '' } = useParams();
++  const navigate = useNavigate();
++  const [saved, setSaved] = useState(false);
+   const { service } = useMedicalRuntime();
+   const id = Number(caseId);
+   const load = useCallback(async () => {
++    if (!Number.isSafeInteger(id) || id < 1) throw new Error('Invalid medical case ID.');
+     const medicalCase = await service.getCase(id);
+     const tasks = [] as Awaited<ReturnType<typeof service.listCaseTasks>>['items'];
+     if (medicalCase.treatmentPlan) {
+@@ -222,10 +228,11 @@
+   };
+   return <><Link to={casePath(id)}>Back to medical case</Link>
+     <PageHeader title={'Treatment Plan · Horse ' + medicalCase.horseId} description={'Medical case ' + id} />
++    {saved && <AlertBanner type="success" title="Treatment plan saved" />}
+     <div className="medical-grid medical-treatment-layout"><div className="medical-stack">
+       <Card title="Plan period"><KeyValue label="Case opened" value={medicalCase.openedAt} /><KeyValue label="Next re-examination" value={medicalCase.treatmentPlan?.reexaminationDate ?? 'Not scheduled'} /></Card>
+       {medicalCase.status === 'CLOSED' ? <AlertBanner type="danger" title="Closed cases cannot be edited" /> :
+-        <TreatmentPlanEditor key={medicalCase.treatmentPlan?.id ?? 'new'} initial={initial} onSave={async (input) => { await service.saveTreatment(id, input); reload(); }} />}
++        <TreatmentPlanEditor key={medicalCase.treatmentPlan?.id ?? 'new'} initial={initial} onCancel={() => navigate(casePath(id))} onSave={async (input) => { await service.saveTreatment(id, input); setSaved(true); reload(); }} />}
+       <CaseTasks caseId={id} />
+     </div><div className="medical-stack">
+       <Card title="Case summary"><KeyValue label="Status" value={medicalCase.status} /><KeyValue label="Reason" value={medicalCase.reason ?? '—'} />
+@@ -274,7 +281,10 @@
+   const { service } = useMedicalRuntime();
+   const navigate = useNavigate();
+   const id = Number(incidentId);
+-  const load = useCallback(() => service.getIncident(id), [service, id]);
++  const load = useCallback(async () => {
++    if (!Number.isSafeInteger(id) || id < 1) throw new Error('Invalid incident ID.');
++    return service.getIncident(id);
++  }, [service, id]);
+   const { data, error, reload } = useResource(load);
+   const [actionError, setActionError] = useState('');
+   const [busy, setBusy] = useState(false);
+diff --git a/src/features/medical/integration.test.tsx b/src/features/medical/integration.test.tsx
+--- a/src/features/medical/integration.test.tsx
++++ b/src/features/medical/integration.test.tsx
+@@ -19,6 +19,18 @@
+ }
+
+ afterEach(() => { authSession.clear(); vi.unstubAllGlobals(); });
++
++it.each(['/medical/cases/no-such-id', '/medical/cases/0', '/medical/cases/no-such-id/treatment-plan'])('renders not-found for invalid route %s without a medical request', async (path) => {
++  authSession.save('jwt', 3600, false);
++  const fetcher = vi.fn(async (url: string) => {
++    if (url.endsWith('/api/auth/me')) return ok(vet);
++    throw new Error(`Unexpected medical request: ${url}`);
++  });
++  vi.stubGlobal('fetch', fetcher);
++  mount(path);
++  expect(await screen.findByText('Medical case not found')).toBeInTheDocument();
++  expect(fetcher).toHaveBeenCalledOnce();
++});
+
+ it('logs in and opens the clinical case list from the canonical router', async () => {
+   const fetcher = vi.fn(async (url: string, _init?: RequestInit) => {
+diff --git a/src/features/core046/client.ts b/src/features/core046/client.ts
+--- a/src/features/core046/client.ts
++++ b/src/features/core046/client.ts
+@@ -11,7 +11,11 @@
+   constructor(private readonly token: string, private readonly base = configuredBase, private readonly handleApiError?: (error: unknown) => boolean) {}
+
+   private async request<T>(path: string, init?: RequestInit): Promise<T> {
+-    try { return await requestApi<T>(path, init, { token: this.token, baseUrl: this.base }); }
++    try {
++      const data = await requestApi<T>(path, init, { token: this.token, baseUrl: this.base });
++      if (data == null) throw new ApiError('Unexpected API response.', 200);
++      return data;
++    }
+     catch (error) {
+       this.handleApiError?.(error);
+       if (error instanceof SharedApiError) throw new ApiError(error.message, error.status);
+@@ -22,10 +26,10 @@
+   getMe(): Promise<{ id: number; fullName: string; roles: string[]; accountStatus: string }> { return this.request('/api/auth/me'); }
+   listTreatmentTasks(page = 0): Promise<Page<GroomTreatmentTask>> { return this.request(`/api/groom/treatment-tasks?page=${page}&size=100`); }
+   completeTreatmentTask(id: number): Promise<GroomTreatmentTask> {
+-    return this.request(`/api/groom/treatment-tasks/${id}/complete`, { method: 'POST', body: '{}' });
++    return this.request(`/api/groom/treatment-tasks/${positiveId(id)}/complete`, { method: 'POST', body: '{}' });
+   }
+   listIncidents(page = 0): Promise<Page<Incident>> { return this.request(`/api/incidents?page=${page}&size=100`); }
+-  getIncident(id: number): Promise<Incident> { return this.request(`/api/incidents/${id}`); }
++  getIncident(id: number): Promise<Incident> { return this.request(`/api/incidents/${positiveId(id)}`); }
+   async reportIncident(request: IncidentCreateRequest): Promise<Incident> {
+     const incident = await this.request<Incident>('/api/incidents', { method: 'POST', body: JSON.stringify(request) });
+     if (!incident || !Number.isSafeInteger(incident.id) || incident.id < 1 || typeof incident.incidentCode !== 'string' || !incident.incidentCode.trim()) {
+@@ -33,6 +37,11 @@
+     }
+     return incident;
+   }
++}
++
++function positiveId(id: number): number {
++  if (!Number.isSafeInteger(id) || id < 1) throw new Error('A positive numeric ID is required.');
++  return id;
+ }
+
+ /** API has pagination only, so collect server-scoped pages before local Figma filters. */
+diff --git a/src/features/core046/client.test.ts b/src/features/core046/client.test.ts
+--- a/src/features/core046/client.test.ts
++++ b/src/features/core046/client.test.ts
+@@ -45,3 +45,17 @@
+     await expect(collectPages(async () => ({ items: [], page: 0, size: 100, totalElements: 1 }))).rejects.toThrow('Incomplete paged response');
+   });
+ });
++
++  it.each([0, -1, Number.NaN, 1.5, Number.POSITIVE_INFINITY])('rejects invalid resource ID %s before any request', (id) => {
++    const fetcher = vi.fn();
++    vi.stubGlobal('fetch', fetcher);
++    const client = new Core046Client('token');
++    expect(() => client.completeTreatmentTask(id)).toThrow('positive numeric ID');
++    expect(() => client.getIncident(id)).toThrow('positive numeric ID');
++    expect(fetcher).not.toHaveBeenCalled();
++  });
++
++  it('rejects null success data instead of confirming a mutation', async () => {
++    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(ok(null)));
++    await expect(new Core046Client('token').completeTreatmentTask(7)).rejects.toMatchObject({ status: 200, message: 'Unexpected API response.' });
++  });
