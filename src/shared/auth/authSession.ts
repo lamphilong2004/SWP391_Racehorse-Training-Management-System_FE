@@ -1,9 +1,9 @@
-import { DEMO_UI_ONLY } from '../../demo/demoMode';
-import { STAGING_SAMPLE } from '../../staging/stagingMode';
+import { ROLE_TEST_LOGIN } from '../../staging/stagingMode';
+import { isTestIdentityToken } from './authApi';
 
-// One canonical session API, with dev harness storage isolated from actual API authentication.
-const LOCAL_SESSION_KEY = STAGING_SAMPLE ? 'racehorse.staging-auth.local.v1' : DEMO_UI_ONLY ? 'racehorse.dev-auth.local.v1' : 'racehorse.auth.local.v1';
-const TAB_SESSION_KEY = STAGING_SAMPLE ? 'racehorse.staging-auth.session.v1' : DEMO_UI_ONLY ? 'racehorse.dev-auth.session.v1' : 'racehorse.auth.session.v1';
+// One canonical session API. Protected-Preview role test sessions use separate keys and never mix with real JWTs.
+const LOCAL_SESSION_KEY = ROLE_TEST_LOGIN ? 'racehorse.role-test.local.v1' : 'racehorse.auth.local.v1';
+const TAB_SESSION_KEY = ROLE_TEST_LOGIN ? 'racehorse.role-test.session.v1' : 'racehorse.auth.session.v1';
 
 export interface StoredAuthSession {
   accessToken: string;
@@ -26,9 +26,7 @@ function readFrom(kind: 'localStorage' | 'sessionStorage', key: string): StoredA
     if (!raw) return null;
     const value = JSON.parse(raw) as Partial<StoredAuthSession>;
     if (typeof value.accessToken !== 'string' || !value.accessToken || typeof value.expiresAt !== 'number' || !Number.isFinite(value.expiresAt)
-      || (!DEMO_UI_ONLY && value.accessToken.startsWith('ui-demo-session:'))
-      || (!STAGING_SAMPLE && value.accessToken.startsWith('staging-sample:'))
-      || (STAGING_SAMPLE && !value.accessToken.startsWith('staging-sample:'))) {
+      || ROLE_TEST_LOGIN !== isTestIdentityToken(value.accessToken)) {
       target.removeItem(key);
       return null;
     }

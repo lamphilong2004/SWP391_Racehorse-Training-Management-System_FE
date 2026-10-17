@@ -13,7 +13,6 @@ import { PedigreeOwnershipPage } from '../features/horses/create/PedigreeOwnersh
 import { PendingActivationPage } from '../features/horses/activation/PendingActivationPage';
 import { PublicOnly, RequireAuth } from './RequireAuth';
 import { ROUTES } from './routePaths';
-import { DEMO_UI_ONLY } from '../demo/demoMode';
 import { Core046Route } from '../features/core046/auth';
 import { IncidentLayout, IncidentListRoute, IncidentDetailRoute } from './IncidentRoutes';
 import { MedicalAccess } from '../features/medical/runtime';
@@ -57,28 +56,22 @@ const devRoutes: RouteObject[] = import.meta.env.DEV
     ]
   : [];
 
-/** Development harness only (dead code in production builds): hidden presenter page, never linked from navigation. */
-const presenterRoutes: RouteObject[] = import.meta.env.DEV && DEMO_UI_ONLY
-  ? [{ path: '/presenter-tools', lazy: async () => ({ Component: (await import('../demo/PresenterToolsPage')).PresenterToolsPage }) }]
-  : [];
-
 /**
  * CORE-008 owns public sign-in and the authenticated role workspace entry. Other feature screens remain with their
  * owning CORE tasks and continue to use the canonical ROUTES/AppShell configuration.
  */
 export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
-  // Inline build flags let the bundler remove the sample entry chunk from API/normal artifacts.
-  const signInRoute: RouteObject = import.meta.env.MODE === 'staging-sample' && import.meta.env.VITE_STAGING_SAMPLE === 'true'
-    ? { path: ROUTES.login, hydrateFallbackElement: <p role="status">Loading sample workspace entry…</p>, lazy: async () => {
-      const { SampleWorkspaceEntry } = await import('../staging/SampleWorkspaceEntry');
-      return { Component: () => <PublicOnly><SampleWorkspaceEntry /></PublicOnly> };
+  // Inline build flags let the bundler remove the role test entry chunk from API/normal/production artifacts.
+  const signInRoute: RouteObject = import.meta.env.MODE === 'staging-preview' && import.meta.env.VITE_ROLE_TEST_LOGIN === 'true'
+    ? { path: ROUTES.login, hydrateFallbackElement: <p role="status">Loading role test sign-in…</p>, lazy: async () => {
+      const { RoleTestEntry } = await import('../staging/RoleTestEntry');
+      return { Component: () => <PublicOnly><RoleTestEntry /></PublicOnly> };
     } }
     : { path: ROUTES.login, element: <PublicOnly><LoginPage /></PublicOnly> };
   return [
     ...(includeDevRoutes
       ? [{ path: ROUTES.root, element: <Navigate to={ROUTES.devComponents} replace /> }, ...devRoutes]
       : [{ path: ROUTES.root, element: <Navigate to={ROUTES.dashboard} replace /> }]),
-    ...presenterRoutes,
     signInRoute,
     { path: ROUTES.dashboard, element: <RequireAuth><ManagementDashboardEntry /></RequireAuth> },
     { path: ROUTES.auditLog, element: <RequireAuth allowedRoles={['CLUB_MANAGER']}><ManagementAuditEntry /></RequireAuth> },

@@ -4,8 +4,7 @@ import { Sidebar } from './Sidebar';
 import styles from './AppShell.module.css';
 import { AlertBanner } from '../design-system';
 import { businessDataMode } from '../shared/data/businessData';
-import { DEMO_UI_ONLY, PRESENTATION_MODE } from '../demo/demoMode';
-import { STAGING_SAMPLE } from '../staging/stagingMode';
+import { ROLE_TEST_LOGIN } from '../staging/stagingMode';
 
 export interface AppShellProps extends HeaderProps {
   children: ReactNode;
@@ -22,7 +21,7 @@ export function AppShell({ children, ...headerProps }: AppShellProps) {
       <Sidebar role={headerProps.user.role} />
       <div className={styles.main}>
         <Header {...headerProps} />
-        <main className={styles.content}>{businessDataMode() === 'sample' && !PRESENTATION_MODE && <AlertBanner type="info" title={STAGING_SAMPLE ? 'Staging sample — no backend connection' : 'Sample business data'}>Changes on unfinished business APIs stay in this browser. {STAGING_SAMPLE ? 'Identity and records are samples, not a real account or SQL data.' : DEMO_UI_ONLY ? 'Sign-in is simulated by the development harness; no backend is called.' : 'Sign-in uses the real backend.'}</AlertBanner>}{children}</main>
+        <main className={styles.content}>{ROLE_TEST_LOGIN && <AlertBanner type="warning" title="Protected test sign-in — UI inspection only">Server operations are unavailable for test roles. Nothing is created, changed or saved.</AlertBanner>}{businessDataMode() === 'sample' && <AlertBanner type="info" title="Sample business data (test fixtures)">Records come from the test-only sample store.</AlertBanner>}{children}</main>
       </div>
     </div>
   );

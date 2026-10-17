@@ -1,7 +1,7 @@
 import process from 'node:process';
 import assert from 'node:assert/strict';
 
-// Read-only HTTP checks. UI/RBAC/mutation smoke tests live in src/staging/stagingSmoke.test.tsx.
+// Read-only HTTP checks. Role test login UI checks live in src/staging/roleTestLogin.test.tsx.
 const base = new URL(process.argv[2] || process.env.STAGING_URL || 'http://127.0.0.1:5196');
 assert(!base.username && !base.password && !base.search && !base.hash, 'Use a plain staging origin; never put credentials in the URL.');
 assert(base.protocol === 'https:' || (base.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(base.hostname)), 'Remote staging must use HTTPS.');
@@ -24,6 +24,6 @@ assert.equal(entry.status, 200); assert.match(entry.headers.get('content-type') 
 const metaResponse = await fetch(new URL('/staging-meta.json', base));
 assert.equal(metaResponse.status, 200);
 const meta = await metaResponse.json();
-assert(['sample', 'api'].includes(meta.profile));
+assert(['preview', 'api'].includes(meta.profile));
 for (const path of ['/assets/does-not-exist.js', '/api/health', '/.env', '/package.json']) assert.equal((await fetch(new URL(path, base))).status, 404, `${path} must not return an HTML false-success.`);
 console.log(JSON.stringify({ result: 'STATIC_HTTP_SMOKE_PASS', profile: meta.profile, revision: meta.revision, deepLinks: paths.length, entryAsset: script, uiRbacAndBackendNotProven: true }, null, 2));

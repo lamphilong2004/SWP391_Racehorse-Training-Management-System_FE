@@ -12,7 +12,9 @@ import { requestApi } from '../../shared/auth/authApi';
 import { setBusinessActor } from '../../shared/data/businessData';
 import { readSamples, sampleUser } from '../../shared/data/sampleStore';
 
-vi.mock('../../demo/demoMode', () => ({ DEMO_UI_ONLY: true, PRESENTATION_MODE: true, SHOW_DEV_BAR: false }));
+// Test-only all-routes sample fixture: no backend exists here, so every API call stays in the sample store.
+vi.stubEnv('VITE_BUSINESS_DATA_SOURCE', 'sample');
+vi.stubEnv('VITE_SAMPLE_SCOPE', 'all');
 const vet = sampleUser('VETERINARIAN');
 const groom = sampleUser('GROOM');
 const foreign: CurrentUser = { ...groom, id: 900, userCode: 'TEST-900', email: 'other.groom@example.test', fullName: 'Other Groom fixture' };

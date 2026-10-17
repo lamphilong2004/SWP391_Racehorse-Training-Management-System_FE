@@ -5,7 +5,9 @@ import { readSamples, saveSamples, sampleUser } from './sampleStore';
 import type { Incident, CaseTreatmentTask, MedicalCase, Page } from '../../features/medical/models';
 
 // Exercise existing presentation routing; product auth and transport are not replaced.
-vi.mock('../../demo/demoMode', () => ({ DEMO_UI_ONLY: true, PRESENTATION_MODE: true, SHOW_DEV_BAR: false }));
+// Test-only all-routes sample fixture: no backend exists here, so every API call stays in the sample store.
+vi.stubEnv('VITE_BUSINESS_DATA_SOURCE', 'sample');
+vi.stubEnv('VITE_SAMPLE_SCOPE', 'all');
 const actor = (role: 'GROOM' | 'VETERINARIAN', id = sampleUser(role).id) => setBusinessActor({ ...sampleUser(role), id });
 const call = <T,>(path: string, method = 'GET', body?: unknown) => requestApi<T>(path, { method, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
 beforeEach(() => { localStorage.clear(); setBusinessActor(null); vi.stubGlobal('fetch', vi.fn(() => { throw new Error('Sample identity must not reach the network'); })); });

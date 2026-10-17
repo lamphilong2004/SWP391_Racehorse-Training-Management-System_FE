@@ -43,7 +43,7 @@ export type ApiErrorCode =
 export class ApiError extends Error {
   constructor(
     readonly status: number,
-    readonly code: ApiErrorCode | 'NETWORK_ERROR' | 'INVALID_RESPONSE',
+    readonly code: ApiErrorCode | 'NETWORK_ERROR' | 'INVALID_RESPONSE' | 'SERVER_UNAVAILABLE',
     message: string,
     readonly details: ApiErrorDetail[] = [],
   ) {
@@ -81,14 +81,16 @@ interface RequestOptions {
 
 /** All responses follow the CORE-001 envelope; a 204 response intentionally has no body. */
 export async function requestApi<T>(path: string, init: RequestInit = {}, options: RequestOptions = {}): Promise<T> {
-  if (usesSampleData(path)) {
+  // Test-only fixtures; the MODE guard lets every runtime build drop the sample transport entirely.
+  if (import.meta.env.MODE === 'test' && usesSampleData(path)) {
     const actor = getBusinessActor();
     if (!actor || actor.accountStatus !== 'ACTIVE') throw new ApiError(401, 'UNAUTHORIZED', 'Sign in to continue.');
     const { sampleRequest } = await import('../data/sampleTransport');
     return sampleRequest<T>(path, init, actor);
   }
-  if (options.token?.startsWith('staging-sample:') || options.token?.startsWith('ui-demo-session:'))
-    throw new ApiError(401, 'UNAUTHORIZED', 'A sample identity cannot be used with the backend.');
+  // A protected-Preview test identity carries no server authority and is never sent to the backend.
+  if (isTestIdentityToken(options.token))
+    throw new ApiError(503, 'SERVER_UNAVAILABLE', 'This operation cannot be completed: test sign-in has no server access. Sign in with a server account when the backend is available.');
   const headers = new Headers(init.headers);
   if (init.body && !(init.body instanceof FormData) && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
   if (options.token) headers.set('Authorization', `Bearer ${options.token}`);
@@ -148,3 +150,9 @@ export function createAuthApi(options: Pick<RequestOptions, 'fetcher' | 'baseUrl
 }
 
 export const authApi = createAuthApi();
+
+/** Local markers used by the role test login (and legacy sample markers). Never JWTs or backend credentials. */
+export const TEST_IDENTITY_PREFIX = 'role-test:';
+export function isTestIdentityToken(token: string | undefined): boolean {
+  return !!token && [TEST_IDENTITY_PREFIX, 'staging-sample:', 'ui-demo-session:'].some((prefix) => token.startsWith(prefix));
+}

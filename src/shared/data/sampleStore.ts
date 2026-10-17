@@ -1,5 +1,6 @@
 import type { CurrentUser } from '../auth/authApi';
 import type { RoleCode } from '../auth/roles';
+import { testIdentity } from '../auth/testIdentities';
 import type { SessionResultView } from '../../features/evaluation/models';
 import type { MedicalCase, CaseTreatmentTask, Incident, HealthStatus } from '../../features/medical/models';
 import type { ProgramDetail, TemplateDetail, HorseSelection } from '../../features/program-creation/programTypes';
@@ -17,24 +18,8 @@ export const template: TemplateDetail = {
     requiredSkills: [{ id: 4, name: 'Endurance' }], createdAt: '2026-10-01T00:00:00Z', recoveryGuidance: 'Review recorded response before the next session.' },
   versions: [{ id: 301, versionNo: 1, createdAt: '2026-10-01T00:00:00Z' }],
 };
-export function sampleUser(role: RoleCode): CurrentUser {
-  const ids: Record<RoleCode, number> = { CLUB_MANAGER: 10, HEAD_TRAINER: 11, TRAINER: 12, WORK_RIDER: 13, VETERINARIAN: 15, GROOM: 16, HORSE_OWNER: 17 };
-  const person = SAMPLE_PEOPLE[role];
-  return { id: ids[role], userCode: `USR-${String(ids[role]).padStart(4, '0')}`, fullName: person.fullName, email: `${person.login}@racehorse.test`, roles: [role], accountStatus: 'ACTIVE' };
-}
-/**
- * Fictitious illustrative people (names follow the approved Figma examples). Emails use the reserved `.test` domain:
- * they are local sample identities, not SQL accounts, and carry no password.
- */
-const SAMPLE_PEOPLE: Record<RoleCode, { fullName: string; login: string }> = {
-  CLUB_MANAGER: { fullName: 'Hoang Minh Tuan', login: 'club.manager' },
-  HEAD_TRAINER: { fullName: 'Vo Thanh Son', login: 'head.trainer' },
-  TRAINER: { fullName: 'Nguyen Minh Khoa', login: 'trainer' },
-  WORK_RIDER: { fullName: 'Pham Quang Huy', login: 'work.rider' },
-  VETERINARIAN: { fullName: 'Dr. Nguyen Thu Ha', login: 'veterinarian' },
-  GROOM: { fullName: 'Bui Van Hai', login: 'groom' },
-  HORSE_OWNER: { fullName: 'Tran Quoc Bao', login: 'horse.owner' },
-};
+/** TEST-ONLY sample store. Identities come from the shared fictitious test identities. */
+export const sampleUser = (role: RoleCode): CurrentUser => testIdentity(role);
 export interface SampleData {
   exercises?: Exercise[];
   horseRegistry?: HorseSampleState;
