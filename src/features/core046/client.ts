@@ -24,16 +24,17 @@ export class Core046Client {
     if (typeof envelope !== 'object' || envelope === null || !('success' in envelope) || envelope.success !== true || !('data' in envelope)) {
       throw new ApiError('Unexpected API response.', response.status);
     }
+    if (envelope.data == null) throw new ApiError('Unexpected API response.', response.status);
     return envelope.data as T;
   }
 
   getMe(): Promise<{ id: number; fullName: string; roles: string[]; accountStatus: string }> { return this.request('/api/auth/me'); }
   listTreatmentTasks(page = 0): Promise<Page<GroomTreatmentTask>> { return this.request(`/api/groom/treatment-tasks?page=${page}&size=100`); }
   completeTreatmentTask(id: number): Promise<GroomTreatmentTask> {
-    return this.request(`/api/groom/treatment-tasks/${id}/complete`, { method: 'POST', body: '{}' });
+    return this.request(`/api/groom/treatment-tasks/${positiveId(id)}/complete`, { method: 'POST', body: '{}' });
   }
   listIncidents(page = 0): Promise<Page<Incident>> { return this.request(`/api/incidents?page=${page}&size=100`); }
-  getIncident(id: number): Promise<Incident> { return this.request(`/api/incidents/${id}`); }
+  getIncident(id: number): Promise<Incident> { return this.request(`/api/incidents/${positiveId(id)}`); }
   async reportIncident(request: IncidentCreateRequest): Promise<Incident> {
     const incident = await this.request<Incident>('/api/incidents', { method: 'POST', body: JSON.stringify(request) });
     if (!incident || !Number.isSafeInteger(incident.id) || incident.id < 1 || typeof incident.incidentCode !== 'string' || !incident.incidentCode.trim()) {
@@ -41,6 +42,11 @@ export class Core046Client {
     }
     return incident;
   }
+}
+
+function positiveId(id: number): number {
+  if (!Number.isSafeInteger(id) || id < 1) throw new Error('A positive numeric ID is required.');
+  return id;
 }
 
 /** API has pagination only, so collect server-scoped pages before local Figma filters. */
