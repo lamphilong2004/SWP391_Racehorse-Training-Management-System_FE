@@ -4,6 +4,7 @@
   "installCommand": "npm ci",
   "buildCommand": "npm run build:staging",
   "outputDirectory": "dist-staging",
+  "git": { "deploymentEnabled": false },
   "rewrites": [
     { "source": "/((?!api(?:/|$)|assets(?:/|$)|.*\\.[^/]+$).*)", "destination": "/index.html" }
   ],
