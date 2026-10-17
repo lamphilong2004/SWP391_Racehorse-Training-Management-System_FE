@@ -27,8 +27,12 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
 
 export function PublicOnly({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
+  const location = useLocation();
   if (auth.status === 'loading') return <p role="status">Restoring your session…</p>;
-  if (auth.status === 'authenticated') return <Navigate to={ROUTES.dashboard} replace />;
+  if (auth.status === 'authenticated') {
+    const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
+    return <Navigate to={from?.startsWith('/') ? from : ROUTES.dashboard} replace />;
+  }
   if (auth.status === 'error') return <RequireAuth>{children}</RequireAuth>;
   return children;
 }
