@@ -74,8 +74,10 @@ it('keeps real auth out of samples and clears the sample actor at logout', async
   const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ success: true, data: { accessToken: 'test-token', tokenType: 'Bearer', expiresIn: 3600, user: manager } }), { status: 200 }));
   await createAuthApi({ fetcher }).login({ email: manager.email, password: 'test-input-only' });
   expect(fetcher).toHaveBeenCalledOnce();
-  open('/dashboard'); await screen.findByRole('heading', { name: 'Club Manager Workspace' });
+  open('/dashboard'); await screen.findByRole('heading', { name: 'Club Manager Dashboard' });
   expect(getBusinessActor()?.id).toBe(201);
+  await userEvent.click(screen.getByRole('button', { name: 'Account menu' }));
+  await screen.findByRole('heading', { name: 'Your account' });
   await userEvent.click(screen.getByRole('button', { name: 'Sign out' }));
   await screen.findByRole('heading', { name: 'Sign in to Racehorse Ops' }); expect(getBusinessActor()).toBeNull();
 });

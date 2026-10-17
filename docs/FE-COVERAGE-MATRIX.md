@@ -65,7 +65,7 @@ Legend:
 |---|---|---|---|---|---|
 | Login | 400:7 | `/login` | 008 Hoàng | UI Implemented | Normal mode uses real auth; presentation identity is development-only. Registration copy needs owner alignment with DEC-008 |
 | Role landing redirect | registry | `/dashboard` | 008 Hoàng (follow-up) | PARTIAL | Generic workspace for HT/Vet/Trainer |
-| CM dashboard + audit log | 308:4605 · 308:5271 | `/dashboard`, `/admin/audit-log` | 052 Dũng in primary tracker; Đức remediation per Leader | NOT INTEGRATED | Do not overwrite Đức's branch or bypass independent remediation Gate |
+| CM dashboard + audit log | 308:4605 · 308:5271 | `/dashboard`, `/admin/audit-log` | 052 Dũng in primary tracker; Đức remediation per Leader | Integrated from786d397; Gate Pending | Canonical client; explicit shared-sample projections; no live BE/SQL claim. Users/Registrations remain unavailable; Reports deferred. F5 management path exception pending formal approval |
 | Staff & Users / Roles | 288:3192 … 290:3537 | `/admin/users`, `/admin/roles` | 050 Dũng (primary tracker) | **MISSING** (guarded unavailable state) | Required shared infrastructure; owner handoff |
 | Owner My Horses | 299:4305 | `/my-horses`, legacy `/owner/horses` | 056 Đức | **MISSING** (guarded unavailable state) | Mandatory minimum workspace under DEC-009; only race/finance/video remain deferred |
 | Notifications | 321:5356 · 322:5410 | `/notifications` | 054 Hoàng | **MISSING** (guarded unavailable state for all 7 roles) | Header bell navigates here; no fake count/list/mark-read |
@@ -78,4 +78,4 @@ These sidebar destinations were unregistered at recovered baseline9b53941:
 - CM: Staff & Users, Roles, Audit Log
 - Owner: My Horses, Notifications
 
-The recovered interrupted route patch replaces known missing screens with explicit unavailable states, preserving their owner and Gate. Performance now opens the existing CORE-033 history through a real route. Unknown URLs still use the actual404. Unavailable pages are not completed business modules, Sample E2E PASS, or CORE Done.
+The recovered interrupted route patch replaces known missing screens with explicit unavailable states, preserving their owner and Gate. Performance now opens the existing CORE-033 history through a real route. CORE-052 integration replaces only the Audit unavailable entry and the CM dashboard, preserving six other role workspaces. Unknown URLs still use the actual404. Unavailable pages are not completed business modules, Sample E2E PASS, or CORE Done.

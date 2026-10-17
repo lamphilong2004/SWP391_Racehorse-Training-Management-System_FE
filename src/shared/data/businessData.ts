@@ -14,5 +14,5 @@ export function usesSampleData(path: string): boolean {
   // Existing auth, health and restriction APIs always use the real backend, even in mixed mode.
   if (/^\/api\/horses\/(?:\d+\/(?:training-availability|availability|medical-restrictions)|availability\/batch)$/.test(route)) return false;
   return /^\/api\/(horses(?:\/|$)|stable-boxes(?:\/|$)|program-templates(?:\/|$)|training-programs(?:\/|$)|training-sessions(?:\/|$)|groom(?:\/|$)|work-rider(?:\/|$)|incidents(?:\/|$)|medical\/(cases|herd-health)(?:\/|$))/.test(route)
-    || route === '/api/admin/users' || /^\/api\/exercises(?:\/|$)/.test(route);
+    || route === '/api/admin/users' || route === '/api/dashboard/club-manager' || route === '/api/admin/audit-log' || /^\/api\/exercises(?:\/|$)/.test(route);
 }

@@ -1,7 +1,7 @@
 import { createBrowserRouter, Navigate, type RouteObject } from 'react-router';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { LoginPage } from '../pages/LoginPage';
-import { WorkspacePage } from '../pages/WorkspacePage';
+import { ManagementDashboardEntry, ManagementAuditEntry } from './ManagementEntry';
 import { AccountPage } from '../pages/AccountPage';
 import { ProgramCreationPage } from '../features/program-creation/ProgramCreationPage';
 import { SessionEvaluationPage } from '../features/evaluation/SessionEvaluationPage';
@@ -38,7 +38,6 @@ const pendingScreens: { path: string; title: string; section: string; roles: Rol
   { path: ROUTES.restrictions, title: 'Restrictions', section: 'Medical', roles: ['HEAD_TRAINER', 'TRAINER'] },
   { path: ROUTES.staffUsers, title: 'Staff & Users', section: 'Administration', roles: ['CLUB_MANAGER'] },
   { path: ROUTES.rolesPermissions, title: 'Roles & Permissions', section: 'Administration', roles: ['CLUB_MANAGER'] },
-  { path: ROUTES.auditLog, title: 'Audit Log', section: 'Operations', roles: ['CLUB_MANAGER'] },
   { path: ROUTES.myHorses, title: 'My Horses', section: 'Owner Portal', roles: ['HORSE_OWNER'] },
   { path: '/my-horses', title: 'My Horses', section: 'Owner Portal', roles: ['HORSE_OWNER'] },
   { path: '/my-horses/:id', title: 'Horse details', section: 'Owner Portal', roles: ['HORSE_OWNER'] },
@@ -78,7 +77,8 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
       : [{ path: ROUTES.root, element: <Navigate to={ROUTES.dashboard} replace /> }]),
     ...presenterRoutes,
     { path: ROUTES.login, element: <PublicOnly><LoginPage /></PublicOnly> },
-    { path: ROUTES.dashboard, element: <RequireAuth><WorkspacePage /></RequireAuth> },
+    { path: ROUTES.dashboard, element: <RequireAuth><ManagementDashboardEntry /></RequireAuth> },
+    { path: ROUTES.auditLog, element: <RequireAuth allowedRoles={['CLUB_MANAGER']}><ManagementAuditEntry /></RequireAuth> },
     { path: ROUTES.account, element: <RequireAuth><AccountPage /></RequireAuth> },
     { element: <RequireAuth allowedRoles={['CLUB_MANAGER', 'HEAD_TRAINER', 'TRAINER', 'VETERINARIAN', 'GROOM']}><HorseManagementLayout /></RequireAuth>, children: [
       { path: ROUTES.horses, element: <HorseListPage /> },

@@ -93,6 +93,8 @@ describe('CORE-022 UI + production router + real transport with HTTP fixtures (n
     expect(fetchMock.mock.calls.map(([url]) => new URL(String(url)).pathname)).toEqual(['/api/auth/me']);
     expect(posts()).toHaveLength(0);
     await actor.click(screen.getByRole('button', { name: 'Back to workspace' }));
+    await actor.click(await screen.findByRole('button', { name: 'Account menu' }));
+    expect(await screen.findByRole('heading', { name: 'Your account' })).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: 'Sign out' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Create program' })).not.toBeInTheDocument();
     expect(authSession.read()?.accessToken).toBe('fixture-program-jwt');

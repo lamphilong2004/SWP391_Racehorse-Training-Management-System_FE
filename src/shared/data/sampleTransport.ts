@@ -10,6 +10,7 @@ import { handleSupportingSample } from './supportingSamples';
 import type { ExaminationRequest, InjuryRequest, ReexaminationRequest, TreatmentPlanRequest, Incident } from '../../features/medical/models';
 import type { EvaluationRequest } from '../../features/evaluation/models';
 import { DEMO_UI_ONLY } from '../../demo/demoMode';
+import { handleManagementSample } from './managementSamples';
 
 /** Explicit temporary business transport. Never calls fetch or falls through to the backend. */
 export async function sampleRequest<T>(path: string, init: RequestInit, user: CurrentUser): Promise<T> {
@@ -45,6 +46,8 @@ export async function sampleRequest<T>(path: string, init: RequestInit, user: Cu
   if (sessionResponse.handled) return sessionResponse.data as T;
   const supportingResponse = handleSupportingSample(path, init, user);
   if (supportingResponse.handled) return supportingResponse.data as T;
+  const managementResponse = handleManagementSample(path, init, user);
+  if (managementResponse.handled) return managementResponse.data as T;
   if (route.startsWith('/api/program-templates') || /\/(template|trainer)-recommendations$/.test(route)) {
     allow('HEAD_TRAINER');
     if (method !== 'GET') fail(404, 'Template mutations are outside this sample data.');

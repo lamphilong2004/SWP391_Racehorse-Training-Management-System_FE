@@ -8,7 +8,7 @@ import './demo.css';
 
 /** Where each role starts in the demo (role landing per tracker Screen Registry, where the screen exists). */
 const LANDING: Record<RoleCode, string> = {
-  CLUB_MANAGER: '/horses',
+  CLUB_MANAGER: '/dashboard',
   HEAD_TRAINER: '/dashboard',
   TRAINER: '/dashboard',
   WORK_RIDER: '/rider',
@@ -94,7 +94,7 @@ export function DemoBar() {
             </div>
           </details>
         )}
-        {role === 'HORSE_OWNER' && <span className="ui-demo-bar__note">Owner portal is deferred (DEC-007) — not part of the 3 core flows.</span>}
+        {role === 'HORSE_OWNER' && <span className="ui-demo-bar__note">Minimum Owner workspace is required (DEC-009); delivery is still pending.</span>}
       </nav>
       <button type="button" className="ui-demo-bar__reset" onClick={reset}>Reset sample data</button>
     </div>

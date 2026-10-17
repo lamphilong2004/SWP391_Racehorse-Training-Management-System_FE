@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildRoutes } from '../../app/router';
 import { AuthProvider, useAuth } from './AuthProvider';
 import { ApiError } from './authApi';
+import { dashboardFixture } from '../../features/management/management.fixtures';
 
 const user = {
   id: 12,
@@ -147,7 +148,7 @@ describe('CORE-008 auth flow', () => {
   });
 
   it.each([
-    ['CLUB_MANAGER', 'Club Manager Workspace', 'Staff & Users', '/admin/users'],
+    ['CLUB_MANAGER', 'Club Manager Dashboard', 'Staff & Users', '/admin/users'],
     ['HEAD_TRAINER', 'Head Trainer Workspace', 'Horse Training Programs', '/training/programs'],
     ['TRAINER', 'Trainer Workspace', 'Assigned Programs', '/training/programs/assigned'],
     ['WORK_RIDER', 'Work Rider Workspace', 'My Rides', '/rider'],
@@ -156,7 +157,7 @@ describe('CORE-008 auth flow', () => {
     ['HORSE_OWNER', 'Horse Owner Portal', 'My Horses', '/owner/horses'],
   ])('uses canonical workspace and navigation for %s', async (role, workspace, navItem, navPath) => {
     savedSession('sessionStorage');
-    vi.stubGlobal('fetch', vi.fn<typeof fetch>(async () => envelope({ ...user, roles: [role] })));
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>(async (input) => String(input).includes('/api/dashboard/club-manager') ? envelope(dashboardFixture) : envelope({ ...user, roles: [role] })));
     renderApp('/dashboard');
 
     expect(await screen.findByRole('heading', { name: workspace })).toBeInTheDocument();
