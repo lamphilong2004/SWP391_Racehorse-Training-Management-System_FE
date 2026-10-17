@@ -18,7 +18,12 @@ function mount(path = '/login') {
   render(<AuthProvider api={stagingAuthApi}><RouterProvider router={router} /></AuthProvider>);
   return router;
 }
-async function enter(role: RoleCode) { fireEvent.click(await screen.findByRole('button', { name: ROLE_LABELS[role] })); }
+async function enter(role: RoleCode) {
+  const button = await screen.findByRole('button', { name: ROLE_LABELS[role] });
+  await act(async () => { fireEvent.click(button); });
+  // Wait for the real route chunks triggered by sign-in, not filesystem-transform timing.
+  await act(async () => { await vi.dynamicImportSettled(); });
+}
 
 it.each(ROLE_CODES)('opens %s via staging entry without credentials, dev controls or network', async (role) => {
   mount();
