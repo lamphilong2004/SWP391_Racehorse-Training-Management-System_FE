@@ -30,10 +30,17 @@ function pageError(cause: unknown): string {
 }
 
 export function TreatmentTasksPage() {
+  const { user } = useCore046Session();
+  return <TreatmentTasks key={user.id} />;
+}
+
+function TreatmentTasks() {
   const { client } = useCore046Session();
   const [tasks, setTasks] = useState<GroomTreatmentTask[] | null>(null);
   const [error, setError] = useState('');
   const [actionError, setActionError] = useState('');
+  const [completionNotice, setCompletionNotice] = useState('');
+  const [refreshError, setRefreshError] = useState('');
   const [busyId, setBusyId] = useState<number | null>(null);
   const completingId = useRef<number | null>(null);
   const [tab, setTab] = useState('today');
@@ -41,7 +48,7 @@ export function TreatmentTasksPage() {
   const [reportSource, setReportSource] = useState<IncidentSource | null>(null);
   const [reportedCode, setReportedCode] = useState('');
   const load = useCallback(() => {
-    setError(''); setTasks(null);
+    setError(''); setActionError(''); setRefreshError(''); setTasks(null);
     collectPages((page) => client.listTreatmentTasks(page)).then(setTasks).catch((cause: unknown) => setError(pageError(cause)));
   }, [client]);
   useEffect(() => {
@@ -52,8 +59,11 @@ export function TreatmentTasksPage() {
 
   const horses = useMemo(() => [...new Set((tasks || []).map((item) => item.horseId))].sort((a, b) => a - b).map((id) => ({ id, label: `Horse #${id}` })), [tasks]);
   const today = localDay(new Date());
+  // Keep today's completed work visible alongside pending work, as in Figma 252:843.
+  // Preserve the existing overdue-pending behavior; old completed tasks stay in Completed.
+  const todayTasks = (tasks || []).filter((task) => task.taskDate <= today && (task.status === 'PENDING' || task.taskDate === today));
   const filtered = (tasks || []).filter((task) => (horse === 'all' || String(task.horseId) === horse) &&
-    (tab === 'completed' ? task.status === 'COMPLETED' : task.status === 'PENDING' && (tab === 'today' ? task.taskDate <= today : task.taskDate > today)));
+    (tab === 'completed' ? task.status === 'COMPLETED' : tab === 'today' ? todayTasks.includes(task) : task.status === 'PENDING' && task.taskDate > today));
   const grouped = [...filtered.reduce((groups, task) => {
     const items = groups.get(task.horseId) || [];
     items.push(task);
@@ -64,10 +74,15 @@ export function TreatmentTasksPage() {
   async function complete(id: number) {
     if (completingId.current !== null) return;
     completingId.current = id;
-    setBusyId(id); setActionError('');
+    setBusyId(id); setActionError(''); setCompletionNotice(''); setRefreshError('');
     try {
-      await client.completeTreatmentTask(id);
-      setTasks(await collectPages((page) => client.listTreatmentTasks(page)));
+      const completed = await client.completeTreatmentTask(id);
+      if (completed.id !== id || completed.status !== 'COMPLETED') throw new Error('The server did not confirm this task completion. Refresh before retrying.');
+      // This state comes from the successful mutation response, never a guessed time/actor.
+      setTasks((current) => current?.map((task) => task.id === id ? { ...task, status: completed.status, ...(completed.completedAt ? { completedAt: completed.completedAt } : {}) } : task) ?? current);
+      setCompletionNotice(`Task ${id} completed.`);
+      try { setTasks(await collectPages((page) => client.listTreatmentTasks(page))); }
+      catch (cause) { setRefreshError(pageError(cause)); }
     } catch (cause) { setActionError(pageError(cause)); }
     finally { completingId.current = null; setBusyId(null); }
   }
@@ -78,15 +93,17 @@ export function TreatmentTasksPage() {
   }
 
   return <>
-    <PageHeader title="My Care & Medication Tasks" description="Veterinarian instructions assigned to you" />
+    <PageHeader title="My Care & Medication Tasks" description={`Assigned to you from the Veterinarian's treatment plans${tasks ? ` · ${todayTasks.length} today · ${todayTasks.filter((task) => task.status === 'COMPLETED').length} done · ${todayTasks.filter((task) => task.status === 'PENDING').length} to do` : ''}`} actions={<Button variant="secondary" disabled={busyId !== null || (!tasks && !error)} onClick={load}>Refresh tasks</Button>} />
     {reportedCode && <AlertBanner type="success" title={`Incident ${reportedCode} submitted.`} />}
+    {completionNotice && <AlertBanner type="success" title={completionNotice} />}
+    {refreshError && <AlertBanner type="warning" title="Task completed, but the list could not be refreshed">{refreshError}</AlertBanner>}
     <div className={styles.treatmentLayout}><Card title="Treatment tasks">
       <p className={styles.hint}>Only your assigned treatment tasks appear here. Completion time and your identity are recorded by the server.</p>
       {!tasks && !error ? <LoadingState label="Loading assigned tasks…" /> : error ? <ErrorPanel message={error} retry={load} /> : <>
-        <div className={styles.filters}><Tabs label="Task period" items={[{ value: 'today', label: `Today · ${tasks!.filter((item) => item.status === 'PENDING' && item.taskDate <= today).length}` }, { value: 'upcoming', label: `Upcoming · ${tasks!.filter((item) => item.status === 'PENDING' && item.taskDate > today).length}` }, { value: 'completed', label: `Completed · ${tasks!.filter((item) => item.status === 'COMPLETED').length}` }]} value={tab} onChange={setTab} idPrefix="treatment-period" />
+        <div className={styles.filters}><Tabs label="Task period" items={[{ value: 'today', label: `Today · ${todayTasks.length}` }, { value: 'upcoming', label: `Upcoming · ${tasks!.filter((item) => item.status === 'PENDING' && item.taskDate > today).length}` }, { value: 'completed', label: `Completed · ${tasks!.filter((item) => item.status === 'COMPLETED').length}` }]} value={tab} onChange={setTab} idPrefix="treatment-period" />
           <SelectField label="Horse" value={horse} onChange={(event) => setHorse(event.target.value)} options={[{ value: 'all', label: 'All my horses' }, ...horses.map((item) => ({ value: String(item.id), label: item.label }))]} />
         </div>
-        {actionError && <AlertBanner type="danger" title="Task completion could not be confirmed">{actionError} <Button variant="secondary" onClick={load}>Refresh tasks</Button></AlertBanner>}
+        {actionError && <AlertBanner type="danger" title="Task completion could not be confirmed">{actionError}</AlertBanner>}
         {filtered.length === 0 ? <EmptyState title="No treatment tasks" description="There are no assigned tasks for this selection." /> : <div className={styles.taskList}>{grouped.map(([horseId, horseTasks]) => <section key={horseId} className={styles.horseGroup} aria-label={`Horse #${horseId} treatment tasks`}>
           <h3>Horse #{horseId}</h3>
           {horseTasks.map((task) => <article key={task.id} className={styles.taskRow}>
@@ -108,6 +125,11 @@ export function TreatmentTasksPage() {
 }
 
 export function IncidentsPage() {
+  const { user } = useCore046Session();
+  return <IncidentList key={user.id} />;
+}
+
+function IncidentList() {
   const { client, user } = useCore046Session();
   const [incidents, setIncidents] = useState<Incident[] | null>(null);
   const [error, setError] = useState('');
@@ -166,6 +188,12 @@ export function IncidentsPage() {
 }
 
 export function IncidentDetailPage() {
+  const { user } = useCore046Session();
+  const { incidentId } = useParams();
+  return <IncidentDetail key={`${user.id}:${incidentId ?? ''}`} />;
+}
+
+function IncidentDetail() {
   const { client } = useCore046Session();
   const { incidentId } = useParams();
   const id = Number(incidentId);
