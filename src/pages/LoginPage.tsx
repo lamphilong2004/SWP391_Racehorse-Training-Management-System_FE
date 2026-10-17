@@ -133,7 +133,7 @@ export function LoginPage() {
         </div>
 
         <div className={styles.footer}>
-          <span className={styles.demoHint}>Demo account · Head Trainer</span>
+          <span className={styles.demoHint}>Racehorse Ops</span>
           <p>© 2026 Racehorse Ops · Web application</p>
         </div>
       </section>

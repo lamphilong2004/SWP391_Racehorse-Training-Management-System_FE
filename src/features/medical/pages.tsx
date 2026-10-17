@@ -74,7 +74,7 @@ export function CreateCasePage() {
   const { service } = useMedicalRuntime();
   const navigate = useNavigate();
   return <><Link to={ROUTES.medical}>Back to cases</Link><PageHeader title="Create Medical Case" />
-    <Card title="Independent case"><MedicalForm submitLabel="Create case" fields={[
+    <Card title="Independent case"><MedicalForm submitLabel="Create case" onCancel={() => navigate(ROUTES.medical)} fields={[
       { name: 'horseId', label: 'Horse ID', type: 'number', required: true },
       { name: 'reason', label: 'Reason', type: 'textarea', required: true },
     ]} onSave={async (values) => {
@@ -197,6 +197,8 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
 }
 export function TreatmentPlanPage() {
   const { caseId = '' } = useParams();
+  const navigate = useNavigate();
+  const [saved, setSaved] = useState(false);
   const { service } = useMedicalRuntime();
   const id = Number(caseId);
   const load = useCallback(async () => {
@@ -222,10 +224,11 @@ export function TreatmentPlanPage() {
   };
   return <><Link to={casePath(id)}>Back to medical case</Link>
     <PageHeader title={'Treatment Plan · Horse ' + medicalCase.horseId} description={'Medical case ' + id} />
+    {saved && <AlertBanner type="success" title="Treatment plan saved" />}
     <div className="medical-grid medical-treatment-layout"><div className="medical-stack">
       <Card title="Plan period"><KeyValue label="Case opened" value={medicalCase.openedAt} /><KeyValue label="Next re-examination" value={medicalCase.treatmentPlan?.reexaminationDate ?? 'Not scheduled'} /></Card>
       {medicalCase.status === 'CLOSED' ? <AlertBanner type="danger" title="Closed cases cannot be edited" /> :
-        <TreatmentPlanEditor key={medicalCase.treatmentPlan?.id ?? 'new'} initial={initial} onSave={async (input) => { await service.saveTreatment(id, input); reload(); }} />}
+        <TreatmentPlanEditor key={medicalCase.treatmentPlan?.id ?? 'new'} initial={initial} onCancel={() => navigate(casePath(id))} onSave={async (input) => { await service.saveTreatment(id, input); setSaved(true); reload(); }} />}
       <CaseTasks caseId={id} />
     </div><div className="medical-stack">
       <Card title="Case summary"><KeyValue label="Status" value={medicalCase.status} /><KeyValue label="Reason" value={medicalCase.reason ?? '—'} />

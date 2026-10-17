@@ -3,9 +3,10 @@ import { AlertBanner, Button, SelectField, TextAreaField, TextField } from '../.
 import { medicalErrorMessage } from './errors';
 
 export interface FormField { name: string; label: string; required?: boolean; type?: string; options?: string[] }
-export function MedicalForm({ fields, initial = {}, submitLabel, onSave }: {
+export function MedicalForm({ fields, initial = {}, submitLabel, onSave, onCancel }: {
   fields: FormField[]; initial?: Record<string, string>; submitLabel: string;
   onSave: (values: Record<string, string>) => Promise<void>;
+  onCancel?: () => void;
 }) {
   const [values, setValues] = useState(initial);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -34,6 +35,9 @@ export function MedicalForm({ fields, initial = {}, submitLabel, onSave }: {
       <TextField key={field.name} label={field.label} type={field.type ?? 'text'} min={field.type === 'number' ? 1 : undefined} step={field.type === 'number' ? 1 : undefined} value={values[field.name] ?? ''} error={errors[field.name]} disabled={pending} onChange={(event) => setValues({ ...values, [field.name]: event.target.value })} />)}
     {result.error && <AlertBanner type="danger" title={result.error} />}
     {result.success && <AlertBanner type="success" title={result.success} />}
-    <Button type="submit" disabled={pending}>{pending ? 'Saving…' : submitLabel}</Button>
+    <div className="medical-actions">
+      <Button type="submit" disabled={pending}>{pending ? 'Saving…' : submitLabel}</Button>
+      {onCancel && <Button type="button" variant="secondary" disabled={pending} onClick={onCancel}>Cancel</Button>}
+    </div>
   </form>;
 }

@@ -16,7 +16,7 @@ export function MedicalAccess({ children }: { children?: ReactNode }) {
   const auth = useAuth();
   const actor = auth.user;
   const token = authSession.read()?.accessToken;
-  const runtime = useMemo(() => actor && token ? { actor, service: createMedicalService(token, auth.handleApiError) } : null,
+  const runtime = useMemo(() => actor && token ? { actor, service: createMedicalService(token, auth.handleApiError, { actor }) } : null,
     [actor, token, auth.handleApiError]);
   if (auth.status !== 'authenticated' || !actor || actor.accountStatus !== 'ACTIVE' || !actor.roles.includes('VETERINARIAN'))
     return <AlertBanner type="danger" title="Access denied" />;

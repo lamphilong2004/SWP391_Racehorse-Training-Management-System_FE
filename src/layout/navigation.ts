@@ -157,6 +157,7 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
       {
         heading: 'My Work',
         items: [
+          { label: 'Treatment Tasks', icon: 'clipboard-list', to: ROUTES.treatmentTasks },
           { label: 'Care Tasks', icon: 'clipboard-list', to: ROUTES.careTasks, deferred: DEFERRED_REASON },
           { label: 'Daily Care', icon: 'check-circle', to: ROUTES.dailyCare, deferred: DEFERRED_REASON },
           {

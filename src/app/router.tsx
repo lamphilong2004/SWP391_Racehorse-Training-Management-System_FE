@@ -6,6 +6,13 @@ import { PublicOnly, RequireAuth } from './RequireAuth';
 import { ROUTES } from './routePaths';
 import { MedicalAccess } from '../features/medical/runtime';
 import { CaseListPage, CreateCasePage, CaseDetailPage, TreatmentPlanPage, HerdHealthPage } from '../features/medical/pages';
+import { Core046Route } from '../features/core046/auth';
+import { TreatmentTasksPage, IncidentsPage } from '../features/core046/pages';
+import { IncidentDetailSwitch } from './IncidentDetailSwitch';
+import { INCIDENT_READ_ROLES } from './incidentRoles';
+import type { RoleCode } from '../shared/auth/roles';
+
+const GROOM_ROLE: RoleCode[] = ['GROOM'];
 
 /**
  * Dev-only routes (DEC-010): the component gallery and the per-role shell preview. They are lazy-loaded inside an
@@ -30,9 +37,8 @@ const devRoutes: RouteObject[] = import.meta.env.DEV
  */
 export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
   return [
-    ...(includeDevRoutes
-      ? [{ path: ROUTES.root, element: <Navigate to={ROUTES.devComponents} replace /> }, ...devRoutes]
-      : [{ path: ROUTES.root, element: <Navigate to={ROUTES.dashboard} replace /> }]),
+    { path: ROUTES.root, element: <Navigate to={ROUTES.dashboard} replace /> },
+    ...(includeDevRoutes ? devRoutes : []),
     { path: ROUTES.login, element: <PublicOnly><LoginPage /></PublicOnly> },
     { path: ROUTES.dashboard, element: <RequireAuth><WorkspacePage /></RequireAuth> },
     { path: ROUTES.medical, element: <RequireAuth><MedicalAccess><CaseListPage /></MedicalAccess></RequireAuth> },
@@ -40,6 +46,9 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
     { path: ROUTES.medicalCaseDetail, element: <RequireAuth><MedicalAccess><CaseDetailPage /></MedicalAccess></RequireAuth> },
     { path: ROUTES.treatmentPlan, element: <RequireAuth><MedicalAccess><TreatmentPlanPage /></MedicalAccess></RequireAuth> },
     { path: ROUTES.herdHealth, element: <RequireAuth><MedicalAccess><HerdHealthPage /></MedicalAccess></RequireAuth> },
+    { path: ROUTES.treatmentTasks, element: <RequireAuth><Core046Route allowedRoles={GROOM_ROLE}><TreatmentTasksPage /></Core046Route></RequireAuth> },
+    { path: ROUTES.incidents, element: <RequireAuth><Core046Route allowedRoles={INCIDENT_READ_ROLES}><IncidentsPage /></Core046Route></RequireAuth> },
+    { path: ROUTES.incidentDetail, element: <RequireAuth><IncidentDetailSwitch /></RequireAuth> },
     { path: '*', element: <RequireAuth><NotFoundPage /></RequireAuth> },
   ];
 }

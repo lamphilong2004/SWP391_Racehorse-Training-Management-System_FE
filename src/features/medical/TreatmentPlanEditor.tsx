@@ -3,8 +3,9 @@ import { AlertBanner, Button, Card, TextAreaField, TextField } from '../../desig
 import type { GroomTaskInstruction, TreatmentPlanRequest } from './models';
 import { medicalErrorMessage } from './errors';
 
-export function TreatmentPlanEditor({ initial, onSave }: {
+export function TreatmentPlanEditor({ initial, onSave, onCancel }: {
   initial?: Partial<TreatmentPlanRequest>; onSave: (input: TreatmentPlanRequest) => Promise<void>;
+  onCancel?: () => void;
 }) {
   const [plan, setPlan] = useState<TreatmentPlanRequest>({
     treatmentMedicationInstructions: initial?.treatmentMedicationInstructions ?? '',
@@ -47,6 +48,9 @@ export function TreatmentPlanEditor({ initial, onSave }: {
     </fieldset></Card>
     <Card title="Next review"><TextField label="Re-examination date" type="date" value={plan.reexaminationDate ?? ''} disabled={saving} onChange={(event) => setPlan({ ...plan, reexaminationDate: event.target.value || undefined })} /></Card>
     {error && <AlertBanner type="danger" title={error} />}
-    <Button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save treatment plan'}</Button>
+    <div className="medical-actions">
+      <Button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save treatment plan'}</Button>
+      {onCancel && <Button type="button" variant="secondary" disabled={saving} onClick={onCancel}>Cancel</Button>}
+    </div>
   </form>;
 }

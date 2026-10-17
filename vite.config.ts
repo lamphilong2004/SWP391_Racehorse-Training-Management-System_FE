@@ -9,6 +9,7 @@ export default defineConfig({
   },
   test: {
     globals: true,
+    env: { VITE_MEDICAL_DATA_SOURCE: 'api' },
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: { modules: { classNameStrategy: 'non-scoped' } },

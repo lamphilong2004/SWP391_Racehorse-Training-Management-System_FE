@@ -1,14 +1,17 @@
 import type { MedicalService } from './models';
+import type { CurrentUser } from '../../shared/auth/authApi';
+import { createMedicalTransport } from '../../shared/services/medicalTransport';
 import { ApiError, requestApi } from '../../shared/auth/authApi';
 
-export function createMedicalService(accessToken: string, onApiError?: (error: unknown) => boolean, options: { baseUrl?: string; fetcher?: typeof fetch } = {}): MedicalService {
+export function createMedicalService(accessToken: string, onApiError?: (error: unknown) => boolean, options: { baseUrl?: string; fetcher?: typeof fetch; actor?: CurrentUser } = {}): MedicalService {
+  const fetcher = options.fetcher ?? createMedicalTransport(options.actor);
   if (!accessToken.trim()) throw new Error('A signed-in session is required for medical requests.');
   async function request<T>(path: string, method = 'GET', payload?: unknown): Promise<T> {
     try {
       const data = await requestApi<T>(path, {
         method, headers: { Accept: 'application/json' },
         ...(payload !== undefined ? { body: JSON.stringify(payload) } : {}),
-      }, { token: accessToken, ...options });
+      }, { token: accessToken, baseUrl: options.baseUrl, fetcher });
       if (data == null) throw new ApiError(200, 'INVALID_RESPONSE', 'The server returned no medical data.');
       return data;
     } catch (error) {

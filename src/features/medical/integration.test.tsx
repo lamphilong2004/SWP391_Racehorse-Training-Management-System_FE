@@ -168,3 +168,52 @@ it('does not show case closure success when the backend returns 409', async () =
   expect(await screen.findByText('Linked incident remains unresolved')).toBeInTheDocument();
   expect(screen.getByText('Close case 9?')).toBeInTheDocument();
 });
+
+it.each([
+  ['OPEN_CASE', 'Open medical case', undefined],
+  ['LINK_CASE', 'Link case', 9],
+  ['RESOLVE', 'Resolve incident', undefined],
+] as const)('selects Vet review and sends %s from the one incident detail route', async (action, button, caseId) => {
+  authSession.save('jwt', 3600, false);
+  const incident = { id: 21, incidentCode: 'INC-021', horseId: 14, reportedByUserId: 6, incidentType: 'FEVER', observedSeverity: 'HIGH', observedAt: '2026-10-17T01:00:00Z', reportedAt: '2026-10-17T01:05:00Z', status: 'REPORTED' };
+  const requests: unknown[] = [];
+  const fetcher = vi.fn(async (url: string, init?: RequestInit) => {
+    if (url.endsWith('/api/auth/me')) return ok(vet);
+    if (url.endsWith('/api/incidents/21/review')) {
+      requests.push(JSON.parse(String(init?.body)));
+      return ok({ ...incident, status: action === 'RESOLVE' ? 'RESOLVED' : 'UNDER_REVIEW', medicalCaseId: action === 'OPEN_CASE' ? 9 : caseId });
+    }
+    if (url.endsWith('/api/incidents/21')) return ok(incident);
+    if (url.endsWith('/api/medical/cases/9')) return ok(medicalCase);
+    if (url.endsWith('/api/horses/14/training-availability')) return ok({ horseId: 14, availability: 'AVAILABLE' });
+    if (url.includes('/treatment-tasks')) return ok(page([]));
+    throw new Error(`Unexpected request: ${url}`);
+  });
+  vi.stubGlobal('fetch', fetcher);
+  const router = mount('/incidents/21');
+  expect(await screen.findByRole('heading', { name: /Incident/ })).toBeInTheDocument();
+  expect(screen.getAllByRole('navigation', { name: 'Main' })).toHaveLength(1);
+  if (caseId) fireEvent.change(screen.getByLabelText('Existing open case ID'), { target: { value: '9' } });
+  fireEvent.click(screen.getByRole('button', { name: button }));
+  await waitFor(() => expect(requests).toEqual([caseId ? { action, medicalCaseId: 9 } : { action }]));
+  if (action === 'OPEN_CASE') await waitFor(() => expect(router.state.location.pathname).toBe('/medical/cases/9'));
+});
+
+it('keeps the incident link input and backend reason on a review conflict', async () => {
+  authSession.save('jwt', 3600, false);
+  const incident = { id: 21, incidentCode: 'INC-021', horseId: 14, reportedByUserId: 6, incidentType: 'FEVER', observedSeverity: 'HIGH', observedAt: '2026-10-17T01:00:00Z', reportedAt: '2026-10-17T01:05:00Z', status: 'REPORTED' };
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+    if (url.endsWith('/api/auth/me')) return ok(vet);
+    if (url.endsWith('/api/incidents/21/review')) return fail(409, 'CONFLICT', 'Case belongs to another horse');
+    if (url.endsWith('/api/incidents/21')) return ok(incident);
+    if (url.endsWith('/api/horses/14/training-availability')) return ok({ horseId: 14, availability: 'AVAILABLE' });
+    throw new Error(`Unexpected request: ${url}`);
+  }));
+  mount('/incidents/21');
+  const input = await screen.findByLabelText('Existing open case ID');
+  fireEvent.change(input, { target: { value: '9' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Link case' }));
+  expect(await screen.findByText('Case belongs to another horse')).toBeInTheDocument();
+  expect(input).toHaveValue(9);
+  expect(screen.getByText('Status', { selector: 'span' }).parentElement).toHaveTextContent('REPORTED');
+});
