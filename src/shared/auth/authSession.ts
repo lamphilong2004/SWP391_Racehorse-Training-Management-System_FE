@@ -1,5 +1,8 @@
-const LOCAL_SESSION_KEY = 'racehorse.auth.local.v1';
-const TAB_SESSION_KEY = 'racehorse.auth.session.v1';
+import { DEMO_UI_ONLY } from '../../demo/demoMode';
+
+// One canonical session API, with dev harness storage isolated from actual API authentication.
+const LOCAL_SESSION_KEY = DEMO_UI_ONLY ? 'racehorse.dev-auth.local.v1' : 'racehorse.auth.local.v1';
+const TAB_SESSION_KEY = DEMO_UI_ONLY ? 'racehorse.dev-auth.session.v1' : 'racehorse.auth.session.v1';
 
 export interface StoredAuthSession {
   accessToken: string;
@@ -21,7 +24,8 @@ function readFrom(kind: 'localStorage' | 'sessionStorage', key: string): StoredA
     const raw = target.getItem(key);
     if (!raw) return null;
     const value = JSON.parse(raw) as Partial<StoredAuthSession>;
-    if (typeof value.accessToken !== 'string' || !value.accessToken || typeof value.expiresAt !== 'number') {
+    if (typeof value.accessToken !== 'string' || !value.accessToken || typeof value.expiresAt !== 'number' || !Number.isFinite(value.expiresAt)
+      || (!DEMO_UI_ONLY && value.accessToken.startsWith('ui-demo-session:'))) {
       target.removeItem(key);
       return null;
     }

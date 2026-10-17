@@ -22,6 +22,7 @@ export const ROUTES = {
   groomPrecheck: '/training/my-sessions/:id/pre-check',
   stable: '/stable',
   trainingPrograms: '/training/programs',
+  assignedPrograms: '/training/programs/assigned',
   trainingProgramCreate: '/training/programs/new',
   programTemplates: '/training/templates',
   trainingSchedule: '/training/schedule',

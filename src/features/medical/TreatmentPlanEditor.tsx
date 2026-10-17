@@ -3,8 +3,9 @@ import { AlertBanner, Button, Card, TextAreaField, TextField } from '../../desig
 import type { GroomTaskInstruction, TreatmentPlanRequest } from './models';
 import { medicalErrorMessage } from './errors';
 
-export function TreatmentPlanEditor({ initial, onSave }: {
+export function TreatmentPlanEditor({ initial, onSave, onCancel }: {
   initial?: Partial<TreatmentPlanRequest>; onSave: (input: TreatmentPlanRequest) => Promise<void>;
+  onCancel?: () => void;
 }) {
   const [plan, setPlan] = useState<TreatmentPlanRequest>({
     treatmentMedicationInstructions: initial?.treatmentMedicationInstructions ?? '',
@@ -23,8 +24,14 @@ export function TreatmentPlanEditor({ initial, onSave }: {
     if (saving) return;
     setError('');
     if (!plan.treatmentMedicationInstructions.trim()) return setError('Medication and treatment instructions are required.');
+    if ((plan.restInstructions?.trim().length ?? 0) > 100 || (plan.careInstructions?.trim().length ?? 0) > 2000) {
+      return setError('Rest instructions must be 100 characters or fewer and care instructions 2000 characters or fewer.');
+    }
     if (tasks.some((task) => !Number.isSafeInteger(task.assignedGroomUserId) || task.assignedGroomUserId < 1 || !task.instruction.trim() || !task.taskDate)) {
       return setError('Each Groom task needs an active Groom ID, instruction and task date.');
+    }
+    if (tasks.some((task) => task.instruction.trim().length > 2000 || (task.scheduledSlot?.trim().length ?? 0) > 50)) {
+      return setError('Groom instructions must be 2000 characters or fewer and scheduled slots 50 characters or fewer.');
     }
     setSaving(true);
     try { await onSave({ ...plan, treatmentMedicationInstructions: plan.treatmentMedicationInstructions.trim(), groomTasks: tasks }); }
@@ -47,6 +54,9 @@ export function TreatmentPlanEditor({ initial, onSave }: {
     </fieldset></Card>
     <Card title="Next review"><TextField label="Re-examination date" type="date" value={plan.reexaminationDate ?? ''} disabled={saving} onChange={(event) => setPlan({ ...plan, reexaminationDate: event.target.value || undefined })} /></Card>
     {error && <AlertBanner type="danger" title={error} />}
-    <Button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save treatment plan'}</Button>
+    <div className="medical-actions">
+      <Button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save treatment plan'}</Button>
+      {onCancel && <Button type="button" variant="secondary" disabled={saving} onClick={onCancel}>Cancel</Button>}
+    </div>
   </form>;
 }

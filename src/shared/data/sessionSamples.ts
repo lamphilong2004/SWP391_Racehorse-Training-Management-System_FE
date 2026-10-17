@@ -1,6 +1,14 @@
 import { ApiError, type CurrentUser } from '../auth/authApi';
 import { CHECK_ITEMS, type Checklist } from '../../features/precheck/types';
-import { readSamples, saveSamples } from './sampleStore';
+import { readSamples, saveSamples, type SampleData } from './sampleStore';
+import type { SessionDetail } from '../../features/evaluation/models';
+
+export function canReadSampleSession(data: Pick<SampleData, 'programs'>, session: SessionDetail, actor: CurrentUser): boolean {
+  return actor.roles.some((role) => ['HEAD_TRAINER', 'CLUB_MANAGER', 'VETERINARIAN'].includes(role))
+    || actor.roles.includes('GROOM') // Groom assignment persistence is still a declared CORE-026 model dependency.
+    || (actor.roles.includes('WORK_RIDER') && session.workRider.id === actor.id)
+    || (actor.roles.includes('TRAINER') && data.programs.some((program) => program.id === session.programId && program.currentTrainer?.id === actor.id));
+}
 
 /** Explicit business-only samples; the signed-in actor still comes from the real auth provider. */
 export function handleSessionSample(path: string, init: RequestInit, actor: CurrentUser): { handled: boolean; data?: unknown } {
@@ -12,9 +20,9 @@ export function handleSessionSample(path: string, init: RequestInit, actor: Curr
   const allow = (...roles: string[]) => { if (!actor.roles.some((role) => roles.includes(role))) fail(403, 'This action is outside your role.'); };
   const send = (value: unknown) => { saveSamples(data); return { handled: true, data: structuredClone(value) }; };
   if (route === '/api/groom/sessions' && method === 'GET') { allow('GROOM'); return send(data.sessions.filter((item) => item.session.status === 'SCHEDULED' && item.session.scheduledStart.slice(0, 10) === (url.searchParams.get('date') ?? now.slice(0, 10))).map((item) => item.session)); }
-  if (route === '/api/work-rider/assignments' && method === 'GET') { allow('WORK_RIDER'); const status = url.searchParams.get('status'); return send(data.sessions.filter((item) => status ? item.session.status === status : ['SCHEDULED', 'IN_PROGRESS', 'PAUSED'].includes(item.session.status)).map((item) => item.session)); }
+  if (route === '/api/work-rider/assignments' && method === 'GET') { allow('WORK_RIDER'); const status = url.searchParams.get('status'); return send(data.sessions.filter((item) => item.session.workRider.id === actor.id && (status ? item.session.status === status : ['SCHEDULED', 'IN_PROGRESS', 'PAUSED'].includes(item.session.status))).map((item) => item.session)); }
   if (route === '/api/work-rider/history' && method === 'GET') {
-    allow('WORK_RIDER'); const rows = data.sessions.filter((item) => ['COMPLETED', 'INTERRUPTED'].includes(item.session.status)).map((item) => item.session).sort((a, b) => b.scheduledStart.localeCompare(a.scheduledStart));
+    allow('WORK_RIDER'); const rows = data.sessions.filter((item) => item.session.workRider.id === actor.id && ['COMPLETED', 'INTERRUPTED'].includes(item.session.status)).map((item) => item.session).sort((a, b) => b.scheduledStart.localeCompare(a.scheduledStart));
     const page = Math.max(0, Number(url.searchParams.get('page')) || 0), size = Math.max(1, Number(url.searchParams.get('size')) || 20);
     return send({ items: rows.slice(page * size, (page + 1) * size), page, size, totalItems: rows.length, totalPages: Math.ceil(rows.length / size) });
   }
@@ -22,6 +30,8 @@ export function handleSessionSample(path: string, init: RequestInit, actor: Curr
   allow('GROOM', 'WORK_RIDER', 'TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER');
   const item = data.sessions.find((result) => result.session.id === Number(match[1])) ?? fail(404, 'Session not found.');
   const session = item.session, action = match[2];
+  if (!canReadSampleSession(data, session, actor)) fail(403, 'This session is outside your assignment.');
+  if (method === 'POST' && ['complete', 'rider-feedback', 'metrics'].includes(action ?? '') && session.workRider.id !== actor.id) fail(403, 'Only the assigned Work Rider may perform this action.');
   if (method === 'GET' && !action) return send(session);
   if (method !== 'POST') return { handled: false };
   const input = init.body ? JSON.parse(String(init.body)) : {};

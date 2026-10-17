@@ -20,6 +20,10 @@ import { TreatmentTasksPage } from '../features/core046/pages';
 import { IncidentLayout, IncidentListRoute, IncidentDetailRoute } from './IncidentRoutes';
 import { MedicalAccess } from '../features/medical/runtime';
 import { CaseListPage, CreateCasePage, CaseDetailPage, TreatmentPlanPage, HerdHealthPage } from '../features/medical/pages';
+import { AssignedProgramsPage } from '../features/training/assigned/AssignedProgramsPage';
+import { TrainingCalendarPage } from '../features/training/calendar/TrainingCalendarPage';
+import { ExerciseLibraryPage } from '../features/training/exercises/ExerciseLibraryPage';
+import { OwnerHandoffPage } from './OwnerHandoffPage';
 
 /**
  * Dev-only routes (DEC-010): the component gallery and the per-role shell preview. They are lazy-loaded inside an
@@ -65,6 +69,15 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
       { path: '/horses/pending-activation', element: <RequireAuth allowedRoles={['CLUB_MANAGER']}><PendingActivationPage /></RequireAuth> },
     ] },
     { path: ROUTES.trainingProgramCreate, element: <RequireAuth allowedRoles={['HEAD_TRAINER']}><ProgramCreationPage /></RequireAuth> },
+    { path: ROUTES.assignedPrograms, element: <RequireAuth allowedRoles={['TRAINER']}><AssignedProgramsPage /></RequireAuth> },
+    { path: ROUTES.trainingSchedule, element: <RequireAuth allowedRoles={['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER']}><TrainingCalendarPage /></RequireAuth> },
+    { path: ROUTES.trainingCalendar, element: <RequireAuth allowedRoles={['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER']}><TrainingCalendarPage /></RequireAuth> },
+    { path: '/training/exercise-library', element: <RequireAuth allowedRoles={['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER', 'WORK_RIDER']}><ExerciseLibraryPage /></RequireAuth> },
+    { path: '/training/exercise-library/new', element: <RequireAuth allowedRoles={['TRAINER']}><ExerciseLibraryPage /></RequireAuth> },
+    { path: ROUTES.exerciseLibrary, element: <RequireAuth allowedRoles={['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER', 'WORK_RIDER']}><ExerciseLibraryPage /></RequireAuth> },
+    { path: '/training/programs/:id', element: <RequireAuth allowedRoles={['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER', 'GROOM']}><OwnerHandoffPage title="Program details" /></RequireAuth> },
+    { path: '/training/session/:id', element: <RequireAuth allowedRoles={['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER']}><OwnerHandoffPage title="Session details" /></RequireAuth> },
+    { path: '/training/schedule/session/new', element: <RequireAuth allowedRoles={['TRAINER']}><OwnerHandoffPage title="Session scheduling" /></RequireAuth> },
     { path: ROUTES.sessionEvaluation, element: <RequireAuth><SessionEvaluationPage /></RequireAuth> },
     { path: ROUTES.groomToday, element: <RequireAuth allowedRoles={['GROOM']}><GroomTodayPage /></RequireAuth> },
     { path: ROUTES.groomPrecheck, element: <RequireAuth allowedRoles={['GROOM']}><PrecheckPage /></RequireAuth> },
@@ -75,6 +88,15 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
     { path: ROUTES.riderSession, element: <RequireAuth allowedRoles={['WORK_RIDER']}><RiderSessionPage /></RequireAuth> },
     { path: ROUTES.riderFeedback, element: <RequireAuth allowedRoles={['WORK_RIDER']}><RiderFeedbackPage /></RequireAuth> },
     { path: ROUTES.ridingHistory, element: <RequireAuth allowedRoles={['WORK_RIDER']}><RiderHistoryPage /></RequireAuth> },
+    // Workbook routes reuse the existing CORE-027/029 screens; retain published links as compatible entries.
+    { path: '/training/my-sessions', element: <RequireAuth allowedRoles={['GROOM']}><GroomTodayPage /></RequireAuth> },
+    { path: '/training/my-rides', element: <RequireAuth allowedRoles={['WORK_RIDER']}><RiderDashboardPage /></RequireAuth> },
+    { path: '/training/rides/assigned', element: <RequireAuth allowedRoles={['WORK_RIDER']}><RiderAssignmentsPage /></RequireAuth> },
+    { path: '/training/rides/history', element: <RequireAuth allowedRoles={['WORK_RIDER']}><RiderHistoryPage /></RequireAuth> },
+    { path: '/training/rides/:id', element: <RequireAuth allowedRoles={['WORK_RIDER']}><RiderAssignmentPage /></RequireAuth> },
+    { path: '/training/rides/:id/start', element: <RequireAuth allowedRoles={['WORK_RIDER']}><RiderAssignmentPage /></RequireAuth> },
+    { path: '/training/rides/:id/execute', element: <RequireAuth allowedRoles={['WORK_RIDER']}><RiderSessionPage /></RequireAuth> },
+    { path: '/training/rides/:id/feedback', element: <RequireAuth allowedRoles={['WORK_RIDER']}><RiderFeedbackPage /></RequireAuth> },
     { path: '/rides', element: <Navigate to={ROUTES.myRides} replace /> },
     { path: '/rides/assignments', element: <Navigate to={ROUTES.assignments} replace /> },
     { path: '/rides/history', element: <Navigate to={ROUTES.ridingHistory} replace /> },

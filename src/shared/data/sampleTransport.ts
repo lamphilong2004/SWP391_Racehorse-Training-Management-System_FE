@@ -5,7 +5,8 @@ import { validateProgramCreation } from '../../features/program-creation/program
 import { template, sampleUser, readSamples, saveSamples } from './sampleStore';
 import type { CurrentUser } from '../auth/authApi';
 import { handleHorseSample } from './horseSamples';
-import { handleSessionSample } from './sessionSamples';
+import { canReadSampleSession, handleSessionSample } from './sessionSamples';
+import { handleSupportingSample } from './supportingSamples';
 import type { ExaminationRequest, InjuryRequest, ReexaminationRequest, TreatmentPlanRequest, Incident } from '../../features/medical/models';
 import type { EvaluationRequest } from '../../features/evaluation/models';
 import { DEMO_UI_ONLY } from '../../demo/demoMode';
@@ -42,6 +43,8 @@ export async function sampleRequest<T>(path: string, init: RequestInit, user: Cu
   if (horseResponse.handled) return horseResponse.data as T;
   const sessionResponse = handleSessionSample(path, init, user);
   if (sessionResponse.handled) return sessionResponse.data as T;
+  const supportingResponse = handleSupportingSample(path, init, user);
+  if (supportingResponse.handled) return supportingResponse.data as T;
   if (route.startsWith('/api/program-templates') || /\/(template|trainer)-recommendations$/.test(route)) {
     allow('HEAD_TRAINER');
     if (method !== 'GET') fail(404, 'Template mutations are outside this sample data.');
@@ -69,6 +72,7 @@ export async function sampleRequest<T>(path: string, init: RequestInit, user: Cu
   if (sessionMatch) {
     allow('TRAINER', 'HEAD_TRAINER', 'WORK_RIDER', 'CLUB_MANAGER', 'VETERINARIAN');
     const result = data.sessions.find((item) => item.session.id === Number(sessionMatch[1])) ?? fail(404, 'Sample session not found. Use session 42 or 43.');
+    if (!canReadSampleSession(data, result.session, user)) fail(403, 'This session is outside your assignment.');
     if (method === 'GET' && sessionMatch[2] === 'result') return respond(result);
     if (method === 'POST' && sessionMatch[2] === 'evaluation') {
       allow('TRAINER');
@@ -84,7 +88,7 @@ export async function sampleRequest<T>(path: string, init: RequestInit, user: Cu
   }
   if (route === '/api/horses/7/performance' && method === 'GET') {
     allow('TRAINER', 'HEAD_TRAINER', 'CLUB_MANAGER', 'VETERINARIAN');
-    return respond(data.sessions.map(({ session, actual, evaluation }) => ({ sessionId: session.id, sessionCode: session.sessionCode, date: session.scheduledStart.slice(0, 10), status: session.status, totalDistanceM: actual.totalDistanceM, durationMin: actual.durationMin, maxHeartRate: actual.maxHeartRate, avgSpeedKmh: actual.avgSpeedKmh, result: evaluation?.result ?? null })).filter((item) => (!url.searchParams.get('from') || item.date >= url.searchParams.get('from')!) && (!url.searchParams.get('to') || item.date <= url.searchParams.get('to')!)));
+    return respond(data.sessions.filter(({ session }) => canReadSampleSession(data, session, user)).map(({ session, actual, evaluation }) => ({ sessionId: session.id, sessionCode: session.sessionCode, date: session.scheduledStart.slice(0, 10), status: session.status, totalDistanceM: actual.totalDistanceM, durationMin: actual.durationMin, maxHeartRate: actual.maxHeartRate, avgSpeedKmh: actual.avgSpeedKmh, result: evaluation?.result ?? null })).filter((item) => (!url.searchParams.get('from') || item.date >= url.searchParams.get('from')!) && (!url.searchParams.get('to') || item.date <= url.searchParams.get('to')!)));
   }
   if (route === '/api/incidents' || /^\/api\/incidents\/\d+(\/review)?$/.test(route)) {
     allow('GROOM', 'VETERINARIAN', 'TRAINER', 'HEAD_TRAINER', 'WORK_RIDER', 'CLUB_MANAGER');

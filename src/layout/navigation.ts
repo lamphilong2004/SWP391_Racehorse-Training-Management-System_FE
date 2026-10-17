@@ -69,7 +69,7 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
       {
         items: [
           { label: 'Dashboard', icon: 'dashboard', to: ROUTES.dashboard },
-          { label: 'Assigned Programs', icon: 'folder', to: ROUTES.trainingPrograms },
+          { label: 'Assigned Programs', icon: 'folder', to: ROUTES.assignedPrograms },
           { label: 'Training Calendar', icon: 'calendar', to: ROUTES.trainingCalendar },
           { label: 'Exercise Library', icon: 'book-open', to: ROUTES.exerciseLibrary },
           { label: 'Live Monitoring', icon: 'activity', to: ROUTES.realtimeMonitoring },

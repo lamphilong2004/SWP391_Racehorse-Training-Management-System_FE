@@ -44,4 +44,18 @@ describe('CORE-046 Medical API adapter', () => {
   it('does not silently show an incomplete result set', async () => {
     await expect(collectPages(async () => ({ items: [], page: 0, size: 100, totalElements: 1 }))).rejects.toThrow('Incomplete paged response');
   });
+
+  it.each([0, -1, Number.NaN, 1.5, Number.POSITIVE_INFINITY])('rejects invalid resource ID %s before any request', (id) => {
+    const fetcher = vi.fn();
+    vi.stubGlobal('fetch', fetcher);
+    const client = new Core046Client('token');
+    expect(() => client.completeTreatmentTask(id)).toThrow('positive numeric ID');
+    expect(() => client.getIncident(id)).toThrow('positive numeric ID');
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it('rejects null success data instead of confirming a mutation', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(ok(null)));
+    await expect(new Core046Client('token').completeTreatmentTask(7)).rejects.toMatchObject({ status: 200, message: 'Unexpected API response.' });
+  });
 });

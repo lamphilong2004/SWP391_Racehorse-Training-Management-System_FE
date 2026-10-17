@@ -6,7 +6,7 @@ import { CHECK_ITEMS, type Checklist } from '../../features/precheck/types';
 import type { SessionResultView } from '../../features/evaluation/models';
 
 const checks = (abnormal = false) => Object.fromEntries(CHECK_ITEMS.map(({ key }, index) => [key, { result: abnormal && index === 0 ? 'ABNORMAL' : 'NORMAL', observation: '' }])) as Checklist;
-const actor = (role: CurrentUser['roles'][number]) => setBusinessActor({ ...sampleUser(role), id: 900 });
+const actor = (role: CurrentUser['roles'][number]) => setBusinessActor(sampleUser(role));
 const post = <T,>(id: number, action: string, body?: unknown) => requestApi<T>(`/api/training-sessions/${id}/${action}`, { method: 'POST', ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
 beforeEach(() => { localStorage.clear(); vi.stubEnv('VITE_BUSINESS_DATA_SOURCE', 'sample'); resetSamples(); vi.stubGlobal('fetch', vi.fn(() => { throw new Error('Unexpected network request'); })); });
 afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); setBusinessActor(null); });
@@ -58,4 +58,18 @@ it('records manual zero values without inventing missing metrics or aggregates, 
 it('keeps implemented auth, restriction and availability endpoints on the real transport in mixed mode', () => {
   for (const path of ['/api/auth/login', '/api/auth/me', '/api/auth/logout', '/api/health', '/api/medical/restrictions', '/api/horses/7/training-availability', '/api/horses/7/medical-restrictions', '/api/horses/availability/batch']) expect(usesSampleData(path)).toBe(false);
   expect(usesSampleData('/api/training-sessions/44/start')).toBe(true);
+});
+
+it('denies foreign Rider reads/mutations and foreign Trainer evaluation without changing the graph', async () => {
+  const before = readSamples();
+  setBusinessActor({ ...sampleUser('WORK_RIDER'), id: 900 });
+  await expect(requestApi('/api/work-rider/assignments')).resolves.toEqual([]);
+  await expect(requestApi('/api/work-rider/history')).resolves.toMatchObject({ items: [], totalItems: 0 });
+  await expect(requestApi('/api/training-sessions/47')).rejects.toMatchObject({ status: 403 });
+  await expect(post(47, 'complete')).rejects.toMatchObject({ status: 403 });
+  await expect(requestApi('/api/training-sessions/42/result')).rejects.toMatchObject({ status: 403 });
+  setBusinessActor({ ...sampleUser('TRAINER'), id: 901 });
+  await expect(post(42, 'evaluation', { result: 'MET' })).rejects.toMatchObject({ status: 403 });
+  await expect(requestApi('/api/horses/7/performance')).resolves.toEqual([]);
+  expect(readSamples()).toEqual(before);
 });

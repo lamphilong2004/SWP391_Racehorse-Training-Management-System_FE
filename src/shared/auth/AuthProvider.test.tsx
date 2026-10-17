@@ -149,7 +149,7 @@ describe('CORE-008 auth flow', () => {
   it.each([
     ['CLUB_MANAGER', 'Club Manager Workspace', 'Staff & Users', '/admin/users'],
     ['HEAD_TRAINER', 'Head Trainer Workspace', 'Horse Training Programs', '/training/programs'],
-    ['TRAINER', 'Trainer Workspace', 'Assigned Programs', '/training/programs'],
+    ['TRAINER', 'Trainer Workspace', 'Assigned Programs', '/training/programs/assigned'],
     ['WORK_RIDER', 'Work Rider Workspace', 'My Rides', '/rider'],
     ['VETERINARIAN', 'Veterinary Workspace', 'Medical / Health', '/medical'],
     ['GROOM', 'Stable Care Workspace', 'Today', '/groom/today'],

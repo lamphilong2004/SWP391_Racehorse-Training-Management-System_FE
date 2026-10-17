@@ -98,11 +98,10 @@ export function AssignmentsTable({ api }: { api: RiderApi }) {
   );
 }
 
-const HISTORY_PAGE_LIMIT = 10;
 async function allHistory(api: RiderApi): Promise<RiderHistory> {
   const first = await api.history(0);
   const items = [...first.items];
-  for (let page = 1; page < Math.min(first.totalPages, HISTORY_PAGE_LIMIT); page += 1) items.push(...(await api.history(page)).items);
+  for (let page = 1; page < first.totalPages; page += 1) items.push(...(await api.history(page)).items);
   return { ...first, items };
 }
 
@@ -147,7 +146,6 @@ export function HistoryTable({ api }: { api: RiderApi }) {
           <Card className={styles.tableCard}>
             <DataTable columns={columns} rows={shown} rowKey={(ride) => ride.id} caption="Riding history" onRowClick={(ride) => navigate(`/rider/assignments/${ride.id}`)} empty={<EmptyState title="No rides yet" description="Completed and interrupted rides appear here." />} />
           </Card>
-          {history.data.totalPages > HISTORY_PAGE_LIMIT && <p className={styles.caption}>Showing the most recent {HISTORY_PAGE_LIMIT} pages of rides.</p>}
         </>
       )}
       <p className={styles.caption}>Only your own rides are shown. Horse performance trends are reviewed by your Trainer.</p>

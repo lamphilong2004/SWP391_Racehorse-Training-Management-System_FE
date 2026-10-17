@@ -20,6 +20,18 @@ function mount(path: string) {
 
 afterEach(() => { authSession.clear(); vi.unstubAllGlobals(); });
 
+it.each(['/medical/cases/no-such-id', '/medical/cases/0', '/medical/cases/no-such-id/treatment-plan'])('renders not-found for invalid route %s without a medical request', async (path) => {
+  authSession.save('jwt', 3600, false);
+  const fetcher = vi.fn(async (url: string) => {
+    if (url.endsWith('/api/auth/me')) return ok(vet);
+    throw new Error(`Unexpected medical request: ${url}`);
+  });
+  vi.stubGlobal('fetch', fetcher);
+  mount(path);
+  expect(await screen.findByText('Medical case not found')).toBeInTheDocument();
+  expect(fetcher).toHaveBeenCalledOnce();
+});
+
 it('logs in and opens the clinical case list from the canonical router', async () => {
   const fetcher = vi.fn(async (url: string, _init?: RequestInit) => {
     void _init;

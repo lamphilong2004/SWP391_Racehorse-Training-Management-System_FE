@@ -68,3 +68,15 @@ it('shows history metrics, filter tabs and server-derived duration and feedback 
   fireEvent.click(screen.getByRole('tab', { name: 'Interrupted' }));
   expect(within(screen.getByRole('table', { name: 'Riding history' })).getAllByRole('row')).toHaveLength(2);
 });
+
+it('includes older rides beyond page ten rather than silently truncating history', async () => {
+  const api = client();
+  vi.mocked(api.history).mockImplementation(async (page = 0) => ({
+    items: [ride(100 + page, { status: 'COMPLETED', horse: { id: 7, name: `History horse ${page}`, horseCode: 'TB-001' } })],
+    page, size: 1, totalItems: 11, totalPages: 11,
+  }));
+  mount(<RiderHistoryPage api={api} />, '/rider/history');
+  expect(await screen.findByText('History horse 10')).toBeInTheDocument();
+  expect(api.history).toHaveBeenCalledWith(10);
+  expect(within(screen.getByRole('table', { name: 'Riding history' })).getAllByRole('row')).toHaveLength(12);
+});

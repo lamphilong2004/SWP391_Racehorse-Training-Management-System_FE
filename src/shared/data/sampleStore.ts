@@ -5,6 +5,7 @@ import type { MedicalCase, CaseTreatmentTask, Incident, HealthStatus } from '../
 import type { ProgramDetail, TemplateDetail, HorseSelection } from '../../features/program-creation/programTypes';
 import { initialHorses, type HorseSampleState } from './horseSamples';
 import type { PreSessionCheck } from '../../features/precheck/types';
+import type { Exercise } from '../../features/training/assigned/supportingApi';
 export type SampleSession = SessionResultView & { session: SessionResultView['session'] & { blocked?: boolean; blockedReasons?: string[]; blockedMessage?: string | null; trainingAvailability?: 'AVAILABLE' | 'LIMITED' | 'LOCKED'; preCheckResult?: 'ALL_NORMAL' | 'ABNORMAL' | null; preSessionCheck?: PreSessionCheck | null; hasRiderFeedback?: boolean } };
 
 const STATE_KEY = 'racehorse.business-samples.v1';
@@ -35,6 +36,7 @@ const SAMPLE_PEOPLE: Record<RoleCode, { fullName: string; login: string }> = {
   HORSE_OWNER: { fullName: 'Tran Quoc Bao', login: 'horse.owner' },
 };
 export interface SampleData {
+  exercises?: Exercise[];
   horseRegistry?: HorseSampleState;
   /** Validated Groom identities seen through the shared sample transport, not API credentials. */
   groomUserIds?: number[];

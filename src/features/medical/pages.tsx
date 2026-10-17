@@ -74,9 +74,9 @@ export function CreateCasePage() {
   const { service } = useMedicalRuntime();
   const navigate = useNavigate();
   return <><Link to={ROUTES.medical}>Back to cases</Link><PageHeader title="Create Medical Case" />
-    <Card title="Independent case"><MedicalForm submitLabel="Create case" fields={[
+    <Card title="Independent case"><MedicalForm submitLabel="Create case" onCancel={() => navigate(ROUTES.medical)} fields={[
       { name: 'horseId', label: 'Horse ID', type: 'number', required: true },
-      { name: 'reason', label: 'Reason', type: 'textarea', required: true },
+      { name: 'reason', label: 'Reason', type: 'textarea', required: true, maxLength: 2000 },
     ]} onSave={async (values) => {
       const item = await service.createCase({ horseId: positiveId(values.horseId), reason: values.reason });
       navigate(casePath(item.id));
@@ -102,7 +102,10 @@ export function CaseDetailPage() {
   const { caseId = '' } = useParams();
   const { service } = useMedicalRuntime();
   const id = Number(caseId);
-  const load = useCallback(() => service.getCase(id), [service, id]);
+  const load = useCallback(async () => {
+    if (!Number.isSafeInteger(id) || id < 1) throw new Error('Invalid medical case ID.');
+    return service.getCase(id);
+  }, [service, id]);
   const { data, error, reload } = useResource(load);
   if (!Number.isSafeInteger(id) || id < 1) return <EmptyState title="Medical case not found" />;
   if (!data) return <ResourceState error={error} retry={reload} />;
@@ -143,7 +146,7 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
         <li key={exam.id}><strong>{exam.examinedAt}</strong><p>{exam.symptoms}</p><p>{exam.diagnosis || 'No diagnosis'} · {exam.severity || 'Severity not set'}</p></li>)}</History>
         {!closed && <MedicalForm submitLabel="Save examination" fields={[
           { name: 'symptoms', label: 'Symptoms and findings', type: 'textarea', required: true },
-          { name: 'diagnosis', label: 'Diagnosis', type: 'textarea' },
+          { name: 'diagnosis', label: 'Diagnosis', type: 'textarea', maxLength: 1000 },
           { name: 'severity', label: 'Severity', options: ['MILD', 'MODERATE', 'SEVERE'] },
           { name: 'healthStatus', label: 'Horse health status', options: ['FIT', 'MONITORING', 'INJURED', 'QUARANTINED'] },
         ]} onSave={async (values) => { await service.addExamination(item.id, {
@@ -161,8 +164,8 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
           { name: 'bodyRegion', label: 'Body region', options: BODY_REGIONS, required: true },
           { name: 'severity', label: 'Severity', options: ['MILD', 'MODERATE', 'SEVERE'], required: true },
           { name: 'recoveryStatus', label: 'Recovery status', options: ['NOT_RECOVERED', 'IMPROVING', 'RECOVERED'], required: true },
-          { name: 'position3d', label: 'Position marker (optional)' },
-          { name: 'side', label: 'Side (optional)' },
+          { name: 'position3d', label: 'Position marker (optional)', maxLength: 100 },
+          { name: 'side', label: 'Side (optional)', maxLength: 20 },
         ]} onSave={async (values) => { await service.addInjury(item.id, {
           bodyRegion: values.bodyRegion, severity: values.severity as ClinicalSeverity,
           recoveryStatus: values.recoveryStatus as RecoveryStatus,
@@ -197,9 +200,12 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
 }
 export function TreatmentPlanPage() {
   const { caseId = '' } = useParams();
+  const navigate = useNavigate();
+  const [saved, setSaved] = useState(false);
   const { service } = useMedicalRuntime();
   const id = Number(caseId);
   const load = useCallback(async () => {
+    if (!Number.isSafeInteger(id) || id < 1) throw new Error('Invalid medical case ID.');
     const medicalCase = await service.getCase(id);
     const tasks = [] as Awaited<ReturnType<typeof service.listCaseTasks>>['items'];
     if (medicalCase.treatmentPlan) {
@@ -222,10 +228,11 @@ export function TreatmentPlanPage() {
   };
   return <><Link to={casePath(id)}>Back to medical case</Link>
     <PageHeader title={'Treatment Plan · Horse ' + medicalCase.horseId} description={'Medical case ' + id} />
+    {saved && <AlertBanner type="success" title="Treatment plan saved" />}
     <div className="medical-grid medical-treatment-layout"><div className="medical-stack">
       <Card title="Plan period"><KeyValue label="Case opened" value={medicalCase.openedAt} /><KeyValue label="Next re-examination" value={medicalCase.treatmentPlan?.reexaminationDate ?? 'Not scheduled'} /></Card>
       {medicalCase.status === 'CLOSED' ? <AlertBanner type="danger" title="Closed cases cannot be edited" /> :
-        <TreatmentPlanEditor key={medicalCase.treatmentPlan?.id ?? 'new'} initial={initial} onSave={async (input) => { await service.saveTreatment(id, input); reload(); }} />}
+        <TreatmentPlanEditor key={medicalCase.treatmentPlan?.id ?? 'new'} initial={initial} onCancel={() => navigate(casePath(id))} onSave={async (input) => { await service.saveTreatment(id, input); setSaved(true); reload(); }} />}
       <CaseTasks caseId={id} />
     </div><div className="medical-stack">
       <Card title="Case summary"><KeyValue label="Status" value={medicalCase.status} /><KeyValue label="Reason" value={medicalCase.reason ?? '—'} />
@@ -274,7 +281,10 @@ export function VetIncidentReview() {
   const { service } = useMedicalRuntime();
   const navigate = useNavigate();
   const id = Number(incidentId);
-  const load = useCallback(() => service.getIncident(id), [service, id]);
+  const load = useCallback(async () => {
+    if (!Number.isSafeInteger(id) || id < 1) throw new Error('Invalid incident ID.');
+    return service.getIncident(id);
+  }, [service, id]);
   const { data, error, reload } = useResource(load);
   const [actionError, setActionError] = useState('');
   const [busy, setBusy] = useState(false);
