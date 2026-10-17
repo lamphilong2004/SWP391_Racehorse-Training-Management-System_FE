@@ -1,0 +1,909 @@
+{
+  "sourceHEAD": "b3457919acae626b9bd19ea36b1d39bcba7b7499",
+  "passed": 167,
+  "failed": 0,
+  "total": 167,
+  "suites": [
+    {
+      "file": "src/app/router.test.tsx",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "router redirects / to the dev component gallery in development",
+          "status": "passed",
+          "durationMs": 296.9260999999999
+        },
+        {
+          "name": "router renders the dev shell preview for a valid role",
+          "status": "passed",
+          "durationMs": 30.149400000000014
+        },
+        {
+          "name": "router falls back to not found for unknown roles",
+          "status": "passed",
+          "durationMs": 5.600799999999936
+        },
+        {
+          "name": "router does not register the dev-only routes in production",
+          "status": "passed",
+          "durationMs": 15.655500000000075
+        }
+      ]
+    },
+    {
+      "file": "src/layout/layout.test.tsx",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "deferred sidebar modules flags exactly the deferred modules in the navigation config",
+          "status": "passed",
+          "durationMs": 1.7662000000000262
+        },
+        {
+          "name": "deferred sidebar modules does not render the deferred modules for CLUB_MANAGER",
+          "status": "passed",
+          "durationMs": 139.47759999999994
+        },
+        {
+          "name": "deferred sidebar modules does not render the deferred modules for HEAD_TRAINER",
+          "status": "passed",
+          "durationMs": 33.78430000000003
+        },
+        {
+          "name": "deferred sidebar modules does not render the deferred modules for VETERINARIAN",
+          "status": "passed",
+          "durationMs": 19.76430000000005
+        },
+        {
+          "name": "deferred sidebar modules does not render the deferred modules for GROOM",
+          "status": "passed",
+          "durationMs": 13.164399999999887
+        },
+        {
+          "name": "deferred sidebar modules keeps a heading only while it still has visible items",
+          "status": "passed",
+          "durationMs": 11.060900000000174
+        },
+        {
+          "name": "deferred sidebar modules drops a section whose items are all deferred",
+          "status": "passed",
+          "durationMs": 0.7846999999999298
+        },
+        {
+          "name": "role navigation defines a sidebar for exactly the 7 RBAC roles",
+          "status": "passed",
+          "durationMs": 0.5514000000000578
+        },
+        {
+          "name": "role navigation only uses Design System icons and central route paths",
+          "status": "passed",
+          "durationMs": 1.8023999999998068
+        },
+        {
+          "name": "role navigation gives the Horse Owner the read-only portal entries only",
+          "status": "passed",
+          "durationMs": 0.25890000000003965
+        },
+        {
+          "name": "AppShell renders the CLUB_MANAGER workspace with its own modules only",
+          "status": "passed",
+          "durationMs": 21.227499999999964
+        },
+        {
+          "name": "AppShell renders the HEAD_TRAINER workspace with its own modules only",
+          "status": "passed",
+          "durationMs": 17.96609999999987
+        },
+        {
+          "name": "AppShell renders the TRAINER workspace with its own modules only",
+          "status": "passed",
+          "durationMs": 15.674600000000055
+        },
+        {
+          "name": "AppShell renders the WORK_RIDER workspace with its own modules only",
+          "status": "passed",
+          "durationMs": 12.85590000000002
+        },
+        {
+          "name": "AppShell renders the VETERINARIAN workspace with its own modules only",
+          "status": "passed",
+          "durationMs": 13.740399999999909
+        },
+        {
+          "name": "AppShell renders the GROOM workspace with its own modules only",
+          "status": "passed",
+          "durationMs": 9.584900000000061
+        },
+        {
+          "name": "AppShell renders the HORSE_OWNER workspace with its own modules only",
+          "status": "passed",
+          "durationMs": 13.901299999999992
+        },
+        {
+          "name": "AppShell marks the current route as active and shows the unread count",
+          "status": "passed",
+          "durationMs": 30.83459999999991
+        }
+      ]
+    },
+    {
+      "file": "src/design-system/components/components.test.tsx",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "Button renders a typed button with the variant and size classes",
+          "status": "passed",
+          "durationMs": 93.3306
+        },
+        {
+          "name": "Button does not fire onClick when disabled",
+          "status": "passed",
+          "durationMs": 26.575900000000047
+        },
+        {
+          "name": "TextField and SelectField links the label and shows a field-level error",
+          "status": "passed",
+          "durationMs": 10.979199999999992
+        },
+        {
+          "name": "TextField and SelectField renders the placeholder option and the given options",
+          "status": "passed",
+          "durationMs": 32.0326
+        },
+        {
+          "name": "AlertBanner and MetricCard announces danger banners as alerts",
+          "status": "passed",
+          "durationMs": 4.656399999999849
+        },
+        {
+          "name": "AlertBanner and MetricCard shows the realtime state with an icon and text, not colour alone",
+          "status": "passed",
+          "durationMs": 3.617999999999938
+        },
+        {
+          "name": "Tabs selects tabs by click and arrow keys",
+          "status": "passed",
+          "durationMs": 33.57400000000007
+        },
+        {
+          "name": "Breadcrumb links parents and marks the last item as the current page",
+          "status": "passed",
+          "durationMs": 9.908199999999852
+        },
+        {
+          "name": "WizardStepper lets only completed steps be clicked",
+          "status": "passed",
+          "durationMs": 21.711099999999988
+        },
+        {
+          "name": "DataTable renders rows and reports row clicks",
+          "status": "passed",
+          "durationMs": 26.325000000000045
+        },
+        {
+          "name": "DataTable renders the empty state across all columns",
+          "status": "passed",
+          "durationMs": 2.4008000000001175
+        },
+        {
+          "name": "Modal opens as a labelled dialog and closes through onClose",
+          "status": "passed",
+          "durationMs": 43.218399999999974
+        }
+      ]
+    },
+    {
+      "file": "src/design-system/components/shared-components.test.tsx",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "design-system barrel exports every shared component required by CORE-002",
+          "status": "passed",
+          "durationMs": 1.4448999999999614
+        },
+        {
+          "name": "Checkbox toggles and stays labelled",
+          "status": "passed",
+          "durationMs": 134.58069999999998
+        },
+        {
+          "name": "Checkbox cannot be toggled when disabled",
+          "status": "passed",
+          "durationMs": 18.003900000000158
+        },
+        {
+          "name": "ValidationNotice shows the category label, icon and the cannot-override pill for medical hard blocks",
+          "status": "passed",
+          "durationMs": 7.3332000000000335
+        },
+        {
+          "name": "ValidationNotice renders warnings as status with their actions",
+          "status": "passed",
+          "durationMs": 7.804599999999937
+        },
+        {
+          "name": "ChartContainer plots the series with a threshold label",
+          "status": "passed",
+          "durationMs": 8.462099999999964
+        },
+        {
+          "name": "ChartContainer shows the empty state instead of zeroes",
+          "status": "passed",
+          "durationMs": 7.42489999999998
+        },
+        {
+          "name": "HorseCard and CandidateCard shows availability as a badge with icon and text",
+          "status": "passed",
+          "durationMs": 10.452599999999848
+        },
+        {
+          "name": "HorseCard and CandidateCard lists candidate reasons as label/value pairs without scores",
+          "status": "passed",
+          "durationMs": 11.201700000000073
+        },
+        {
+          "name": "PhotoAttachmentTile fires add and remove callbacks",
+          "status": "passed",
+          "durationMs": 25.90650000000005
+        },
+        {
+          "name": "NotificationItem marks unread items and hides the dot once read",
+          "status": "passed",
+          "durationMs": 6.350100000000111
+        },
+        {
+          "name": "StableBoxTile lets free boxes be selected but never occupied ones",
+          "status": "passed",
+          "durationMs": 26.41930000000002
+        },
+        {
+          "name": "LoadingState and ErrorState announces loading politely",
+          "status": "passed",
+          "durationMs": 2.320699999999988
+        },
+        {
+          "name": "LoadingState and ErrorState shows the error with a retry action",
+          "status": "passed",
+          "durationMs": 14.085500000000138
+        }
+      ]
+    },
+    {
+      "file": "src/features/registration/registrationPages.test.tsx",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "CORE-048 public registration submits a neutral access request, clears passwords and never logs in or stores applicant credentials",
+          "status": "passed",
+          "durationMs": 225.0534
+        },
+        {
+          "name": "CORE-048 public registration validates password length without browser UTF-16 truncation",
+          "status": "passed",
+          "durationMs": 51.65179999999987
+        },
+        {
+          "name": "CORE-048 public registration blocks mismatched credentials and allows correction",
+          "status": "passed",
+          "durationMs": 36.67619999999988
+        },
+        {
+          "name": "CORE-048 public registration keeps public HTTP 400 neutral without exposing server details",
+          "status": "passed",
+          "durationMs": 39.12689999999998
+        },
+        {
+          "name": "CORE-048 public registration keeps public HTTP 429 neutral without exposing server details",
+          "status": "passed",
+          "durationMs": 31.73519999999985
+        },
+        {
+          "name": "CORE-048 public registration keeps public HTTP 500 neutral without exposing server details",
+          "status": "passed",
+          "durationMs": 36.20309999999995
+        },
+        {
+          "name": "CORE-048 public registration prevents duplicate submissions and disables fields during the request",
+          "status": "passed",
+          "durationMs": 23.969100000000026
+        },
+        {
+          "name": "CORE-048 public registration shows/hides passwords and cancels to the existing login without submitting",
+          "status": "passed",
+          "durationMs": 57.689800000000105
+        },
+        {
+          "name": "CORE-048 public registration keeps signed-in actors on their existing workspace rather than registering another account",
+          "status": "passed",
+          "durationMs": 7.305900000000065
+        },
+        {
+          "name": "CORE-048 review access and lifecycle denies HEAD_TRAINER before requesting registrations",
+          "status": "passed",
+          "durationMs": 4.620400000000018
+        },
+        {
+          "name": "CORE-048 review access and lifecycle denies TRAINER before requesting registrations",
+          "status": "passed",
+          "durationMs": 4.063200000000052
+        },
+        {
+          "name": "CORE-048 review access and lifecycle denies WORK_RIDER before requesting registrations",
+          "status": "passed",
+          "durationMs": 3.6437000000000808
+        },
+        {
+          "name": "CORE-048 review access and lifecycle denies VETERINARIAN before requesting registrations",
+          "status": "passed",
+          "durationMs": 3.8904999999999745
+        },
+        {
+          "name": "CORE-048 review access and lifecycle denies GROOM before requesting registrations",
+          "status": "passed",
+          "durationMs": 3.945199999999886
+        },
+        {
+          "name": "CORE-048 review access and lifecycle denies HORSE_OWNER before requesting registrations",
+          "status": "passed",
+          "durationMs": 3.7839000000001306
+        },
+        {
+          "name": "CORE-048 review access and lifecycle redirects anonymous review to shared sign-in without an admin request",
+          "status": "passed",
+          "durationMs": 13.704499999999825
+        },
+        {
+          "name": "CORE-048 review access and lifecycle accepts a multi-role Club Manager and loads through the shared session",
+          "status": "passed",
+          "durationMs": 41.1545000000001
+        },
+        {
+          "name": "CORE-048 review access and lifecycle requires one explicit role, confirms approval and reads updated server state",
+          "status": "passed",
+          "durationMs": 138.87720000000013
+        },
+        {
+          "name": "CORE-048 review access and lifecycle rejects with a reason and keeps the reason on the decided request",
+          "status": "passed",
+          "durationMs": 72.37920000000031
+        },
+        {
+          "name": "CORE-048 review access and lifecycle cancels a review without writing or selecting a default role",
+          "status": "passed",
+          "durationMs": 58.81179999999995
+        },
+        {
+          "name": "CORE-048 review access and lifecycle blocks duplicate decisions until the pending mutation completes",
+          "status": "passed",
+          "durationMs": 70.97769999999991
+        },
+        {
+          "name": "CORE-048 review access and lifecycle keeps a 409 decision unconfirmed and refreshes before another decision",
+          "status": "passed",
+          "durationMs": 106.08550000000014
+        },
+        {
+          "name": "CORE-048 review access and lifecycle keeps a confirmed approval successful if list readback fails",
+          "status": "passed",
+          "durationMs": 83.08590000000004
+        },
+        {
+          "name": "CORE-048 review access and lifecycle keeps a rejected API decision editable without claiming success",
+          "status": "passed",
+          "durationMs": 63.221000000000004
+        },
+        {
+          "name": "CORE-048 review access and lifecycle delegates HTTP 401 correctly to shared authentication",
+          "status": "passed",
+          "durationMs": 20.16170000000011
+        },
+        {
+          "name": "CORE-048 review access and lifecycle delegates HTTP 403 correctly to shared authentication",
+          "status": "passed",
+          "durationMs": 15.929799999999886
+        },
+        {
+          "name": "CORE-048 review access and lifecycle supports empty/loading/error and retry without fabricated rows",
+          "status": "passed",
+          "durationMs": 30.24980000000005
+        },
+        {
+          "name": "CORE-048 review access and lifecycle validates deep links before requesting data and recovers via Reset filters",
+          "status": "passed",
+          "durationMs": 27.222499999999854
+        },
+        {
+          "name": "CORE-048 review access and lifecycle retains server filters across pagination and resets page when size changes",
+          "status": "passed",
+          "durationMs": 58.26440000000002
+        },
+        {
+          "name": "CORE-048 review access and lifecycle ignores old filter responses and aborts a previous read",
+          "status": "passed",
+          "durationMs": 19.302400000000034
+        },
+        {
+          "name": "CORE-048 review access and lifecycle renders applicant content as text and never exposes arbitrary secret fields",
+          "status": "passed",
+          "durationMs": 15.420600000000377
+        }
+      ]
+    },
+    {
+      "file": "src/features/registration/registrationService.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "CORE-048 registration contract submits exactly the public DTO without bearer token, role or extra caller fields",
+          "status": "passed",
+          "durationMs": 4.78449999999998
+        },
+        {
+          "name": "CORE-048 registration contract sends only approved list parameters and the shared bearer token/abort signal",
+          "status": "passed",
+          "durationMs": 0.9688000000001011
+        },
+        {
+          "name": "CORE-048 registration contract approves with exactly one roleCode and returns the decided request",
+          "status": "passed",
+          "durationMs": 0.9929000000001906
+        },
+        {
+          "name": "CORE-048 registration contract rejects with only the optional reason (\"\")",
+          "status": "passed",
+          "durationMs": 0.4762000000000626
+        },
+        {
+          "name": "CORE-048 registration contract rejects with only the optional reason (\"  Reason for review  \")",
+          "status": "passed",
+          "durationMs": 0.3387000000000171
+        },
+        {
+          "name": "CORE-048 registration contract projects only safe registration/reviewer fields",
+          "status": "passed",
+          "durationMs": 0.7019999999999982
+        },
+        {
+          "name": "CORE-048 registration contract rejects a malformed DTO",
+          "status": "passed",
+          "durationMs": 0.28759999999988395
+        },
+        {
+          "name": "CORE-048 registration contract rejects a malformed DTO",
+          "status": "passed",
+          "durationMs": 0.09040000000004511
+        },
+        {
+          "name": "CORE-048 registration contract rejects a malformed DTO",
+          "status": "passed",
+          "durationMs": 0.13949999999999818
+        },
+        {
+          "name": "CORE-048 registration contract rejects a malformed DTO",
+          "status": "passed",
+          "durationMs": 0.14159999999992579
+        },
+        {
+          "name": "CORE-048 registration contract rejects a malformed DTO",
+          "status": "passed",
+          "durationMs": 0.08619999999996253
+        },
+        {
+          "name": "CORE-048 registration contract rejects a malformed DTO",
+          "status": "passed",
+          "durationMs": 0.06439999999997781
+        },
+        {
+          "name": "CORE-048 registration contract rejects inconsistent page metadata",
+          "status": "passed",
+          "durationMs": 0.8709999999998672
+        },
+        {
+          "name": "CORE-048 registration contract rejects inconsistent page metadata",
+          "status": "passed",
+          "durationMs": 0.39859999999998763
+        },
+        {
+          "name": "CORE-048 registration contract rejects inconsistent page metadata",
+          "status": "passed",
+          "durationMs": 0.3306999999999789
+        },
+        {
+          "name": "CORE-048 registration contract rejects a mutation response that does not confirm the requested decision",
+          "status": "passed",
+          "durationMs": 0.5764999999998963
+        },
+        {
+          "name": "CORE-048 registration contract propagates HTTP 400 without fallback or retry",
+          "status": "passed",
+          "durationMs": 0.5246999999999389
+        },
+        {
+          "name": "CORE-048 registration contract propagates HTTP 401 without fallback or retry",
+          "status": "passed",
+          "durationMs": 0.29169999999999163
+        },
+        {
+          "name": "CORE-048 registration contract propagates HTTP 403 without fallback or retry",
+          "status": "passed",
+          "durationMs": 0.25649999999996
+        },
+        {
+          "name": "CORE-048 registration contract propagates HTTP 404 without fallback or retry",
+          "status": "passed",
+          "durationMs": 0.2497000000000753
+        },
+        {
+          "name": "CORE-048 registration contract propagates HTTP 409 without fallback or retry",
+          "status": "passed",
+          "durationMs": 0.2727999999999611
+        },
+        {
+          "name": "CORE-048 registration contract propagates HTTP 429 without fallback or retry",
+          "status": "passed",
+          "durationMs": 0.1995999999999185
+        },
+        {
+          "name": "CORE-048 registration contract propagates HTTP 500 without fallback or retry",
+          "status": "passed",
+          "durationMs": 0.16259999999988395
+        },
+        {
+          "name": "CORE-048 registration contract propagates network failure without fallback and rejects missing neutral data",
+          "status": "passed",
+          "durationMs": 0.6092000000001008
+        },
+        {
+          "name": "CORE-048 registration contract blocks invalid IDs, roles, reason and queries before any HTTP request",
+          "status": "passed",
+          "durationMs": 0.6886999999999261
+        },
+        {
+          "name": "CORE-048 input validation accepts contract-compliant credentials without trimming the password",
+          "status": "passed",
+          "durationMs": 0.1409000000001015
+        },
+        {
+          "name": "CORE-048 input validation rejects invalid password without exposing its value (0)",
+          "status": "passed",
+          "durationMs": 0.17669999999998254
+        },
+        {
+          "name": "CORE-048 input validation rejects invalid password without exposing its value (1)",
+          "status": "passed",
+          "durationMs": 0.06439999999997781
+        },
+        {
+          "name": "CORE-048 input validation rejects invalid password without exposing its value (2)",
+          "status": "passed",
+          "durationMs": 0.047700000000077125
+        },
+        {
+          "name": "CORE-048 input validation rejects invalid password without exposing its value (3)",
+          "status": "passed",
+          "durationMs": 0.0624000000000251
+        },
+        {
+          "name": "CORE-048 input validation rejects invalid password without exposing its value (4)",
+          "status": "passed",
+          "durationMs": 0.06750000000010914
+        },
+        {
+          "name": "CORE-048 input validation rejects invalid password without exposing its value (5)",
+          "status": "passed",
+          "durationMs": 0.04609999999979664
+        },
+        {
+          "name": "CORE-048 input validation checks full name/email/matching confirmation",
+          "status": "passed",
+          "durationMs": 0.09760000000005675
+        },
+        {
+          "name": "CORE-048 input validation rejects malformed deep-link query page=-1",
+          "status": "passed",
+          "durationMs": 0.16499999999996362
+        },
+        {
+          "name": "CORE-048 input validation rejects malformed deep-link query page=1.5",
+          "status": "passed",
+          "durationMs": 0.0905999999999949
+        },
+        {
+          "name": "CORE-048 input validation rejects malformed deep-link query size=0",
+          "status": "passed",
+          "durationMs": 0.056100000000014916
+        },
+        {
+          "name": "CORE-048 input validation rejects malformed deep-link query size=101",
+          "status": "passed",
+          "durationMs": 0.04800000000000182
+        },
+        {
+          "name": "CORE-048 input validation rejects malformed deep-link query status=ACTIVE",
+          "status": "passed",
+          "durationMs": 0.051400000000057844
+        }
+      ]
+    },
+    {
+      "file": "src/shared/auth/AuthProvider.test.tsx",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "CORE-008 auth flow submits LoginRequest, stores the bearer response and routes into the role workspace",
+          "status": "passed",
+          "durationMs": 390.6419000000001
+        },
+        {
+          "name": "CORE-008 auth flow stores a non-remembered login in tab session storage",
+          "status": "passed",
+          "durationMs": 162.7297000000001
+        },
+        {
+          "name": "CORE-008 auth flow shows the contract 401 login error without creating a session",
+          "status": "passed",
+          "durationMs": 152.95150000000012
+        },
+        {
+          "name": "CORE-008 auth flow shows the contract 403 login error without creating a session",
+          "status": "passed",
+          "durationMs": 141.21230000000014
+        },
+        {
+          "name": "CORE-008 auth flow shows the contract 403 login error without creating a session",
+          "status": "passed",
+          "durationMs": 144.39029999999957
+        },
+        {
+          "name": "CORE-008 auth flow restores a saved session through GET /api/auth/me and uses the returned role",
+          "status": "passed",
+          "durationMs": 14.03819999999996
+        },
+        {
+          "name": "CORE-008 auth flow uses canonical workspace and navigation for CLUB_MANAGER",
+          "status": "passed",
+          "durationMs": 23.21349999999984
+        },
+        {
+          "name": "CORE-008 auth flow uses canonical workspace and navigation for HEAD_TRAINER",
+          "status": "passed",
+          "durationMs": 28.789800000000014
+        },
+        {
+          "name": "CORE-008 auth flow uses canonical workspace and navigation for TRAINER",
+          "status": "passed",
+          "durationMs": 22.306100000000242
+        },
+        {
+          "name": "CORE-008 auth flow uses canonical workspace and navigation for WORK_RIDER",
+          "status": "passed",
+          "durationMs": 16.21050000000014
+        },
+        {
+          "name": "CORE-008 auth flow uses canonical workspace and navigation for VETERINARIAN",
+          "status": "passed",
+          "durationMs": 15.259000000000015
+        },
+        {
+          "name": "CORE-008 auth flow uses canonical workspace and navigation for GROOM",
+          "status": "passed",
+          "durationMs": 12.246800000000349
+        },
+        {
+          "name": "CORE-008 auth flow uses canonical workspace and navigation for HORSE_OWNER",
+          "status": "passed",
+          "durationMs": 12.987699999999677
+        },
+        {
+          "name": "CORE-008 auth flow expires a locally expired token without calling the backend",
+          "status": "passed",
+          "durationMs": 9.764400000000023
+        },
+        {
+          "name": "CORE-008 auth flow clears a restored session on 401 but keeps a 403 session and shows an access error",
+          "status": "passed",
+          "durationMs": 12.507599999999911
+        },
+        {
+          "name": "CORE-008 auth flow clears an inactive session on /me 403 and distinguishes it from ordinary protected 403",
+          "status": "passed",
+          "durationMs": 29.3738000000003
+        },
+        {
+          "name": "CORE-008 auth flow calls POST /api/auth/logout, accepts 204 without JSON and clears both storage locations",
+          "status": "passed",
+          "durationMs": 24.599099999999908
+        },
+        {
+          "name": "CORE-008 auth flow clears client state after logout network failure and discloses server audit is unconfirmed",
+          "status": "passed",
+          "durationMs": 26.41319999999996
+        }
+      ]
+    },
+    {
+      "file": "src/shared/incidents/IncidentReportModal.test.tsx",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "IncidentReportModal requires horse, type, severity and description",
+          "status": "passed",
+          "durationMs": 277.3007
+        },
+        {
+          "name": "IncidentReportModal rejects blank description after all other required fields are selected",
+          "status": "passed",
+          "durationMs": 67.32060000000001
+        },
+        {
+          "name": "IncidentReportModal keeps the horse fixed for a pre-session check and supports keyboard navigation and selection",
+          "status": "passed",
+          "durationMs": 54.68959999999993
+        },
+        {
+          "name": "IncidentReportModal rejects horse ID 0",
+          "status": "passed",
+          "durationMs": 53.904199999999946
+        },
+        {
+          "name": "IncidentReportModal rejects horse ID -1",
+          "status": "passed",
+          "durationMs": 51.442200000000184
+        },
+        {
+          "name": "IncidentReportModal rejects horse ID 1.5",
+          "status": "passed",
+          "durationMs": 53.490099999999984
+        },
+        {
+          "name": "IncidentReportModal rejects horse ID NaN",
+          "status": "passed",
+          "durationMs": 53.83889999999997
+        },
+        {
+          "name": "IncidentReportModal rejects horse ID Infinity",
+          "status": "passed",
+          "durationMs": 52.834100000000035
+        },
+        {
+          "name": "IncidentReportModal rejects context ID 0",
+          "status": "passed",
+          "durationMs": 49.74050000000011
+        },
+        {
+          "name": "IncidentReportModal rejects context ID -1",
+          "status": "passed",
+          "durationMs": 55.69370000000026
+        },
+        {
+          "name": "IncidentReportModal rejects context ID 1.5",
+          "status": "passed",
+          "durationMs": 51.641599999999926
+        },
+        {
+          "name": "IncidentReportModal rejects context ID NaN",
+          "status": "passed",
+          "durationMs": 47.851700000000164
+        },
+        {
+          "name": "IncidentReportModal rejects context ID Infinity",
+          "status": "passed",
+          "durationMs": 51.72280000000001
+        },
+        {
+          "name": "IncidentReportModal rejects context ID 12",
+          "status": "passed",
+          "durationMs": 46.24839999999995
+        },
+        {
+          "name": "IncidentReportModal rejects multiple source contexts",
+          "status": "passed",
+          "durationMs": 46.897799999999734
+        },
+        {
+          "name": "IncidentReportModal rejects missing, malformed and future observedAt",
+          "status": "passed",
+          "durationMs": 151.8204999999998
+        },
+        {
+          "name": "IncidentReportModal serializes observedAt to UTC ISO and sends exact OpenAPI keys",
+          "status": "passed",
+          "durationMs": 65.4622000000004
+        },
+        {
+          "name": "IncidentReportModal rejects descriptions longer than 2,000 characters",
+          "status": "passed",
+          "durationMs": 46.74319999999989
+        },
+        {
+          "name": "IncidentReportModal locks duplicate submit and close while pending, then closes on success",
+          "status": "passed",
+          "durationMs": 66.59810000000016
+        },
+        {
+          "name": "IncidentReportModal shows error, permits retry, and resets fields and error on reopen",
+          "status": "passed",
+          "durationMs": 115.91719999999987
+        },
+        {
+          "name": "IncidentReportModal has labeled dialog and fields, and closes with Escape when idle",
+          "status": "passed",
+          "durationMs": 9.713799999999992
+        },
+        {
+          "name": "IncidentReportModal assigns distinct form and description IDs, linking each footer button and label to its form",
+          "status": "passed",
+          "durationMs": 9.260999999999967
+        }
+      ]
+    },
+    {
+      "file": "src/design-system/components/RadioGroup/RadioGroup.test.tsx",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "RadioGroup selects an option and reports its value",
+          "status": "passed",
+          "durationMs": 141.08490000000006
+        },
+        {
+          "name": "RadioGroup supports native arrow-key selection within the radio group",
+          "status": "passed",
+          "durationMs": 33.65380000000005
+        },
+        {
+          "name": "RadioGroup announces required and validation states with the field message",
+          "status": "passed",
+          "durationMs": 15.935999999999922
+        },
+        {
+          "name": "RadioGroup disables every option when the group is disabled",
+          "status": "passed",
+          "durationMs": 8.975300000000061
+        }
+      ]
+    },
+    {
+      "file": "src/design-system/components/StatusBadge/StatusBadge.test.tsx",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "StatusBadge pairs colour with an icon and a text label for every registered status",
+          "status": "passed",
+          "durationMs": 64.06060000000002
+        },
+        {
+          "name": "StatusBadge keeps exactly the statuses drawn in the Figma badge families",
+          "status": "passed",
+          "durationMs": 0.8775000000000546
+        },
+        {
+          "name": "StatusBadge shows the human label, not the enum key",
+          "status": "passed",
+          "durationMs": 6.484400000000051
+        }
+      ]
+    },
+    {
+      "file": "src/design-system/components/TextAreaField/TextAreaField.test.tsx",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "TextAreaField renders a multiline field with required label and helper text",
+          "status": "passed",
+          "durationMs": 97.13329999999996
+        },
+        {
+          "name": "TextAreaField accepts text and exposes a validation error accessibly",
+          "status": "passed",
+          "durationMs": 81.07079999999996
+        },
+        {
+          "name": "TextAreaField respects the disabled state",
+          "status": "passed",
+          "durationMs": 4.8887999999999465
+        }
+      ]
+    }
+  ]
+}

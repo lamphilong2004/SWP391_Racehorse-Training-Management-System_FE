@@ -1,0 +1,365 @@
+{
+  "sourceHEAD": "b3457919acae626b9bd19ea36b1d39bcba7b7499",
+  "passed": 69,
+  "failed": 0,
+  "total": 69,
+  "suites": [
+    {
+      "file": "src/features/registration/registrationPages.test.tsx",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "CORE-048 public registration submits a neutral access request, clears passwords and never logs in or stores applicant credentials",
+          "status": "passed",
+          "durationMs": 164.1422
+        },
+        {
+          "name": "CORE-048 public registration validates password length without browser UTF-16 truncation",
+          "status": "passed",
+          "durationMs": 35.19490000000019
+        },
+        {
+          "name": "CORE-048 public registration blocks mismatched credentials and allows correction",
+          "status": "passed",
+          "durationMs": 29.492099999999937
+        },
+        {
+          "name": "CORE-048 public registration keeps public HTTP 400 neutral without exposing server details",
+          "status": "passed",
+          "durationMs": 36.102300000000014
+        },
+        {
+          "name": "CORE-048 public registration keeps public HTTP 429 neutral without exposing server details",
+          "status": "passed",
+          "durationMs": 30.584499999999935
+        },
+        {
+          "name": "CORE-048 public registration keeps public HTTP 500 neutral without exposing server details",
+          "status": "passed",
+          "durationMs": 24.374000000000024
+        },
+        {
+          "name": "CORE-048 public registration prevents duplicate submissions and disables fields during the request",
+          "status": "passed",
+          "durationMs": 18.858600000000024
+        },
+        {
+          "name": "CORE-048 public registration shows/hides passwords and cancels to the existing login without submitting",
+          "status": "passed",
+          "durationMs": 49.78800000000001
+        },
+        {
+          "name": "CORE-048 public registration keeps signed-in actors on their existing workspace rather than registering another account",
+          "status": "passed",
+          "durationMs": 7.022199999999884
+        },
+        {
+          "name": "CORE-048 review access and lifecycle denies HEAD_TRAINER before requesting registrations",
+          "status": "passed",
+          "durationMs": 2.9791999999999916
+        },
+        {
+          "name": "CORE-048 review access and lifecycle denies TRAINER before requesting registrations",
+          "status": "passed",
+          "durationMs": 2.828399999999874
+        },
+        {
+          "name": "CORE-048 review access and lifecycle denies WORK_RIDER before requesting registrations",
+          "status": "passed",
+          "durationMs": 3.4732000000001335
+        },
+        {
+          "name": "CORE-048 review access and lifecycle denies VETERINARIAN before requesting registrations",
+          "status": "passed",
+          "durationMs": 5.178299999999808
+        },
+        {
+          "name": "CORE-048 review access and lifecycle denies GROOM before requesting registrations",
+          "status": "passed",
+          "durationMs": 4.012900000000172
+        },
+        {
+          "name": "CORE-048 review access and lifecycle denies HORSE_OWNER before requesting registrations",
+          "status": "passed",
+          "durationMs": 3.904700000000048
+        },
+        {
+          "name": "CORE-048 review access and lifecycle redirects anonymous review to shared sign-in without an admin request",
+          "status": "passed",
+          "durationMs": 11.949600000000146
+        },
+        {
+          "name": "CORE-048 review access and lifecycle accepts a multi-role Club Manager and loads through the shared session",
+          "status": "passed",
+          "durationMs": 32.68830000000003
+        },
+        {
+          "name": "CORE-048 review access and lifecycle requires one explicit role, confirms approval and reads updated server state",
+          "status": "passed",
+          "durationMs": 125.61360000000013
+        },
+        {
+          "name": "CORE-048 review access and lifecycle rejects with a reason and keeps the reason on the decided request",
+          "status": "passed",
+          "durationMs": 63.671499999999924
+        },
+        {
+          "name": "CORE-048 review access and lifecycle cancels a review without writing or selecting a default role",
+          "status": "passed",
+          "durationMs": 51.14490000000001
+        },
+        {
+          "name": "CORE-048 review access and lifecycle blocks duplicate decisions until the pending mutation completes",
+          "status": "passed",
+          "durationMs": 63.918300000000045
+        },
+        {
+          "name": "CORE-048 review access and lifecycle keeps a 409 decision unconfirmed and refreshes before another decision",
+          "status": "passed",
+          "durationMs": 103.64859999999999
+        },
+        {
+          "name": "CORE-048 review access and lifecycle keeps a confirmed approval successful if list readback fails",
+          "status": "passed",
+          "durationMs": 74.39239999999995
+        },
+        {
+          "name": "CORE-048 review access and lifecycle keeps a rejected API decision editable without claiming success",
+          "status": "passed",
+          "durationMs": 56.06280000000015
+        },
+        {
+          "name": "CORE-048 review access and lifecycle delegates HTTP 401 correctly to shared authentication",
+          "status": "passed",
+          "durationMs": 16.785300000000007
+        },
+        {
+          "name": "CORE-048 review access and lifecycle delegates HTTP 403 correctly to shared authentication",
+          "status": "passed",
+          "durationMs": 13.128099999999904
+        },
+        {
+          "name": "CORE-048 review access and lifecycle supports empty/loading/error and retry without fabricated rows",
+          "status": "passed",
+          "durationMs": 27.949099999999817
+        },
+        {
+          "name": "CORE-048 review access and lifecycle validates deep links before requesting data and recovers via Reset filters",
+          "status": "passed",
+          "durationMs": 25.038999999999987
+        },
+        {
+          "name": "CORE-048 review access and lifecycle retains server filters across pagination and resets page when size changes",
+          "status": "passed",
+          "durationMs": 56.133400000000165
+        },
+        {
+          "name": "CORE-048 review access and lifecycle ignores old filter responses and aborts a previous read",
+          "status": "passed",
+          "durationMs": 20.604799999999614
+        },
+        {
+          "name": "CORE-048 review access and lifecycle renders applicant content as text and never exposes arbitrary secret fields",
+          "status": "passed",
+          "durationMs": 19.316100000000006
+        }
+      ]
+    },
+    {
+      "file": "src/features/registration/registrationService.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "CORE-048 registration contract submits exactly the public DTO without bearer token, role or extra caller fields",
+          "status": "passed",
+          "durationMs": 4.185299999999984
+        },
+        {
+          "name": "CORE-048 registration contract sends only approved list parameters and the shared bearer token/abort signal",
+          "status": "passed",
+          "durationMs": 0.7305000000000064
+        },
+        {
+          "name": "CORE-048 registration contract approves with exactly one roleCode and returns the decided request",
+          "status": "passed",
+          "durationMs": 0.7373999999999796
+        },
+        {
+          "name": "CORE-048 registration contract rejects with only the optional reason (\"\")",
+          "status": "passed",
+          "durationMs": 0.3523999999999887
+        },
+        {
+          "name": "CORE-048 registration contract rejects with only the optional reason (\"  Reason for review  \")",
+          "status": "passed",
+          "durationMs": 0.2746999999999389
+        },
+        {
+          "name": "CORE-048 registration contract projects only safe registration/reviewer fields",
+          "status": "passed",
+          "durationMs": 0.49909999999999854
+        },
+        {
+          "name": "CORE-048 registration contract rejects a malformed DTO",
+          "status": "passed",
+          "durationMs": 0.24520000000006803
+        },
+        {
+          "name": "CORE-048 registration contract rejects a malformed DTO",
+          "status": "passed",
+          "durationMs": 0.07110000000000127
+        },
+        {
+          "name": "CORE-048 registration contract rejects a malformed DTO",
+          "status": "passed",
+          "durationMs": 0.10550000000000637
+        },
+        {
+          "name": "CORE-048 registration contract rejects a malformed DTO",
+          "status": "passed",
+          "durationMs": 0.10849999999993543
+        },
+        {
+          "name": "CORE-048 registration contract rejects a malformed DTO",
+          "status": "passed",
+          "durationMs": 0.07129999999995107
+        },
+        {
+          "name": "CORE-048 registration contract rejects a malformed DTO",
+          "status": "passed",
+          "durationMs": 0.05779999999992924
+        },
+        {
+          "name": "CORE-048 registration contract rejects inconsistent page metadata",
+          "status": "passed",
+          "durationMs": 0.6654999999999518
+        },
+        {
+          "name": "CORE-048 registration contract rejects inconsistent page metadata",
+          "status": "passed",
+          "durationMs": 0.31159999999999854
+        },
+        {
+          "name": "CORE-048 registration contract rejects inconsistent page metadata",
+          "status": "passed",
+          "durationMs": 0.41679999999996653
+        },
+        {
+          "name": "CORE-048 registration contract rejects a mutation response that does not confirm the requested decision",
+          "status": "passed",
+          "durationMs": 0.44489999999996144
+        },
+        {
+          "name": "CORE-048 registration contract propagates HTTP 400 without fallback or retry",
+          "status": "passed",
+          "durationMs": 0.5529999999999973
+        },
+        {
+          "name": "CORE-048 registration contract propagates HTTP 401 without fallback or retry",
+          "status": "passed",
+          "durationMs": 0.25080000000002656
+        },
+        {
+          "name": "CORE-048 registration contract propagates HTTP 403 without fallback or retry",
+          "status": "passed",
+          "durationMs": 0.21839999999997417
+        },
+        {
+          "name": "CORE-048 registration contract propagates HTTP 404 without fallback or retry",
+          "status": "passed",
+          "durationMs": 0.1976999999999407
+        },
+        {
+          "name": "CORE-048 registration contract propagates HTTP 409 without fallback or retry",
+          "status": "passed",
+          "durationMs": 0.2699000000000069
+        },
+        {
+          "name": "CORE-048 registration contract propagates HTTP 429 without fallback or retry",
+          "status": "passed",
+          "durationMs": 0.16829999999993106
+        },
+        {
+          "name": "CORE-048 registration contract propagates HTTP 500 without fallback or retry",
+          "status": "passed",
+          "durationMs": 0.2744000000000142
+        },
+        {
+          "name": "CORE-048 registration contract propagates network failure without fallback and rejects missing neutral data",
+          "status": "passed",
+          "durationMs": 0.6544000000000096
+        },
+        {
+          "name": "CORE-048 registration contract blocks invalid IDs, roles, reason and queries before any HTTP request",
+          "status": "passed",
+          "durationMs": 0.5571999999999662
+        },
+        {
+          "name": "CORE-048 input validation accepts contract-compliant credentials without trimming the password",
+          "status": "passed",
+          "durationMs": 0.0966000000000804
+        },
+        {
+          "name": "CORE-048 input validation rejects invalid password without exposing its value (0)",
+          "status": "passed",
+          "durationMs": 0.14390000000003056
+        },
+        {
+          "name": "CORE-048 input validation rejects invalid password without exposing its value (1)",
+          "status": "passed",
+          "durationMs": 0.048800000000028376
+        },
+        {
+          "name": "CORE-048 input validation rejects invalid password without exposing its value (2)",
+          "status": "passed",
+          "durationMs": 0.03770000000008622
+        },
+        {
+          "name": "CORE-048 input validation rejects invalid password without exposing its value (3)",
+          "status": "passed",
+          "durationMs": 0.04980000000000473
+        },
+        {
+          "name": "CORE-048 input validation rejects invalid password without exposing its value (4)",
+          "status": "passed",
+          "durationMs": 0.04949999999996635
+        },
+        {
+          "name": "CORE-048 input validation rejects invalid password without exposing its value (5)",
+          "status": "passed",
+          "durationMs": 0.03660000000002128
+        },
+        {
+          "name": "CORE-048 input validation checks full name/email/matching confirmation",
+          "status": "passed",
+          "durationMs": 0.07740000000001146
+        },
+        {
+          "name": "CORE-048 input validation rejects malformed deep-link query page=-1",
+          "status": "passed",
+          "durationMs": 0.11789999999996326
+        },
+        {
+          "name": "CORE-048 input validation rejects malformed deep-link query page=1.5",
+          "status": "passed",
+          "durationMs": 0.061199999999985266
+        },
+        {
+          "name": "CORE-048 input validation rejects malformed deep-link query size=0",
+          "status": "passed",
+          "durationMs": 0.04100000000005366
+        },
+        {
+          "name": "CORE-048 input validation rejects malformed deep-link query size=101",
+          "status": "passed",
+          "durationMs": 0.041200000000003456
+        },
+        {
+          "name": "CORE-048 input validation rejects malformed deep-link query status=ACTIVE",
+          "status": "passed",
+          "durationMs": 0.040899999999965075
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "branch": "feat/CORE-048-registration-fe",
+  "baseHEAD": "f7c290d100c77ba6d33cf781aed9102f73c8a1bc",
+  "gitStatus": "Published source HEAD preserved; separate evidence branch only.",
+  "coreTests": 69,
+  "fullTestsPassed": 167,
+  "fullTestsFailed": 0,
+  "lint": "PASS",
+  "typecheck": "PASS",
+  "build": "PASS",
+  "fixtureCompositionBuild": "PASS",
+  "diffCheck": "PASS (no-index returns 1 for new content, no whitespace findings)",
+  "browser": "Fixture public validation/neutral response/rate limit, shared login, role choice, approval, rejection, 409 conflict, filters/empty, anonymous redirect",
+  "stableBuildBrowser": "Registration -> shared login -> CM review -> approval -> rejection; no console warnings/errors",
+  "limitations": [
+    "Router entries not mounted; shared login registration entry/copy and App Shell handlers require Integration Owner",
+    "No dedicated approved CORE-048 Figma frame; uses approved auth/design-system patterns; awaiting review",
+    "Shared AppShell min-width 1280px; 1024px needs horizontal scrolling",
+    "Browser fixtures are disposable, in-memory, outside feature diff; reload resets fixture data",
+    "Real Backend CORE-047 / SQL Server / RBAC runtime NOT VERIFIED; Independent Gate Pending"
+  ],
+  "sourceFiles": [
+    {
+      "name": "RegisterPage.tsx",
+      "sha256": "3F15E2E6DE793558FC2B9EC37AE1FEEFF82AB6B692BE8CD07D9525A52B182B62"
+    },
+    {
+      "name": "registration.module.css",
+      "sha256": "13615787E04F15EEA2684E7BDED8A0EFBBD99A973F2B1ECF55E5EFCBB6107D14"
+    },
+    {
+      "name": "registrationPages.test.tsx",
+      "sha256": "C2BD98EDAB03963EB5C2E07A74FF9D9197195E89FCD83D02D2AC5D37638D198E"
+    },
+    {
+      "name": "RegistrationProvider.tsx",
+      "sha256": "59DB01271CB337542708A5743BBC7C564631BEA4F9EF0A460DAEE83C0B9EA7F0"
+    },
+    {
+      "name": "RegistrationReviewPage.tsx",
+      "sha256": "56B6005F4143A5111FC56A72A4E905E945AEE737E1469B4A70A1963A41D0DE6A"
+    },
+    {
+      "name": "registrationService.test.ts",
+      "sha256": "410B1D95AF1AD3D54F093869CECC760BA6A9001279279387FDE433FAA988AFB8"
+    },
+    {
+      "name": "registrationService.ts",
+      "sha256": "5610D63DB4A19C1BD73B02EC3B31214D12EF88137EF7DEE520ABC587A7A76438"
+    },
+    {
+      "name": "routes.tsx",
+      "sha256": "7971C953CCEFA148F92A10C15B8E7C2FAF96C7E57590A30B4EE2FA7B60730E62"
+    },
+    {
+      "name": "types.ts",
+      "sha256": "C829886B9EF01E6C12D59AC90704C7D109C18C365AA5EA9893269EF1239981B9"
+    },
+    {
+      "name": "validation.ts",
+      "sha256": "650318DCC960527D0E4851483372D679AC7F6F09578AE4A89EEBC6C679AFEDE2"
+    }
+  ],
+  "sourceHEAD": "b3457919acae626b9bd19ea36b1d39bcba7b7499",
+  "pr": "https://github.com/lamphilong2004/SWP391_Racehorse-Training-Management-System_FE/pull/9"
+}

@@ -1,0 +1,12 @@
+CORE-048 owner evidence for source b3457919acae626b9bd19ea36b1d39bcba7b7499, Draft PR #9.
+These artifacts are author verification, not Independent Gate approval.
+Browser composition and fixture auth/service were disposable and outside the source branch.
+Fixture-only records reset on reload. No production mock store, endpoint, route mount or auth replacement was added.
+The clean compiled fixture flow registered a request, used shared LoginPage, opened Club Manager review, approved one role and rejected another request. Console warnings/errors: none in that compiled recheck.
+Additional development-fixture checks: validation, neutral response, 429 recovery, explicit role choice, 409 conflict, filter/empty/reset, anonymous redirect, public 390px, management 1440px and 1024px.
+A router error occurred during edits to the temporary HMR composition; the original local console log was preserved. The fresh compiled recheck passed; this is not evidence for the official integrated router.
+Shared AppShell min-width 1280px causes horizontal overflow at 1024px. Integration Owner coordination is required; source shell is unchanged.
+The shared LoginPage still has old no-public-signup copy. Integration Owner owns registration entry/copy, menu and shared router integration.
+No dedicated approved Register/Registration Review Figma frame was identified. UI derives from approved auth and shared design-system patterns and requires design approval.
+Backend CORE-047 endpoints/deployment, SQL Server, runtime RBAC/transactions/audit: NOT VERIFIED.
+Source HEAD and CORE-036/046/052 are preserved. This evidence-only branch is not intended for merge into dev.
