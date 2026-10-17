@@ -5,6 +5,7 @@ import { WorkspacePage } from '../pages/WorkspacePage';
 import { AccountPage } from '../pages/AccountPage';
 import { ProgramCreationPage } from '../features/program-creation/ProgramCreationPage';
 import { SessionEvaluationPage } from '../features/evaluation/SessionEvaluationPage';
+import { PerformancePage } from '../features/evaluation/PerformancePage';
 import { HorseManagementLayout } from '../features/horses/shared/HorseManagementLayout';
 import { HorseListPage, HorseProfilePage } from '../features/horses/HorsePages';
 import { RegisterHorsePage } from '../features/horses/create/RegisterHorsePage';
@@ -24,6 +25,25 @@ import { AssignedProgramsPage } from '../features/training/assigned/AssignedProg
 import { TrainingCalendarPage } from '../features/training/calendar/TrainingCalendarPage';
 import { ExerciseLibraryPage } from '../features/training/exercises/ExerciseLibraryPage';
 import { OwnerHandoffPage } from './OwnerHandoffPage';
+import { ROLE_CODES, type RoleCode } from '../shared/auth/roles';
+
+/** Route integration only. Owners: CORE-022 program list, CORE-041 templates, CORE-031 monitoring,
+ * CORE-036 medical summary, CORE-020 restrictions, CORE-050 accounts, CORE-052 audit, CORE-056 Owner,
+ * CORE-054 notifications. DEC-009 requires the minimum Owner workspace; it is not deferred. */
+const pendingScreens: { path: string; title: string; section: string; roles: RoleCode[] }[] = [
+  { path: ROUTES.trainingPrograms, title: 'Horse Training Programs', section: 'Training', roles: ['HEAD_TRAINER'] },
+  { path: ROUTES.programTemplates, title: 'Program Templates', section: 'Training', roles: ['HEAD_TRAINER'] },
+  { path: ROUTES.realtimeMonitoring, title: 'Realtime Monitoring', section: 'Training', roles: ['HEAD_TRAINER', 'TRAINER'] },
+  { path: ROUTES.medicalSummary, title: 'Medical Summary', section: 'Medical', roles: ['HEAD_TRAINER'] },
+  { path: ROUTES.restrictions, title: 'Restrictions', section: 'Medical', roles: ['HEAD_TRAINER', 'TRAINER'] },
+  { path: ROUTES.staffUsers, title: 'Staff & Users', section: 'Administration', roles: ['CLUB_MANAGER'] },
+  { path: ROUTES.rolesPermissions, title: 'Roles & Permissions', section: 'Administration', roles: ['CLUB_MANAGER'] },
+  { path: ROUTES.auditLog, title: 'Audit Log', section: 'Operations', roles: ['CLUB_MANAGER'] },
+  { path: ROUTES.myHorses, title: 'My Horses', section: 'Owner Portal', roles: ['HORSE_OWNER'] },
+  { path: '/my-horses', title: 'My Horses', section: 'Owner Portal', roles: ['HORSE_OWNER'] },
+  { path: '/my-horses/:id', title: 'Horse details', section: 'Owner Portal', roles: ['HORSE_OWNER'] },
+  { path: ROUTES.notifications, title: 'Notifications', section: 'Workspace', roles: [...ROLE_CODES] },
+];
 
 /**
  * Dev-only routes (DEC-010): the component gallery and the per-role shell preview. They are lazy-loaded inside an
@@ -79,6 +99,7 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
     { path: '/training/session/:id', element: <RequireAuth allowedRoles={['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER']}><OwnerHandoffPage title="Session details" /></RequireAuth> },
     { path: '/training/schedule/session/new', element: <RequireAuth allowedRoles={['TRAINER']}><OwnerHandoffPage title="Session scheduling" /></RequireAuth> },
     { path: ROUTES.sessionEvaluation, element: <RequireAuth><SessionEvaluationPage /></RequireAuth> },
+    { path: ROUTES.performance, element: <RequireAuth allowedRoles={['HEAD_TRAINER', 'TRAINER', 'CLUB_MANAGER', 'VETERINARIAN']}><PerformancePage /></RequireAuth> },
     { path: ROUTES.groomToday, element: <RequireAuth allowedRoles={['GROOM']}><GroomTodayPage /></RequireAuth> },
     { path: ROUTES.groomPrecheck, element: <RequireAuth allowedRoles={['GROOM']}><PrecheckPage /></RequireAuth> },
     { path: ROUTES.myRides, element: <RequireAuth allowedRoles={['WORK_RIDER']}><RiderDashboardPage /></RequireAuth> },
@@ -111,6 +132,8 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
       { path: ROUTES.incidents, element: <IncidentListRoute /> },
       { path: ROUTES.incidentDetail, element: <IncidentDetailRoute /> },
     ] },
+    // Sidebar destinations whose owning CORE screen is not integrated yet: explicit unavailable state instead of a 404.
+    ...pendingScreens.map(({ path, title, section, roles }) => ({ path, element: <RequireAuth allowedRoles={roles}><OwnerHandoffPage title={title} section={section} /></RequireAuth> })),
     { path: '*', element: <RequireAuth><NotFoundPage /></RequireAuth> },
   ];
 }

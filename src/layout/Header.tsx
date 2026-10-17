@@ -54,7 +54,7 @@ export function Header({
         <button
           type="button"
           className={styles.bell}
-          onClick={onNotificationsClick}
+          onClick={onNotificationsClick ?? (() => navigate(ROUTES.notifications))}
           aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
         >
           <Icon name="bell" size={22} />

@@ -1,0 +1,3 @@
+.stack { display: flex; flex-direction: column; align-items: center; gap: var(--space-lg); padding-top: var(--space-xl); }
+.stack > :first-child { align-self: stretch; }
+.link { color: var(--color-primary-600); font-weight: 500; }
