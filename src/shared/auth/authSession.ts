@@ -1,8 +1,9 @@
 import { DEMO_UI_ONLY } from '../../demo/demoMode';
+import { STAGING_SAMPLE } from '../../staging/stagingMode';
 
 // One canonical session API, with dev harness storage isolated from actual API authentication.
-const LOCAL_SESSION_KEY = DEMO_UI_ONLY ? 'racehorse.dev-auth.local.v1' : 'racehorse.auth.local.v1';
-const TAB_SESSION_KEY = DEMO_UI_ONLY ? 'racehorse.dev-auth.session.v1' : 'racehorse.auth.session.v1';
+const LOCAL_SESSION_KEY = STAGING_SAMPLE ? 'racehorse.staging-auth.local.v1' : DEMO_UI_ONLY ? 'racehorse.dev-auth.local.v1' : 'racehorse.auth.local.v1';
+const TAB_SESSION_KEY = STAGING_SAMPLE ? 'racehorse.staging-auth.session.v1' : DEMO_UI_ONLY ? 'racehorse.dev-auth.session.v1' : 'racehorse.auth.session.v1';
 
 export interface StoredAuthSession {
   accessToken: string;
@@ -25,7 +26,9 @@ function readFrom(kind: 'localStorage' | 'sessionStorage', key: string): StoredA
     if (!raw) return null;
     const value = JSON.parse(raw) as Partial<StoredAuthSession>;
     if (typeof value.accessToken !== 'string' || !value.accessToken || typeof value.expiresAt !== 'number' || !Number.isFinite(value.expiresAt)
-      || (!DEMO_UI_ONLY && value.accessToken.startsWith('ui-demo-session:'))) {
+      || (!DEMO_UI_ONLY && value.accessToken.startsWith('ui-demo-session:'))
+      || (!STAGING_SAMPLE && value.accessToken.startsWith('staging-sample:'))
+      || (STAGING_SAMPLE && !value.accessToken.startsWith('staging-sample:'))) {
       target.removeItem(key);
       return null;
     }

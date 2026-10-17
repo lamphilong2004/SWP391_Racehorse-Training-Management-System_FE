@@ -87,6 +87,8 @@ export async function requestApi<T>(path: string, init: RequestInit = {}, option
     const { sampleRequest } = await import('../data/sampleTransport');
     return sampleRequest<T>(path, init, actor);
   }
+  if (options.token?.startsWith('staging-sample:') || options.token?.startsWith('ui-demo-session:'))
+    throw new ApiError(401, 'UNAUTHORIZED', 'A sample identity cannot be used with the backend.');
   const headers = new Headers(init.headers);
   if (init.body && !(init.body instanceof FormData) && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
   if (options.token) headers.set('Authorization', `Bearer ${options.token}`);

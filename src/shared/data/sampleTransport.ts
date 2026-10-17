@@ -11,6 +11,7 @@ import type { ExaminationRequest, InjuryRequest, ReexaminationRequest, Treatment
 import type { EvaluationRequest } from '../../features/evaluation/models';
 import { DEMO_UI_ONLY } from '../../demo/demoMode';
 import { handleManagementSample } from './managementSamples';
+import { STAGING_SAMPLE } from '../../staging/stagingMode';
 
 /** Explicit temporary business transport. Never calls fetch or falls through to the backend. */
 export async function sampleRequest<T>(path: string, init: RequestInit, user: CurrentUser): Promise<T> {
@@ -35,6 +36,18 @@ export async function sampleRequest<T>(path: string, init: RequestInit, user: Cu
     return { items: rows.slice(index * size, (index + 1) * size), page: index, size, totalElements: rows.length, totalItems: rows.length, totalPages: Math.ceil(rows.length / size) };
   };
   const find = <V extends { id: number }>(rows: V[], id: number): V => rows.find((item) => item.id === id) ?? fail(404, 'Sample record not found. Reload sample data to restore the starting scenario.');
+  if (STAGING_SAMPLE && method === 'GET') {
+    if (route === '/api/auth/me') return respond(user);
+    const availability = route.match(/^\/api\/horses\/(\d+)\/training-availability$/);
+    if (availability) {
+      allow('CLUB_MANAGER', 'HEAD_TRAINER', 'TRAINER', 'WORK_RIDER', 'VETERINARIAN', 'GROOM');
+      const horseId = Number(availability[1]);
+      const record = data.horseRegistry?.records.find((horse) => horse.id === horseId) ?? fail(404, 'Sample horse not found.');
+      const staff = user.roles.some((role) => ['CLUB_MANAGER', 'HEAD_TRAINER', 'VETERINARIAN', 'GROOM'].includes(role));
+      if (!staff && !data.sessions.some(({ session }) => session.horse.id === horseId && canReadSampleSession(data, session, user))) fail(403, 'This horse is outside your sample assignment.');
+      return respond({ horseId, availability: record.trainingAvailability });
+    }
+  }
   if (import.meta.env.DEV && DEMO_UI_ONLY) {
     const { handleDemoSample } = await import('../../demo/demoSamples');
     const demoResponse = handleDemoSample(path, init, user);

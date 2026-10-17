@@ -9,6 +9,11 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:staging": "node scripts/build-staging.mjs",
+    "build:staging:sample": "node scripts/build-staging.mjs sample",
+    "build:staging:api": "node scripts/build-staging.mjs api",
+    "test:staging:build": "node --test scripts/staging-policy.check.mjs",
+    "smoke:staging": "node scripts/smoke-staging.mjs",
     "preview": "vite preview",
     "lint": "eslint .",
     "typecheck": "tsc -b --noEmit",

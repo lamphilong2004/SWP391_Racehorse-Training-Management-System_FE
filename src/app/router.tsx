@@ -67,12 +67,19 @@ const presenterRoutes: RouteObject[] = import.meta.env.DEV && DEMO_UI_ONLY
  * owning CORE tasks and continue to use the canonical ROUTES/AppShell configuration.
  */
 export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
+  // Inline build flags let the bundler remove the sample entry chunk from API/normal artifacts.
+  const signInRoute: RouteObject = import.meta.env.MODE === 'staging-sample' && import.meta.env.VITE_STAGING_SAMPLE === 'true'
+    ? { path: ROUTES.login, hydrateFallbackElement: <p role="status">Loading sample workspace entry…</p>, lazy: async () => {
+      const { SampleWorkspaceEntry } = await import('../staging/SampleWorkspaceEntry');
+      return { Component: () => <PublicOnly><SampleWorkspaceEntry /></PublicOnly> };
+    } }
+    : { path: ROUTES.login, element: <PublicOnly><LoginPage /></PublicOnly> };
   return [
     ...(includeDevRoutes
       ? [{ path: ROUTES.root, element: <Navigate to={ROUTES.devComponents} replace /> }, ...devRoutes]
       : [{ path: ROUTES.root, element: <Navigate to={ROUTES.dashboard} replace /> }]),
     ...presenterRoutes,
-    { path: ROUTES.login, element: <PublicOnly><LoginPage /></PublicOnly> },
+    signInRoute,
     { path: ROUTES.dashboard, element: <RequireAuth><ManagementDashboardEntry /></RequireAuth> },
     { path: ROUTES.auditLog, element: <RequireAuth allowedRoles={['CLUB_MANAGER']}><ManagementAuditEntry /></RequireAuth> },
     { path: ROUTES.account, element: <RequireAuth><AccountPage /></RequireAuth> },
