@@ -4,6 +4,11 @@ import { LoginPage } from '../pages/LoginPage';
 import { WorkspacePage } from '../pages/WorkspacePage';
 import { ProgramCreationPage } from '../features/program-creation/ProgramCreationPage';
 import { SessionEvaluationPage } from '../features/evaluation/SessionEvaluationPage';
+import { HorseManagementLayout } from '../features/horses/shared/HorseManagementLayout';
+import { HorseListPage, HorseProfilePage } from '../features/horses/HorsePages';
+import { RegisterHorsePage } from '../features/horses/create/RegisterHorsePage';
+import { PedigreeOwnershipPage } from '../features/horses/create/PedigreeOwnershipPage';
+import { PendingActivationPage } from '../features/horses/activation/PendingActivationPage';
 import { PublicOnly, RequireAuth } from './RequireAuth';
 import { ROUTES } from './routePaths';
 import { Core046Route } from '../features/core046/auth';
@@ -40,6 +45,14 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
       : [{ path: ROUTES.root, element: <Navigate to={ROUTES.dashboard} replace /> }]),
     { path: ROUTES.login, element: <PublicOnly><LoginPage /></PublicOnly> },
     { path: ROUTES.dashboard, element: <RequireAuth><WorkspacePage /></RequireAuth> },
+    { element: <RequireAuth allowedRoles={['CLUB_MANAGER', 'HEAD_TRAINER', 'TRAINER', 'VETERINARIAN', 'GROOM']}><HorseManagementLayout /></RequireAuth>, children: [
+      { path: ROUTES.horses, element: <HorseListPage /> },
+      { path: '/horses/:id', element: <HorseProfilePage /> },
+      { path: '/horses/new', element: <RequireAuth allowedRoles={['CLUB_MANAGER']}><RegisterHorsePage /></RequireAuth> },
+      { path: '/horses/:id/identity', element: <RequireAuth allowedRoles={['CLUB_MANAGER']}><RegisterHorsePage /></RequireAuth> },
+      { path: '/horses/:id/edit', element: <RequireAuth allowedRoles={['CLUB_MANAGER']}><PedigreeOwnershipPage /></RequireAuth> },
+      { path: '/horses/pending-activation', element: <RequireAuth allowedRoles={['CLUB_MANAGER']}><PendingActivationPage /></RequireAuth> },
+    ] },
     { path: ROUTES.trainingProgramCreate, element: <RequireAuth allowedRoles={['HEAD_TRAINER']}><ProgramCreationPage /></RequireAuth> },
     { path: ROUTES.sessionEvaluation, element: <RequireAuth><SessionEvaluationPage /></RequireAuth> },
     { path: ROUTES.medical, element: <RequireAuth><MedicalAccess><CaseListPage /></MedicalAccess></RequireAuth> },
@@ -56,6 +69,6 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
   ];
 }
 
-export const routes = buildRoutes(import.meta.env.DEV);
+export const routes = buildRoutes(false);
 
 export const router = createBrowserRouter(routes);

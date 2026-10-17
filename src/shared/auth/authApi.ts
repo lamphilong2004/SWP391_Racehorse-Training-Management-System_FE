@@ -1,4 +1,5 @@
 import type { RoleCode } from './roles';
+import { getBusinessActor, usesSampleData } from '../data/businessData';
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080').replace(/\/$/, '');
 
@@ -80,8 +81,14 @@ interface RequestOptions {
 
 /** All responses follow the CORE-001 envelope; a 204 response intentionally has no body. */
 export async function requestApi<T>(path: string, init: RequestInit = {}, options: RequestOptions = {}): Promise<T> {
+  if (usesSampleData(path)) {
+    const actor = getBusinessActor();
+    if (!actor || actor.accountStatus !== 'ACTIVE') throw new ApiError(401, 'UNAUTHORIZED', 'Sign in to continue.');
+    const { sampleRequest } = await import('../data/sampleTransport');
+    return sampleRequest<T>(path, init, actor);
+  }
   const headers = new Headers(init.headers);
-  if (init.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
+  if (init.body && !(init.body instanceof FormData) && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
   if (options.token) headers.set('Authorization', `Bearer ${options.token}`);
 
   let response: Response;

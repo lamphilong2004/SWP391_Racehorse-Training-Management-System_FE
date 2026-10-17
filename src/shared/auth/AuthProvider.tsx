@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { ApiError, authApi, isInactiveAccountError, type AuthApi, type CurrentUser } from './authApi';
 import { authSession, type StoredAuthSession } from './authSession';
 import { isRoleCode } from './roles';
+import { setBusinessActor } from '../data/businessData';
 
 export type AuthStatus = 'loading' | 'anonymous' | 'authenticated' | 'error';
 
@@ -47,6 +48,7 @@ export function AuthProvider({ children, api = authApi }: { children: ReactNode;
   });
 
   const clearLocalSession = useCallback((message: string | null = null) => {
+    setBusinessActor(null);
     authSession.clear();
     setState({ status: 'anonymous', user: null, expiresAt: null, message });
   }, []);
@@ -66,6 +68,7 @@ export function AuthProvider({ children, api = authApi }: { children: ReactNode;
   const restore = useCallback(async () => {
     const stored: StoredAuthSession | null = authSession.read();
     if (!stored) {
+      setBusinessActor(null);
       setState({ status: 'anonymous', user: null, expiresAt: null, message: null });
       return;
     }
@@ -74,6 +77,7 @@ export function AuthProvider({ children, api = authApi }: { children: ReactNode;
       return;
     }
 
+    setBusinessActor(null);
     setState({ status: 'loading', user: null, expiresAt: stored.expiresAt, message: null });
     try {
       const user = await api.currentUser(stored.accessToken, () => clearLocalSession(sessionExpiredMessage()));
@@ -82,6 +86,7 @@ export function AuthProvider({ children, api = authApi }: { children: ReactNode;
         return;
       }
       if (!isCurrentUser(user)) throw new Error('The current-user response does not match the approved auth contract.');
+      setBusinessActor(user);
       setState({ status: 'authenticated', user, expiresAt: stored.expiresAt, message: null });
     } catch (error) {
       if (handleApiError(error)) return;
@@ -123,6 +128,7 @@ export function AuthProvider({ children, api = authApi }: { children: ReactNode;
         throw new ApiError(200, 'INVALID_RESPONSE', 'The sign-in response does not match the approved auth contract.');
       }
       const stored = authSession.save(response.accessToken, response.expiresIn, remember);
+      setBusinessActor(response.user);
       setState({ status: 'authenticated', user: response.user, expiresAt: stored.expiresAt, message: null });
     },
     [api],

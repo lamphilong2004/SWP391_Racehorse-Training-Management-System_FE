@@ -1,0 +1,82 @@
+/*
+ * Page layout shared by the CORE-013 screens (Figma 282:2377, 283:2487, 285:2786): content padding 32 (AppShell),
+ * vertical gap 24, two columns (fluid + 380), cards from the shared Card component.
+ */
+.page { display: flex; flex-direction: column; gap: var(--space-xl); }
+.table { overflow-x: auto; }
+.profilePhoto { width: 160px; height: 140px; object-fit: cover; display: grid; place-items: center; background: var(--color-bg-subtle); border-radius: var(--radius-md); flex-shrink: 0; }
+
+.back {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: 500 14px/17px var(--font-family);
+  color: var(--color-primary-600);
+  cursor: pointer;
+}
+
+.titleRow { display: flex; align-items: center; gap: var(--space-md); }
+.titleBlock { display: flex; flex-direction: column; gap: var(--space-xs); flex: 1; min-width: 0; }
+.title { font: 600 24px/29px var(--font-family); color: var(--color-text-primary); }
+.subtitle { font: 400 14px/17px var(--font-family); color: var(--color-text-secondary); white-space: pre-wrap; }
+.startsAs { display: flex; align-items: center; gap: var(--space-sm); font: 400 13px/16px var(--font-family); color: var(--color-text-secondary); }
+
+.twoCol { display: flex; align-items: flex-start; gap: var(--space-xl); }
+.colMain { display: flex; flex-direction: column; gap: var(--space-xl); flex: 1; min-width: 0; }
+.colSide { display: flex; flex-direction: column; gap: var(--space-xl); width: 380px; flex-shrink: 0; }
+
+/* Inside a shared Card: Figma screen cards stack title / help / fields with gap 14. */
+.cardBody { display: flex; flex-direction: column; gap: 14px; }
+.cardTitle { font: 600 16px/19px var(--font-family); color: var(--color-text-primary); }
+.cardHelp { font: 400 13px/16px var(--font-family); color: var(--color-text-secondary); }
+.row { display: flex; gap: var(--space-lg); align-items: flex-start; }
+.row > * { flex: 1; min-width: 0; }
+
+.footer { display: flex; justify-content: flex-end; gap: var(--space-md); }
+
+/* "What happens next" steps */
+.step { display: flex; gap: 10px; align-items: flex-start; font: 400 13px/16px var(--font-family); color: var(--color-text-primary); }
+.stepNum {
+  flex-shrink: 0;
+  padding: 2px var(--space-sm);
+  border-radius: var(--radius-full);
+  background: var(--color-primary-50);
+  font: 600 12px/15px var(--font-family);
+  color: var(--color-primary-600);
+}
+
+/* Inline notes (screen-level pattern: tinted box, 16px icon, 13px text; not the Alert/Banner component). */
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: var(--space-md) 14px;
+  border-radius: var(--radius-md);
+  font: 400 13px/16px var(--font-family);
+  color: var(--color-text-primary);
+}
+.note > svg { flex-shrink: 0; margin-top: 0; }
+.notePrimary { background: var(--color-primary-50); }
+.notePrimary > svg { color: var(--color-primary-600); }
+.noteWarning { background: var(--color-warning-50); }
+.noteWarning > svg { color: var(--color-warning-600); }
+.noteStrong { font-weight: 500; }
+
+/* Key-value rows of the Horse summary card (label 130 wide) */
+.kv { display: flex; align-items: center; gap: var(--space-md); }
+.kvLabel { width: 130px; flex-shrink: 0; font: 400 13px/16px var(--font-family); color: var(--color-text-secondary); }
+.kvValue { flex: 1; min-width: 0; font: 500 14px/17px var(--font-family); color: var(--color-text-primary); }
+
+.photoTiles { display: flex; gap: var(--space-md); flex-wrap: wrap; }
+.hiddenInput { display: none; }
+
+.boxRow { display: flex; align-items: center; gap: var(--space-md); }
+.boxValue { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.boxValueMain { font: 500 14px/17px var(--font-family); color: var(--color-text-primary); }
+.boxValueSub { font: 400 12px/15px var(--font-family); color: var(--color-text-secondary); }
+@media (max-width: 1100px) { .twoCol { flex-direction: column; } .colSide { width: 100%; } .row { flex-wrap: wrap; } }
+

@@ -2,6 +2,8 @@ import type { ReactNode } from 'react';
 import { Header, type HeaderProps } from './Header';
 import { Sidebar } from './Sidebar';
 import styles from './AppShell.module.css';
+import { AlertBanner } from '../design-system';
+import { businessDataMode } from '../shared/data/businessData';
 
 export interface AppShellProps extends HeaderProps {
   children: ReactNode;
@@ -18,7 +20,7 @@ export function AppShell({ children, ...headerProps }: AppShellProps) {
       <Sidebar role={headerProps.user.role} />
       <div className={styles.main}>
         <Header {...headerProps} />
-        <main className={styles.content}>{children}</main>
+        <main className={styles.content}>{businessDataMode() === 'sample' && <AlertBanner type="info" title="Sample business data">Changes on unfinished business APIs stay in this browser. Sign-in uses the real backend.</AlertBanner>}{children}</main>
       </div>
     </div>
   );

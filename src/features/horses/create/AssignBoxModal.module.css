@@ -1,0 +1,9 @@
+/* SCR-HORSE-007 body (Figma 284:2596): gap 16; rows gap 6; tiles gap 12. */
+.body { display: flex; flex-direction: column; gap: var(--space-lg); }
+.topRow { display: flex; align-items: flex-end; gap: var(--space-md); }
+.yard { width: 200px; }
+.spacer { flex: 1; }
+.counts { font: 400 13px/16px var(--font-family); color: var(--color-text-secondary); }
+.row { display: flex; flex-direction: column; gap: 6px; }
+.rowLabel { font: 600 11px/13px var(--font-family); color: var(--color-text-secondary); }
+.tiles { display: flex; flex-wrap: wrap; gap: var(--space-md); }
