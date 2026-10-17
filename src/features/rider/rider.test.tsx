@@ -158,3 +158,16 @@ it('releases a feedback409 lock only after successful fresh authoritative snapsh
   fireEvent.click(await screen.findByRole('button', { name: 'Submit Feedback' })); await screen.findByText('Rider Feedback submitted');
   expect(client.feedback).toHaveBeenCalledTimes(2);
 });
+
+it('shows the completed assignment with Your ride and Your Rider Feedback before instructions (Figma WR-D6)', async () => {
+  const done: RiderSession = { ...base, status: 'COMPLETED', hasRiderFeedback: true };
+  const client = api(done);
+  client.result = vi.fn().mockResolvedValue({ ...result(done), riderFeedback: { id: 81, sessionId: 50, submittedBy: { id: 9, fullName: 'Test Rider' }, submittedAt: '2020-10-17T01:30:00Z', responses: { horseResponse: 'Settled and responsive' } } });
+  mount(client, '/rider/assignments/50');
+  expect(await screen.findByText('“Settled and responsive”')).toBeInTheDocument();
+  expect(screen.getByText('Visible to your Trainer in Session Review.')).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'View Riding History' })).toHaveAttribute('href', '/rider/history');
+  expect(screen.getByText('Ride completed. Your Rider Feedback has been submitted.')).toBeInTheDocument();
+  const headings = screen.getAllByRole('heading').map((heading) => heading.textContent);
+  expect(headings.indexOf('Your Rider Feedback')).toBeLessThan(headings.indexOf('Training Instructions'));
+});
