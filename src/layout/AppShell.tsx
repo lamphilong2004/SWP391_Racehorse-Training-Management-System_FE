@@ -4,6 +4,7 @@ import { Sidebar } from './Sidebar';
 import styles from './AppShell.module.css';
 import { AlertBanner } from '../design-system';
 import { businessDataMode } from '../shared/data/businessData';
+import { DEMO_UI_ONLY } from '../demo/demoMode';
 
 export interface AppShellProps extends HeaderProps {
   children: ReactNode;
@@ -20,7 +21,7 @@ export function AppShell({ children, ...headerProps }: AppShellProps) {
       <Sidebar role={headerProps.user.role} />
       <div className={styles.main}>
         <Header {...headerProps} />
-        <main className={styles.content}>{businessDataMode() === 'sample' && <AlertBanner type="info" title="Sample business data">Changes on unfinished business APIs stay in this browser. Sign-in uses the real backend.</AlertBanner>}{children}</main>
+        <main className={styles.content}>{businessDataMode() === 'sample' && <AlertBanner type="info" title="Sample business data">Changes on unfinished business APIs stay in this browser. {DEMO_UI_ONLY ? 'Sign-in is simulated by the development harness; no backend is called.' : 'Sign-in uses the real backend.'}</AlertBanner>}{children}</main>
       </div>
     </div>
   );

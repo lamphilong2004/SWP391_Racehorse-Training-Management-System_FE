@@ -10,6 +10,7 @@ function initialHorses(): HorseSampleState {
     currentAssignment: { id: 102, stableBoxId: 12, boxCode: 'A-12', yard: 'North Yard', effectiveFrom: now.slice(0, 10), effectiveTo: null, reason: null, assignedBy: sampleUser('CLUB_MANAGER') }, createdAt: now, updatedAt: null }],
     boxes: [{ id: 12, boxCode: 'A-12', yard: 'North Yard', status: 'OCCUPIED', currentHorse: horse }, ...[7, 8, 9].map((id): StableBox => ({ id, boxCode: `B-0${id}`, yard: 'North Yard', status: 'FREE', currentHorse: null }))], photos: {}, baselineHorseIds: [7] };
 }
+export { activation as evaluateActivation };
 function activation(h: HorseDetail, state: HorseSampleState): ActivationStatus {
   const items: [ActivationStatus['checklist'][number]['item'], boolean][] = [
     ['IDENTITY', Boolean(h.name && h.horseCode && h.breed && h.sex && h.foaledDate)],
