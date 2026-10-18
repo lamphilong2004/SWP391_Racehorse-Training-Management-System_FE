@@ -75,6 +75,8 @@ export interface HorseDetail {
   currentAssignment: StableAssignment | null;
   createdAt: string;
   updatedAt: string | null;
+  /** CORE-004 non-clinical latestWeight projection, absent/null when no record exists. */
+  latestWeight?: { weightKg: number; recordedAt: string } | null;
 }
 
 export interface PedigreeRequest {
