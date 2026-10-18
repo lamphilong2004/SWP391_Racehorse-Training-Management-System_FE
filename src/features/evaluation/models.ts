@@ -40,3 +40,11 @@ export const RESULT_LABELS: Record<EvaluationResult, string> = { MET: 'Met targe
 export const isTerminal = (status: SessionStatus) => status === 'COMPLETED' || status === 'INTERRUPTED';
 export const metric = (value: number | null | undefined, unit: string) =>
   typeof value === 'number' && Number.isFinite(value) ? `${value.toLocaleString('en-US', { maximumFractionDigits: 3 })} ${unit}` : 'Not measured';
+
+const DATE_TIME = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+const CLOCK = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' });
+const valid = (value: string | null | undefined) => (value && Number.isFinite(Date.parse(value)) ? new Date(value) : null);
+/** Server ISO timestamp as Figma's "20 Oct 2026 · 08:34" in the viewer's time zone; never invents a value. */
+export const dateTime = (value: string | null | undefined) => { const date = valid(value); return date ? DATE_TIME.format(date).replace(', ', ' · ') : 'Not recorded'; };
+/** Recorded-sample clock time (HH:mm:ss). */
+export const clockTime = (value: string | null | undefined) => { const date = valid(value); return date ? CLOCK.format(date) : 'Not recorded'; };
