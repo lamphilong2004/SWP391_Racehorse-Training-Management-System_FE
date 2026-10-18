@@ -47,13 +47,24 @@ describe('CORE-056 read-only Owner journey', () => {
     await userEvent.click(screen.getByRole('link', { name: '← My Horses' }));
     await screen.findByRole('heading', { name: 'My Horses' });
   });
-  it('renders contract-supported health weights, dates and raw training counts without fabricated metrics', async () => {
+  it('keeps approved Profile layout read-only without extra ownership rows', async () => {
+    mount('/owner/horses/7'); await screen.findByRole('heading', { name: 'Ownership' });
+    expect(screen.getByText('Thunder Bolt is linked to your account.')).toBeInTheDocument();
+    expect(screen.queryByText('My share')).not.toBeInTheDocument();
+    expect(screen.queryByText('Linked since')).not.toBeInTheDocument();
+    expect(screen.queryByText('Managing owner')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Edit|Save|Delete/i })).not.toBeInTheDocument();
+  });
+  it('uses approved Health/Weight layout and real contract values without inventing progress metrics', async () => {
     const source = createOwnerSampleTransport({ readSamples: canonicalFixture, getBusinessActor: () => ownerA }, () => new Date('2026-10-18T00:00:00Z'));
     const horse = await source.detail(7, { actorId: 17 });
     const service: OwnerService = { list: source.list, async detail() { return { ...horse, healthSummary: { reviewDate: '2026-10-25', recovery: 'IMPROVING', examinedAt: '2026-10-17T06:00:00Z', weights: [{ weightKg: 501.25, recordedAt: '2026-10-18T06:00:00Z' }] }, program: { ...horse.program!, completed: 3, planned: 8 } }; } };
     mount('/owner/horses/7?tab=health', { service });
-    await screen.findByText('Improving'); expect(screen.getByText('25 Oct 2026')).toBeInTheDocument();
-    expect(screen.getByRole('list', { name: 'Weight history' })).toHaveTextContent('501.25 kg');
+    await screen.findByText('25 Oct 2026');
+    expect(screen.getByText('501.25 kg')).toBeInTheDocument();
+    expect(screen.getByText(/last recorded/)).toHaveTextContent('18 Oct 2026');
+    expect(screen.queryByText('Recovery')).not.toBeInTheDocument(); expect(screen.queryByText('Last examined')).not.toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Weight history' })).not.toBeInTheDocument();
     expect(document.querySelector('time[datetime="2026-10-18T06:00:00Z"]')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('tab', { name: 'Training & Performance' }));
     expect(screen.getByText('3 / 8 sessions completed')).toBeInTheDocument(); expect(screen.queryByText('58%')).not.toBeInTheDocument();

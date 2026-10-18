@@ -25,7 +25,9 @@
 .fact { display: grid; grid-template-columns: 160px minmax(0,1fr); gap: 12px; margin: 0; align-items: start; }
 .fact dt { font-size: 13px; line-height: 20px; }
 .fact dd { font-weight: 400; font-size: 14px; line-height: 20px; overflow-wrap: anywhere; }
-.columns .facts .fact { padding: 4px 0; }
+.columns .facts .fact { padding: 6px 0; }
+.columns .facts .fact dd { font-weight: 500; }
+.ownershipStatement { font-size: 14px; line-height: 20px; font-weight: 500; }
 .horseCard .fact { grid-template-columns: 120px minmax(0,1fr); }
 .horseCard .fact dd { font-size: 13px; line-height: 18px; }
 .viewLink { display: inline-flex; align-self: flex-start; align-items: center; min-height: 40px; padding: 0 16px; font-size: 14px; font-weight: 500; border-radius: var(--radius-md); text-decoration: none; color: var(--color-text-on-primary); background: var(--color-primary-600); border: 1px solid var(--color-primary-600); }
@@ -40,10 +42,14 @@
 .note { padding: 12px 14px; border-left: 0; }
 .note > span { width: 16px !important; height: 16px !important; }
 .note p { font-size: 13px; line-height: 18px; font-weight: 400; }
-.healthFacts .fact { padding: 14px 0; border-bottom: 1px solid var(--color-border-default); }
+.healthFacts { display: flex; flex-direction: column; gap: 12px; }
+.healthFacts .fact { grid-template-columns: 170px minmax(0,1fr); padding: 10px 0; border-bottom: 1px solid var(--color-border-default); align-items: center; }
+.healthFacts .fact dd { font-weight: 500; }
+.weightValue { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
 .weight { font-size: 28px; font-weight: 600; }
 .pedigree { display: grid; grid-template-columns: minmax(0,112px) minmax(0,118px) minmax(0,120px); align-items: center; gap: 16px; }
 .pedigree .stack { gap: 12px; }
+.pedigree > .stack:last-child { gap: 8px; }
 .ancestor { display: flex; flex-direction: column; gap: 2px; background: var(--color-primary-50); padding: 10px 12px; border-radius: var(--radius-md); font-size: 14px; line-height: 17px; overflow-wrap: anywhere; }
 .ancestor small { color: var(--color-text-secondary); font-size: 11px; line-height: 13px; }
 .ancestor strong { font-weight: 600; }

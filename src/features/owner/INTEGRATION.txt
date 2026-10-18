@@ -1,7 +1,7 @@
 CORE-056 OWNER FE — LOCAL INDEPENDENT REVIEW HANDOFF
 
-Branch: feat/CORE-056-owner-fe; base/HEAD f7c290d100c77ba6d33cf781aed9102f73c8a1bc.
-Source remains uncommitted by the CORE-056 Task Playbook. No push/PR before prescribed Independent Gate authorization.
+Original branch feat/CORE-056-owner-fe; original base/HEAD f7c290d100c77ba6d33cf781aed9102f73c8a1bc.
+Figma remediation branch: fix/CORE-056-figma-remediation, from preserved LOCAL recovery checkpoint5aae0f5f1f456ab03ff4939a7211804affe95609. Original source/checkpoint retained. Recovery commits do not authorize feature publication. No push/PR before prescribed Independent Gate authorization.
 
 Pinned CORE-004 contract:
 https://github.com/lamphilong2004/SWP391_Racehorse-Training-Management-System_BE/blob/f8e7895ba4ad4816f951c56d6480fd01178f1bc5/docs/api/flow1-horse.openapi.yaml
@@ -36,7 +36,7 @@ Canonical AppShell/Card/KeyValue/Tabs/StatusBadge/AlertBanner and local icons re
 
 Remaining deviations/dependencies — not approved automatically:
 - Contract gaps: Owner card has no current program/next session; Owner profile has no photo/stable/grandparents; Training has no trainer name, distance/focus, next session, trainer update or videos. Display missing/not-shared states; no staff endpoint enrichment. Ask Dung/Leader for explicit safe extensions before adding data.
-- Health weights/recovery/review/examinedAt and Training counts ARE contract-supported and rendered when supplied. Canonical sample lacks an approved health-summary producer; its missing values stay empty, not borrowed from clinical entities. Progress counts stay unavailable when absent.
+- Health weights/recovery/review/examinedAt and Training counts ARE contract-supported and preserved in the model. Approved Health UI shows status/availability/review and latest weight with its original timestamp; extra Recovery/Last examined rows and extra Ownership rows were removed to restore Figma. Canonical sample lacks an approved health-summary producer; missing values stay empty, not borrowed from clinical entities. Progress counts stay unavailable when absent; a percent formula still needs confirmation.
 - Evaluation label vocabulary and current-program selection when multiple candidates exist need CORE-055 confirmation. Sample picks an ACTIVE program and date-matching phase for demonstration only; real selection belongs to BE.
 - Race History and Financial summary are outside the four approved screens; omitted pending scope/design decision. No fake buttons/destinations.
 - Shared detail-menu active highlight and min-width:1280px shell overflow remain Integration Owner dependencies. Owner content adapts at 1280/1440; no claim of full mobile shell support.
@@ -44,5 +44,5 @@ Remaining deviations/dependencies — not approved automatically:
 
 Evidence outside feature diff: outputs/CORE-056 has pinned YAML, source patch/hash, tests, Figma references and browser screenshots. Disposable browser composition uses exact official integration fbfe47fa40b72ba57b07623888ed7b74652f0375 plus Owner source and fixture AuthApi through normal shared login. It uses canonical readSamples/saveSamples only; it is not production auth or Backend verification.
 
-Independent Gate: PENDING. Real Backend/SQL Server/RBAC: NOT VERIFIED. Official router integration: PENDING. No merge or Done claim.
+Last formal Independent Gate: FAIL9/11 on preserved source (Figma acceptance + actual route/provider mount). This scoped remediation is awaiting review; no automatic criterion promotion. Real Backend/SQL Server/RBAC: NOT VERIFIED. Official router integration: PENDING. No merge or Done claim.
 Preserve CORE-036 a605a7d; CORE-046 a9ec360; CORE-048 b345791; CORE-052 786d397.
