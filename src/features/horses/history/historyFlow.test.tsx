@@ -30,6 +30,7 @@ describe('CORE-017 existing Horse Profile extended with history and readiness', 
     expect(screen.getByRole('heading', { name: 'Pedigree Tree' })).toBeInTheDocument(); expect(screen.getByRole('heading', { name: 'Ownership history' })).toBeInTheDocument();
     expect(screen.getAllByText('Current Owner')).toHaveLength(2);
     expect(screen.getByText(/foaled .* · Owner /)).toBeInTheDocument();
+    expect(screen.getByText(/North Yard · A-12 \(since/)).toHaveTextContent(readSamples().horseRegistry!.records[0].currentAssignment!.effectiveFrom);
     expect(screen.getByRole('heading', { name: 'Stable assignment history' })).toBeInTheDocument(); expect(screen.getByText('No timeline events shared')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('link', { name: '← Back to Horse Profile' })); await screen.findByRole('heading', { name: 'Head Trainer readiness review' });
     const tab = screen.getByRole('tab', { name: 'Overview' }); tab.focus(); await userEvent.keyboard('{End}');
@@ -49,6 +50,14 @@ describe('CORE-017 existing Horse Profile extended with history and readiness', 
   });
   it.each(['CLUB_MANAGER', 'VETERINARIAN'] as const)('shows the checklist read-only for %s', async (role) => {
     open(undefined, sampleUser(role)); await screen.findByText('Recommended · non-blocking'); expect(screen.queryByRole('button', { name: 'Record readiness review' })).not.toBeInTheDocument();
+  });
+  it.each([403, 404])('shows the correct terminal readiness read error %s without offering a write or retry', async (status) => {
+    const service = { ...sample(), checklist: vi.fn().mockRejectedValue(new ApiError(status, 'NOT_FOUND', 'PRIVATE-SECRET')), acknowledge: vi.fn() };
+    open(undefined, sampleUser('HEAD_TRAINER'), service);
+    await screen.findByText(status === 403 ? 'Access denied' : 'Horse not found');
+    expect(screen.queryByRole('button', { name: 'Record readiness review' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Try again|Retry/i })).not.toBeInTheDocument();
+    expect(service.acknowledge).not.toHaveBeenCalled(); expect(document.body).not.toHaveTextContent('PRIVATE-SECRET');
   });
   it('prevents duplicate submissions, records the HT acknowledgement, rereads checklist and preserves lifecycle', async () => {
     const base = sample(); let resolve!: () => void; const pending = new Promise<void>((done) => { resolve = done; });
