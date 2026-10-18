@@ -20,6 +20,7 @@ import { AssignedProgramsPage } from '../features/training/assigned/AssignedProg
 import { TrainingCalendarPage } from '../features/training/calendar/TrainingCalendarPage';
 import { ExerciseLibraryPage } from '../features/training/exercises/ExerciseLibraryPage';
 import { OwnerHandoffPage } from './OwnerHandoffPage';
+import { ownerApplicationRoutes } from '../features/owner/ownerApplicationRoutes';
 import { registrationRoutes } from '../features/registration/routes';
 import { ROLE_CODES, type RoleCode } from '../shared/auth/roles';
 
@@ -34,9 +35,6 @@ const pendingScreens: { path: string; title: string; section: string; roles: Rol
   { path: ROUTES.restrictions, title: 'Restrictions', section: 'Medical', roles: ['HEAD_TRAINER', 'TRAINER'] },
   { path: ROUTES.staffUsers, title: 'Staff & Users', section: 'Administration', roles: ['CLUB_MANAGER'] },
   { path: ROUTES.rolesPermissions, title: 'Roles & Permissions', section: 'Administration', roles: ['CLUB_MANAGER'] },
-  { path: ROUTES.myHorses, title: 'My Horses', section: 'Owner Portal', roles: ['HORSE_OWNER'] },
-  { path: '/my-horses', title: 'My Horses', section: 'Owner Portal', roles: ['HORSE_OWNER'] },
-  { path: '/my-horses/:id', title: 'Horse details', section: 'Owner Portal', roles: ['HORSE_OWNER'] },
   { path: ROUTES.notifications, title: 'Notifications', section: 'Workspace', roles: [...ROLE_CODES] },
 ];
 
@@ -79,6 +77,8 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
     { path: ROUTES.account, element: <RequireAuth><AccountPage /></RequireAuth> },
     // CORE-048 (DEC-008): public access request and Club Manager review; each page enforces its own boundary.
     ...registrationRoutes,
+    // CORE-056 candidate mount: canonical API provider plus legacy deep-link aliases.
+    ...ownerApplicationRoutes,
     { element: <RequireAuth allowedRoles={['CLUB_MANAGER', 'HEAD_TRAINER', 'TRAINER', 'VETERINARIAN', 'GROOM']}><HorseManagementLayout /></RequireAuth>, children: [
       { path: ROUTES.horses, element: <HorseListPage /> },
       { path: '/horses/:id', element: <HorseProfilePage /> },
