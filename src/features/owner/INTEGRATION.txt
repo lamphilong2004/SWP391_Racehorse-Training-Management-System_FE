@@ -1,0 +1,48 @@
+CORE-056 OWNER FE — LOCAL INDEPENDENT REVIEW HANDOFF
+
+Branch: feat/CORE-056-owner-fe; base/HEAD f7c290d100c77ba6d33cf781aed9102f73c8a1bc.
+Source remains uncommitted by the CORE-056 Task Playbook. No push/PR before prescribed Independent Gate authorization.
+
+Pinned CORE-004 contract:
+https://github.com/lamphilong2004/SWP391_Racehorse-Training-Management-System_BE/blob/f8e7895ba4ad4816f951c56d6480fd01178f1bc5/docs/api/flow1-horse.openapi.yaml
+BE PR #9 is still open at this pin. Contract alignment is not proof of deployed CORE-055 or SQL/RBAC verification.
+
+Exact HTTP mapping (shared requestApi and authSession; GET only):
+- /api/owner/horses -> Envelope.data ARRAY<OwnerHorseCard>. No paging, filters, ownerId or all-horses endpoint.
+- /api/owner/horses/{id}/profile -> OwnerHorseProfile; only myOwnership, never other owners.
+- /api/owner/horses/{id}/health-summary -> OwnerHealthSummary; status, availability, review date, recovery, last examination timestamp and <=12 weights.
+- /api/owner/horses/{id}/training-summary -> OwnerTrainingSummary; current program name/phase/period/counts and <=10 session code/date/status summaries.
+The profile is read before summary requests. Any failure rejects the whole detail; 401/403/404/network/invalid DTO never selects samples or renders partial data. API responses are validated and projected by allowlist. Weight values/timestamps and raw session totals are preserved, not fabricated percentages. Evaluation label is withheld until its vocabulary is confirmed; no evaluation bodies are exposed.
+
+Integration Owner wiring — instructions only; shared files unchanged:
+1. Mount exported ownerRoutes: canonical /owner/horses and proposed /owner/horses/:horseId with ?tab=profile|health|training. Reject invalid ids/tabs.
+2. Keep shared AuthProvider/RequireAuth and ACTIVE + HORSE_OWNER guard. Canonical business actor must follow the authenticated user, including restore/logout/login.
+3. Choose once at centralized composition:
+   sample: createOwnerSampleTransport({ readSamples, getBusinessActor })
+   api: createOwnerApi() (shared authSession token; shared requestApi base URL)
+   Wrap route elements in <OwnerProvider service={service}>. The unconfigured default remains unavailable and never auto-selects a source.
+4. Bind ONLY canonical src/shared/data readSamples/getBusinessActor. No new store, key, HTTP mock server, on-login assignment or sample-to-real write exists. Canonical key remains racehorse.business-samples.v1. Sample UI is visibly labelled and is not API-verified.
+5. HORSE_OWNER My Horses menu already references ROUTES.myHorses. Shared nesting/highlight, role landing, account/logout/notifications and navigation remain Long's scope.
+6. Header search is client-side only within returned owned horses; q is an FE view query, never an API parameter. Owner list does not fetch staff horse data.
+
+Sample isolation:
+Every read validates canonical authenticated actor, ACTIVE and HORSE_OWNER before reading/projecting. Revalidates actor after snapshot read. context.actorId is only a consistency check. Non-owned existing horse ->403; missing ->404; invalid id -> local400; missing/mismatched actor ->401. No hardcoded user id or role switcher.
+CORE-004 grants open ownership rows only: effectiveTo must be null; valid effectiveFrom must not be future. Closed rows are excluded, malformed periods fail closed. Ask Dung to confirm effectiveFrom treatment and SQL timezone/effective-period semantics; future starts are conservatively denied, not treated as an approved SQL rule.
+The sample projection only exposes safe Owner field equivalents. Staff-only photo/stable/trainer/focus/distance/next-session fields were removed, even where the wider sample store contains them. Clinical cases, diagnosis, injury/exam detail, prescriptions, medication, restriction reasons, feedback, telemetry and other owners never cross the transport boundary. No sample data is deleted or seeded by the feature.
+
+Figma (file tm7dpgAQbHReZ7tlQeQJlc):
+My Horses 299:4305; Profile 300:4380; Health 301:4447; Training 303:4522.
+Canonical AppShell/Card/KeyValue/Tabs/StatusBadge/AlertBanner and local icons reused. Compact cards compose existing primitives; shared HorseCard is a different layout.
+
+Remaining deviations/dependencies — not approved automatically:
+- Contract gaps: Owner card has no current program/next session; Owner profile has no photo/stable/grandparents; Training has no trainer name, distance/focus, next session, trainer update or videos. Display missing/not-shared states; no staff endpoint enrichment. Ask Dung/Leader for explicit safe extensions before adding data.
+- Health weights/recovery/review/examinedAt and Training counts ARE contract-supported and rendered when supplied. Canonical sample lacks an approved health-summary producer; its missing values stay empty, not borrowed from clinical entities. Progress counts stay unavailable when absent.
+- Evaluation label vocabulary and current-program selection when multiple candidates exist need CORE-055 confirmation. Sample picks an ACTIVE program and date-matching phase for demonstration only; real selection belongs to BE.
+- Race History and Financial summary are outside the four approved screens; omitted pending scope/design decision. No fake buttons/destinations.
+- Shared detail-menu active highlight and min-width:1280px shell overflow remain Integration Owner dependencies. Owner content adapts at 1280/1440; no claim of full mobile shell support.
+- Shared notification count is not invented. Sample content differs from illustrative Figma values.
+
+Evidence outside feature diff: outputs/CORE-056 has pinned YAML, source patch/hash, tests, Figma references and browser screenshots. Disposable browser composition uses exact official integration fbfe47fa40b72ba57b07623888ed7b74652f0375 plus Owner source and fixture AuthApi through normal shared login. It uses canonical readSamples/saveSamples only; it is not production auth or Backend verification.
+
+Independent Gate: PENDING. Real Backend/SQL Server/RBAC: NOT VERIFIED. Official router integration: PENDING. No merge or Done claim.
+Preserve CORE-036 a605a7d; CORE-046 a9ec360; CORE-048 b345791; CORE-052 786d397.
