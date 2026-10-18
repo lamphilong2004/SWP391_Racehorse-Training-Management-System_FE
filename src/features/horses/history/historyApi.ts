@@ -8,7 +8,14 @@ const object = (v: unknown): Record<string, unknown> => { if (!v || typeof v !==
 const list = (v: unknown): unknown[] => { if (!Array.isArray(v)) throw invalid(); return v; };
 const int = (v: unknown, min = 0): number => { if (!Number.isSafeInteger(v) || (v as number) < min) throw invalid(); return v as number; };
 const text = (v: unknown): string => { if (typeof v !== 'string') throw invalid(); return v; };
-const instant = (v: unknown): string => { const s = text(v); if (!Number.isFinite(Date.parse(s)) || !/(Z|[+-]\d\d:\d\d)$/.test(s)) throw invalid(); return s; };
+const instant = (v: unknown): string => {
+  const s = text(v);
+  const parts = /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(Z|[+-](\d{2}):(\d{2}))$/.exec(s);
+  if (!parts || !Number.isFinite(Date.parse(s)) || Number(parts[2]) > 23 || Number(parts[3]) > 59 || Number(parts[4]) > 59 || Number(parts[6] ?? 0) > 23 || Number(parts[7] ?? 0) > 59) throw invalid();
+  // Date.parse normalizes impossible dates such as February 30; the contract requires a real date-time.
+  date(parts[1]);
+  return s;
+};
 const date = (v: unknown): string => { const s = text(v); if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || !Number.isFinite(Date.parse(s)) || new Date(s).toISOString().slice(0, 10) !== s) throw invalid(); return s; };
 const nullableDate = (v: unknown) => v == null ? null : date(v);
 const user = (v: unknown) => { const u = object(v); return { id: int(u.id, 1), fullName: text(u.fullName), ...(u.userCode == null ? {} : { userCode: text(u.userCode) }) }; };
@@ -42,8 +49,14 @@ export function createHorseHistoryApi(options: { fetcher?: typeof fetch; baseUrl
     async timeline(id, page, signal) {
       if (!Number.isSafeInteger(page) || page < 0) throw new ApiError(400, 'VALIDATION_ERROR', 'Choose a valid page.');
       const v = object(await call(id, `timeline?page=${page}&size=20`, signal));
-      const items = list(v.items).map((value): TimelineEvent => { const e = object(value); return { occurredAt: instant(e.occurredAt), eventType: text(e.eventType), title: text(e.title) }; });
-      return { items, page: int(v.page), size: int(v.size, 1), totalItems: int(v.totalItems), totalPages: int(v.totalPages) } satisfies Page<TimelineEvent>;
+      const items = list(v.items).map((value): TimelineEvent => {
+        const e = object(value), title = text(e.title);
+        if (Array.from(title).length > 200) throw invalid();
+        return { occurredAt: instant(e.occurredAt), eventType: text(e.eventType), title };
+      });
+      const result = { items, page: int(v.page), size: int(v.size, 1), totalItems: int(v.totalItems), totalPages: int(v.totalPages) } satisfies Page<TimelineEvent>;
+      if (result.page !== page || items.length > result.size || items.some((event, index) => index > 0 && Date.parse(event.occurredAt) > Date.parse(items[index - 1].occurredAt))) throw invalid();
+      return result;
     },
     async ownerships(id, signal) { return list(await call(id, 'ownerships', signal)).map((value): Ownership => { const v = object(value); if (typeof v.sharePercentage !== 'number' || !Number.isFinite(v.sharePercentage) || v.sharePercentage <= 0 || v.sharePercentage > 100 || typeof v.isManagingOwner !== 'boolean') throw invalid(); return { id: int(v.id, 1), owner: user(v.owner), sharePercentage: v.sharePercentage, effectiveFrom: date(v.effectiveFrom), effectiveTo: nullableDate(v.effectiveTo), isManagingOwner: v.isManagingOwner }; }); },
     async assignments(id, signal) { return list(await call(id, 'stable-assignments', signal)).map((value): StableAssignment => { const v = object(value); return { id: int(v.id, 1), stableBoxId: int(v.stableBoxId, 1), boxCode: text(v.boxCode), yard: v.yard == null ? null : text(v.yard), effectiveFrom: date(v.effectiveFrom), effectiveTo: nullableDate(v.effectiveTo), reason: null, assignedBy: user(v.assignedBy) }; }); },

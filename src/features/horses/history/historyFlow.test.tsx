@@ -28,6 +28,8 @@ describe('CORE-017 existing Horse Profile extended with history and readiness', 
     await userEvent.click(screen.getByRole('link', { name: 'View Pedigree & History →' }));
     await screen.findByRole('heading', { name: 'Pedigree & History' }); expect(router.state.location.search).toBe('?tab=history');
     expect(screen.getByRole('heading', { name: 'Pedigree Tree' })).toBeInTheDocument(); expect(screen.getByRole('heading', { name: 'Ownership history' })).toBeInTheDocument();
+    expect(screen.getAllByText('Current Owner')).toHaveLength(2);
+    expect(screen.getByText(/foaled .* · Owner /)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Stable assignment history' })).toBeInTheDocument(); expect(screen.getByText('No timeline events shared')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('link', { name: '← Back to Horse Profile' })); await screen.findByRole('heading', { name: 'Head Trainer readiness review' });
     const tab = screen.getByRole('tab', { name: 'Overview' }); tab.focus(); await userEvent.keyboard('{End}');

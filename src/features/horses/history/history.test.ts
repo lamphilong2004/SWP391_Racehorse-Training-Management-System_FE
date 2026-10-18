@@ -63,6 +63,38 @@ describe('CORE-017 canonical sample history/readiness', () => {
 });
 describe('CORE-017 pinned API operations', () => {
   const api = (fetcher: typeof fetch) => createHorseHistoryApi({ fetcher, baseUrl: 'https://api.example.test', getToken: () => 'fixture-token' });
+  const timelineResponse = (items: unknown[], meta = {}) => new Response(JSON.stringify({ success: true, data: { page: 0, size: 20, totalItems: items.length, totalPages: items.length ? 1 : 0, items, ...meta } }));
+  const event = { occurredAt: '2026-10-18T06:00:00Z', eventType: 'UNMAPPED_CONTRACT_TYPE', title: 'Non-clinical summary' };
+  it.each(['2026-02-30T06:00:00Z', '2026-10-18T24:00:00Z', '2026-10-18T06:00:00', '2026-10-18T06:00:00+24:00', '2026-10-18T06:00:00+07:60'])('rejects malformed event timestamp %s without sample fallback', async (occurredAt) => {
+    const before = JSON.stringify(readSamples()); const fetcher = vi.fn().mockResolvedValue(timelineResponse([{ ...event, occurredAt }]));
+    await expect(api(fetcher).timeline(7, 0)).rejects.toMatchObject({ code: 'INVALID_RESPONSE' });
+    expect(fetcher).toHaveBeenCalledOnce(); expect(JSON.stringify(readSamples())).toBe(before);
+  });
+  it('preserves offset/fractional timestamps and unknown event codes without inventing a source mapping', async () => {
+    const items = [{ ...event, occurredAt: '2026-10-18T13:00:00.123+07:00', targetId: 999, targetType: 'UNAPPROVED_TARGET', medication: 'SECRET' }, { ...event, occurredAt: '2026-02-28T23:59:59Z' }];
+    const fetcher = vi.fn().mockResolvedValue(timelineResponse(items)); const result = await api(fetcher).timeline(7, 0);
+    expect(result.items).toEqual(items.map(({ occurredAt, eventType, title }) => ({ occurredAt, eventType, title })));
+    expect(JSON.stringify(result)).not.toMatch(/SECRET|UNAPPROVED_TARGET|targetId/);
+  });
+  it('enforces the approved 200-character title limit using Unicode characters', async () => {
+    const fetcher = vi.fn().mockResolvedValueOnce(timelineResponse([{ ...event, title: '🐎'.repeat(200) }])).mockResolvedValueOnce(timelineResponse([{ ...event, title: 'x'.repeat(201) }]));
+    expect((await api(fetcher).timeline(7, 0)).items[0].title).toBe('🐎'.repeat(200));
+    await expect(api(fetcher).timeline(7, 0)).rejects.toMatchObject({ code: 'INVALID_RESPONSE' });
+  });
+  it.each([
+    { page: 1 }, { size: 0 }, { size: 0.5 }, { totalItems: -1 }, { totalPages: -1 },
+  ])('rejects mismatched/invalid page metadata %j', async (meta) => {
+    await expect(api(vi.fn().mockResolvedValue(timelineResponse([event], meta))).timeline(7, 0)).rejects.toMatchObject({ code: 'INVALID_RESPONSE' });
+  });
+  it('rejects overflow and older-first payloads rather than silently rewriting Backend pagination/order', async () => {
+    const fetcher = vi.fn().mockResolvedValueOnce(timelineResponse([event, event], { size: 1 })).mockResolvedValueOnce(timelineResponse([{ ...event, occurredAt: '2026-10-17T06:00:00Z' }, event]));
+    await expect(api(fetcher).timeline(7, 0)).rejects.toMatchObject({ code: 'INVALID_RESPONSE' });
+    await expect(api(fetcher).timeline(7, 0)).rejects.toMatchObject({ code: 'INVALID_RESPONSE' });
+  });
+  it.each([401, 403, 404, 500])('propagates timeline HTTP %s without deriving events from other stores', async (status) => {
+    const before = JSON.stringify(readSamples()); const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ success: false, error: { code: 'FORBIDDEN', message: 'Unavailable', details: [] } }), { status }));
+    await expect(api(fetcher).timeline(7, 0)).rejects.toMatchObject({ status }); expect(fetcher).toHaveBeenCalledOnce(); expect(JSON.stringify(readSamples())).toBe(before);
+  });
   it('uses exact paged timeline path, preserves unknown event types as neutral titles, and whitelists fields', async () => {
     const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ success: true, data: { page: 2, size: 20, totalItems: 45, totalPages: 3, items: [{ occurredAt: '2026-10-18T06:00:00Z', eventType: 'FUTURE_BE_TYPE', title: 'Safe summary', diagnosis: 'SECRET' }] } })));
     const result = await api(fetcher).timeline(7, 2); expect(fetcher.mock.calls[0][0]).toBe('https://api.example.test/api/horses/7/timeline?page=2&size=20'); expect(result.items[0].eventType).toBe('FUTURE_BE_TYPE'); expect(JSON.stringify(result)).not.toContain('SECRET');

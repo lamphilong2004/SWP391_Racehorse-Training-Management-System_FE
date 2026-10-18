@@ -30,24 +30,25 @@ function History({ horse }: { horse: HorseDetail }) {
     return () => { active = false; abort.abort(); };
   }, [source, service, handleApiError]);
   const current = result?.source === source ? result : undefined;
+  const ownerNames = horse.currentOwnerships.map((ownership) => ownership.owner.fullName).join(', ') || missing;
   if (current?.error !== undefined) return <Message code={current.error} retry={() => setRevision((v) => v + 1)} />;
   if (!current?.timeline) return <LoadingState label="Loading horse history…" />;
   return <div className={styles.page}>
     <Link to={`/horses/${horse.id}?tab=overview`} className={styles.back}>← Back to Horse Profile</Link>
-    <div><h1 className={styles.title}>Pedigree &amp; History</h1><p className={styles.subtitle}>{horse.horseCode} · {horse.name} · {horse.breed ?? missing} · {horse.sex ?? missing} · foaled {formatDate(horse.foaledDate)}</p></div>
+    <div><h1 className={styles.title}>Pedigree &amp; History</h1><p className={styles.subtitle}>{horse.horseCode} · {horse.name} · {horse.breed ?? missing} · {horse.sex ?? missing} · foaled {formatDate(horse.foaledDate)} · Owner {ownerNames}</p></div>
     {service.source === 'sample' && <AlertBanner title="Sample history">Only shared sample records are shown. Additional history is not available in this preview.</AlertBanner>}
     <h2 className={styles.sectionTitle}>Origin &amp; Pedigree</h2>
     <Card className={styles.section}><h3>Origin &amp; Identity</h3><div className={styles.identityGrid}>
       <KeyValue label="Horse Name" value={horse.name} /><KeyValue label="Horse ID" value={horse.horseCode} /><KeyValue label="Breed" value={horse.breed ?? missing} />
       <KeyValue label="Country of Origin" value={horse.countryOfOrigin ?? missing} /><KeyValue label="Date of Birth" value={formatDate(horse.foaledDate)} /><KeyValue label="Sex" value={horse.sex ?? missing} />
-      <KeyValue label="Breeder" value={missing} /><KeyValue label="Current Owner" value={horse.currentOwnerships.map((o) => o.owner.fullName).join(', ') || missing} /><span aria-hidden="true" /><KeyValue label="Sire" value={horse.pedigree.sire.name ?? horse.pedigree.sire.horseCode ?? missing} /><KeyValue label="Dam" value={horse.pedigree.dam.name ?? horse.pedigree.dam.horseCode ?? missing} />
+      <KeyValue label="Breeder" value={missing} /><KeyValue label="Current Owner" value={ownerNames} /><span aria-hidden="true" /><KeyValue label="Sire" value={horse.pedigree.sire.name ?? horse.pedigree.sire.horseCode ?? missing} /><KeyValue label="Dam" value={horse.pedigree.dam.name ?? horse.pedigree.dam.horseCode ?? missing} />
     </div></Card>
     <Card className={styles.section}><h3>Pedigree Tree</h3><div className={styles.tree}>
       <div className={styles.ancestors}>{['Sire’s Sire', 'Sire’s Dam', 'Dam’s Sire', 'Dam’s Dam'].map((label) => <div className={styles.chip} key={label}><span>{missing}</span><small>{label}</small></div>)}</div>
       <span className={styles.arrow} aria-hidden="true">→</span><div className={styles.ancestors}>{[['Sire', horse.pedigree.sire], ['Dam', horse.pedigree.dam]].map(([label, parent]) => <div className={styles.chip} key={String(label)}><span>{typeof parent === 'object' ? parent.name ?? parent.horseCode ?? missing : missing}</span><small>{String(label)}</small></div>)}</div>
       <span className={styles.arrow} aria-hidden="true">→</span><div className={`${styles.chip} ${styles.subject}`}><span>{horse.name}</span><small>{horse.horseCode} · Subject</small></div>
     </div></Card>
-    <Card className={styles.section}><h2>Ownership &amp; History</h2><div className={styles.identityGrid}><KeyValue label="Registration No." value={horse.registrationNo ?? missing} /><KeyValue label="Current Stable" value={horse.currentAssignment ? [horse.currentAssignment.yard, horse.currentAssignment.boxCode].filter(Boolean).join(' · ') : missing} /><KeyValue label="Timeline starts" value={horse.activatedAt ? <time dateTime={horse.activatedAt} title={horse.activatedAt}>{formatDate(horse.activatedAt)}</time> : 'Not activated yet'} /></div>
+    <Card className={styles.section}><h2>Ownership &amp; History</h2><div className={styles.identityGrid}><KeyValue label="Current Owner" value={ownerNames} /><KeyValue label="Registration No." value={horse.registrationNo ?? missing} /><KeyValue label="Current Stable" value={horse.currentAssignment ? [horse.currentAssignment.yard, horse.currentAssignment.boxCode].filter(Boolean).join(' · ') : missing} /><KeyValue label="Timeline starts" value={horse.activatedAt ? <time dateTime={horse.activatedAt} title={horse.activatedAt}>{formatDate(horse.activatedAt)}</time> : 'Not activated yet'} /></div>
       {fullHistory ? <>
         <h3>Ownership history</h3>{current.ownerships?.length ? <ul className={styles.records}>{current.ownerships.map((o) => <li key={o.id}><strong>{o.owner.fullName} · {o.sharePercentage}%</strong><span>{formatDate(o.effectiveFrom)} – {o.effectiveTo ? formatDate(o.effectiveTo) : 'Open period'}{o.isManagingOwner ? ' · Managing owner' : ''}</span></li>)}</ul> : <EmptyState title="No ownership history recorded" />}
         <h3>Stable assignment history</h3>{current.assignments?.length ? <ul className={styles.records}>{current.assignments.map((a) => <li key={a.id}><strong>{[a.yard, a.boxCode].filter(Boolean).join(' · ')}</strong><span>{formatDate(a.effectiveFrom)} – {a.effectiveTo ? formatDate(a.effectiveTo) : 'Open period'}</span></li>)}</ul> : <EmptyState title="No stable assignments recorded" />}
