@@ -17,6 +17,12 @@ test('v1 remains default; v2 overrides only inside the single shared scope', () 
 test('v2 action, text and clinical badge foreground/background pairs meet 4.5:1', () => {
   for (const [a, b] of [['#ffffff', color('primary-600')], [color('text-primary'), color('bg-page')], [color('text-secondary'), color('bg-surface')], [color('simulated-text'), color('simulated-bg')], ...['success', 'warning', 'danger'].map(t => [color(`${t}-600`), color(`${t}-50`)])]) assert(ratio(a, b) >= 4.5, `Contrast ${ratio(a, b).toFixed(2)} below 4.5`);
 });
+
+test('the v2 keyboard outline outranks legacy control focus without changing v1', () => {
+  const global = read('styles/global.css');
+  assert.match(global, /\[data-design-system='v2'\] :focus:focus-visible \{ outline: 2px solid var\(--color-border-focus\); outline-offset: 2px; \}/);
+  assert.match(read('components/Field/Field.module.css'), /\.control:focus,/);
+});
 test('motion has a reduced-motion escape in tokens, pending feedback and skeletons', () => {
   assert.match(tokens, /prefers-reduced-motion: reduce/);
   for (const file of ['Button/Button.module.css', 'Skeleton/Skeleton.module.css', 'Toast/ToastRegion.module.css', 'Overlay/Overlay.module.css', 'LoadingState/LoadingState.module.css']) {
