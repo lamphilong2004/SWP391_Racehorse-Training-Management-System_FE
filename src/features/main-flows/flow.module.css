@@ -1,0 +1,25 @@
+.page { display: flex; flex-direction: column; gap: var(--space-xl); }
+.heading, .row, .footer { display: flex; align-items: center; gap: var(--space-lg); flex-wrap: wrap; }
+.heading { justify-content: space-between; }
+.heading h1, .heading p { margin: 0; }
+.heading p { margin-top: var(--space-xs); }
+.muted { color: var(--color-text-secondary); }
+.columns { display: grid; grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); gap: var(--space-xl); align-items: start; }
+.stack { display: flex; flex-direction: column; gap: var(--space-lg); }
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg); }
+.sessionFields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-lg); }
+.footer { justify-content: flex-end; padding-top: var(--space-xl); }
+.fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.choices { display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-top: var(--space-sm); }
+.choice { display: flex; align-items: center; gap: var(--space-sm); border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); padding: var(--space-sm) var(--space-md); cursor: pointer; }
+.choice:has(input:checked) { border-color: var(--color-primary-600); background: var(--color-primary-50); }
+.choice input { accent-color: var(--color-primary-600); }
+.checklist { display: flex; gap: var(--space-sm); align-items: flex-start; }
+.checklist p { margin: 0; }
+.metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-lg); }
+.table { overflow-x: auto; }
+.table table { width: 100%; }
+.selected { background: var(--color-primary-50); }
+.factGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-xl); }
+@media (max-width: 1100px) { .columns { grid-template-columns: 1fr; } .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } .sessionFields { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .fields, .factGrid { grid-template-columns: 1fr; } }

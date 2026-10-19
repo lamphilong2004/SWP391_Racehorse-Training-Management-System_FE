@@ -8,6 +8,7 @@ export type ProgramTransport = <T>(path: string, init?: RequestInit) => Promise<
 
 interface ListQuery {
   q?: string;
+  availability?: string;
   page?: number;
   size?: number;
 }
@@ -15,6 +16,7 @@ interface ListQuery {
 function listQuery(query: ListQuery, filter: Record<string, string>): string {
   const params = new URLSearchParams(filter);
   if (query.q) params.set('q', query.q);
+  if (query.availability) params.set('availability', query.availability);
   params.set('page', String(query.page ?? 0));
   params.set('size', String(query.size ?? 20));
   return params.toString();

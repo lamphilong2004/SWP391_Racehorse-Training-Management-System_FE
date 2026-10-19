@@ -13,9 +13,7 @@ vi.mock('../shared/auth/AuthProvider', () => ({ useAuth: () => auth }));
 const pending = [
   ['/training/programs', 'HEAD_TRAINER', 'Horse Training Programs'],
   ['/training/templates', 'HEAD_TRAINER', 'Program Templates'],
-  ['/training/monitoring', 'TRAINER', 'Realtime Monitoring'],
   ['/medical/summary', 'HEAD_TRAINER', 'Medical Summary'],
-  ['/medical/restrictions', 'TRAINER', 'Restrictions'],
   ['/admin/users', 'CLUB_MANAGER', 'Staff & Users'],
   ['/admin/roles', 'CLUB_MANAGER', 'Roles & Permissions'],
 ] as const;
