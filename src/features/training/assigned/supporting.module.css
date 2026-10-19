@@ -3,6 +3,11 @@
 .header, .actions, .filters { display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); flex-wrap: wrap; }
 .filters { justify-content: flex-start; padding-bottom: var(--space-lg); }
 .filters > :first-child { flex: 1; min-width: 200px; }
+/* Figma 95:400: search and the three selects share one toolbar row; design-system fields default to width 100%. */
+.filters { align-items: flex-end; flex-wrap: nowrap; }
+.filters > * { width: auto; flex: 0 0 168px; min-width: 0; }
+.filters > :first-child { flex: 1 1 240px; }
+.filters > .count { flex: 0 0 auto; padding-bottom: 10px; }
 .title { margin: 0 0 var(--space-sm); font-size: 24px; line-height: 32px; }
 .muted { color: var(--color-text-secondary); }
 .caption { color: var(--color-text-secondary); font-size: 12px; line-height: 16px; }
@@ -10,6 +15,9 @@
 .tableWrap table { min-width: 900px; }
 .strong { font-weight: 500; }
 .link { color: var(--color-primary-600); }
+/* Primary action drawn as a button in Figma (97:286 "+ New Training Session"). */
+.primaryLink { display: inline-flex; align-items: center; min-height: 40px; padding: var(--space-sm) var(--space-lg); border-radius: var(--radius-md); background: var(--color-primary-600); color: var(--color-text-on-primary); font-size: 14px; font-weight: 500; text-decoration: none; }
+.primaryLink:hover { background: var(--color-primary-700); }
 .notice { display: inline-flex; gap: var(--space-sm); border: 1px solid var(--color-border-default); border-radius: var(--radius-full); padding: var(--space-sm) var(--space-md); font-size: 12px; color: var(--color-text-secondary); background: var(--color-bg-surface); }
 .actions { justify-content: flex-end; }
 @media (max-width: 1000px) { .header { align-items: flex-start; } }
