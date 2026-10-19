@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { AlertBanner, Button, Card, EmptyState, ErrorState, Icon, SelectField, StatusBadge, TextField, WizardStepper } from '../../design-system';
+import { AlertBanner, Button, Card, DataTable, EmptyState, ErrorState, Icon, SelectField, StatusBadge, TextField, WizardStepper } from '../../design-system';
 import { AppShell } from '../../layout/AppShell';
 import { ROUTES } from '../../app/routePaths';
 import { useAuth } from '../../shared/auth/AuthProvider';
@@ -13,6 +13,7 @@ import { useProgramLookup } from './useProgramLookup';
 import { AvailabilityNote, DraftSteps, HorseSummary, ProgramResult } from './ProgramSteps';
 import type { CreateProgramRequest, ProgramDetail } from './programTypes';
 import styles from './ProgramCreationPage.module.css';
+import { ProgramProfile } from './ProgramProfile';
 
 const STEP_NAMES = ['Horse', 'Profile', 'Template', 'Customize', 'Workload', 'Trainer', 'Review'];
 const STEP_TITLES = ['Select horse', 'Training profile', 'Choose template', 'Customize program', 'Workload and intensity', 'Assign Trainer', 'Review and activate'];
@@ -25,7 +26,7 @@ export function ProgramCreationPage() {
   const [step, setStep] = useState(0);
   const [issues, setIssues] = useState<ProgramValidationIssue[]>([]);
   const [horseSearch, setHorseSearch] = useState('');
-  const [horseQuery, setHorseQuery] = useState({ q: '', page: 0 });
+  const [horseQuery, setHorseQuery] = useState({ q: '', page: 0, availability: '' });
   const [templateSearch, setTemplateSearch] = useState('');
   const [templateQuery, setTemplateQuery] = useState({ q: '', page: 0 });
   const [requestedTemplate, setRequestedTemplate] = useState<{ id: number; versionNo?: number } | null>(null);
@@ -88,6 +89,7 @@ export function ProgramCreationPage() {
           <StatusBadge family="availability" status={flow.horse.trainingAvailability} />
           {flow.template && <span>{flow.template.template.templateCode} · v{flow.template.version.versionNo}</span>}
         </div>}
+        {!flow.horse && <div className={styles.context}><Icon name="horseshoe" /><span>Horse: not selected yet</span></div>}
         {flow.error != null && <AlertBanner type="danger" title="Request failed">{programErrorMessage(flow.error)}
           {flow.error instanceof ApiError && flow.error.details.length > 0 && <ul className={styles.reasons}>{flow.error.details.map((detail, index) => <li key={index}>{detail.message}</li>)}</ul>}
         </AlertBanner>}
@@ -96,14 +98,18 @@ export function ProgramCreationPage() {
         <form aria-label="Create training program" noValidate onSubmit={(event) => { event.preventDefault(); void advance(); }}>
           <fieldset disabled={busy} className={styles.formBody}>
             {step === 0 && <div className={styles.columns}><Card title="Select a horse for this program"><div className={styles.stack}>
-              <div className={styles.row}><TextField label="Search horses" value={horseSearch} onChange={(event) => setHorseSearch(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); setHorseQuery({ q: horseSearch, page: 0 }); } }} />
-                <Button type="button" variant="secondary" onClick={() => setHorseQuery({ q: horseSearch, page: 0 })}>Search horses</Button></div>
+              <div className={styles.row}><TextField label="Search horses" value={horseSearch} onChange={(event) => setHorseSearch(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); setHorseQuery({ ...horseQuery, q: horseSearch, page: 0 }); } }} />
+                <SelectField label="Availability" value={horseQuery.availability} options={[{ value: '', label: 'All' }, ...['AVAILABLE', 'LIMITED', 'LOCKED'].map((value) => ({ value, label: value }))]} onChange={(event) => setHorseQuery({ ...horseQuery, page: 0, availability: event.target.value })} />
+                <Button type="button" variant="secondary" onClick={() => setHorseQuery({ ...horseQuery, q: horseSearch, page: 0 })}>Search horses</Button></div>
+              <div className={styles.fields}><SelectField label="Breed" disabled options={[{ value: '', label: 'All breeds' }]} helperText="Breed filtering is unavailable in the approved list contract." /><SelectField label="Stable" disabled options={[{ value: '', label: 'All stables' }]} helperText="Stable filtering is unavailable in the approved list contract." /></div>
               {horses.pending && <p role="status">Loading horses…</p>}
               {horses.error != null && <ErrorState title="Horses unavailable" description={programErrorMessage(horses.error)} onRetry={horses.retry} />}
-              {horses.data?.items.filter((horse) => horse.lifecycle === 'ACTIVE').map((horse) => <article className={`${styles.choice} ${flow.horse?.id === horse.id ? styles.selected : ''}`} key={horse.id}>
-                <h3>{horse.name}</h3><p>{horse.horseCode}{horse.breed ? ` · ${horse.breed}` : ''}</p><div className={styles.row}><StatusBadge family="availability" status={horse.trainingAvailability} />
-                  <Button type="button" variant="secondary" aria-pressed={flow.horse?.id === horse.id} disabled={horse.trainingAvailability === 'LOCKED'} onClick={() => { setIssues([]); setRequestedTemplate(null); void flow.selectHorse(horse); }}>Select {horse.name}</Button></div>
-              </article>)}
+              {horses.data && <div className={styles.table}><DataTable caption="Select an ACTIVE horse" rows={horses.data.items.filter((horse) => horse.lifecycle === 'ACTIVE')} rowKey={(horse) => horse.id} selectedKey={flow.horse?.id} columns={[
+                { key: 'horse', header: 'Horse', render: (horse) => <label className={styles.horseChoice}><input type="radio" name="program-horse" aria-label={`Select ${horse.name}`} checked={flow.horse?.id === horse.id} disabled={horse.trainingAvailability === 'LOCKED'} onChange={() => { setIssues([]); setRequestedTemplate(null); void flow.selectHorse(horse); }} /><Icon name="horseshoe" /><span>{horse.name}<small className={styles.muted}>{horse.horseCode}{horse.breed ? ` · ${horse.breed}` : ''}</small></span></label> },
+                { key: 'availability', header: 'Availability', render: (horse) => <StatusBadge family="availability" status={horse.trainingAvailability} /> },
+                { key: 'lastTraining', header: 'Last training', render: () => <span className={styles.muted}>Not provided</span> },
+                { key: 'program', header: 'Current program', render: () => <span className={styles.muted}>Not provided</span> },
+              ]} /></div>}
               {horses.data?.items.length === 0 && <EmptyState title="No ACTIVE horses" description="Try a different search." />}
               {horses.data && <div className={styles.row}>
                 <Button type="button" variant="tertiary" disabled={horseQuery.page === 0} onClick={() => setHorseQuery({ ...horseQuery, page: horseQuery.page - 1 })}>Previous horses</Button>
@@ -112,7 +118,7 @@ export function ProgramCreationPage() {
               </div>}
               {error('horseId') && <p className={styles.error}>{error('horseId')}</p>}
             </div></Card><div className={styles.stack}><HorseSummary flow={flow} /><AvailabilityNote flow={flow} /></div></div>}
-            {step === 1 && <div className={styles.columns}><div className={styles.stack}><Card title="Training profile"><p>Review the selected horse’s profile and current Training Availability before choosing a template.</p></Card><HorseSummary flow={flow} /></div><AvailabilityNote flow={flow} /></div>}
+            {step === 1 && flow.horse && <ProgramProfile horse={flow.horse} />}
             {step === 2 && <div className={styles.columns}><div className={styles.stack}>
               <Card title="Recommended templates"><div className={styles.stack}>
                 {flow.recommendations.map((item) => <article className={styles.choice} key={`${item.templateId}-${item.templateVersionId}`}><h3>{item.name} · v{item.versionNo}</h3><p>{item.label.replaceAll('_', ' ')}</p>

@@ -3,7 +3,7 @@ import { NotFoundPage } from '../pages/NotFoundPage';
 import { LoginPage } from '../pages/LoginPage';
 import { ManagementDashboardEntry, ManagementAuditEntry } from './ManagementEntry';
 import { AccountPage } from '../pages/AccountPage';
-import { ProgramCreationPage, SessionEvaluationPage, PerformancePage, GroomTodayPage, PrecheckPage,
+import { ProgramCreationPage, BaselinePage, CreateSessionPage, SessionDetailPage, RestrictionsPage, LiveMonitoringPage, SessionEvaluationPage, PerformancePage, GroomTodayPage, PrecheckPage,
   RiderDashboardPage, RiderAssignmentsPage, RiderAssignmentPage, RiderSessionPage, RiderFeedbackPage, RiderHistoryPage,
   TreatmentTasksPage, CaseListPage, CreateCasePage, CaseDetailPage, TreatmentPlanPage, HerdHealthPage } from './DeferredPages';
 import { HorseManagementLayout } from '../features/horses/shared/HorseManagementLayout';
@@ -30,9 +30,7 @@ import { ROLE_CODES, type RoleCode } from '../shared/auth/roles';
 const pendingScreens: { path: string; title: string; section: string; roles: RoleCode[] }[] = [
   { path: ROUTES.trainingPrograms, title: 'Horse Training Programs', section: 'Training', roles: ['HEAD_TRAINER'] },
   { path: ROUTES.programTemplates, title: 'Program Templates', section: 'Training', roles: ['HEAD_TRAINER'] },
-  { path: ROUTES.realtimeMonitoring, title: 'Realtime Monitoring', section: 'Training', roles: ['HEAD_TRAINER', 'TRAINER'] },
   { path: ROUTES.medicalSummary, title: 'Medical Summary', section: 'Medical', roles: ['HEAD_TRAINER'] },
-  { path: ROUTES.restrictions, title: 'Restrictions', section: 'Medical', roles: ['HEAD_TRAINER', 'TRAINER'] },
   { path: ROUTES.staffUsers, title: 'Staff & Users', section: 'Administration', roles: ['CLUB_MANAGER'] },
   { path: ROUTES.rolesPermissions, title: 'Roles & Permissions', section: 'Administration', roles: ['CLUB_MANAGER'] },
   { path: ROUTES.notifications, title: 'Notifications', section: 'Workspace', roles: [...ROLE_CODES] },
@@ -88,6 +86,9 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
       { path: '/horses/pending-activation', element: <RequireAuth allowedRoles={['CLUB_MANAGER']}><PendingActivationPage /></RequireAuth> },
     ] },
     { path: ROUTES.trainingProgramCreate, element: <RequireAuth allowedRoles={['HEAD_TRAINER']}><ProgramCreationPage /></RequireAuth> },
+    { path: '/horses/:id/baseline', element: <RequireAuth allowedRoles={['VETERINARIAN']}><BaselinePage /></RequireAuth> },
+    { path: ROUTES.restrictions, element: <RequireAuth allowedRoles={['VETERINARIAN', 'HEAD_TRAINER', 'TRAINER', 'CLUB_MANAGER']}><RestrictionsPage /></RequireAuth> },
+    { path: ROUTES.realtimeMonitoring, element: <RequireAuth allowedRoles={['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER']}><LiveMonitoringPage /></RequireAuth> },
     { path: ROUTES.assignedPrograms, element: <RequireAuth allowedRoles={['TRAINER']}><AssignedProgramsPage /></RequireAuth> },
     { path: ROUTES.trainingSchedule, element: <RequireAuth allowedRoles={['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER']}><TrainingCalendarPage /></RequireAuth> },
     { path: ROUTES.trainingCalendar, element: <RequireAuth allowedRoles={['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER']}><TrainingCalendarPage /></RequireAuth> },
@@ -95,8 +96,8 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
     { path: '/training/exercise-library/new', element: <RequireAuth allowedRoles={['TRAINER']}><ExerciseLibraryPage /></RequireAuth> },
     { path: ROUTES.exerciseLibrary, element: <RequireAuth allowedRoles={['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER', 'WORK_RIDER']}><ExerciseLibraryPage /></RequireAuth> },
     { path: '/training/programs/:id', element: <RequireAuth allowedRoles={['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER', 'GROOM']}><OwnerHandoffPage title="Program details" /></RequireAuth> },
-    { path: '/training/session/:id', element: <RequireAuth allowedRoles={['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER']}><OwnerHandoffPage title="Session details" /></RequireAuth> },
-    { path: '/training/schedule/session/new', element: <RequireAuth allowedRoles={['TRAINER']}><OwnerHandoffPage title="Session scheduling" /></RequireAuth> },
+    { path: '/training/session/:id', element: <RequireAuth allowedRoles={['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER']}><SessionDetailPage /></RequireAuth> },
+    { path: '/training/schedule/session/new', element: <RequireAuth allowedRoles={['TRAINER']}><CreateSessionPage /></RequireAuth> },
     { path: ROUTES.sessionEvaluation, element: <RequireAuth><SessionEvaluationPage /></RequireAuth> },
     { path: ROUTES.performance, element: <RequireAuth allowedRoles={['HEAD_TRAINER', 'TRAINER', 'CLUB_MANAGER', 'VETERINARIAN']}><PerformancePage /></RequireAuth> },
     { path: ROUTES.groomToday, element: <RequireAuth allowedRoles={['GROOM']}><GroomTodayPage /></RequireAuth> },

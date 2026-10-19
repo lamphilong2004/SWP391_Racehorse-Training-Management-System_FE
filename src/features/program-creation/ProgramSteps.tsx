@@ -1,5 +1,5 @@
 import {
-  AlertBanner, Button, CandidateCard, Card, Checkbox, EmptyState, HorseCard, KeyValue,
+  AlertBanner, Button, CandidateCard, Card, ChartContainer, Checkbox, EmptyState, HorseCard, KeyValue,
   SelectField, StatusBadge, TextAreaField, TextField,
 } from '../../design-system';
 import type { ProgramCreationFlow } from './useProgramCreation';
@@ -9,11 +9,11 @@ import styles from './ProgramCreationPage.module.css';
 
 export function HorseSummary({ flow }: { flow: ProgramCreationFlow }) {
   const horse = flow.horse;
-  return horse ? <HorseCard name={horse.name} meta={`${horse.horseCode}${horse.breed ? ` · ${horse.breed}` : ''}`}
+  return horse ? <Card title="Selected horse"><HorseCard className={styles.horseSummary} name={horse.name} meta={`${horse.horseCode}${horse.breed ? ` · ${horse.breed}` : ''}`}
     availability={horse.trainingAvailability} facts={[
       { label: 'Lifecycle', value: horse.lifecycle }, { label: 'Sex', value: horse.sex ?? 'Not provided' },
       { label: 'Foaled', value: horse.foaledDate ?? 'Not provided' },
-    ]} /> : <Card title="Selected horse"><p>Select a horse to view its information.</p></Card>;
+    ]} /></Card> : <Card title="Selected horse"><p>Select a horse to view its information.</p></Card>;
 }
 
 export function AvailabilityNote({ flow }: { flow: ProgramCreationFlow }) {
@@ -61,33 +61,30 @@ export function DraftSteps({ step, flow, issues, update, edit }: {
         </div></Card>;
       })}
     </div>
-    <Card title="Source template"><div className={styles.stack}>
+    <div className={styles.stack}><Card title="Source template"><div className={styles.stack}>
       <KeyValue label="Template" value={template.version.name} /><KeyValue label="Version" value={`v${template.version.versionNo}`} />
       <KeyValue label="Suggested duration" value={template.version.recommendedDuration ?? 'Not provided'} />
       <p className={styles.muted}>Set dates for this horse. Every phase must fit inside the program period without overlapping another phase.</p>
-    </div></Card>
+    </div></Card><Card title="Program timeline"><div className={styles.stack}>{draft.phases.map((phase, index) => <KeyValue key={index} label={`${phase.phaseOrder}. ${phase.name}`} value={`${phase.startDate || 'Start not set'} → ${phase.endDate || 'End not set'}`} />)}</div></Card><Card title="Exercises come later"><p>Phases set objectives, dates and intensity ranges. The Trainer chooses exercises for each session within the approved phase.</p></Card></div>
   </div>;
 
   if (step === 4) return <div className={styles.columns}>
-    <div className={styles.stack}>{draft.phases.map((phase, index) => {
+    <div className={styles.stack}><Card title="Workload by phase"><div className={styles.table}><table><thead><tr><th>Phase</th><th>Template default → Horse plan</th><th>Intensity range</th></tr></thead><tbody>{draft.phases.map((phase, index) => {
       const label = `Phase ${index + 1}`;
       const prefix = `phases[${index}]`;
       const options = ['LOW', 'MEDIUM', 'MEDIUM_HIGH', 'HIGH'].map((value) => ({ value, label: value.replaceAll('_', ' ') }));
-      return <Card key={index} title={`${label}: ${phase.name}`}><div className={styles.stack}>
-        <p>{phase.startDate} — {phase.endDate}</p>
+      return <tr key={index}><td><strong>{phase.name}</strong><p>{phase.startDate} — {phase.endDate}</p></td><td><div className={styles.stack}><p className={styles.muted}>Template: {template.version.phases.find((source) => source.id === phase.templateVersionPhaseId)?.intensityGuidance ?? 'Not provided'}</p><TextAreaField label={`${label} workload`} maxLength={500} value={phase.workload ?? ''} error={error(`${prefix}.workload`)} onChange={(event) => phaseUpdate(index, { workload: event.target.value })} /></div></td><td>
         <div className={styles.fields}>
           <SelectField label={`${label} minimum intensity`} placeholder="Not specified" options={options} value={phase.intensityMin ?? ''} error={error(`${prefix}.intensityMin`)} onChange={(event) => phaseUpdate(index, { intensityMin: (event.target.value || null) as Intensity | null })} />
           <SelectField label={`${label} maximum intensity`} placeholder="Not specified" options={options} value={phase.intensityMax ?? ''} error={error(`${prefix}.intensityMax`)} onChange={(event) => phaseUpdate(index, { intensityMax: (event.target.value || null) as Intensity | null })} />
         </div>
-        <TextAreaField label={`${label} workload`} maxLength={500} value={phase.workload ?? ''} error={error(`${prefix}.workload`)} onChange={(event) => phaseUpdate(index, { workload: event.target.value })} />
-        <p className={styles.muted}>Template intensity guidance: {template.version.phases.find((source) => source.id === phase.templateVersionPhaseId)?.intensityGuidance ?? 'Not provided'}</p>
-      </div></Card>;
-    })}</div>
-    <Card title="Guidance"><div className={styles.stack}>
+      </td></tr>;
+    })}</tbody></table></div></Card><ChartContainer title="Planned weekly load" seriesLabel="Load points" values={[]} yTicks={[1, 0]} xLabels={[]} emptyTitle="Weekly load series unavailable" emptyDescription="The contract provides workload guidance as text. No load-point formula is applied." /></div>
+    <div className={styles.stack}><Card title="System recommendation"><EmptyState title="Recommendation unavailable" description="No workload recommendation response is exposed by the approved contract." /></Card><Card title="Guidance"><div className={styles.stack}>
       <KeyValue label="Workload / intensity" value={template.version.workloadIntensityGuidance ?? 'Not provided'} />
       <KeyValue label="Recovery" value={template.version.recoveryGuidance ?? 'Not provided'} />
       <p className={styles.muted}>Use the guidance to set a suitable range and workload for this horse.</p>
-    </div></Card>
+    </div></Card></div>
   </div>;
 
   if (step === 5) return <div className={styles.stack}>

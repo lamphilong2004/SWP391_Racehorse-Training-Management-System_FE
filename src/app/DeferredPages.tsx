@@ -10,6 +10,12 @@ function deferred(load: () => Promise<{ default: ComponentType }>) {
 }
 
 export const ProgramCreationPage = deferred(() => import('../features/program-creation/ProgramCreationPage').then((m) => ({ default: m.ProgramCreationPage })));
+export const BaselinePage = deferred(() => import('../features/baseline/BaselinePage').then((m) => ({ default: m.BaselinePage })));
+export const TrainerDashboardPage = deferred(() => import('../features/trainer-session/TrainerDashboardPage').then((m) => ({ default: m.TrainerDashboardPage })));
+export const CreateSessionPage = deferred(() => import('../features/trainer-session/CreateSessionPage').then((m) => ({ default: m.CreateSessionPage })));
+export const SessionDetailPage = deferred(() => import('../features/trainer-session/SessionDetailPage').then((m) => ({ default: m.SessionDetailPage })));
+export const RestrictionsPage = deferred(() => import('../features/restrictions/RestrictionsPage').then((m) => ({ default: m.RestrictionsPage })));
+export const LiveMonitoringPage = deferred(() => import('../features/live-monitoring/LiveMonitoringPage').then((m) => ({ default: m.LiveMonitoringPage })));
 export const SessionEvaluationPage = deferred(() => import('../features/evaluation/SessionEvaluationPage').then((m) => ({ default: m.SessionEvaluationPage })));
 export const PerformancePage = deferred(() => import('../features/evaluation/PerformancePage').then((m) => ({ default: m.PerformancePage })));
 export const GroomTodayPage = deferred(() => import('../features/precheck/pages').then((m) => ({ default: m.GroomTodayPage })));
