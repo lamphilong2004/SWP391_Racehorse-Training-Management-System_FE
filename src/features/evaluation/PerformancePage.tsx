@@ -44,7 +44,7 @@ function PerformanceWorkspace({ api, loadHorses, assignedToMe }: { api: Evaluati
       : <ErrorState title="Performance workspace unavailable" description={state.error instanceof Error ? state.error.message : 'Unable to load programs.'} onRetry={retry} />
       : !state.horses ? <LoadingState label="Loading permitted horses…" /> : state.horses.length === 0
         ? <EmptyState title="No horses available" description="No programs were returned for your account." />
-        : <><SelectField label="Horse" value={String(selected?.id ?? '')} placeholder="Select a horse" options={state.horses.map((horse) => ({ value: String(horse.id), label: `${horse.name} · ${horse.horseCode}` }))} onChange={(event) => setSearch({ horseId: event.target.value })} />
+        : <><div className="evaluation-horse-select"><SelectField label="Horse" value={String(selected?.id ?? '')} placeholder="Select a horse" options={state.horses.map((horse) => ({ value: String(horse.id), label: `${horse.name} · ${horse.horseCode}` }))} onChange={(event) => setSearch({ horseId: event.target.value })} /></div>
           {selected ? <PerformanceHistory key={selected.id} horseId={selected.id} api={api} onError={handleApiError} />
             : <><EmptyState title="Horse not available" description="Choose a horse returned for your account." /><Button variant="secondary" onClick={() => setSearch({})}>Choose first available horse</Button></>}
         </>}

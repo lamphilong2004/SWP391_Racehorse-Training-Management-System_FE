@@ -60,6 +60,17 @@ function YourFeedback({ id, feedback }: { id: number; feedback: NonNullable<Retu
   const quote = feedback && [feedback.responses.horseResponse, feedback.responses.strideFeeling, feedback.responses.notes].find((text) => typeof text === 'string' && text.trim());
   return <Card title="Your Rider Feedback" action={feedback ? <span className={styles.chip}>SUBMITTED {new Date(feedback.submittedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })}</span> : undefined}>{feedback ? <div className={styles.smallStack}>{quote && <p>“{quote}”</p>}<p className={styles.muted}>Visible to your Trainer in Session Review.</p></div> : <div className={styles.smallStack}><p className={styles.muted}>Not submitted yet.</p><Link className={styles.link} to={`/rider/sessions/${id}/feedback`}>Give Rider Feedback</Link></div>}</Card>;
 }
+/** Figma WR-D2 (416:9756): numbered exercise cards with parameter chips; only supplied values are shown. */
 export function Exercises({ session }: { session: RiderSession }) {
-  return <div className={styles.smallStack}>{session.exercises.map((exercise) => <article key={exercise.id} className={styles.exercise}><h3>{exercise.exerciseOrder}. {exercise.exerciseName}</h3><p>{value(exercise.distanceM, 'm')} · {exercise.repetitions === null || exercise.repetitions === undefined ? 'Repetitions not supplied' : `${exercise.repetitions} rep(s)`} · {exercise.intensity ?? 'Intensity not supplied'}</p><p className={styles.muted}>Duration {value(exercise.durationMin, 'min')} · Rest {value(exercise.restIntervalMin, 'min')} · {exercise.surface ?? session.surface ?? 'Surface not supplied'}</p></article>)}</div>;
+  const chips = (exercise: RiderSession['exercises'][number]) => [
+    exercise.distanceM != null ? `${exercise.distanceM.toLocaleString('en-US')} m${exercise.repetitions != null ? ` × ${exercise.repetitions}` : ''}` : exercise.repetitions != null ? `${exercise.repetitions} rep(s)` : null,
+    exercise.durationMin != null ? `${exercise.durationMin} min` : null,
+    exercise.restIntervalMin != null ? `Rest ${exercise.restIntervalMin} min` : 'Rest —',
+    exercise.intensity ? `Intensity ${exercise.intensity}` : 'Intensity not supplied',
+    exercise.surface ?? session.surface ?? 'Surface not supplied',
+  ].filter((chip): chip is string => Boolean(chip));
+  return <ol className={styles.exerciseList}>{[...session.exercises].sort((a, b) => a.exerciseOrder - b.exerciseOrder).map((exercise) => <li key={exercise.id} className={styles.exercise}>
+    <span className={styles.exerciseNumber} aria-hidden="true">{exercise.exerciseOrder}</span>
+    <div className={styles.smallStack}><h3 className={styles.exerciseName}>{exercise.exerciseName}</h3><div className={styles.badges}>{chips(exercise).map((chip) => <span key={chip} className={styles.paramChip}>{chip}</span>)}</div></div>
+  </li>)}</ol>;
 }

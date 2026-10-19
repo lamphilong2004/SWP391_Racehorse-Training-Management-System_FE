@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useSearchParams } from 'react-router';
+import { Link, useParams, useSearchParams } from 'react-router';
 import { AlertBanner, Button, Card, ChartContainer, DataTable, EmptyState, ErrorState, KeyValue, LoadingState, MetricCard, StatusBadge, Tabs } from '../../design-system';
 import { AppShell } from '../../layout/AppShell';
 import { useAuth } from '../../shared/auth/AuthProvider';
@@ -10,6 +10,9 @@ import { EvaluationForm } from './EvaluationForm';
 import { PerformanceHistory } from './PerformanceHistory';
 import { clockTime, dateTime, isTerminal, metric, RESULT_LABELS, type SessionResultView } from './models';
 import './evaluation.css';
+
+/** Roles routed to /training/session/:id (see router). */
+const SESSION_DETAIL_ROLES: RoleCode[] = ['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER'];
 
 const READ_ROLES: RoleCode[] = ['TRAINER', 'HEAD_TRAINER', 'WORK_RIDER', 'CLUB_MANAGER', 'VETERINARIAN'];
 const HISTORY_ROLES: RoleCode[] = ['TRAINER', 'HEAD_TRAINER', 'CLUB_MANAGER', 'VETERINARIAN'];
@@ -62,6 +65,7 @@ function EvaluationContent({ sessionId, api }: { sessionId: number; api: Evaluat
   const selected = ['result', 'comparison', 'evaluation'].includes(tab) ? tab : 'result';
   return <div className="evaluation-stack">
     <div className="evaluation-actions"><div className="evaluation-stack-sm"><h1 className="text-h1">Session Evaluation · {session.focus || session.sessionCode}</h1><p>{session.horse.name} · {session.horse.horseCode} · {session.sessionCode}</p></div><StatusBadge family="session" status={session.status} />
+      {SESSION_DETAIL_ROLES.some((role) => user?.roles.includes(role)) && <Link className="evaluation-link-button" to={`/training/session/${session.id}`}>Session Detail</Link>}
       {canHistory && <Button variant="secondary" disabled={submitting} onClick={() => changeTab(tab === 'history' ? 'result' : 'history')}>{tab === 'history' ? 'Back to evaluation' : 'Performance History'}</Button>}
       <Button variant="secondary" disabled={submitting} onClick={reload}>Reload session</Button>
     </div>
@@ -111,7 +115,8 @@ function ResultPanel({ data }: { data: SessionResultView }) {
     ]} /></div></Card>
     <p className="text-caption">Values are recorded by the server; no distance formula, performance score or recovery time is calculated here.</p>
   </div><aside className="evaluation-stack"><Card title="Trainer evaluation"><p>{data.evaluation ? RESULT_LABELS[data.evaluation.result] : 'Not recorded yet'}</p></Card><Card title="Exercise plan"><ul className="evaluation-list">{session.exercises.map((exercise) => <li key={exercise.id}><strong>{exercise.exerciseName}</strong><p>{metric(exercise.distanceM, 'm')} · {metric(exercise.repetitions, 'reps')} · {display(exercise.intensity)}</p></li>)}</ul><p className="text-caption">Exercise completion and recorded rep splits are not supplied by this contract.</p></Card>
-    <Card title="Alerts raised">{data.alerts.length ? <div className="evaluation-stack-sm">{data.alerts.map((alert) => <AlertBanner key={alert.id} type="danger" title={`${alert.severity} · Heart rate ${alert.metricValue} bpm > ${alert.thresholdApplied} bpm`} children={`${alert.raisedAt} · ${alert.acknowledgedAt ? `Acknowledged ${alert.acknowledgedAt}` : 'Not acknowledged'}${alert.actionTaken ? ` · ${alert.actionTaken}` : ''}${alert.escalatedToVetAt ? ` · Escalated to Vet ${alert.escalatedToVetAt}` : ''}`} />)}</div> : <EmptyState title="No recorded critical alerts" />}</Card><FeedbackCard data={data} /></aside></div>;
+    <Card title="Alerts raised">{data.alerts.length ? <div className="evaluation-stack-sm">{data.alerts.map((alert) => <AlertBanner key={alert.id} type="danger" title={`${alert.severity} · Heart rate ${alert.metricValue} bpm > ${alert.thresholdApplied} bpm`} children={`${clockTime(alert.raisedAt)} · ${alert.acknowledgedAt ? `Acknowledged ${clockTime(alert.acknowledgedAt)}` : 'Not acknowledged'}${alert.actionTaken ? ` · ${alert.actionTaken}` : ''}${alert.escalatedToVetAt ? ` · Escalated to Vet ${clockTime(alert.escalatedToVetAt)}` : ''}`} />)}</div> : <EmptyState title="No recorded critical alerts" />}</Card><FeedbackCard data={data} />
+    {(session.status === 'INTERRUPTED' || data.alerts.length > 0) && <Card title="Medical escalation"><AlertBanner type="danger" title="If medically relevant, escalate to the Medical flow">The Veterinarian can open or link a Flow 3 case. This evaluation does not change Training Availability.</AlertBanner></Card>}</aside></div>;
 }
 
 function ComparisonPanel({ data }: { data: SessionResultView }) {
