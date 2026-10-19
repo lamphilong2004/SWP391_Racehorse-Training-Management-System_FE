@@ -1,0 +1,30 @@
+/* SCR-HORSE-005 (Figma 285:2786) */
+.horseBody { display: flex; flex-direction: column; gap: 14px; }
+.horseHeader { display: flex; align-items: center; gap: var(--space-md); }
+.horseName { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.horseTitle { font: 600 16px/19px var(--font-family); color: var(--color-text-primary); }
+.horseMeta { font: 400 13px/16px var(--font-family); color: var(--color-text-secondary); }
+.divider { margin: 0; border: 0; border-top: 1px solid var(--color-border-default); }
+.checklistTitle { font: 600 14px/17px var(--font-family); color: var(--color-text-primary); }
+.checklist { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border-default);
+}
+.checkIcon { display: inline-flex; flex-shrink: 0; }
+.checkText { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.checkLabel { font: 500 14px/17px var(--font-family); color: var(--color-text-primary); }
+.checkSub { font: 400 12px/15px var(--font-family); color: var(--color-text-secondary); }
+.checkValue { font: 500 13px/16px var(--font-family); white-space: nowrap; }
+.success { color: var(--color-success-600); }
+.warning { color: var(--color-warning-600); }
+.muted { color: var(--color-text-secondary); }
+.actions { display: flex; gap: var(--space-sm); }
+
+.howBody { display: flex; flex-direction: column; gap: 10px; }
+.howText { font: 400 13px/16px var(--font-family); color: var(--color-text-primary); }
+.howMuted { font: 400 13px/16px var(--font-family); color: var(--color-text-secondary); }
+.lifecycle { display: flex; align-items: center; gap: var(--space-sm); color: var(--color-text-secondary); }

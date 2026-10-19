@@ -4,6 +4,7 @@ import { LoginPage } from '../pages/LoginPage';
 import { WorkspacePage } from '../pages/WorkspacePage';
 import { PublicOnly, RequireAuth } from './RequireAuth';
 import { ROUTES } from './routePaths';
+import { horseApplicationRoutes } from '../features/horses/horseApplicationRoutes';
 
 /**
  * Dev-only routes (DEC-010): the component gallery and the per-role shell preview. They are lazy-loaded inside an
@@ -33,6 +34,7 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
       : [{ path: ROUTES.root, element: <Navigate to={ROUTES.dashboard} replace /> }]),
     { path: ROUTES.login, element: <PublicOnly><LoginPage /></PublicOnly> },
     { path: ROUTES.dashboard, element: <RequireAuth><WorkspacePage /></RequireAuth> },
+    ...horseApplicationRoutes,
     { path: '*', element: <RequireAuth><NotFoundPage /></RequireAuth> },
   ];
 }
