@@ -62,18 +62,20 @@ function HorseProfileContent() {
   const api = useHorsesApi(), { user } = useAuth();
   const location = useLocation();
   const id = Number(useParams().id);
-  const load = useCallback(() => Number.isSafeInteger(id) && id > 0 ? api.getHorse(id) : Promise.reject(new Error('Invalid horse identifier')), [api, id]);
-  const { data: horse, error, reload } = useHorseResource(load);
   const [params, setParams] = useSearchParams();
   const tab = params.get('tab') ?? 'overview';
+  // Unknown sections are rejected before any business request.
+  const validTab = ['overview', 'pedigree', 'training', 'history'].includes(tab);
+  const load = useCallback(() => Number.isSafeInteger(id) && id > 0 && validTab ? api.getHorse(id) : Promise.reject(new Error('Invalid horse link')), [api, id, validTab]);
+  const { data: horse, error, reload } = useHorseResource(load);
   const setTab = (value: string) => { const next = new URLSearchParams(params); next.set('tab', value); setParams(next); };
   const [photoError, setPhotoError] = useState(''), [uploading, setUploading] = useState(false);
   const photoInput = useRef<HTMLInputElement>(null);
   const canManage = user?.roles.includes('CLUB_MANAGER');
   useBreadcrumb([{ label: 'Horses', to: '/horses' }, { label: horse?.name ?? 'Horse profile', ...(tab === 'history' ? { to: `/horses/${id}?tab=overview` } : {}) }, ...(tab === 'history' ? [{ label: 'Pedigree & History' }] : [])]);
   if (!Number.isSafeInteger(id) || id < 1) return <EmptyState title="Horse not found" />;
+  if (!validTab) return <ErrorState title="Invalid profile section" description="Choose an existing horse profile section." />;
   if (!horse) return <HorseState error={error} retry={reload} />;
-  if (!['overview', 'pedigree', 'training', 'history'].includes(tab)) return <ErrorState title="Invalid profile section" description="Choose an existing horse profile section." />;
   if (tab === 'history') return <HorseHistoryPanel horse={horse} />;
   return <div className={styles.page}><Link to="/horses">← Back to Horses</Link>
     {(location.state as { photoUploadFailed?: boolean } | null)?.photoUploadFailed && <AlertBanner type="warning" title="Some photos were not uploaded">Identity was saved. Add the missing photos again from this profile.</AlertBanner>}

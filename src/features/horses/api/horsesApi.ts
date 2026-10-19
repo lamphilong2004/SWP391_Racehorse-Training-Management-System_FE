@@ -24,11 +24,22 @@ export class ApiRequestError extends Error {
 
 /**
  * Minimal transport this feature needs. The real implementation (JWT, interceptors, 401 handling) is the shared
- * API client of CORE-008; CORE-018 wires it in. The host chooses explicit live/sample adapters; API failures never select sample data.
+ * API client of CORE-008, bound by HorseManagementLayout. Runtime is API-only; errors never select sample data.
  * Implementations return the envelope's `data` and throw {@link ApiRequestError} on failures.
  */
 export interface HttpClient {
   request<T>(method: 'GET' | 'POST' | 'PUT', path: string, options?: { body?: unknown; query?: Record<string, string | number | undefined> }): Promise<T>;
+}
+
+const checklistIds = ['IDENTITY', 'PEDIGREE', 'OWNER', 'FREE_STABLE_BOX', 'VETERINARIAN_BASELINE', 'HEAD_TRAINER_READINESS_REVIEW'];
+function activation(value: ActivationStatus): ActivationStatus {
+  const invalid = () => new ApiRequestError(502, 'INVALID_RESPONSE', 'The activation checklist does not match the approved contract.');
+  if (!value || !Number.isSafeInteger(value.horseId) || value.horseId <= 0 || !Array.isArray(value.checklist) || value.checklist.length !== 6) throw invalid();
+  value.checklist.forEach((item, index) => {
+    if (!item || item.id !== checklistIds[index] || typeof item.label !== 'string' || typeof item.description !== 'string' ||
+      (index < 5 ? item.requirement !== 'MANDATORY' || !['SATISFIED', 'PENDING'].includes(item.state) : item.requirement !== 'RECOMMENDED' || !['REVIEWED', 'NOT_REVIEWED'].includes(item.state))) throw invalid();
+  });
+  return value;
 }
 
 /** Flow 1 Club Manager operations used by CORE-013 (docs/api/flow1-horse.openapi.yaml). */
@@ -49,9 +60,11 @@ export function createHorsesApi(http: HttpClient) {
     listStableAssignments: (id: number) => http.request<StableAssignment[]>('GET', `/api/horses/${id}/stable-assignments`),
     assignStableBox: (id: number, body: StableAssignmentRequest) =>
       http.request<StableAssignment>('POST', `/api/horses/${id}/stable-assignments`, { body }),
-    listPendingActivation: (page = 0, size = 50) =>
-      http.request<Page<ActivationStatus>>('GET', '/api/horses/pending-activation', { query: { page, size } }),
-    getActivationStatus: (id: number) => http.request<ActivationStatus>('GET', `/api/horses/${id}/activation-status`),
+    listPendingActivation: async (page = 0, size = 50) => {
+      const result = await http.request<Page<ActivationStatus>>('GET', '/api/horses/pending-activation', { query: { page, size } });
+      return { ...result, items: result.items.map(activation) };
+    },
+    getActivationStatus: async (id: number) => activation(await http.request<ActivationStatus>('GET', `/api/horses/${id}/activation-status`)),
     /** Owner picker: shared contract, Club Manager only (CORE-003). */
     listHorseOwners: () =>
       http.request<Page<UserSummary>>('GET', '/api/admin/users', { query: { role: 'HORSE_OWNER', status: 'ACTIVE', size: 100 } }),

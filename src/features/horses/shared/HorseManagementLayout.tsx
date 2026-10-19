@@ -17,10 +17,13 @@ export function HorseManagementLayout() {
   const api = useMemo(() => createHorsesApi({ request: async <T,>(method: 'GET' | 'POST' | 'PUT', path: string, options?: { body?: unknown; query?: Record<string, string | number | undefined> }) => {
     const query = new URLSearchParams();
     Object.entries(options?.query ?? {}).forEach(([key, value]) => { if (value !== undefined) query.set(key, String(value)); });
+    const token = authSession.read()?.accessToken;
+    if (!token) throw new ApiRequestError(401, 'UNAUTHORIZED', 'Sign in again to view horses.');
     try {
-      return await requestApi<T>(path + (query.size ? `?${query}` : ''), { method, ...(options?.body === undefined ? {} : { body: options.body instanceof FormData ? options.body : JSON.stringify(options.body) }) }, { token: authSession.read()?.accessToken });
+      return await requestApi<T>(path + (query.size ? `?${query}` : ''), { method, ...(options?.body === undefined ? {} : { body: options.body instanceof FormData ? options.body : JSON.stringify(options.body) }) }, { token });
     } catch (error) {
-      handleApiError(error);
+      // A late failure from an old actor must not clear a newly established session.
+      if (authSession.read()?.accessToken === token) handleApiError(error);
       if (error instanceof ApiError) throw new ApiRequestError(error.status, error.code, error.message, error.details);
       throw error;
     }

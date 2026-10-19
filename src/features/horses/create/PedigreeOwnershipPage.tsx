@@ -30,7 +30,8 @@ export function PedigreeOwnershipPage() {
   const api = useHorsesApi();
   const navigate = useNavigate();
   const location = useLocation() as { state?: { photoUploadFailed?: boolean } };
-  const id = Number(useParams().id);
+  const rawId = useParams().id ?? '';
+  const id = /^\d+$/.test(rawId) ? Number(rawId) : NaN;
 
   const [data, setData] = useState<Loaded>();
   const [loadError, setLoadError] = useState<string>();
@@ -51,6 +52,7 @@ export function PedigreeOwnershipPage() {
   useBreadcrumb([{ label: 'Horses', to: '/horses' }, { label: data?.horse.name ?? 'Horse' }, { label: 'Pedigree & Ownership' }]);
 
   const fetchAll = useCallback(async (): Promise<Loaded> => {
+    if (!Number.isSafeInteger(id) || id <= 0) throw new ApiRequestError(400, 'VALIDATION_ERROR', 'Invalid horse identifier.');
     const horse = await api.getHorse(id);
     const [owners, assignments, activation] = await Promise.allSettled([
       api.listHorseOwners(), api.listStableAssignments(id), api.getActivationStatus(id),
@@ -108,14 +110,15 @@ export function PedigreeOwnershipPage() {
   }
 
   const { horse, owners, assignments, activation, unavailable } = data;
-  const baselineDone = activation?.checklist.find((c) => c.item === 'VET_BASELINE')?.complete;
+  const baseline = activation?.checklist.find((c) => c.id === 'VETERINARIAN_BASELINE');
+  const baselineDone = baseline ? baseline.state === 'SATISFIED' : undefined;
   const current = horse.currentAssignment;
   const previous = assignments?.filter((a) => a.effectiveTo !== null).length;
   const facts = [horse.horseCode, horse.breed, horse.sex, horse.foaledDate ? `foaled ${formatDate(horse.foaledDate)}` : null].filter(Boolean).join(' · ');
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (pending.current || refreshing || unavailable.length > 0) return;
+    if (pending.current || refreshing || unavailable.length > 0 || !owners?.length) return;
     const missing: Partial<Record<Field, string>> = {};
     if (!sire.trim()) missing.sire = 'Enter the sire.';
     if (!dam.trim()) missing.dam = 'Enter the dam.';
@@ -233,7 +236,7 @@ export function PedigreeOwnershipPage() {
 
       <div className={styles.footer}>
         <Button variant="secondary" onClick={() => navigate('/horses')} disabled={saving}>Cancel</Button>
-        <Button type="submit" disabled={saving || refreshing || unavailable.length > 0}>{'Save & Continue'}</Button>
+        <Button type="submit" disabled={saving || refreshing || unavailable.length > 0 || !owners?.length}>{'Save & Continue'}</Button>
       </div>
 
       {boxModalOpen && (

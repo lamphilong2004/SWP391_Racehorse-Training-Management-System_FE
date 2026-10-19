@@ -16,12 +16,13 @@ interface PendingHorse {
 /** Labels and owners of the mandatory items, as drawn on Figma 285:2786. */
 const ITEMS: Record<ActivationItem, { label: string; who: 'Club Manager' | 'Veterinarian'; sub: (h: HorseDetail) => string }> = {
   IDENTITY: { label: 'Profile & identity', who: 'Club Manager', sub: () => 'Club Manager · Register Horse' },
-  PEDIGREE_AND_OWNER: { label: 'Pedigree & ownership', who: 'Club Manager', sub: () => 'Club Manager · Sire, Dam, owner' },
-  STABLE_BOX: {
+  PEDIGREE: { label: 'Pedigree', who: 'Club Manager', sub: () => 'Club Manager · Sire and Dam' },
+  OWNER: { label: 'Ownership', who: 'Club Manager', sub: () => 'Club Manager · Horse Owner' },
+  FREE_STABLE_BOX: {
     label: 'Stable box assigned', who: 'Club Manager',
     sub: (h) => (h.currentBoxCode ? `Club Manager · ${h.currentBoxCode} (free box)` : 'Club Manager · a free stable box'),
   },
-  VET_BASELINE: { label: 'Initial health baseline', who: 'Veterinarian', sub: () => 'Veterinarian · weight, condition, first Health Status' },
+  VETERINARIAN_BASELINE: { label: 'Initial health baseline', who: 'Veterinarian', sub: () => 'Veterinarian · weight, condition, first Health Status' },
 };
 
 /**
@@ -70,9 +71,9 @@ export function PendingActivationPage() {
         </p>
       </div>
 
-      {completed && completed.horse.currentBoxCode && (
+      {completed && completed.horse.currentBoxCode && missingItems(completed.status).every((item) => item === 'VETERINARIAN_BASELINE') && (
         <AlertBanner type="success" title={`Stable box ${completed.horse.currentBoxCode} assigned to ${completed.horse.name}`}>
-          {missingItems(completed.status).length === 1 && missingItems(completed.status)[0] === 'VET_BASELINE'
+          {missingItems(completed.status).length === 1 && missingItems(completed.status)[0] === 'VETERINARIAN_BASELINE'
             ? 'Pedigree, owner and box are recorded. The Veterinarian’s initial health baseline is the remaining requirement.'
             : 'Pedigree, owner and box are recorded.'}
         </AlertBanner>
@@ -85,7 +86,7 @@ export function PendingActivationPage() {
           {pending && pending.length === 0 && (
             <Card>
               <EmptyState title="No horses waiting for activation"
-                description="Every registered horse is ACTIVE. New horses appear here while they are in DRAFT." />
+                description="No DRAFT horses were returned. New horses appear here while they are waiting for mandatory requirements." />
             </Card>
           )}
           {pending?.map((p) => <PendingHorseCard key={p.horse.id} {...p} onViewRegister={() => navigate('/horses')} />)}
@@ -112,7 +113,7 @@ export function PendingActivationPage() {
 }
 
 function missingItems(status: ActivationStatus): ActivationItem[] {
-  return status.checklist.filter((c) => !c.complete).map((c) => c.item);
+  return status.checklist.flatMap((c) => c.requirement === 'MANDATORY' && c.state === 'PENDING' ? [c.id] : []);
 }
 
 function PendingHorseCard({ status, horse, onViewRegister }: PendingHorse & { onViewRegister: () => void }) {
@@ -122,8 +123,8 @@ function PendingHorseCard({ status, horse, onViewRegister }: PendingHorse & { on
     owner ? `Owner ${owner}` : null, horse.currentBoxCode ? `Box ${horse.currentBoxCode}` : null,
     `registered ${formatDate(horse.createdAt)}`].filter(Boolean).join(' · ');
   const missing = missingItems(status);
-  const onlyBaseline = missing.length === 1 && missing[0] === 'VET_BASELINE';
-  const review = status.readinessReview ?? { reviewed: false };
+  const onlyBaseline = missing.length === 1 && missing[0] === 'VETERINARIAN_BASELINE';
+  const reviewed = status.checklist.find((c) => c.id === 'HEAD_TRAINER_READINESS_REVIEW')?.state === 'REVIEWED';
 
   return (
     <Card>
@@ -139,15 +140,16 @@ function PendingHorseCard({ status, horse, onViewRegister }: PendingHorse & { on
         <h3 className={styles.checklistTitle}>Activation checklist</h3>
         <ul className={styles.checklist}>
           {status.checklist.map((c) => {
-            const spec = ITEMS[c.item];
-            if (!spec) return null;
+            if (c.requirement !== 'MANDATORY') return null;
+            const spec = ITEMS[c.id];
+            const complete = c.state === 'SATISFIED';
             return (
-              <ChecklistRow key={c.item} icon={c.complete ? 'check-circle' : 'clock'} tone={c.complete ? 'success' : 'warning'}
-                label={spec.label} sub={spec.sub(horse)} value={c.complete ? 'Complete' : `Pending — ${spec.who}`} />
+              <ChecklistRow key={c.id} icon={complete ? 'check-circle' : 'clock'} tone={complete ? 'success' : 'warning'}
+                label={c.label} sub={c.description} value={complete ? 'Complete' : `Pending — ${spec.who}`} />
             );
           })}
-          <ChecklistRow icon={review.reviewed ? 'check-circle' : 'circle'} tone="muted" label="Head Trainer readiness review"
-            sub="Recommended before training — does not block activation" value={review.reviewed ? 'Reviewed' : 'Recommended'} />
+          <ChecklistRow icon={reviewed ? 'check-circle' : 'circle'} tone="muted" label="Head Trainer readiness review"
+            sub="Recommended before training — does not block activation" value={reviewed ? 'Reviewed' : 'Recommended'} />
         </ul>
         <div className={[shared.note, shared.noteWarning, shared.noteStrong].join(' ')} role="status">
           <Icon name="clock" size={16} />

@@ -105,7 +105,14 @@ export interface StableAssignmentRequest {
   reason?: string | null;
 }
 
-export type ActivationItem = 'IDENTITY' | 'PEDIGREE_AND_OWNER' | 'STABLE_BOX' | 'VET_BASELINE';
+export type ActivationItem = 'IDENTITY' | 'PEDIGREE' | 'OWNER' | 'FREE_STABLE_BOX' | 'VETERINARIAN_BASELINE';
+export type ActivationChecklistItem = {
+  id: ActivationItem; label: string; description: string;
+  requirement: 'MANDATORY'; state: 'SATISFIED' | 'PENDING';
+} | {
+  id: 'HEAD_TRAINER_READINESS_REVIEW'; label: string; description: string;
+  requirement: 'RECOMMENDED'; state: 'REVIEWED' | 'NOT_REVIEWED';
+};
 
 export interface ActivationStatus {
   horseId: number;
@@ -113,14 +120,7 @@ export interface ActivationStatus {
   name: string;
   lifecycle: HorseLifecycle;
   activatedAt: string | null;
-  checklist: { item: ActivationItem; mandatory: true; complete: boolean; detail: string | null }[];
-  readinessReview: {
-    recommendation: 'RECOMMENDED';
-    blocking: false;
-    reviewed: boolean;
-    lastReviewedAt: string | null;
-    lastReviewedBy: UserRef | null;
-  };
+  checklist: ActivationChecklistItem[];
 }
 
 export interface Photo {

@@ -1,5 +1,5 @@
 import { ApiError, type CurrentUser } from '../auth/authApi';
-import type { HorseDetail, StableBox, ActivationStatus, HorseIdentityRequest, OwnershipRequest } from '../../features/horses/api/types';
+import type { HorseDetail, StableBox, ActivationItem, ActivationStatus, HorseIdentityRequest, OwnershipRequest } from '../../features/horses/api/types';
 import { readSamples, saveSamples, horse, sampleUser } from './sampleStore';
 
 export interface HorseSampleState { records: HorseDetail[]; boxes: StableBox[]; photos: Record<number, { id: number; url: string; uploadedAt: string }[]>; baselineHorseIds: number[] }
@@ -12,15 +12,20 @@ export function initialHorses(): HorseSampleState {
 }
 export { activation as evaluateActivation };
 function activation(h: HorseDetail, state: HorseSampleState): ActivationStatus {
-  const items: [ActivationStatus['checklist'][number]['item'], boolean][] = [
-    ['IDENTITY', Boolean(h.name && h.horseCode && h.breed && h.sex && h.foaledDate)],
-    ['PEDIGREE_AND_OWNER', Boolean((h.pedigree.sire.name || h.pedigree.sire.horseId) && (h.pedigree.dam.name || h.pedigree.dam.horseId) && h.currentOwnerships.length)],
-    ['STABLE_BOX', Boolean(h.currentAssignment)], ['VET_BASELINE', state.baselineHorseIds.includes(h.id)],
+  // Approved CORE-004 checklist: five mandatory items plus the non-blocking Head Trainer readiness review.
+  const items: [ActivationItem, string, boolean][] = [
+    ['IDENTITY', 'Profile & identity', Boolean(h.name && h.horseCode && h.breed && h.sex && h.foaledDate)],
+    ['PEDIGREE', 'Pedigree', Boolean((h.pedigree.sire.name || h.pedigree.sire.horseId) && (h.pedigree.dam.name || h.pedigree.dam.horseId))],
+    ['OWNER', 'Ownership', h.currentOwnerships.length > 0],
+    ['FREE_STABLE_BOX', 'Stable box assigned', Boolean(h.currentAssignment)],
+    ['VETERINARIAN_BASELINE', 'Initial health baseline', state.baselineHorseIds.includes(h.id)],
   ];
-  if (h.lifecycle === 'DRAFT' && items.every(([, done]) => done)) { h.lifecycle = 'ACTIVE'; h.activatedAt = new Date().toISOString(); }
+  if (h.lifecycle === 'DRAFT' && items.every(([, , done]) => done)) { h.lifecycle = 'ACTIVE'; h.activatedAt = new Date().toISOString(); }
   return { horseId: h.id, horseCode: h.horseCode, name: h.name, lifecycle: h.lifecycle, activatedAt: h.activatedAt,
-    checklist: items.map(([item, complete]) => ({ item, complete, mandatory: true, detail: null })),
-    readinessReview: { recommendation: 'RECOMMENDED', blocking: false, reviewed: false, lastReviewedAt: null, lastReviewedBy: null } };
+    checklist: [
+      ...items.map(([id, label, done]) => ({ id, label, description: label, requirement: 'MANDATORY' as const, state: done ? 'SATISFIED' as const : 'PENDING' as const })),
+      { id: 'HEAD_TRAINER_READINESS_REVIEW', label: 'Head Trainer readiness review', description: 'Recommended before training — does not block activation', requirement: 'RECOMMENDED', state: 'NOT_REVIEWED' },
+    ] };
 }
 export async function handleHorseSample(path: string, init: RequestInit, actor: CurrentUser): Promise<{ handled: boolean; data?: unknown }> {
   const url = new URL(path, 'http://sample.invalid');

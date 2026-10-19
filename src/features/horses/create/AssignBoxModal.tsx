@@ -81,12 +81,13 @@ export function AssignBoxModal({ open, horse, onClose, onAssigned }: AssignBoxMo
   };
 
   return (
-    <Modal open={open} size="lg" onClose={saving ? () => undefined : onClose} title={`Assign Stable Box · ${horse.name}`}
+    <Modal open={open} size="lg" className={styles.modal} onClose={saving ? () => undefined : onClose} title={`Assign Stable Box · ${horse.name}`}
       footer={<>
         <Button variant="secondary" onClick={onClose} disabled={saving}>Cancel</Button>
         <Button onClick={assign} disabled={!selected || saving}>Assign Box</Button>
       </>}>
       <div className={styles.body}>
+        <p className={styles.subtitle}>{`${horse.horseCode} · ${horse.lifecycle} · choose a free box`}</p>
         {saveError && <AlertBanner type="danger" title="Box not assigned">{saveError}</AlertBanner>}
         {loadError && <ErrorState title="Stable boxes unavailable" description="The stable boxes could not be loaded." onRetry={reload} />}
         {!loadError && !boxes && <LoadingState label="Loading stable boxes…" />}

@@ -3,7 +3,7 @@ import type { HorsesApi } from './horsesApi';
 
 const HorsesApiContext = createContext<HorsesApi | null>(null);
 
-/** Supplies the Flow 1 API to CORE-013 pages (contract mock now; real client in CORE-018). */
+/** Supplies the shared authenticated HTTP adapter to CORE-013; tests may inject a fixture adapter. */
 export function HorsesApiProvider({ api, children }: { api: HorsesApi; children: ReactNode }) {
   return <HorsesApiContext.Provider value={api}>{children}</HorsesApiContext.Provider>;
 }
