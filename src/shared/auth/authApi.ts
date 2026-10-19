@@ -1,7 +1,8 @@
 import type { RoleCode } from './roles';
 import { getBusinessActor, usesSampleData } from '../data/businessData';
+import { resolveApiBase } from '../apiOrigin';
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080').replace(/\/$/, '');
+const API_BASE_URL = resolveApiBase(import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:8080' : ''), import.meta.env.DEV);
 
 export interface CurrentUser {
   id: number;
