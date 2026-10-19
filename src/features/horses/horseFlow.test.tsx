@@ -129,6 +129,73 @@ it('retains the identity 404 error without offering an unverified saved profile'
   await screen.findByText('This horse was not found.');
   expect(screen.queryByRole('link', { name: 'View saved horse profile' })).not.toBeInTheDocument();
 });
+it.each(['owners', 'assignments', 'activation'] as const)('keeps the form visible without inventing missing %s data (HTTP fixtures)', async (missing) => {
+  setBusinessActor(manager);
+  const horse = await requestApi<HorseDetail>('/api/horses/7');
+  const activation = await requestApi('/api/horses/7/activation-status');
+  vi.stubEnv('VITE_BUSINESS_DATA_SOURCE', 'api');
+  const fetcher = vi.fn((input: RequestInfo | URL) => {
+    const path = new URL(String(input), 'http://localhost').pathname;
+    const resource = path === '/api/admin/users' ? 'owners' : path.endsWith('/stable-assignments') ? 'assignments' : path.endsWith('/activation-status') ? 'activation' : 'horse';
+    const data = resource === 'horse' ? horse : resource === 'owners' ? { items: [], page: 0, size: 100, totalItems: 0, totalPages: 0 } : resource === 'assignments' ? [] : activation;
+    return Promise.resolve(new Response(JSON.stringify(resource === missing ? { success: false, error: { code: 'FORBIDDEN', message: 'Access denied' } } : { success: true, data }), { status: resource === missing ? 403 : 200 }));
+  });
+  vi.stubGlobal('fetch', fetcher);
+  open('/horses/7/edit');
+  await screen.findByRole('heading', { name: 'Pedigree & Ownership · Thunder Bolt' });
+  expect(screen.getByLabelText('Sire *')).toBeEnabled();
+  expect(screen.getByRole('button', { name: 'Save & Continue' })).toBeDisabled();
+  expect(screen.getByLabelText('Owner *')).toHaveProperty('disabled', missing === 'owners');
+  if (missing === 'assignments') {
+    expect(screen.getByText('Box history unavailable')).toBeInTheDocument();
+    expect(screen.queryByText(/Box history: none/)).not.toBeInTheDocument();
+  }
+  if (missing === 'activation') {
+    expect(screen.getByText('Baseline status unavailable')).toBeInTheDocument();
+    expect(screen.queryByText('Not yet recorded (Veterinarian)')).not.toBeInTheDocument();
+  }
+  fireEvent.submit(screen.getByRole('button', { name: 'Save & Continue' }).closest('form')!);
+  expect(fetcher.mock.calls).toHaveLength(4);
+});
+it('retains typed and deliberately cleared fields across setup retry, then sends only contracted payloads (HTTP fixtures)', async () => {
+  setBusinessActor(manager);
+  const base = await requestApi<HorseDetail>('/api/horses/7');
+  const horse = { ...base, currentOwnerships: [] };
+  const activation = await requestApi('/api/horses/7/activation-status');
+  let available = false;
+  vi.stubEnv('VITE_BUSINESS_DATA_SOURCE', 'api');
+  const fetcher = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+    const path = new URL(String(input), 'http://localhost').pathname;
+    const failed = path.endsWith('/activation-status') && !available;
+    const data = path === '/api/admin/users' ? { items: [{ id: 17, fullName: 'Test Owner', userCode: 'OWNER-17', email: 'owner@example.test', roles: ['HORSE_OWNER'], accountStatus: 'ACTIVE' }], page: 0, size: 100, totalItems: 1, totalPages: 1 }
+      : path.endsWith('/activation-status') ? activation : path.endsWith('/stable-assignments') ? [] : path.endsWith('/pending-activation') ? { items: [], page: 0, size: 50, totalItems: 0, totalPages: 0 } : horse;
+    return Promise.resolve(new Response(JSON.stringify(failed ? { success: false, error: { code: 'NOT_FOUND', message: 'Not implemented' } } : { success: true, data }), { status: failed ? 404 : init?.method === 'POST' ? 201 : 200 }));
+  });
+  vi.stubGlobal('fetch', fetcher);
+  open('/horses/7/edit');
+  await screen.findByRole('heading', { name: 'Pedigree & Ownership · Thunder Bolt' });
+  fireEvent.change(screen.getByLabelText('Sire *'), { target: { value: '' } });
+  fireEvent.change(screen.getByLabelText('Dam *'), { target: { value: 'Edited Dam' } });
+  fireEvent.change(screen.getByLabelText('Owner *'), { target: { value: '17' } });
+  fireEvent.change(screen.getByLabelText('Ownership share (%)'), { target: { value: '65' } });
+  available = true;
+  fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Save & Continue' })).toBeEnabled());
+  expect(screen.getByLabelText('Sire *')).toHaveValue('');
+  expect(screen.getByLabelText('Dam *')).toHaveValue('Edited Dam');
+  expect(screen.getByLabelText('Owner *')).toHaveValue('17');
+  expect(screen.getByLabelText('Ownership share (%)')).toHaveValue(65);
+  fireEvent.click(screen.getByRole('button', { name: 'Save & Continue' }));
+  expect(await screen.findByText('Enter the sire.')).toBeInTheDocument();
+  expect(fetcher.mock.calls.filter(([, init]) => init?.method === 'PUT' || init?.method === 'POST')).toHaveLength(0);
+  fireEvent.change(screen.getByLabelText('Sire *'), { target: { value: 'Edited Sire' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save & Continue' }));
+  await screen.findByRole('heading', { name: 'Pending Activation' });
+  const writes = fetcher.mock.calls.filter(([, init]) => init?.method === 'PUT' || init?.method === 'POST');
+  expect(writes).toHaveLength(2);
+  expect(JSON.parse(String(writes[0][1]?.body))).toEqual({ sire: { horseId: null, name: 'Edited Sire' }, dam: { horseId: null, name: 'Edited Dam' } });
+  expect(JSON.parse(String(writes[1][1]?.body))).toMatchObject({ ownerUserId: 17, sharePercentage: 65, isManagingOwner: false });
+});
 it('preserves existing parent references and ownership when saving unchanged pedigree', async () => {
   setBusinessActor(manager); await requestApi('/api/horses/7');
   const data = readSamples(); data.horseRegistry!.records[0].pedigree.sire = { horseId: 91, name: 'Northern Star', horseCode: 'SIRE-91' }; saveSamples(data);

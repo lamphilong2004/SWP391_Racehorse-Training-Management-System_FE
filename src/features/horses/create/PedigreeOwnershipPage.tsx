@@ -13,18 +13,13 @@ import { AssignBoxModal } from './AssignBoxModal';
 
 interface Loaded {
   horse: HorseDetail;
-  owners: UserSummary[];
-  assignments: StableAssignment[];
-  activation: ActivationStatus;
+  owners?: UserSummary[];
+  assignments?: StableAssignment[];
+  activation?: ActivationStatus;
+  unavailable: string[];
 }
 
 type Field = 'sire' | 'dam' | 'owner';
-
-class SetupDependenciesError extends Error {
-  constructor(readonly horse: HorseDetail) {
-    super('Horse identity is available, but ownership, stable history or activation data could not be loaded. Retry setup or open the saved horse profile.');
-  }
-}
 
 /**
  * SCR-HORSE-004 Pedigree & Ownership (Figma 283:2487) — Flow 1 step 1.2, BR-04. Declares sire/dam (sent as names:
@@ -39,7 +34,8 @@ export function PedigreeOwnershipPage() {
 
   const [data, setData] = useState<Loaded>();
   const [loadError, setLoadError] = useState<string>();
-  const [availableHorse, setAvailableHorse] = useState<HorseDetail>();
+  const initializedHorse = useRef<number | undefined>(undefined);
+  const [refreshing, setRefreshing] = useState(false);
   const [sire, setSire] = useState('');
   const [dam, setDam] = useState('');
   const [ownerId, setOwnerId] = useState('');
@@ -56,29 +52,36 @@ export function PedigreeOwnershipPage() {
 
   const fetchAll = useCallback(async (): Promise<Loaded> => {
     const horse = await api.getHorse(id);
-    try {
-      const [owners, assignments, activation] = await Promise.all([
-        api.listHorseOwners(), api.listStableAssignments(id), api.getActivationStatus(id),
-      ]);
-      return { horse, owners: owners.items, assignments, activation };
-    } catch {
-      throw new SetupDependenciesError(horse);
-    }
+    const [owners, assignments, activation] = await Promise.allSettled([
+      api.listHorseOwners(), api.listStableAssignments(id), api.getActivationStatus(id),
+    ]);
+    return {
+      horse,
+      owners: owners.status === 'fulfilled' ? owners.value.items : undefined,
+      assignments: assignments.status === 'fulfilled' ? assignments.value : undefined,
+      activation: activation.status === 'fulfilled' ? activation.value : undefined,
+      unavailable: [
+        owners.status === 'rejected' ? 'Owner accounts' : null,
+        assignments.status === 'rejected' ? 'Stable assignment history' : null,
+        activation.status === 'rejected' ? 'Activation checklist' : null,
+      ].filter((item): item is string => item !== null),
+    };
   }, [api, id]);
 
   const apply = useCallback((loaded: Loaded) => {
     const { horse } = loaded;
     setData(loaded);
-    setAvailableHorse(undefined);
     setLoadError(undefined);
-    setSire((s) => s || horse.pedigree.sire.name || horse.pedigree.sire.horseCode || '');
-    setDam((d) => d || horse.pedigree.dam.name || horse.pedigree.dam.horseCode || '');
-    setOwnerId((o) => o || String(horse.currentOwnerships[0]?.owner.id ?? ''));
+    if (initializedHorse.current !== horse.id) {
+      initializedHorse.current = horse.id;
+      setSire(horse.pedigree.sire.name || horse.pedigree.sire.horseCode || '');
+      setDam(horse.pedigree.dam.name || horse.pedigree.dam.horseCode || '');
+      setOwnerId(String(horse.currentOwnerships[0]?.owner.id ?? ''));
+    }
   }, []);
 
   const loadFailed = (e: unknown) => {
-    setAvailableHorse(e instanceof SetupDependenciesError ? e.horse : undefined);
-    setLoadError(e instanceof SetupDependenciesError ? e.message : e instanceof ApiRequestError && e.status === 404 ? 'This horse was not found.' : 'The horse could not be loaded.');
+    setLoadError(e instanceof ApiRequestError && e.status === 404 ? 'This horse was not found.' : e instanceof ApiRequestError && e.status === 403 ? 'You do not have permission to view this horse.' : 'The horse could not be loaded.');
   };
 
   useEffect(() => {
@@ -89,27 +92,30 @@ export function PedigreeOwnershipPage() {
     };
   }, [fetchAll, apply]);
 
-  const load = () => fetchAll().then(apply, loadFailed);
+  const load = async () => {
+    setRefreshing(true);
+    try { apply(await fetchAll()); } catch (e) { loadFailed(e); }
+    finally { setRefreshing(false); }
+  };
 
   if (loadError) {
     return <div className={styles.page}>
-      <ErrorState title={availableHorse?.id === id ? 'Horse setup unavailable' : 'Horse not available'} description={loadError} onRetry={() => { setLoadError(undefined); void load(); }} />
-      {availableHorse?.id === id && <p><Link to={`/horses/${id}`}>View saved horse profile</Link>{' · '}<Link to="/horses">Back to Horses</Link></p>}
+      <ErrorState title="Horse not available" description={loadError} onRetry={() => { setLoadError(undefined); void load(); }} />
     </div>;
   }
   if (!data) {
     return <LoadingState label="Loading horse…" />;
   }
 
-  const { horse, owners, assignments, activation } = data;
-  const baselineDone = activation.checklist.find((c) => c.item === 'VET_BASELINE')?.complete ?? false;
+  const { horse, owners, assignments, activation, unavailable } = data;
+  const baselineDone = activation?.checklist.find((c) => c.item === 'VET_BASELINE')?.complete;
   const current = horse.currentAssignment;
-  const previous = assignments.filter((a) => a.effectiveTo !== null).length;
+  const previous = assignments?.filter((a) => a.effectiveTo !== null).length;
   const facts = [horse.horseCode, horse.breed, horse.sex, horse.foaledDate ? `foaled ${formatDate(horse.foaledDate)}` : null].filter(Boolean).join(' · ');
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (pending.current) return;
+    if (pending.current || refreshing || unavailable.length > 0) return;
     const missing: Partial<Record<Field, string>> = {};
     if (!sire.trim()) missing.sire = 'Enter the sire.';
     if (!dam.trim()) missing.dam = 'Enter the dam.';
@@ -151,6 +157,11 @@ export function PedigreeOwnershipPage() {
         <AlertBanner type="warning" title="Some photos were not uploaded">The horse was saved. Add the photos again from the horse profile.</AlertBanner>
       )}
       {formError && <AlertBanner type="danger" title="Changes not saved">{formError}</AlertBanner>}
+      {unavailable.length > 0 && <AlertBanner type="warning" title="Horse setup unavailable">
+        <p>{`${unavailable.join(', ')} could not be loaded. The saved horse remains available. Saving is disabled until the required setup data can be verified.`}</p>
+        <Button variant="secondary" disabled={refreshing || saving} onClick={() => void load()}>{refreshing ? 'Retrying…' : 'Try again'}</Button>
+        <p><Link to={`/horses/${id}`}>View saved horse profile</Link>{' · '}<Link to="/horses">Back to Horses</Link></p>
+      </AlertBanner>}
 
       <div className={styles.twoCol}>
         <div className={styles.colMain}>
@@ -158,9 +169,9 @@ export function PedigreeOwnershipPage() {
             <div className={styles.cardBody}>
               <h2 className={styles.cardTitle}>Pedigree</h2>
               <div className={styles.row}>
-                <TextField label="Sire *" value={sire} maxLength={150} error={errors.sire}
+                <TextField label="Sire *" value={sire} maxLength={150} error={errors.sire} disabled={saving}
                   onChange={(e) => { setSire(e.target.value); setErrors((x) => ({ ...x, sire: undefined })); }} />
-                <TextField label="Dam *" value={dam} maxLength={150} error={errors.dam}
+                <TextField label="Dam *" value={dam} maxLength={150} error={errors.dam} disabled={saving}
                   onChange={(e) => { setDam(e.target.value); setErrors((x) => ({ ...x, dam: undefined })); }} />
               </div>
             </div>
@@ -171,13 +182,14 @@ export function PedigreeOwnershipPage() {
               <h2 className={styles.cardTitle}>Ownership</h2>
               <p className={styles.cardHelp}>The owner sees this horse read-only in the Owner portal — owners cannot edit administrative data.</p>
               <SelectField label="Owner *" placeholder="Select a Horse Owner account" value={ownerId} error={errors.owner}
-                helperText="Ownership is saved when you continue."
-                options={owners.map((o) => ({ value: String(o.id), label: `${o.fullName} · Horse Owner account` }))}
+                disabled={!owners || saving || refreshing}
+                helperText={owners ? (owners.length ? 'Ownership is saved when you continue.' : 'No active Horse Owner accounts were returned. Contact the Club Manager.') : 'Owner accounts unavailable. Retry setup data.'}
+                options={(owners ?? []).map((o) => ({ value: String(o.id), label: `${o.fullName} · Horse Owner account` }))}
                 onChange={(e) => { setOwnerId(e.target.value); setErrors((x) => ({ ...x, owner: undefined })); }} />
               {!horse.currentOwnerships.some((item) => item.owner.id === Number(ownerId)) && <>
-                <TextField label="Ownership share (%)" type="number" min={0.01} max={100} step={0.01} value={share} onChange={(event) => setShare(event.target.value)} />
-                <TextField label="Ownership effective from" type="date" value={effectiveFrom} onChange={(event) => setEffectiveFrom(event.target.value)} />
-                <Checkbox label="Managing owner" checked={managing} onChange={(event) => setManaging(event.target.checked)} />
+                <TextField label="Ownership share (%)" type="number" min={0.01} max={100} step={0.01} value={share} disabled={saving} onChange={(event) => setShare(event.target.value)} />
+                <TextField label="Ownership effective from" type="date" value={effectiveFrom} disabled={saving} onChange={(event) => setEffectiveFrom(event.target.value)} />
+                <Checkbox label="Managing owner" checked={managing} disabled={saving} onChange={(event) => setManaging(event.target.checked)} />
               </>}
               <p className={styles.cardHelp}>Existing ownerships are retained. This form does not assume a single owner or a 100% share.</p>
             </div>
@@ -191,11 +203,11 @@ export function PedigreeOwnershipPage() {
                 <div className={styles.boxValue}>
                   <span className={styles.boxValueMain}>{current ? `Box ${current.boxCode}${current.yard ? ` · ${current.yard}` : ''}` : 'No box assigned yet'}</span>
                   <span className={styles.boxValueSub}>
-                    {previous === 0 ? (current ? `Assigned ${formatDate(current.effectiveFrom)}` : 'Box history: none — new arrival')
+                    {previous === undefined ? 'Box history unavailable' : previous === 0 ? (current ? `Assigned ${formatDate(current.effectiveFrom)}` : 'Box history: none — new arrival')
                       : `Box history: ${previous} previous ${previous === 1 ? 'box' : 'boxes'}`}
                   </span>
                 </div>
-                <Button variant="secondary" onClick={() => setBoxModalOpen(true)}>Assign Stable Box</Button>
+                <Button variant="secondary" disabled={saving || refreshing} onClick={() => setBoxModalOpen(true)}>Assign Stable Box</Button>
               </div>
             </div>
           </Card>
@@ -209,7 +221,7 @@ export function PedigreeOwnershipPage() {
               <div className={styles.kv}><span className={styles.kvLabel}>Breed · sex</span><span className={styles.kvValue}>{[horse.breed, horse.sex].filter(Boolean).join(' · ') || '—'}</span></div>
               <div className={styles.kv}><span className={styles.kvLabel}>Lifecycle</span><StatusBadge family="lifecycle" status={horse.lifecycle} /></div>
               <div className={styles.kv}><span className={styles.kvLabel}>Health baseline</span>
-                <span className={styles.kvValue}>{baselineDone ? 'Recorded (Veterinarian)' : 'Not yet recorded (Veterinarian)'}</span></div>
+                <span className={styles.kvValue}>{baselineDone === undefined ? 'Baseline status unavailable' : baselineDone ? 'Recorded (Veterinarian)' : 'Not yet recorded (Veterinarian)'}</span></div>
             </div>
           </Card>
           <div className={[styles.note, styles.notePrimary].join(' ')}>
@@ -221,7 +233,7 @@ export function PedigreeOwnershipPage() {
 
       <div className={styles.footer}>
         <Button variant="secondary" onClick={() => navigate('/horses')} disabled={saving}>Cancel</Button>
-        <Button type="submit" disabled={saving}>{'Save & Continue'}</Button>
+        <Button type="submit" disabled={saving || refreshing || unavailable.length > 0}>{'Save & Continue'}</Button>
       </div>
 
       {boxModalOpen && (
