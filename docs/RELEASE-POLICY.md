@@ -9,6 +9,8 @@ Leader decision: `main` holds the complete Frontend for the three Main Flows and
 - The per-commit `RACEHORSE_APPROVED_RELEASE_SHA` interlock is retired. The staging scripts (`build:staging:*`) are local/manual tooling only and refuse to build Production.
 - Vercel project settings to keep in the dashboard: connected repository `lamphilong2004/SWP391_Racehorse-Training-Management-System_FE`, Production Branch `main`, Root Directory `.`, no Ignored Build Step that skips Production, no duplicate project.
 - Backend is not connected in this phase. `VITE_API_BASE_URL` (public HTTPS origin only, never a secret) is set in Vercel when the Backend goes online.
+- Without an API origin the production shell requests same-origin `/api` and `/ws`; no localhost default or sample fallback is used. Static hosting alone does not implement those endpoints: login and business operations remain unavailable until a real Backend is connected. A production build rejects configured HTTP, local/private, credential-bearing or path/query-bearing API origins.
+- Preparing this release does not authorize merging PR #18 or changing Production settings. The Leader must authorize the exact reviewed release and the dashboard changes before Production is enabled.
 
 ---
 

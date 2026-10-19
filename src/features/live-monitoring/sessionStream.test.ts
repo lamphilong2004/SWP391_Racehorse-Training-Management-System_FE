@@ -1,4 +1,9 @@
-import { connectSessionStream } from './sessionStream';
+import { connectSessionStream, monitoringSocketUrl } from './sessionStream';
+
+it('keeps same-origin secure WebSockets on HTTPS and supports configured API origins', () => {
+  expect(monitoringSocketUrl('https://api.example.test')).toBe('wss://api.example.test/ws');
+  expect(monitoringSocketUrl('/')).toBe(new URL('/ws', location.origin).toString().replace(/^http/, 'ws'));
+});
 
 class FakeSocket {
   sent: string[] = []; binaryType = ''; readyState = 1;

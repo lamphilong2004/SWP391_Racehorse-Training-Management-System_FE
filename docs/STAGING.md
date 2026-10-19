@@ -27,7 +27,7 @@ It also fails if an `api` output contains the role test login or test identities
 
 - **Production** is built from `main` by Vercel with `npm run build` (see `docs/RELEASE-POLICY.md`, 19 October 2026). Staging profiles refuse to build Production.
 - **Preview** builds accept only `integration/fe-product-main`.
-- `vercel.json` keeps `git.deploymentEnabled: false`. Every Preview is a manual, Leader-authorized deployment.
+- Current `vercel.json` allows automatic deployments only from `main`; every Preview remains a manual, Leader-authorized deployment.
 - Switching the existing Vercel Preview from `sample` to `preview` requires changing `RACEHORSE_STAGING_MODE` in the Vercel Preview environment. A build that still uses `sample` now fails on purpose.
 
 ## Local checks

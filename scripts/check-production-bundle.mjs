@@ -9,6 +9,7 @@ const source = files.filter((file) => file.endsWith('.js')).map((file) => readFi
 const forbidden = [
   'racehorse.business-samples.v1', 'Sample record not found', 'DEV HARNESS', 'PresenterToolsPage', 'demoAuthApi', 'presenter-tools',
   'Role test sign-in', '@racehorse.test', 'Protected test sign-in', 'UI fixture preview',
+  'http://localhost:8080', 'ws://localhost:8080',
 ];
 const found = forbidden.filter((text) => source.includes(text));
 if (found.length) throw new Error(`Production bundle contains test/sample/developer code: ${found.join(', ')}`);

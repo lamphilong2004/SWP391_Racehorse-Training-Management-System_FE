@@ -1,8 +1,10 @@
+import { resolveApiBase } from '../../shared/apiOrigin';
+
 export interface StreamEvent { topic: 'metrics' | 'alerts' | 'state'; data: Record<string, unknown> }
 export type StreamStatus = 'Connecting' | 'Connected' | 'Disconnected' | 'Unavailable';
 const TOPICS = ['metrics', 'alerts', 'state'] as const;
-export function monitoringSocketUrl(base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'): string {
-  const url = new URL(base, globalThis.location?.origin || 'http://localhost');
+export function monitoringSocketUrl(base = resolveApiBase(import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:8080' : ''), import.meta.env.DEV)): string {
+  const url = new URL(base || '/', globalThis.location?.origin);
   url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
   url.pathname = '/ws'; url.search = ''; url.hash = ''; return url.toString();
 }

@@ -1,9 +1,12 @@
 /// <reference types="vitest/config" />
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import { resolveApiBase } from './src/shared/apiOrigin.ts';
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, command }) => {
   const env = loadEnv(mode, '.', 'VITE_');
+  // Validate deployable artifacts before compilation, including accidental local .env values.
+  if (command === 'build') resolveApiBase(env.VITE_API_BASE_URL, false);
   return {
   plugins: [react()],
   server: {
