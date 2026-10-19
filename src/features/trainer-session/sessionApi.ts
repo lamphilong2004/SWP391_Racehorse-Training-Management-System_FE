@@ -1,7 +1,13 @@
 import type { SessionDetail as ExistingSession, SessionResultView } from '../evaluation/models';
 import type { CandidateList, Intensity, Page, ProgramDetail, TrainingAvailability } from '../program-creation/programTypes';
 import type { AssignedProgram, Exercise } from '../training/assigned/supportingApi';
+import { ApiError } from '../../shared/auth/authApi';
 import { idOf, jsonBody, type FlowRequest } from '../main-flows/api';
+
+const invalid = () => new ApiError(200, 'INVALID_RESPONSE', 'Training data does not match the approved contract. Reload to retry.');
+/** Envelope shape checks so a malformed response surfaces as an error state instead of crashing the page. */
+function list<T>(value: T[]): T[] { if (!Array.isArray(value)) throw invalid(); return value; }
+function page<T>(value: Page<T>): Page<T> { if (!value || !Array.isArray(value.items)) throw invalid(); return value; }
 
 export interface SessionExerciseInput {
   exerciseDefinitionId: number; exerciseOrder: number; distanceM?: number | null; durationMin?: number | null;
@@ -34,11 +40,11 @@ export function createSessionPayload(input: CreateSessionInput): CreateSessionIn
 }
 export function createSessionApi(request: FlowRequest) {
   return {
-    programs: (signal?: AbortSignal) => request<Page<AssignedProgram>>('/api/training-programs?assignedToMe=true&page=0&size=100', { signal }),
+    programs: async (signal?: AbortSignal) => page(await request<Page<AssignedProgram>>('/api/training-programs?assignedToMe=true&page=0&size=100', { signal })),
     program: (id: number, signal?: AbortSignal) => request<ProgramDetail>(`/api/training-programs/${idOf(id)}`, { signal }),
     availability: (id: number, signal?: AbortSignal) => request<{ availability: TrainingAvailability; reason?: string }>(`/api/horses/${idOf(id)}/training-availability`, { signal }),
-    exercises: (signal?: AbortSignal) => request<Exercise[]>('/api/exercises', { signal }),
-    sessions: (from: string, to: string, signal?: AbortSignal) => request<TrainingSession[]>(`/api/training-sessions?${new URLSearchParams({ from, to })}`, { signal }),
+    exercises: async (signal?: AbortSignal) => list(await request<Exercise[]>('/api/exercises', { signal })),
+    sessions: async (from: string, to: string, signal?: AbortSignal) => list(await request<TrainingSession[]>(`/api/training-sessions?${new URLSearchParams({ from, to })}`, { signal })),
     read: (id: number, signal?: AbortSignal) => request<TrainingSession>(`/api/training-sessions/${idOf(id)}`, { signal }),
     result: (id: number, signal?: AbortSignal) => request<SessionResultView>(`/api/training-sessions/${idOf(id)}/result`, { signal }),
     suitability: (draft: SessionDraft) => request<Suitability>('/api/training-sessions/suitability-check', jsonBody('POST', draftPayload(draft))),

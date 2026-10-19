@@ -69,7 +69,7 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
       {
         items: [
           { label: 'Dashboard', icon: 'dashboard', to: ROUTES.dashboard },
-          { label: 'Assigned Programs', icon: 'folder', to: ROUTES.trainingPrograms },
+          { label: 'Assigned Programs', icon: 'folder', to: ROUTES.assignedPrograms },
           { label: 'Training Calendar', icon: 'calendar', to: ROUTES.trainingCalendar },
           { label: 'Exercise Library', icon: 'book-open', to: ROUTES.exerciseLibrary },
           { label: 'Live Monitoring', icon: 'activity', to: ROUTES.realtimeMonitoring },
@@ -90,7 +90,6 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
           { label: 'Assignments', icon: 'clipboard-list', to: ROUTES.assignments },
           { label: 'Riding History', icon: 'history', to: ROUTES.ridingHistory },
           { label: 'Report Issue', icon: 'alert-triangle', to: ROUTES.reportIssue },
-          { label: 'Horses', icon: 'horseshoe', to: ROUTES.horses },
         ],
       },
     ],
@@ -127,6 +126,7 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
         items: [
           { label: 'Dashboard', icon: 'dashboard', to: ROUTES.dashboard },
           { label: 'Horses', icon: 'horseshoe', to: ROUTES.horses },
+          { label: 'Pending Activation', icon: 'clipboard-list', to: ROUTES.pendingActivation },
           { label: 'Stable', icon: 'warehouse', to: ROUTES.stable, deferred: DEFERRED_REASON },
         ],
       },
@@ -134,6 +134,7 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
         heading: 'Administration',
         items: [
           { label: 'Staff & Users', icon: 'users', to: ROUTES.staffUsers },
+          { label: 'Registration Requests', icon: 'user', to: ROUTES.registrations },
           { label: 'Roles & Permissions', icon: 'shield-check', to: ROUTES.rolesPermissions },
         ],
       },
@@ -152,7 +153,7 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
     workspaceLabel: 'Stable Care Workspace',
     sections: [
       {
-        items: [{ label: 'Today', icon: 'dashboard', to: ROUTES.dashboard }],
+        items: [{ label: 'Today', icon: 'dashboard', to: ROUTES.groomToday }],
       },
       {
         heading: 'My Work',

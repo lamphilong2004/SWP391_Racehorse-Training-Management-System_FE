@@ -28,7 +28,7 @@ function mount(role: RoleCode, path: string, signedIn = true) {
     if (url.pathname === '/api/auth/login') return ok({ accessToken: 'integration-fixture-jwt', tokenType: 'Bearer', expiresIn: 3600, user });
     if (url.pathname === '/api/training-sessions/42/result') return ok(result);
     if (url.pathname === '/api/medical/cases') return ok({ page: 0, size: 20, totalElements: 1,
-      items: [{ id: 9, horseId: 7, reason: 'Fixture lameness', status: 'OPEN', openedAt: '2026-11-01T06:00:00Z' }] });
+      items: [{ id: 9, horseId: 7, reason: 'Fixture lameness', status: 'OPEN', openedAt: '2026-11-01T06:00:00Z', incidentIds: [], examinations: [], injuries: [], reexaminations: [] }] });
     return fixtureResponse(url, init, user);
   });
   vi.stubGlobal('fetch', fetcher);
@@ -50,7 +50,7 @@ describe('dev + CORE-022 + CORE-033 + clean CORE-036 / production routes', () =>
   it.each(allowed)('restores %s into %s with the shared API base/session', async (role, path, heading, endpoint) => {
     const { router, fetcher } = mount(role, path);
     expect(await screen.findByRole('heading', { name: heading })).toBeInTheDocument();
-    if (role === 'HEAD_TRAINER') await screen.findByRole('button', { name: 'Select Thunder Bolt' });
+    if (role === 'HEAD_TRAINER') await screen.findByRole('radio', { name: 'Select Thunder Bolt' });
     if (role === 'VETERINARIAN') await screen.findByText('Fixture lameness');
     if (role === 'TRAINER') {
       fireEvent.click(screen.getByRole('tab', { name: 'Evaluation & Recommendation' }));

@@ -32,7 +32,7 @@ it.each(ROLE_CODES)('opens the %s workspace without credentials, network or samp
   expect(await screen.findByRole('heading', { name: 'Role test sign-in' })).toBeInTheDocument();
   expect(screen.queryByLabelText('Password')).not.toBeInTheDocument();
   await enter(role);
-  expect(await screen.findByRole('heading', { name: role === 'CLUB_MANAGER' ? 'Club Manager Dashboard' : NAVIGATION[role].workspaceLabel })).toBeInTheDocument();
+  expect(await screen.findByRole('heading', { name: role === 'CLUB_MANAGER' ? 'Club Manager Dashboard' : role === 'TRAINER' ? 'Trainer Dashboard' : NAVIGATION[role].workspaceLabel })).toBeInTheDocument();
   expect(screen.getByText('Protected test sign-in — UI inspection only')).toBeInTheDocument();
   expect(authSession.read()?.accessToken).toBe(`role-test:${role}`);
   expect(localStorage.getItem('racehorse.auth.local.v1')).toBeNull();

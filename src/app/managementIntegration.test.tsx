@@ -20,7 +20,7 @@ afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
 
 it.each(ROLE_CODES)('retains the intended dashboard for %s', async (role) => {
   mount(role);
-  expect(await screen.findByRole('heading', { name: role === 'CLUB_MANAGER' ? 'Club Manager Dashboard' : NAVIGATION[role].workspaceLabel })).toBeInTheDocument();
+  expect(await screen.findByRole('heading', { name: role === 'CLUB_MANAGER' ? 'Club Manager Dashboard' : role === 'TRAINER' ? 'Trainer Dashboard' : NAVIGATION[role].workspaceLabel })).toBeInTheDocument();
   if (role === 'CLUB_MANAGER') {
     expect(await screen.findByRole('link', { name: 'View horses' })).toHaveAttribute('href', '/horses');
     expect(screen.getByRole('link', { name: 'View pending activations' })).toHaveAttribute('href', '/horses/pending-activation');
