@@ -71,3 +71,14 @@ it('reads all summary pages, rejects unstable pagination and never falls back on
   const failed = vi.fn().mockRejectedValue(new Error('Offline'));
   await expect(createSummaryService('fixture', undefined, { baseUrl: '', fetcher: failed }).listCases()).rejects.toMatchObject({ code: 'NETWORK_ERROR' }); expect(failed).toHaveBeenCalledOnce();
 });
+
+it('uses the approved non-clinical HorseDetail weight and identity projection without copying clinical extras', async () => {
+  const fetcher = vi.fn().mockResolvedValue(ok({ ...horse, breed: 'Thoroughbred', sex: 'Colt', foaledDate: '2022-04-01', latestWeight: { weightKg: 512, recordedAt: '2026-09-30T00:00:00Z' }, currentAssignment: { yard: 'North Yard' }, diagnosis: 'Do not copy clinical details' }));
+  const value = createSummaryService('fixture', undefined, { baseUrl: '', fetcher });
+  const result = await value.getHorse(14); expect(result.latestWeight?.weightKg).toBe(512); expect(result).not.toHaveProperty('diagnosis');
+  const view = service(); vi.mocked(view.getHorse).mockResolvedValue(result); mount(view);
+  await screen.findByRole('heading', { name: 'Medical Summary · Storm' });
+  expect(screen.getByText(/ST-014 · Thoroughbred · \d+ yrs · Colt · North Yard, Box B-03/)).toBeInTheDocument();
+  expect(screen.getByText('30 Sept 2026')).toHaveAttribute('dateTime', '2026-09-30T00:00:00Z');
+  expect(screen.queryByText('Do not copy clinical details')).not.toBeInTheDocument();
+});

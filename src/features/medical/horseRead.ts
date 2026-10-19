@@ -10,7 +10,7 @@ export interface HerdHorse extends HorseIdentity { lifecycle: 'ACTIVE' }
 function object(v: unknown): v is Record<string, unknown> { return typeof v === 'object' && v !== null && !Array.isArray(v); }
 const integer = (v: unknown, min = 0): v is number => Number.isSafeInteger(v) && Number(v) >= min;
 const invalid = () => new ApiError(200, 'INVALID_RESPONSE', 'Horse overview data is incomplete or does not match the approved contract. Reload to retry.');
-function identity(v: unknown): HorseIdentity {
+export function readHorseIdentityData(v: unknown): HorseIdentity {
   if (!object(v) || !integer(v.id, 1) || typeof v.horseCode !== 'string' || typeof v.name !== 'string' || !['DRAFT', 'ACTIVE', 'INACTIVE'].includes(String(v.lifecycle)) ||
     !['AVAILABLE', 'LIMITED', 'LOCKED'].includes(String(v.trainingAvailability)) ||
     (v.healthStatus != null && !['FIT', 'MONITORING', 'INJURED', 'QUARANTINED'].includes(String(v.healthStatus))) ||
@@ -19,7 +19,7 @@ function identity(v: unknown): HorseIdentity {
     trainingAvailability: v.trainingAvailability as Availability, currentBoxCode: v.currentBoxCode as HorseIdentity['currentBoxCode'] };
 }
 function horse(v: unknown): HerdHorse {
-  const result = identity(v);
+  const result = readHorseIdentityData(v);
   if (result.lifecycle !== 'ACTIVE') throw invalid();
   return { ...result, lifecycle: 'ACTIVE' };
 }
@@ -27,7 +27,7 @@ function horse(v: unknown): HerdHorse {
 export async function readHorseIdentity(token: string, id: number, onApiError?: (error: unknown) => boolean, options: { baseUrl?: string; fetcher?: typeof fetch } = {}): Promise<HorseIdentity> {
   if (!integer(id, 1)) throw new Error('Invalid horse ID.');
   try {
-    const result = identity(await requestApi<unknown>(`/api/horses/${id}`, { method: 'GET' }, { token, ...options }));
+    const result = readHorseIdentityData(await requestApi<unknown>(`/api/horses/${id}`, { method: 'GET' }, { token, ...options }));
     if (result.id !== id) throw invalid();
     return result;
   } catch (error) { onApiError?.(error); throw error; }

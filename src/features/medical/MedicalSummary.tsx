@@ -61,9 +61,14 @@ function HorseSummary({ id, service }: { id: number; service: SummaryService }) 
   const horse = useRead(horseLoad, horseLoad), availability = useRead(availabilityLoad, availabilityLoad), cases = useRead(casesLoad, casesLoad);
   if (!horse.data) return <State error={horse.error} retry={horse.retry} />;
   const current = availability.data;
+  const birth = horse.data.foaledDate?.split('-').map(Number), today = new Date();
+  let age = birth ? today.getFullYear() - birth[0] : null;
+  if (age !== null && birth && (today.getMonth() + 1 < birth[1] || (today.getMonth() + 1 === birth[1] && today.getDate() < birth[2]))) age--;
+  const subtitle = [horse.data.horseCode, horse.data.breed, age !== null && age >= 0 ? `${age} yrs` : undefined, horse.data.sex,
+    [horse.data.yard, horse.data.currentBoxCode ? `Box ${horse.data.currentBoxCode}` : undefined].filter(Boolean).join(', ')].filter(Boolean).join(' · ');
   const open = cases.data?.filter((c) => c.horseId === id && c.status === 'OPEN');
   return <>
-    <PageHeader title={`Medical Summary · ${horse.data.name}`} description={`${horse.data.horseCode}${horse.data.currentBoxCode ? ` · Box ${horse.data.currentBoxCode}` : ''}`}
+    <PageHeader title={`Medical Summary · ${horse.data.name}`} description={subtitle}
       actions={<span className="medical-read-only"><Icon name="eye" size={14} /> READ-ONLY</span>} />
     <div className="medical-summary-columns">
       <Card title="Training-relevant medical status" className="medical-summary-status">
@@ -72,7 +77,7 @@ function HorseSummary({ id, service }: { id: number; service: SummaryService }) 
           <Row label="Training Availability">{current ? <StatusBadge family="availability" status={current.availability} /> : 'Unavailable'}</Row>
           <Row label="Active restriction">{current ? current.availability === 'AVAILABLE' ? 'None' : current.reason || current.availability : 'Unavailable'}</Row>
           <Row label="Open medical case">{open ? open.length ? open.map((c) => `Case ${c.id}`).join(', ') : 'None' : 'Unavailable'}</Row>
-          <Row label="Latest recorded weight">Unavailable in this summary</Row>
+          <Row label="Latest recorded weight">{horse.data.latestWeight ? <>{horse.data.latestWeight.weightKg} kg · <time dateTime={horse.data.latestWeight.recordedAt}>{new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium' }).format(new Date(horse.data.latestWeight.recordedAt))}</time></> : 'Unavailable in this summary'}</Row>
           <Row label="Next medical review">Unavailable in this summary</Row>
         </dl>
         {!current ? <State error={availability.error} retry={availability.retry} /> :

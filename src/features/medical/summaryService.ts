@@ -1,12 +1,13 @@
 import { ApiError, requestApi } from '../../shared/auth/authApi';
-import { readActiveHerd, readHorseIdentity } from './horseRead';
+import { readActiveHerd, readHorseIdentityData, type HorseIdentity } from './horseRead';
 import { readAvailability, readPage } from './validation';
 
 /** CORE-006 MedicalCaseSummary only. Never reuse the Vet clinical reader for Head Trainer. */
 export interface CaseSummary { id: number; horseId: number; status: 'OPEN' | 'CLOSED'; openedAt: string; closedAt?: string }
+export interface SummaryHorse extends HorseIdentity { breed?: string | null; sex?: string | null; foaledDate?: string | null; yard?: string | null; latestWeight?: { weightKg: number; recordedAt: string } | null }
 export interface SummaryService {
   listHorses: () => ReturnType<typeof readActiveHerd>;
-  getHorse: (id: number) => ReturnType<typeof readHorseIdentity>;
+  getHorse: (id: number) => Promise<SummaryHorse>;
   getAvailability: (id: number) => Promise<import('./models').TrainingAvailability>;
   listCases: () => Promise<CaseSummary[]>;
 }
@@ -27,7 +28,18 @@ export function createSummaryService(token: string, onError?: (error: unknown) =
   }
   return {
     listHorses: () => readActiveHerd(token, onError, options),
-    getHorse: (id) => readHorseIdentity(token, id, onError, options),
+    getHorse: async (id) => {
+      if (!Number.isSafeInteger(id) || id < 1) throw new Error('Invalid horse ID.');
+      const raw = await get(`/api/horses/${id}`), identity = readHorseIdentityData(raw), v = raw as Record<string, unknown>;
+      if (identity.id !== id || ['breed', 'sex'].some((key) => v[key] != null && typeof v[key] !== 'string') ||
+        (v.foaledDate != null && (typeof v.foaledDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v.foaledDate) || !Number.isFinite(Date.parse(v.foaledDate))))) throw invalid();
+      const assignment = v.currentAssignment as { yard?: unknown } | null | undefined;
+      if (assignment != null && (typeof assignment !== 'object' || Array.isArray(assignment) || (assignment.yard != null && typeof assignment.yard !== 'string'))) throw invalid();
+      const weight = v.latestWeight as { weightKg: unknown; recordedAt: unknown } | null | undefined;
+      if (weight != null && (typeof weight !== 'object' || Array.isArray(weight) || typeof weight.weightKg !== 'number' || !Number.isFinite(weight.weightKg) || weight.weightKg <= 0 || typeof weight.recordedAt !== 'string' || !Number.isFinite(Date.parse(weight.recordedAt)))) throw invalid();
+      return { ...identity, breed: v.breed as string | null | undefined, sex: v.sex as string | null | undefined, foaledDate: v.foaledDate as string | null | undefined,
+        yard: assignment?.yard as string | null | undefined, latestWeight: weight ? { weightKg: Number(weight.weightKg), recordedAt: String(weight.recordedAt) } : weight };
+    },
     getAvailability: async (id) => {
       if (!Number.isSafeInteger(id) || id < 1) throw new Error('Invalid horse ID.');
       return readAvailability(await get(`/api/horses/${id}/training-availability`), id);
