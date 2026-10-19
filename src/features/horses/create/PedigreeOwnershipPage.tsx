@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router';
+import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import {
   AlertBanner, Button, Card, Checkbox, ErrorState, StatusBadge, Icon, LoadingState, SelectField, TextField,
 } from '../../../design-system';
@@ -20,6 +20,12 @@ interface Loaded {
 
 type Field = 'sire' | 'dam' | 'owner';
 
+class SetupDependenciesError extends Error {
+  constructor(readonly horse: HorseDetail) {
+    super('Horse identity is available, but ownership, stable history or activation data could not be loaded. Retry setup or open the saved horse profile.');
+  }
+}
+
 /**
  * SCR-HORSE-004 Pedigree & Ownership (Figma 283:2487) — Flow 1 step 1.2, BR-04. Declares sire/dam (sent as names:
  * the contract's ref-XOR-name rule is satisfied by never sending both), links the owner and opens the Assign Stable Box
@@ -33,6 +39,7 @@ export function PedigreeOwnershipPage() {
 
   const [data, setData] = useState<Loaded>();
   const [loadError, setLoadError] = useState<string>();
+  const [availableHorse, setAvailableHorse] = useState<HorseDetail>();
   const [sire, setSire] = useState('');
   const [dam, setDam] = useState('');
   const [ownerId, setOwnerId] = useState('');
@@ -48,22 +55,31 @@ export function PedigreeOwnershipPage() {
   useBreadcrumb([{ label: 'Horses', to: '/horses' }, { label: data?.horse.name ?? 'Horse' }, { label: 'Pedigree & Ownership' }]);
 
   const fetchAll = useCallback(async (): Promise<Loaded> => {
-    const [horse, owners, assignments, activation] = await Promise.all([
-      api.getHorse(id), api.listHorseOwners(), api.listStableAssignments(id), api.getActivationStatus(id),
-    ]);
-    return { horse, owners: owners.items, assignments, activation };
+    const horse = await api.getHorse(id);
+    try {
+      const [owners, assignments, activation] = await Promise.all([
+        api.listHorseOwners(), api.listStableAssignments(id), api.getActivationStatus(id),
+      ]);
+      return { horse, owners: owners.items, assignments, activation };
+    } catch {
+      throw new SetupDependenciesError(horse);
+    }
   }, [api, id]);
 
   const apply = useCallback((loaded: Loaded) => {
     const { horse } = loaded;
     setData(loaded);
+    setAvailableHorse(undefined);
+    setLoadError(undefined);
     setSire((s) => s || horse.pedigree.sire.name || horse.pedigree.sire.horseCode || '');
     setDam((d) => d || horse.pedigree.dam.name || horse.pedigree.dam.horseCode || '');
     setOwnerId((o) => o || String(horse.currentOwnerships[0]?.owner.id ?? ''));
   }, []);
 
-  const loadFailed = (e: unknown) =>
-    setLoadError(e instanceof ApiRequestError && e.status === 404 ? 'This horse was not found.' : 'The horse could not be loaded.');
+  const loadFailed = (e: unknown) => {
+    setAvailableHorse(e instanceof SetupDependenciesError ? e.horse : undefined);
+    setLoadError(e instanceof SetupDependenciesError ? e.message : e instanceof ApiRequestError && e.status === 404 ? 'This horse was not found.' : 'The horse could not be loaded.');
+  };
 
   useEffect(() => {
     let active = true;
@@ -76,7 +92,10 @@ export function PedigreeOwnershipPage() {
   const load = () => fetchAll().then(apply, loadFailed);
 
   if (loadError) {
-    return <ErrorState title="Horse not available" description={loadError} onRetry={() => { setLoadError(undefined); void load(); }} />;
+    return <div className={styles.page}>
+      <ErrorState title={availableHorse?.id === id ? 'Horse setup unavailable' : 'Horse not available'} description={loadError} onRetry={() => { setLoadError(undefined); void load(); }} />
+      {availableHorse?.id === id && <p><Link to={`/horses/${id}`}>View saved horse profile</Link>{' · '}<Link to="/horses">Back to Horses</Link></p>}
+    </div>;
   }
   if (!data) {
     return <LoadingState label="Loading horse…" />;

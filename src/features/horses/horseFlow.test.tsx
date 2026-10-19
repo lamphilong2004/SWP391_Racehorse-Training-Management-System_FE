@@ -8,6 +8,7 @@ import { authSession } from '../../shared/auth/authSession';
 import { requestApi, createAuthApi, type CurrentUser } from '../../shared/auth/authApi';
 import { getBusinessActor, setBusinessActor } from '../../shared/data/businessData';
 import { readSamples, resetSamples, saveSamples } from '../../shared/data/sampleStore';
+import type { HorseDetail } from './api/types';
 
 const manager: CurrentUser = { id: 201, userCode: 'TEST-CM', fullName: 'Test Manager', email: 'manager@example.test', roles: ['CLUB_MANAGER'], accountStatus: 'ACTIVE' };
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); vi.stubEnv('VITE_BUSINESS_DATA_SOURCE', 'sample'); setBusinessActor(null); resetSamples(); vi.stubGlobal('fetch', vi.fn(() => { throw new Error('Unexpected network request'); })); });
@@ -88,6 +89,45 @@ it('API mode never falls back to samples on 404, 403 or network failure', async 
     await expect(requestApi('/api/horses', {}, { fetcher })).rejects.toMatchObject({ status, message: 'Real API error' });
   }
   await expect(requestApi('/api/horses', {}, { fetcher: vi.fn().mockRejectedValue(new Error('offline')) })).rejects.toMatchObject({ code: 'NETWORK_ERROR' });
+});
+it.each([404, 503])('keeps a created identity reachable when supporting APIs return %s (transport fixtures only)', async (supportStatus) => {
+  setBusinessActor(manager);
+  const base = await requestApi<HorseDetail>('/api/horses/7');
+  const created = { ...base, id: 501, horseCode: 'TRANSPORT-501', name: 'Transport Draft', lifecycle: 'DRAFT' as const };
+  vi.stubEnv('VITE_BUSINESS_DATA_SOURCE', 'api');
+  const fetcher = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+    const path = new URL(String(input), 'http://localhost').pathname;
+    let data: unknown;
+    let status = 200;
+    if (path === '/api/horses' && init?.method === 'POST') { data = created; status = 201; }
+    else if (path === '/api/horses/501') data = created;
+    else if (path === '/api/horses') data = { items: [created], page: 0, size: 20, totalItems: 1, totalPages: 1 };
+    else return Promise.resolve(new Response(JSON.stringify({ success: false, error: { code: 'NOT_FOUND', message: 'Supporting API unavailable' } }), { status: supportStatus }));
+    return Promise.resolve(new Response(JSON.stringify({ success: true, data }), { status }));
+  });
+  vi.stubGlobal('fetch', fetcher);
+  const router = open('/horses/new');
+  await screen.findByRole('heading', { name: 'Register Horse' });
+  fireEvent.change(screen.getByLabelText('Horse name *'), { target: { value: created.name } });
+  fireEvent.change(screen.getByLabelText('Horse ID *'), { target: { value: created.horseCode } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save Draft & Continue' }));
+  await screen.findByText('Horse setup unavailable');
+  expect(screen.queryByText('This horse was not found.')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+  await screen.findByText('Horse setup unavailable');
+  expect(fetcher.mock.calls.filter(([, init]) => init?.method === 'POST')).toHaveLength(1);
+  fireEvent.click(screen.getByRole('link', { name: /^Back to Horses$/ }));
+  await screen.findByRole('heading', { name: 'Horses' });
+  fireEvent.click(screen.getByRole('link', { name: /Transport Draft/ }));
+  await screen.findByRole('heading', { name: created.name });
+  expect(router.state.location.pathname).toBe('/horses/501');
+});
+it('retains the identity 404 error without offering an unverified saved profile', async () => {
+  vi.stubEnv('VITE_BUSINESS_DATA_SOURCE', 'api');
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ success: false, error: { code: 'NOT_FOUND', message: 'Horse not found' } }), { status: 404 })));
+  open('/horses/501/edit');
+  await screen.findByText('This horse was not found.');
+  expect(screen.queryByRole('link', { name: 'View saved horse profile' })).not.toBeInTheDocument();
 });
 it('preserves existing parent references and ownership when saving unchanged pedigree', async () => {
   setBusinessActor(manager); await requestApi('/api/horses/7');
