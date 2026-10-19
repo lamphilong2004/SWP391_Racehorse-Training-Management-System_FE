@@ -53,21 +53,41 @@ test('the explicit main-source Preview requires both full pins and the exact hos
     assert.throws(() => stagingSettings(profile, { ...mainPreview, VITE_BUSINESS_DATA_SOURCE: 'sample' }), /sample\/harness/);
   }
 });
-test('Preview provenance verifies actual checkout SHA, named branch and main ancestry before recording a snapshot', () => {
-  const checkout = { revision: 'a'.repeat(40), branch: MAIN_PREVIEW_BRANCH, mainIsAncestor: true };
-  assert.deepEqual(stagingSourceMetadata(mainPreview, checkout), { revision: checkout.revision, sourceBranch: MAIN_PREVIEW_BRANCH, sourceMainRevision: 'b'.repeat(40), workingTreeDirty: false, sourceKind: 'main-snapshot' });
-  assert.doesNotThrow(() => stagingSourceMetadata(mainPreview, { ...checkout, branch: '' }));
-  assert.throws(() => stagingSourceMetadata(mainPreview, { ...checkout, revision: 'c'.repeat(40) }), /actual Git checkout/);
-  assert.throws(() => stagingSourceMetadata(mainPreview, { ...checkout, branch: 'feat/unreviewed' }), /branch/);
-  assert.throws(() => stagingSourceMetadata(mainPreview, { ...checkout, branch: 'master' }), (error) => {
-    assert.match(error.message, /hosting="preview\/role-test-main", checkout="master"/);
-    assert.match(error.message, /revision=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/);
-    assert.match(error.message, /No branch or source verification was bypassed/);
-    return true;
-  });
-  assert.throws(() => stagingSourceMetadata(mainPreview, { ...checkout, mainIsAncestor: false }), /verified ancestor/);
-  assert.throws(() => stagingSourceMetadata(mainPreview, { ...checkout, dirty: true }), /clean Git checkout/);
-  assert.throws(() => stagingSourceMetadata(mainPreview, { ...checkout, revision: undefined }), /checkout SHA/);
+const verifiedCheckout = { revision: 'a'.repeat(40), branch: MAIN_PREVIEW_BRANCH, mainIsAncestor: true, gitVerified: true, dirty: false };
+test('Preview source uses verified deployment metadata for matching, synthetic master and detached checkout names', () => {
+  // The internal label does not grant authority: every case still needs the same Git proof and full pins.
+  for (const branch of [MAIN_PREVIEW_BRANCH, 'master', '', 'internal-build-checkout']) {
+    assert.deepEqual(stagingSourceMetadata(mainPreview, { ...verifiedCheckout, branch }), { revision: verifiedCheckout.revision, sourceBranch: MAIN_PREVIEW_BRANCH, sourceMainRevision: 'b'.repeat(40), workingTreeDirty: false, sourceKind: 'main-snapshot' });
+  }
+});
+test('Preview rejects actual Git revision, hosting SHA and expected pin mismatches', () => {
+  for (const branch of [MAIN_PREVIEW_BRANCH, 'master', '']) {
+    const checkout = { ...verifiedCheckout, branch };
+    assert.throws(() => stagingSourceMetadata(mainPreview, { ...checkout, revision: 'c'.repeat(40) }), /actual Git checkout/);
+    assert.throws(() => stagingSourceMetadata({ ...mainPreview, VERCEL_GIT_COMMIT_SHA: 'c'.repeat(40) }, checkout), /deployment SHA/);
+    assert.throws(() => stagingSourceMetadata({ ...mainPreview, RACEHORSE_PREVIEW_EXPECTED_SHA: 'c'.repeat(40) }, checkout), /deployment SHA/);
+  }
+});
+test('Preview rejects invalid or missing hosting branch metadata even for an internal master checkout', () => {
+  for (const branch of [undefined, '', 'master', 'main', 'dev', 'feat/unreviewed', `${MAIN_PREVIEW_BRANCH}-other`]) {
+    assert.throws(() => stagingSourceMetadata({ ...mainPreview, VERCEL_GIT_COMMIT_REF: branch }, { ...verifiedCheckout, branch: 'master' }), /Preview builds require/);
+  }
+});
+test('Preview fails closed on missing, mismatched or unknown main ancestry', () => {
+  for (const mainIsAncestor of [false, undefined, null, 'true', 1]) {
+    assert.throws(() => stagingSourceMetadata(mainPreview, { ...verifiedCheckout, branch: 'master', mainIsAncestor }), /verified ancestor/);
+  }
+});
+test('Preview rejects dirty and unknown Git worktree state', () => {
+  assert.throws(() => stagingSourceMetadata(mainPreview, { ...verifiedCheckout, dirty: true }), /clean Git checkout/);
+  for (const dirty of [undefined, null, '', 0, 'false']) assert.throws(() => stagingSourceMetadata(mainPreview, { ...verifiedCheckout, dirty }), /worktree state/);
+});
+test('Preview requires successful Git probes and a known full actual revision, not metadata alone', () => {
+  for (const gitVerified of [undefined, false, null, 'true', 1]) assert.throws(() => stagingSourceMetadata(mainPreview, { ...verifiedCheckout, gitVerified }), /Preview Git source/);
+  for (const revision of [undefined, '', 'a'.repeat(7), 'A'.repeat(40), 'g'.repeat(40)]) assert.throws(() => stagingSourceMetadata(mainPreview, { ...verifiedCheckout, revision }), /checkout SHA/);
+  assert.throws(() => stagingSourceMetadata(mainPreview), /Preview Git source/);
+  assert.throws(() => stagingSourceMetadata({ ...mainPreview, VERCEL_GIT_COMMIT_SHA: undefined }, verifiedCheckout), /deployment SHA/);
+  for (const key of ['RACEHORSE_PREVIEW_EXPECTED_SHA', 'RACEHORSE_PREVIEW_MAIN_SHA']) assert.throws(() => stagingSourceMetadata({ ...mainPreview, [key]: undefined }, verifiedCheckout), /full lowercase/);
 });
 test('a local rehearsal records its real branch without pretending it is a hosted Preview or fetching main', () => {
   const checkout = { revision: 'a'.repeat(40), branch: 'feat/local-work', mainIsAncestor: true, dirty: true };
@@ -77,9 +97,9 @@ test('a local rehearsal records its real branch without pretending it is a hoste
   assert.deepEqual(stagingSourceMetadata({}, checkout), { revision: checkout.revision, sourceBranch: checkout.branch, sourceMainRevision: null, workingTreeDirty: true, sourceKind: 'local' });
 });
 test('historical integration metadata never claims to be a current main snapshot', () => {
-  const source = stagingSourceMetadata({ ...production, VERCEL_ENV: 'preview', VERCEL_GIT_COMMIT_REF: 'integration/fe-product-main' }, { revision: 'a'.repeat(40), branch: 'integration/fe-product-main' });
+  const source = stagingSourceMetadata({ ...production, VERCEL_ENV: 'preview', VERCEL_GIT_COMMIT_REF: 'integration/fe-product-main' }, { ...verifiedCheckout, branch: 'integration/fe-product-main' });
   assert.equal(source.sourceKind, 'historical-integration'); assert.equal(source.sourceMainRevision, null);
-  assert.throws(() => stagingSourceMetadata({ ...mainPreview, VERCEL_GIT_COMMIT_REF: 'integration/fe-product-main' }, { revision: 'a'.repeat(40), branch: 'integration/fe-product-main', mainIsAncestor: true }), /pins apply only/);
+  assert.throws(() => stagingSourceMetadata({ ...mainPreview, VERCEL_GIT_COMMIT_REF: 'integration/fe-product-main' }, verifiedCheckout), /pins apply only/);
 });
 const expectedProductionConfig = {
     $schema: 'https://openapi.vercel.sh/vercel.json', framework: 'vite', installCommand: 'npm ci', buildCommand: 'npm run build', outputDirectory: 'dist',
@@ -101,28 +121,35 @@ const expectedPreviewConfig = {
   outputDirectory: 'dist-staging',
   git: { deploymentEnabled: false },
 };
-function expectedHostingConfig(actualBranch, env = {}) {
-  // Hosting metadata is considered only for a detached Preview checkout, never over a named local branch.
-  const branch = actualBranch || (env.VERCEL_ENV === 'preview' ? env.VERCEL_GIT_COMMIT_REF : '');
+function expectedHostingConfig(actualBranch, env = {}, checkout = {}) {
+  // Hosted Preview uses the same proven source as the build; local and Production policy stay unchanged.
+  const branch = env.VERCEL_ENV === 'preview' ? stagingSourceMetadata(env, { ...checkout, branch: actualBranch }).sourceBranch : actualBranch;
   return branch === MAIN_PREVIEW_BRANCH ? expectedPreviewConfig : expectedProductionConfig;
 }
 
 test('checked-in hosting configuration exactly matches its actual Git branch policy', () => {
   const git = spawnSync('git', ['branch', '--show-current'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
   assert.equal(git.status, 0, 'Git branch verification must succeed before accepting hosting configuration.');
+  const revision = spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' });
+  const status = spawnSync('git', ['status', '--porcelain', '--untracked-files=normal'], { encoding: 'utf8' });
   const config = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'));
-  assert.deepEqual(config, expectedHostingConfig(git.stdout.trim(), process.env));
+  assert.deepEqual(config, expectedHostingConfig(git.stdout.trim(), process.env, {
+    revision: revision.stdout?.trim(), gitVerified: revision.status === 0 && status.status === 0,
+    dirty: Boolean(status.stdout?.trim()), mainIsAncestor: spawnSync('git', ['merge-base', '--is-ancestor', process.env.RACEHORSE_PREVIEW_MAIN_SHA || '', 'HEAD'], { encoding: 'utf8' }).status === 0,
+  }));
 });
 
-test('only the dedicated Preview branch accepts the exact Preview configuration; named branches cannot be overridden by hosting metadata', () => {
+test('only proven hosted Preview source or the dedicated local branch accepts the exact Preview config; Production is unchanged', () => {
   for (const branch of ['main', 'dev', 'integration/fe-product-main', 'feat/local-work', 'preview/role-test-main-other', '']) {
     assert.deepEqual(expectedHostingConfig(branch), expectedProductionConfig);
     assert.throws(() => assert.deepEqual(expectedPreviewConfig, expectedHostingConfig(branch)));
   }
   assert.deepEqual(expectedHostingConfig(MAIN_PREVIEW_BRANCH), expectedPreviewConfig);
   assert.throws(() => assert.deepEqual(expectedProductionConfig, expectedHostingConfig(MAIN_PREVIEW_BRANCH)));
-  assert.deepEqual(expectedHostingConfig('main', { VERCEL_ENV: 'preview', VERCEL_GIT_COMMIT_REF: MAIN_PREVIEW_BRANCH }), expectedProductionConfig);
-  assert.deepEqual(expectedHostingConfig('', { VERCEL_ENV: 'preview', VERCEL_GIT_COMMIT_REF: MAIN_PREVIEW_BRANCH }), expectedPreviewConfig);
+  assert.throws(() => expectedHostingConfig('master', { VERCEL_ENV: 'preview', VERCEL_GIT_COMMIT_REF: MAIN_PREVIEW_BRANCH }), /full lowercase/);
+  for (const branch of ['master', MAIN_PREVIEW_BRANCH, '']) assert.deepEqual(expectedHostingConfig(branch, mainPreview, verifiedCheckout), expectedPreviewConfig);
+  assert.throws(() => expectedHostingConfig('master', { ...mainPreview, VERCEL_GIT_COMMIT_REF: 'main' }, verifiedCheckout), /Preview builds require/);
+  assert.throws(() => expectedHostingConfig('master', mainPreview, { ...verifiedCheckout, gitVerified: false }), /Preview Git source/);
   assert.deepEqual(expectedHostingConfig('', { VERCEL_ENV: 'production', VERCEL_GIT_COMMIT_REF: MAIN_PREVIEW_BRANCH }), expectedProductionConfig);
   assert.throws(() => assert.deepEqual({ ...expectedPreviewConfig, buildCommand: 'npm run build' }, expectedHostingConfig(MAIN_PREVIEW_BRANCH)));
   assert.throws(() => assert.deepEqual({ ...expectedPreviewConfig, git: { deploymentEnabled: true } }, expectedHostingConfig(MAIN_PREVIEW_BRANCH)));

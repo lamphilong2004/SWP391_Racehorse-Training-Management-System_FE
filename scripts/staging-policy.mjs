@@ -46,15 +46,20 @@ export function validateDeploymentContext(profile, env) {
 }
 
 // Git evidence is supplied by the build runner. Metadata alone does not establish checkout identity or ancestry.
-export function stagingSourceMetadata(env, checkout) {
-  if (!/^[0-9a-f]{40}$/.test(checkout.revision ?? '')) throw new Error('Cannot verify the staging checkout SHA.');
+export function stagingSourceMetadata(env, checkout = {}) {
   const isPreview = env.VERCEL_ENV === 'preview';
+  if (isPreview) {
+    validateDeploymentContext('preview', env);
+    if (checkout.gitVerified !== true) throw new Error('Cannot verify the Preview Git source. Successful Git revision, branch and status probes are required.');
+    if (typeof checkout.dirty !== 'boolean') throw new Error('Cannot verify the Preview Git worktree state.');
+  }
+  if (!/^[0-9a-f]{40}$/.test(checkout.revision ?? '')) throw new Error('Cannot verify the staging checkout SHA.');
   const branch = isPreview ? env.VERCEL_GIT_COMMIT_REF : checkout.branch || null;
   const hasPins = Boolean(env.RACEHORSE_PREVIEW_EXPECTED_SHA || env.RACEHORSE_PREVIEW_MAIN_SHA);
   if (isPreview) {
     if (env.VERCEL_GIT_COMMIT_SHA !== checkout.revision) throw new Error('Vercel Preview SHA does not match the actual Git checkout.');
-    // Vercel may use a detached checkout. A named checkout must agree with the hosting metadata.
-    if (checkout.branch && checkout.branch !== branch) throw new Error(`Vercel Preview branch does not match the actual Git checkout: hosting=${JSON.stringify(branch)}, checkout=${JSON.stringify(checkout.branch)}, revision=${checkout.revision}. No branch or source verification was bypassed.`);
+    // Vercel may name its internal checkout master or detach HEAD. Deployment metadata
+    // identifies the source branch; the actual Git revision, pins and ancestry verify its contents.
     if (hasPins && branch !== MAIN_PREVIEW_BRANCH) throw new Error(`Main-source Preview pins apply only to ${MAIN_PREVIEW_BRANCH}.`);
     if (branch === MAIN_PREVIEW_BRANCH && checkout.dirty) throw new Error('Main-source Preview requires a clean Git checkout matching the reviewed SHA.');
   }
@@ -63,7 +68,7 @@ export function stagingSourceMetadata(env, checkout) {
   if (pinned) {
     const { expected, main } = previewPins(env);
     if (checkout.revision !== expected) throw new Error('Staging checkout SHA does not match RACEHORSE_PREVIEW_EXPECTED_SHA.');
-    if (!checkout.mainIsAncestor) throw new Error('Pinned main SHA is not a verified ancestor of the checkout. Make its Git history available before building.');
+    if (checkout.mainIsAncestor !== true) throw new Error('Pinned main SHA is not a verified ancestor of the checkout. Make its Git history available before building.');
     sourceMainRevision = main;
   }
   return {

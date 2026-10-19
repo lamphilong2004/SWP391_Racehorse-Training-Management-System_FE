@@ -8,12 +8,15 @@ const profile = process.argv[2] || process.env.RACEHORSE_STAGING_MODE;
 const outDir = safeOutput(process.argv[3]);
 const configMode = profile === 'preview' ? 'staging-preview' : 'staging-api';
 const settings = stagingSettings(profile, { ...loadEnv(configMode, process.cwd(), 'VITE_'), ...process.env });
-const revision = spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).stdout?.trim();
-const branch = spawnSync('git', ['branch', '--show-current'], { encoding: 'utf8' }).stdout?.trim();
+const revisionProbe = spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' });
+const branchProbe = spawnSync('git', ['branch', '--show-current'], { encoding: 'utf8' });
+const revision = revisionProbe.stdout?.trim();
+const branch = branchProbe.stdout?.trim();
 const status = spawnSync('git', ['status', '--porcelain', '--untracked-files=normal'], { encoding: 'utf8' });
 if (status.status !== 0) throw new Error('Cannot verify the staging worktree state.');
 const mainRevision = process.env.RACEHORSE_PREVIEW_MAIN_SHA;
 const sourceMetadata = stagingSourceMetadata(process.env, {
+  gitVerified: revisionProbe.status === 0 && branchProbe.status === 0 && status.status === 0,
   revision, branch, dirty: Boolean(status.stdout.trim()),
   mainIsAncestor: /^[0-9a-f]{40}$/.test(mainRevision ?? '') && spawnSync('git', ['merge-base', '--is-ancestor', mainRevision, revision], { encoding: 'utf8' }).status === 0,
 });
