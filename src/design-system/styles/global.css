@@ -62,7 +62,8 @@ textarea {
 
 /* Shared v2 utilities: no business data, storage or role-specific themes. */
 [data-design-system='v2'] { color: var(--color-text-primary); background: var(--color-bg-page); }
-[data-design-system='v2'] :focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 2px; }
+/* Outrank legacy .control:focus without changing the v1 field's focus treatment. */
+[data-design-system='v2'] :focus:focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 2px; }
 [data-design-system='v2'] .text-metric,
 [data-design-system='v2'] .text-metric-l,
 [data-design-system='v2'] time { font-variant-numeric: tabular-nums; }
