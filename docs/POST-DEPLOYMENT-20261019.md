@@ -1,5 +1,34 @@
 # Post-deployment checkpoint
 
+## Final verification for PR20 readiness
+
+The final shared-code revision is `112d56c68a58ff329f3c340c4ea64906ea4ccbc8`. It fixes the v2 keyboard outline being overridden by legacy field focus specificity, without changing v1 or weakening an assertion. Subsequent checkpoint/adoption-guide updates change documentation only.
+
+- **Full regression PASS in one uninterrupted run after the focus fix:**69/69 files,862/862 tests, exit0, no worker-start/unhandled error. Command: `vitest run --pool=threads --maxWorkers=1 --no-file-parallelism --isolate`. Per-file isolation, assertions and default timeouts remain intact. A separate complete run before the focus fix also passed; the earlier partial forks run remains historical below.
+- Lint, typecheck, Production build and bundle isolation,18/18 Node policies (13 staging/configuration +5 foundation), and diff check PASS. The Production artifact contains no DEV foundation title/route, role-test sign-in, test emails or sample store.
+- Isolated local Chromium:11 checks PASS across1440x900,1280x800,1024x768,768x1024 and375x812. Grid3/3/2/2/1, no horizontal document overflow, bounded modal/drawer and guard actions, dirty input preservation, keyboard tab selection/focus, duplicate-toast suppression and reduced-motion skeleton/spinner PASS. Legacy gallery retains #2f6dd9/#f7f8fa and no v2 scope. No API request or page error occurred. This is shared-foundation coverage, not certification of every feature screen or mobile AppShell.
+- Exact clean local Preview candidate: `preview/role-test-main` at `7351106e7d5f621579194bac85820ba0e27baca5`, source-main `bfa814776d16e2b7cb054e5600714cd6382e1662`. Its src/scripts match the final tested shared-code revision. It adds only Preview-specific hosting configuration beyond that source and retains all authored history. Hosted-context build and13/13 configuration checks PASS; actual output is `dist-staging`, metadata records both exact pins and `workingTreeDirty=false`. This replaces the initial1a792b4 local candidate below. The branch remains local/unpublished; no hosted deployment was created.
+
+### Exact Vercel proposal awaiting Leader approval
+
+Existing project/team: `racehorse-official-fe` / `lamphilong2004s-projects`, Hobby. Publish the dedicated Preview branch only after approval, then create one manual **Preview** Git deployment at the exact SHA above. Add only these public config variables, scoped to **Preview + preview/role-test-main**:
+
+| Variable | Value |
+|---|---|
+| `RACEHORSE_STAGING_MODE` | `preview` |
+| `RACEHORSE_PREVIEW_EXPECTED_SHA` | `7351106e7d5f621579194bac85820ba0e27baca5` |
+| `RACEHORSE_PREVIEW_MAIN_SHA` | `bfa814776d16e2b7cb054e5600714cd6382e1662` |
+
+The branch-only vercel.json selects `npm run build:staging:preview`, output `dist-staging`, automatic deployment=false, and unchanged rewrites/headers. Keep API origin unset for UI inspection; the build runner supplies API-only transport and the non-authoritative role-test flag. No sample flags, credentials, localhost origin or fake success.
+
+Read-only live dashboard verification: Vite, root repository directory, Node24.x, npm ci; Production tracks main with npm run build/dist, Auto-Assign Domains enabled, primary domain `racehorse-training-management.vercel.app`, no Production env variables listed. Preview Branch Tracking is disabled, no custom domain is attached, and system-variable exposure is enabled. Existing RACEHORSE_STAGING_MODE belongs only to historical integration/fe-product-main. Vercel Require Log In / Standard Protection remains enabled. Preserve every setting above; do not change project-wide build overrides, Production, current domains, protection or old integration variables.
+
+The new URL is UNKNOWN until deployment; use its generated protected Preview URL only. Do not attach Production domains, create bypass/share links or assume additional reviewer memberships. After approval, verify exact Git/metadata, signed-out denial, authorized seven-role entry, unavailable API states, no Backend requests/writes, refresh/deep links and unchanged Production. Missing Git history or protection failure stops sharing; do not fabricate metadata or relax guards. If needed, roll back only the newly approved Preview and its branch-scoped overrides. No current cloud mutation, paid resource, Backend/SQL work, CORE-050 implementation or cross-owner screen migration is performed.
+
+Final evidence outside Git: `v2-final-after-focus-full-suite.json`, `v2-final-browser-results.json`, five viewport screenshots and `v2-preview-approval.json` under workspace `.preview-local/official-fe-audit/`. Hosted Preview and independent GitHub approval remain pending. Existing React act/HydrateFallback warnings remain; they are not failed assertions or a new page error.
+
+## Initial checkpoint — historical evidence
+
 ## Source and Production
 
 Base: `main` at `bfa814776d16e2b7cb054e5600714cd6382e1662`, PR18 merged. Existing Vercel Production deployment `8TM6d3TVNRLGVgUaoENoZRhMFJ5m` is Ready from that exact main revision at <https://project-m15tb.vercel.app/>. No cloud configuration or deployment was changed.
