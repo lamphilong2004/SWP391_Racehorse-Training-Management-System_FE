@@ -54,7 +54,7 @@ export function stagingSourceMetadata(env, checkout) {
   if (isPreview) {
     if (env.VERCEL_GIT_COMMIT_SHA !== checkout.revision) throw new Error('Vercel Preview SHA does not match the actual Git checkout.');
     // Vercel may use a detached checkout. A named checkout must agree with the hosting metadata.
-    if (checkout.branch && checkout.branch !== branch) throw new Error('Vercel Preview branch does not match the actual Git checkout.');
+    if (checkout.branch && checkout.branch !== branch) throw new Error(`Vercel Preview branch does not match the actual Git checkout: hosting=${JSON.stringify(branch)}, checkout=${JSON.stringify(checkout.branch)}, revision=${checkout.revision}. No branch or source verification was bypassed.`);
     if (hasPins && branch !== MAIN_PREVIEW_BRANCH) throw new Error(`Main-source Preview pins apply only to ${MAIN_PREVIEW_BRANCH}.`);
     if (branch === MAIN_PREVIEW_BRANCH && checkout.dirty) throw new Error('Main-source Preview requires a clean Git checkout matching the reviewed SHA.');
   }

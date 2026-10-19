@@ -59,6 +59,12 @@ test('Preview provenance verifies actual checkout SHA, named branch and main anc
   assert.doesNotThrow(() => stagingSourceMetadata(mainPreview, { ...checkout, branch: '' }));
   assert.throws(() => stagingSourceMetadata(mainPreview, { ...checkout, revision: 'c'.repeat(40) }), /actual Git checkout/);
   assert.throws(() => stagingSourceMetadata(mainPreview, { ...checkout, branch: 'feat/unreviewed' }), /branch/);
+  assert.throws(() => stagingSourceMetadata(mainPreview, { ...checkout, branch: 'master' }), (error) => {
+    assert.match(error.message, /hosting="preview\/role-test-main", checkout="master"/);
+    assert.match(error.message, /revision=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/);
+    assert.match(error.message, /No branch or source verification was bypassed/);
+    return true;
+  });
   assert.throws(() => stagingSourceMetadata(mainPreview, { ...checkout, mainIsAncestor: false }), /verified ancestor/);
   assert.throws(() => stagingSourceMetadata(mainPreview, { ...checkout, dirty: true }), /clean Git checkout/);
   assert.throws(() => stagingSourceMetadata(mainPreview, { ...checkout, revision: undefined }), /checkout SHA/);

@@ -105,3 +105,9 @@ The UI checks for the role test login are in `src/staging/roleTestLogin.test.tsx
 ## What is still not proven
 
 Backend authentication, RBAC, SQL Server persistence and real business transactions are **NOT VERIFIED** until the backend staging API is online and the API profile is tested against it.
+
+## First hosted main-source Preview attempt (19 October 2026)
+
+The Leader-authorized manual Git Preview at `7351106e7d5f621579194bac85820ba0e27baca5` failed before compilation. Deployment `CGYN3HdQ8H2W2Y8b4q2NaekiNtUL` used `npm run build:staging:preview` and reported `Vercel Preview branch does not match the actual Git checkout.` The actual checkout SHA passed its preceding equality check, but the log did not record the checkout branch name. No hosted seven-role PASS or working Preview URL is claimed.
+
+The diagnostic update records only the hosting branch, checkout branch and public commit SHA in that existing failure. It retains the same rejection, pins, ancestry and clean-checkout requirements. A new exact SHA requires Leader review before changing its branch-scoped expected-SHA variable and creating another manual Preview. Do not remove the branch check, fabricate metadata, modify Production settings, or use a source upload to bypass the failure. Inspect the resulting diagnostic before choosing a compatibility change.
