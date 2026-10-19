@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate, type RouteObject } from 'react-router';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { LoginPage } from '../pages/LoginPage';
+import { LandingPage } from '../pages/LandingPage';
 import { ManagementDashboardEntry, ManagementAuditEntry } from './ManagementEntry';
 import { AccountPage } from '../pages/AccountPage';
 import { ProgramCreationPage, BaselinePage, CreateSessionPage, SessionDetailPage, RestrictionsPage, LiveMonitoringPage, SessionEvaluationPage, PerformancePage, GroomTodayPage, PrecheckPage,
@@ -68,7 +69,7 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
   return [
     ...(includeDevRoutes
       ? [{ path: ROUTES.root, element: <Navigate to={ROUTES.devComponents} replace /> }, ...devRoutes]
-      : [{ path: ROUTES.root, element: <Navigate to={ROUTES.dashboard} replace /> }]),
+      : [{ path: ROUTES.root, element: <PublicOnly><LandingPage /></PublicOnly> }]),
     signInRoute,
     { path: ROUTES.dashboard, element: <RequireAuth><ManagementDashboardEntry /></RequireAuth> },
     { path: ROUTES.auditLog, element: <RequireAuth allowedRoles={['CLUB_MANAGER']}><ManagementAuditEntry /></RequireAuth> },

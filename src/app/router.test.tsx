@@ -16,6 +16,16 @@ describe('router', () => {
     expect(router.state.location.pathname).toBe('/dev/components');
   });
 
+  it('opens the public Landing page at / in production and links both ways with Login', async () => {
+    const router = renderAt('/', false);
+    expect(await screen.findByRole('heading', { name: /Precision in/ })).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /Access the Platform/ })[0]).toHaveAttribute('href', '/login');
+    expect(screen.getByText('No public sign-up', { exact: false })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/');
+    router.navigate('/login');
+    expect(await screen.findByRole('link', { name: /Back to overview/ })).toHaveAttribute('href', '/');
+  });
+
   it('renders the dev shell preview for a valid role', async () => {
     renderAt('/dev/shell/VETERINARIAN');
     expect(await screen.findByText('Veterinary Workspace')).toBeInTheDocument();
