@@ -1,4 +1,18 @@
-# Leader release policy — 18 October 2026
+# Leader release policy
+
+## Current policy — 19 October 2026 (supersedes the Vercel sections below)
+
+Leader decision: `main` holds the complete Frontend for the three Main Flows and Vercel Production builds only from `main`.
+
+- `vercel.json`: framework Vite, install `npm ci`, build `npm run build`, output `dist`, SPA deep-link rewrite to `/index.html`, and `git.deploymentEnabled = { "main": true, "**": false }`, so only `main` deploys automatically. Older revisions keep their own `vercel.json` (`deploymentEnabled=false`) and do not deploy.
+- `npm run build` runs `scripts/check-production-bundle.mjs`, which fails the build if the bundle contains the sample store, developer harness, role-test sign-in or test identities. JWT/RBAC remain enforced by the real API client.
+- The per-commit `RACEHORSE_APPROVED_RELEASE_SHA` interlock is retired. The staging scripts (`build:staging:*`) are local/manual tooling only and refuse to build Production.
+- Vercel project settings to keep in the dashboard: connected repository `lamphilong2004/SWP391_Racehorse-Training-Management-System_FE`, Production Branch `main`, Root Directory `.`, no Ignored Build Step that skips Production, no duplicate project.
+- Backend is not connected in this phase. `VITE_API_BASE_URL` (public HTTPS origin only, never a secret) is set in Vercel when the Backend goes online.
+
+---
+
+## Previous policy — 18 October 2026
 
 Authority: direct Leader decision in this session. Project Tracking remains authoritative for CORE ownership/lifecycle; no status, Gate or business/Figma decision is changed here.
 

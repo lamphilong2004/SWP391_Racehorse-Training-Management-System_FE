@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/check-production-bundle.mjs",
     "build:staging": "node scripts/build-staging.mjs",
     "build:staging:preview": "node scripts/build-staging.mjs preview",
     "build:staging:api": "node scripts/build-staging.mjs api",

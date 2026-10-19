@@ -27,12 +27,8 @@ export function validateDeploymentContext(profile, env) {
     return;
   }
   if (env.VERCEL_ENV !== 'production') throw new Error('Unknown Vercel deployment environment.');
-  if (profile !== 'api' || env.VERCEL_GIT_COMMIT_REF !== 'main') throw new Error('Production requires API mode from main; sample/integration releases are forbidden.');
-  const sha = env.VERCEL_GIT_COMMIT_SHA;
-  if (!/^[a-f0-9]{40}$/.test(sha || '') || env.RACEHORSE_APPROVED_RELEASE_SHA !== sha) throw new Error('Production requires explicit approval for this exact release SHA.');
-  let host;
-  try { host = new URL(env.VITE_API_BASE_URL).hostname; } catch { throw new Error('Production requires a configured backend origin.'); }
-  if (/(?:^|\.)(?:invalid|test|example|example\.com|example\.org|example\.net)$/i.test(host)) throw new Error('Production rejects placeholder backend domains.');
+  // Leader decision 2026-10-19: Production deploys automatically from `main` with `npm run build` (vercel.json).
+  throw new Error('Staging profiles never build Production. Production is built from main with npm run build.');
 }
 
 export function safeOutput(name = 'dist-staging') {

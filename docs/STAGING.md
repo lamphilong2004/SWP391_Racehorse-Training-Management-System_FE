@@ -25,7 +25,7 @@ It also fails if an `api` output contains the role test login or test identities
 
 ## Release rules
 
-- **Production** builds accept only `api` from `main` with `RACEHORSE_APPROVED_RELEASE_SHA` equal to the commit SHA (`scripts/staging-policy.mjs`). Production deployments require separate Leader approval.
+- **Production** is built from `main` by Vercel with `npm run build` (see `docs/RELEASE-POLICY.md`, 19 October 2026). Staging profiles refuse to build Production.
 - **Preview** builds accept only `integration/fe-product-main`.
 - `vercel.json` keeps `git.deploymentEnabled: false`. Every Preview is a manual, Leader-authorized deployment.
 - Switching the existing Vercel Preview from `sample` to `preview` requires changing `RACEHORSE_STAGING_MODE` in the Vercel Preview environment. A build that still uses `sample` now fails on purpose.

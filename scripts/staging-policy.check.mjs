@@ -28,15 +28,8 @@ test('unknown profile and output escape are rejected', () => {
 });
 
 const production = { VERCEL_ENV: 'production', VERCEL_GIT_COMMIT_REF: 'main', VERCEL_GIT_COMMIT_SHA: 'a'.repeat(40), RACEHORSE_APPROVED_RELEASE_SHA: 'a'.repeat(40), VITE_API_BASE_URL: 'https://api.racehorse.vn' };
-test('production rejects sample/preview modes and every non-main source', () => {
-  for (const profile of ['sample', 'preview']) assert.throws(() => stagingSettings(profile, production));
-  for (const branch of [undefined, 'dev', 'integration/fe-product-main', 'feat/CORE-008-auth']) assert.throws(() => stagingSettings('api', { ...production, VERCEL_GIT_COMMIT_REF: branch }));
-});
-test('production requires exact SHA approval and never accepts a placeholder backend', () => {
-  for (const sha of [undefined, '', 'b'.repeat(40)]) assert.throws(() => stagingSettings('api', { ...production, RACEHORSE_APPROVED_RELEASE_SHA: sha }));
-  assert.throws(() => stagingSettings('api', { ...production, VERCEL_GIT_COMMIT_SHA: 'main', RACEHORSE_APPROVED_RELEASE_SHA: 'main' }));
-  for (const host of ['api.example.invalid', 'api.example.test', 'api.example.com', 'api.example.org', 'api.example.net', 'api.example']) assert.throws(() => stagingSettings('api', { ...production, VITE_API_BASE_URL: `https://${host}` }));
-  assert.equal(stagingSettings('api', production).mode, 'staging-api');
+test('staging profiles never build Production; main uses npm run build', () => {
+  for (const profile of ['sample', 'preview', 'api']) assert.throws(() => stagingSettings(profile, production));
 });
 test('Preview accepts only the integration branch; local builds still work', () => {
   for (const profile of ['preview', 'api']) {
@@ -45,8 +38,12 @@ test('Preview accepts only the integration branch; local builds still work', () 
   }
   assert.throws(() => stagingSettings('api', { ...production, VERCEL_ENV: 'unknown' }));
 });
-test('checked-in hosting configuration cannot trigger automatic Git deployments', () => {
+test('checked-in hosting configuration auto-deploys only main with the production build', () => {
   const config = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'));
-  assert.equal(config.git.deploymentEnabled, false);
-  assert.equal(config.buildCommand, 'npm run build:staging');
+  assert.deepEqual(config.git.deploymentEnabled, { main: true, '**': false });
+  assert.equal(config.framework, 'vite');
+  assert.equal(config.installCommand, 'npm ci');
+  assert.equal(config.buildCommand, 'npm run build');
+  assert.equal(config.outputDirectory, 'dist');
+  assert.ok(config.rewrites.some((rule) => rule.destination === '/index.html'));
 });
