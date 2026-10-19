@@ -18,9 +18,6 @@ const pending = [
   ['/medical/restrictions', 'TRAINER', 'Restrictions'],
   ['/admin/users', 'CLUB_MANAGER', 'Staff & Users'],
   ['/admin/roles', 'CLUB_MANAGER', 'Roles & Permissions'],
-  ['/owner/horses', 'HORSE_OWNER', 'My Horses'],
-  ['/my-horses', 'HORSE_OWNER', 'My Horses'],
-  ['/my-horses/7', 'HORSE_OWNER', 'Horse details'],
 ] as const;
 
 function mount(path: string) {
