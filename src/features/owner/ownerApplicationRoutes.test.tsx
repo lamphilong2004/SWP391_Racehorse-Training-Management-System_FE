@@ -66,6 +66,11 @@ describe('CORE-056 actual application HTTP route mounting', () => {
     const { requests } = mount('/owner/horses/7?tab=health', { role });
     await screen.findByText('Access denied'); expect(requests).toEqual([]);
   });
+  it.each(['/my-horses', '/my-horses/7?tab=health'])('denies a staff legacy link %s before redirecting or reading Owner data', async (path) => {
+    const { router, requests } = mount(path, { role: 'HEAD_TRAINER' });
+    await screen.findByText('Access denied');
+    expect(router.state.location.pathname).toBe(path.split('?')[0]); expect(requests).toEqual([]);
+  });
   it('uses shared login for an anonymous deep link, retaining return-location state', async () => {
     const { requests, router } = mount('/owner/horses/7?tab=training', { anonymous: true });
     await screen.findByRole('heading', { name: 'Sign in to Racehorse Ops' });
