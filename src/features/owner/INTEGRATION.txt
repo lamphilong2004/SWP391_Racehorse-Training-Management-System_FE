@@ -1,53 +1,38 @@
-CURRENT DELIVERY UPDATE — 2026-10-19
-Official FE Integration now contains the three reviewed commits through PR10, merge7f44ca4d355554858da953b7ec3b96b6e81b4dad. Its tree matches4c56212. Original source/review HEADs are unchanged.
-This isolated delivery/CORE-056-owner-fe branch is a clean16-file port onto FEdevf7c290d. It does not bring Integration history or other CORE modules into dev. Dev RequireAuth is auth-only; OwnerPage retains ACTIVE+HORSE_OWNER enforcement, and legacy aliases check the same boundary before redirect. No shared auth/navigation edit.
-Dev router adds only four Owner canonical/alias entries. Exact Owner DTOs, strict API-only runtime and no fallback remain unchanged. Additional alias-denial tests cover the compatibility change. No module-wide Gate/design approval is inferred; missing-data alternatives still require Leader disposition before declaring Done.
-Below are retained historical checkpoint notes; statements that the official app was unmounted refer to the earlier checkpoint, superseded by PR10 above.
+CORE-056 OWNER FE — APPROVED DELIVERY SCOPE
 
-CORE-056 OWNER FE — LOCAL INDEPENDENT REVIEW HANDOFF
+PR12 branch: delivery/CORE-056-owner-fe; dev base f7c290d.
+The Owner/History integration source was delivered separately through PR10, merge7f44ca4. Current FE Integration baseline is9fb747d. This PR ports only the Owner feature plus its route mounting into dev; no Integration history, shared auth/navigation, CORE017 or other CORE changes are included.
 
-Original branch feat/CORE-056-owner-fe; original base/HEAD f7c290d100c77ba6d33cf781aed9102f73c8a1bc.
-Figma remediation branch: fix/CORE-056-figma-remediation, from preserved LOCAL recovery checkpoint5aae0f5f1f456ab03ff4939a7211804affe95609. Original source/checkpoint retained. Recovery commits do not authorize feature publication. No push/PR before prescribed Independent Gate authorization.
+Scope and Figma
+- My Horses299:4305; Profile300:4380; Health301:4447; Training303:4522, file tm7dpgAQbHReZ7tlQeQJlc.
+- Four read-only screens using canonical AppShell, design-system components, shared AuthProvider/authSession and requestApi.
+- Preserve the three Profile/Health/Training tabs and supported data/interaction behavior.
+- Trial-run videos, including its placeholder, is explicitly deferred/excluded by the Task Playbook, DEC009 and current Leader instruction. The panel and unused local style have been removed. No video endpoint, fake data or replacement control is added. This approved scope exclusion takes precedence over the illustrative Figma video panel.
+- Financial Summary and Race History remain explicitly outside this increment; no fake destinations.
 
-Pinned CORE-004 contract:
-https://github.com/lamphilong2004/SWP391_Racehorse-Training-Management-System_BE/blob/f8e7895ba4ad4816f951c56d6480fd01178f1bc5/docs/api/flow1-horse.openapi.yaml
-BE PR #9 merged into dev at f55b9e7ae5836d5ecbfaf71f269050cd67ed737d; the merged YAML is byte-identical to this pin. Contract alignment is not proof of deployed CORE-055 or SQL/RBAC verification.
+Routes and role boundary
+- /owner/horses and /owner/horses/:horseId?tab=profile|health|training; invalid ids/tabs fail locally.
+- Legacy /my-horses and /my-horses/:id redirect to canonical paths while preserving query/hash.
+- Dev RequireAuth is auth-only. OwnerPage requires ACTIVE+HORSE_OWNER before data reads; legacy aliases enforce that same boundary before redirecting. Shared auth is not modified.
+- Existing My Horses navigation is reused. Shared shell, active menu matching and the separate login return-query proposal remain with their owners.
 
-Exact HTTP mapping (shared requestApi and authSession; GET only):
-- /api/owner/horses -> Envelope.data ARRAY<OwnerHorseCard>. No paging, filters, ownerId or all-horses endpoint.
-- /api/owner/horses/{id}/profile -> OwnerHorseProfile; only myOwnership, never other owners.
-- /api/owner/horses/{id}/health-summary -> OwnerHealthSummary; status, availability, review date, recovery, last examination timestamp and <=12 weights.
-- /api/owner/horses/{id}/training-summary -> OwnerTrainingSummary; current program name/phase/period/counts and <=10 session code/date/status summaries.
-The profile is read before summary requests. Any failure rejects the whole detail; 401/403/404/network/invalid DTO never selects samples or renders partial data. API responses are validated and projected by allowlist. Weight values/timestamps and raw session totals are preserved, not fabricated percentages. Evaluation label is withheld until its vocabulary is confirmed; no evaluation bodies are exposed.
+Approved API mapping
+CORE004 docs/api/flow1-horse.openapi.yaml, original pin f8e7895ba4ad4816f951c56d6480fd01178f1bc5, merged via f55b9e7 and retained on BEdev9dc594d:
+https://github.com/lamphilong2004/SWP391_Racehorse-Training-Management-System_BE/blob/f55b9e7ae5836d5ecbfaf71f269050cd67ed737d/docs/api/flow1-horse.openapi.yaml
+- GET /api/owner/horses returns Envelope.data ARRAY<OwnerHorseCard>; no invented pagination/filter/ownerId or staff all-horses request.
+- GET /api/owner/horses/{id}/profile authorizes the horse before summary requests; only myOwnership is projected.
+- GET /api/owner/horses/{id}/health-summary uses allowlisted status/readiness/review fields and at most12 weights.
+- GET /api/owner/horses/{id}/training-summary uses allowlisted current-program/count/session summaries.
+- API-only application binding. Errors, malformed responses,401/403/404 and network failure never select sample transport or partial successful detail.
+- Clinical findings, diagnosis, treatments, prescriptions, restriction reasons, telemetry, raw feedback and other-owner data are not exposed.
+- Search is client-side within the returned owned list; q is only an FE view parameter, never an API filter.
 
-Integration candidate on 8d73133 — review-only mounting, earlier official remote app was unchanged (now superseded by PR10):
-1. ownerApplicationRoutes wraps exported ownerRoutes with createOwnerApi, OwnerProvider and shared HORSE_OWNER RequireAuth; the isolated candidate router mounts these entries. Canonical routes: canonical /owner/horses and proposed /owner/horses/:horseId with ?tab=profile|health|training. Reject invalid ids/tabs.
-2. Keep shared AuthProvider/RequireAuth and ACTIVE + HORSE_OWNER guard. Canonical business actor must follow the authenticated user, including restore/logout/login.
-3. Runtime composition is API-only: createOwnerApi() uses shared authSession/requestApi. Never select samples from environment flags or API errors. Test code may explicitly inject the canonical sample service; that does not enable runtime sample mode. Legacy /my-horses and /my-horses/:id redirect to canonical entries, preserving query/hash and role guards. The unconfigured standalone provider remains unavailable.
-4. Bind ONLY canonical src/shared/data readSamples/getBusinessActor. No new store, key, HTTP mock server, on-login assignment or sample-to-real write exists. Canonical key remains racehorse.business-samples.v1. Sample UI is visibly labelled and is not API-verified.
-5. HORSE_OWNER My Horses menu already references ROUTES.myHorses. Shared nesting/highlight, role landing, account/logout/notifications and navigation remain Long's scope.
-6. Header search is client-side only within returned owned horses; q is an FE view query, never an API parameter. Owner list does not fetch staff horse data.
+Missing data / metrics
+The Leader explicitly accepts truthful unavailable states when Backend lacks a contract-supported projection. Preserve those states without claiming absent data is zero, deriving progress percentages, or enriching from staff/clinical endpoints. Keep raw completed/planned counts only when returned; do not change their meaning.
+Unsupported list program/next-session, profile stable/grandparents, trainer name, phase ordinal/total, session focus/distance, trainer update and next-session projections require approved contract changes before adding data. Evaluation-label vocabulary and business metric formulas remain contract-owner decisions. These missing fields do not block the already-authorized screen mounting, and no design/contract extension is self-approved.
 
-Sample isolation:
-Every read validates canonical authenticated actor, ACTIVE and HORSE_OWNER before reading/projecting. Revalidates actor after snapshot read. context.actorId is only a consistency check. Non-owned existing horse ->403; missing ->404; invalid id -> local400; missing/mismatched actor ->401. No hardcoded user id or role switcher.
-CORE-004 grants open ownership rows only: effectiveTo must be null; valid effectiveFrom must not be future. Closed rows are excluded, malformed periods fail closed. Ask Dung to confirm effectiveFrom treatment and SQL timezone/effective-period semantics; future starts are conservatively denied, not treated as an approved SQL rule.
-The sample projection only exposes safe Owner field equivalents. Staff-only photo/stable/trainer/focus/distance/next-session fields were removed, even where the wider sample store contains them. Clinical cases, diagnosis, injury/exam detail, prescriptions, medication, restriction reasons, feedback, telemetry and other owners never cross the transport boundary. No sample data is deleted or seeded by the feature.
-
-Figma (file tm7dpgAQbHReZ7tlQeQJlc):
-My Horses 299:4305; Profile 300:4380; Health 301:4447; Training 303:4522.
-Canonical AppShell/Card/KeyValue/Tabs/StatusBadge/AlertBanner and local icons reused. Compact cards compose existing primitives; shared HorseCard is a different layout.
-
-Remaining deviations/dependencies — not approved automatically:
-- Contract gaps: Owner card has no current program/next session; Owner profile has no stable/grandparents; the approved photo placeholder needs no photo endpoint; Training has no trainer name, distance/focus, next session, trainer update. The approved empty video panel and exact copy require no video endpoint; functional videos remain outside this delivery. Display missing/not-shared states; no staff endpoint enrichment. Ask Dung/Leader for explicit safe extensions before adding data.
-- Health weights/recovery/review/examinedAt and Training counts ARE contract-supported and preserved in the model. Approved Health UI shows status/availability/review and latest weight with its original timestamp; extra Recovery/Last examined rows and extra Ownership rows were removed to restore Figma. Canonical sample lacks an approved health-summary producer; missing values stay empty, not borrowed from clinical entities. Progress counts stay unavailable when absent; a percent formula still needs confirmation.
-- Evaluation label vocabulary and current-program selection when multiple candidates exist need CORE-055 confirmation. Sample picks an ACTIVE program and date-matching phase for demonstration only; real selection belongs to BE.
-- Race History and Financial summary are outside the four approved screens; omitted per explicit Leader scope exclusion. No fake buttons/destinations.
-- Shared detail-menu active highlight and min-width:1280px shell overflow remain Integration Owner dependencies. Owner content adapts at 1280/1440; no claim of full mobile shell support.
-- Shared notification count is not invented. Sample content differs from illustrative Figma values.
-
-Evidence outside feature diff: outputs/CORE-056 has pinned YAML, source patch/hash, tests, Figma references and browser screenshots. Disposable browser composition uses exact official integration fbfe47fa40b72ba57b07623888ed7b74652f0375 plus Owner source and fixture AuthApi through normal shared login. It uses canonical readSamples/saveSamples only; it is not production auth or Backend verification.
-
-Last formal Independent Gate: FAIL9/11 on preserved source (Figma acceptance + actual route/provider mount). This scoped remediation is awaiting review; no automatic criterion promotion. Real Backend/SQL Server/RBAC: NOT VERIFIED. Official router integration: PENDING. No merge or Done claim.
-Preserve CORE-036 a605a7d; CORE-046 a9ec360; CORE-048 b345791; CORE-052 786d397.
-
-CURRENT REVIEW CHECKPOINT (2026-10-18): scoped source port only, not a stacked merge. Three app mount/test files are a separate Integration Owner patch; auth/navigation untouched. Existing source/checkpoints and evidence are preserved on published review branches. New actual-router HTTP fixture tests cover canonical routes/aliases and errors; production bundle drops canonical sample store. Formal Gate remains pending: original 9/11 result is historical, not re-certified. G056-2 technical mount can now be reviewed on the isolated candidate; official Integration source publication is complete via PR10; deployed Pilot verification and G056-1 design acceptance remain pending. Fresh HTTP fixture browser screenshots are in outputs/integration-gate/browser-qa. Backend/SQL/RBAC runtime NOT VERIFIED.
+Fixture and verification limits
+Sample services remain explicit test injections using the canonical source only. No runtime source switch, second store, automatic seed or API-error fallback is introduced. Sample isolation checks are fixture evidence, not SQL authorization proof.
+Prior source verification: author100/100 and independent19/19 route checks on fc2c3fd. This video/documentation-only remediation uses targeted tests/build; it does not repeat or relabel the earlier100/716 suites.
+Final-HEAD GitHub approval, Hoang UI consistency review and resolved review conversations are required before Ready/merge. No self-approval, branch-rule bypass or automatic CORE Done claim.
+Real Backend/SQL/RBAC for Owner: NOT VERIFIED; the four Owner endpoints are not yet published. Existing historical source, screenshots and test evidence remain in their original handoff locations outside the feature diff.

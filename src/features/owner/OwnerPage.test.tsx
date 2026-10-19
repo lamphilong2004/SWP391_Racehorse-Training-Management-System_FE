@@ -44,6 +44,7 @@ describe('CORE-056 read-only Owner journey', () => {
     await userEvent.click(screen.getByRole('tab', { name: 'Training & Performance' }));
     await screen.findByRole('heading', { name: 'Current training program' });
     expect(screen.getByText('Endurance foundation')).toBeInTheDocument(); expect(screen.queryByText('58%')).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Trial-run videos' })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('link', { name: '← My Horses' }));
     await screen.findByRole('heading', { name: 'My Horses' });
   });

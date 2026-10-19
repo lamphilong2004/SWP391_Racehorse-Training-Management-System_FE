@@ -59,6 +59,5 @@
 .session > span { color: var(--color-text-secondary); }
 .session strong { font-weight: 500; }
 .quote { display: flex; align-items: start; gap: 10px; background: var(--color-bg-subtle); border-radius: var(--radius-md); padding: 12px 14px; font-size: 14px; }
-.video { display: flex; align-items: center; flex-direction: column; gap: 6px; border: 1px dashed var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-bg-subtle); color: var(--color-text-secondary); padding: 20px 14px; font-size: 13px; line-height: 18px; }
 .searchResult { display: flex; align-items: center; gap: 12px; }
 @media(max-width:1300px) { .columns { grid-template-columns: minmax(0,1fr) 320px; } .fact { grid-template-columns: 120px minmax(0,1fr); } .session { grid-template-columns: 80px minmax(0,1fr) auto; } .session > span:last-child { grid-column: 2 / 4; justify-self: start; } }
