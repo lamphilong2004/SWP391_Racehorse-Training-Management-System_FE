@@ -12,7 +12,7 @@ const DEFERRED_BY_ROLE: Partial<Record<RoleCode, string[]>> = {
   CLUB_MANAGER: ['Stable', 'Races', 'Inventory', 'Reports'],
   HEAD_TRAINER: ['Races'],
   VETERINARIAN: ['Preventive Healthcare'],
-  GROOM: ['Care Tasks', 'Daily Care', 'Preventive Healthcare'],
+  GROOM: ['Daily Care', 'Preventive Healthcare'],
 };
 
 describe('deferred sidebar modules', () => {
@@ -52,7 +52,7 @@ describe('deferred sidebar modules', () => {
       </MemoryRouter>,
     );
     const nav = screen.getByRole('navigation', { name: 'Main' });
-    expect(within(nav).getAllByRole('link').map((link) => link.textContent)).toEqual(['Today', 'Incidents']);
+    expect(within(nav).getAllByRole('link').map((link) => link.textContent)).toEqual(['Today', 'Care Tasks', 'Incidents']);
     expect(within(nav).getByText('My Work')).toBeInTheDocument();
     expect(visibleSections('CLUB_MANAGER')[2].items.map((item) => item.label)).toEqual(['Audit Log']);
   });

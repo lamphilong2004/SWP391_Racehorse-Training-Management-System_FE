@@ -1,3 +1,5 @@
+import { ROUTES } from '../../app/routePaths';
+import { UiPreviewNotice } from './UiPreviewNotice';
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { AlertBanner, Button, Card, Checkbox, EmptyState, Icon, SelectField, StatusBadge } from '../../design-system';
 import { AppShell } from '../../layout/AppShell';
@@ -27,6 +29,7 @@ export function GroomTreatmentAccess() {
   if (auth.status !== 'authenticated' || actor?.accountStatus !== 'ACTIVE' || !actor.roles.includes('GROOM')) return <AlertBanner type="danger" title="Access denied" />;
   if (!service) return <AlertBanner type="danger" title="Sign in again to access assigned tasks" />;
   return <AppShell user={{ fullName: actor.fullName, role: 'GROOM' }} breadcrumb={[{ label: 'Stable Care' }, { label: 'Care Tasks' }]}>
+    <UiPreviewNotice />
     <GroomTasks key={`${actor.id}:${auth.expiresAt}`} service={service} />
   </AppShell>;
 }
@@ -107,7 +110,7 @@ export function GroomTasks({ service }: { service: GroomService }) {
           </Card>)}
     </div><aside className="medical-stack">
       <Card className="medical-groom-panel" title="What you can do here"><div className="medical-help"><p>Mark an assigned task complete — the server records the time and your identity.</p><p>Read the Veterinarian’s instruction for each task.</p><p className="text-caption">Diagnosis, treatment plans and prescriptions are not shown or editable here.</p><p className="text-caption">Health Status and Training Availability are set by the Veterinarian only.</p></div></Card>
-      <Card className="medical-groom-panel" title="Something looks wrong?"><p>If a horse looks worse while you do a task, report it so the Veterinarian can review.</p><p className="text-caption">Incident reporting is provided by the existing CORE-046 workspace.</p></Card>
+      <Card className="medical-groom-panel" title="Something looks wrong?"><p>If a horse looks worse while you do a task, report it so the Veterinarian can review.</p><a href={ROUTES.incidents}>Report Incident →</a></Card>
     </aside></div>
   </div>;
 }

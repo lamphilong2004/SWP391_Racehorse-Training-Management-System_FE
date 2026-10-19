@@ -85,9 +85,8 @@ it('Vet assigns treatment -> normal Groom login completes -> Vet rereads progres
     await screen.findByRole('button', { name: 'Sign out' });
   }
   await login(groom);
-  // Care Tasks is still deferred in dev's shared navigation. Verify the feature direct link;
-  // enabling that menu belongs to the Integration Owner and remains a reported delivery dependency.
-  await act(() => router.navigate('/care/tasks'));
+  fireEvent.click(await screen.findByRole('link', { name: 'Care Tasks' }));
+  expect(router.state.location.pathname).toBe('/care/tasks');
   fireEvent.click(await screen.findByRole('button', { name: 'All assigned' }));
   fireEvent.click(await screen.findByRole('checkbox', { name: 'Complete task 1' }));
   await screen.findByText(/Task 1 completed/);

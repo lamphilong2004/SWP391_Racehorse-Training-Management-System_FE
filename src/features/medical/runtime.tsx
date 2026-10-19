@@ -1,3 +1,4 @@
+import { UiPreviewNotice } from './UiPreviewNotice';
 import { useMemo, type ReactNode } from 'react';
 import { Outlet } from 'react-router';
 import { AlertBanner } from '../../design-system';
@@ -29,6 +30,7 @@ export function MedicalAccess({ children }: { children?: ReactNode }) {
 function MedicalShell({ actor, children }: { actor: MedicalRuntime['actor']; children?: ReactNode }) {
   return <AppShell user={{ fullName: actor.fullName, role: 'VETERINARIAN' }} breadcrumb={[{ label: 'Medical' }]}>
     <div className="medical-stack">
+      <UiPreviewNotice />
       {children ?? <Outlet />}
     </div>
   </AppShell>;

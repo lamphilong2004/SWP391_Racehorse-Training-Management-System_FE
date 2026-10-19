@@ -53,3 +53,22 @@
 .medical-progress span { flex: 1; min-width: 120px; padding: var(--space-sm); text-align: center; color: var(--color-text-secondary); background: var(--color-bg-subtle); border-radius: var(--radius-sm); }
 .medical-progress .medical-progress-active { color: var(--color-primary-600); background: var(--color-primary-50); font-weight: 600; }
 @media (max-width: 1000px) { .medical-treatment-layout, .medical-herd-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* Figma 274:9405: 24px gap, flexible status card and 380px supporting column. */
+.medical-summary-columns { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: var(--space-xl); align-items: start; }
+.medical-summary-status { gap: 8px; }
+.medical-summary-status > [role="presentation"] { display: none; }
+.medical-summary-status dl { margin: 0; }
+.medical-summary-row { display: grid; grid-template-columns: minmax(150px, 220px) minmax(0, 1fr); gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--color-border-default); align-items: center; }
+.medical-summary-row dt { font-size: 14px; color: var(--color-text-secondary); }
+.medical-summary-row dd { margin: 0; font-size: 14px; font-weight: 500; overflow-wrap: anywhere; }
+.medical-read-only { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--color-text-secondary); border-radius: var(--radius-full); padding: 4px 10px; color: var(--color-text-secondary); font-size: 11px; font-weight: 600; }
+@media (max-width: 1200px) { .medical-summary-columns { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 600px) { .medical-summary-row { grid-template-columns: minmax(0, 1fr); } }
+
+.medical-incident-filters { display: flex; flex-wrap: wrap; gap: var(--space-sm); align-items: end; }
+.medical-incident-filters > :first-child { min-width: 240px; flex: 1; }
+.medical-incident-filters > :not(:first-child) { min-width: 170px; }
+.medical-incident-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg); }
+.medical-capitalize { text-transform: capitalize; }
+@media (max-width: 600px) { .medical-incident-details { grid-template-columns: minmax(0, 1fr); } }
