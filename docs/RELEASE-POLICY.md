@@ -10,7 +10,8 @@ Leader decision: `main` holds the complete Frontend for the three Main Flows and
 - Vercel project settings to keep in the dashboard: connected repository `lamphilong2004/SWP391_Racehorse-Training-Management-System_FE`, Production Branch `main`, Root Directory `.`, no Ignored Build Step that skips Production, no duplicate project.
 - Backend is not connected in this phase. `VITE_API_BASE_URL` (public HTTPS origin only, never a secret) is set in Vercel when the Backend goes online.
 - Without an API origin the production shell requests same-origin `/api` and `/ws`; no localhost default or sample fallback is used. Static hosting alone does not implement those endpoints: login and business operations remain unavailable until a real Backend is connected. A production build rejects configured HTTP, local/private, credential-bearing or path/query-bearing API origins.
-- Preparing this release does not authorize merging PR #18 or changing Production settings. The Leader must authorize the exact reviewed release and the dashboard changes before Production is enabled.
+- PR #18 is now merged. Production was verified Ready from `main` at `bfa814776d16e2b7cb054e5600714cd6382e1662`, at `https://project-m15tb.vercel.app`. This records the existing deployment, not approval to merge or deploy subsequent changes. Its static shell is available; Backend authentication and database integration remain unavailable on this deployment.
+- A new main-source role-test Preview may be prepared on `preview/role-test-main` with verified source pins and its branch-only configuration. See `docs/STAGING.md`. Deployment and any Vercel environment/protection change still require Leader approval. This Preview configuration must never be promoted into `main` or `dev`.
 
 ---
 

@@ -20,15 +20,59 @@ function publicOrigin(value) {
 }
 
 // Accident prevention only: actual Gate, branch protection and release approval remain external.
+export const MAIN_PREVIEW_BRANCH = 'preview/role-test-main';
+
+function previewPins(env) {
+  const expected = env.RACEHORSE_PREVIEW_EXPECTED_SHA;
+  const main = env.RACEHORSE_PREVIEW_MAIN_SHA;
+  if (![expected, main].every((value) => typeof value === 'string' && /^[0-9a-f]{40}$/.test(value)))
+    throw new Error('Main-source Preview requires full lowercase RACEHORSE_PREVIEW_EXPECTED_SHA and RACEHORSE_PREVIEW_MAIN_SHA.');
+  return { expected, main };
+}
+
 export function validateDeploymentContext(profile, env) {
   if (!env.VERCEL_ENV || env.VERCEL_ENV === 'development') return;
   if (env.VERCEL_ENV === 'preview') {
-    if (env.VERCEL_GIT_COMMIT_REF !== 'integration/fe-product-main') throw new Error('Preview builds require integration/fe-product-main source metadata.');
+    const branch = env.VERCEL_GIT_COMMIT_REF;
+    if (branch === MAIN_PREVIEW_BRANCH) {
+      const { expected } = previewPins(env);
+      if (env.VERCEL_GIT_COMMIT_SHA !== expected) throw new Error('Preview deployment SHA does not match RACEHORSE_PREVIEW_EXPECTED_SHA.');
+    } else if (branch !== 'integration/fe-product-main') throw new Error(`Preview builds require ${MAIN_PREVIEW_BRANCH} or the historical integration/fe-product-main source.`);
     return;
   }
   if (env.VERCEL_ENV !== 'production') throw new Error('Unknown Vercel deployment environment.');
   // Leader decision 2026-10-19: Production deploys automatically from `main` with `npm run build` (vercel.json).
   throw new Error('Staging profiles never build Production. Production is built from main with npm run build.');
+}
+
+// Git evidence is supplied by the build runner. Metadata alone does not establish checkout identity or ancestry.
+export function stagingSourceMetadata(env, checkout) {
+  if (!/^[0-9a-f]{40}$/.test(checkout.revision ?? '')) throw new Error('Cannot verify the staging checkout SHA.');
+  const isPreview = env.VERCEL_ENV === 'preview';
+  const branch = isPreview ? env.VERCEL_GIT_COMMIT_REF : checkout.branch || null;
+  const hasPins = Boolean(env.RACEHORSE_PREVIEW_EXPECTED_SHA || env.RACEHORSE_PREVIEW_MAIN_SHA);
+  if (isPreview) {
+    if (env.VERCEL_GIT_COMMIT_SHA !== checkout.revision) throw new Error('Vercel Preview SHA does not match the actual Git checkout.');
+    // Vercel may use a detached checkout. A named checkout must agree with the hosting metadata.
+    if (checkout.branch && checkout.branch !== branch) throw new Error('Vercel Preview branch does not match the actual Git checkout.');
+    if (hasPins && branch !== MAIN_PREVIEW_BRANCH) throw new Error(`Main-source Preview pins apply only to ${MAIN_PREVIEW_BRANCH}.`);
+    if (branch === MAIN_PREVIEW_BRANCH && checkout.dirty) throw new Error('Main-source Preview requires a clean Git checkout matching the reviewed SHA.');
+  }
+  const pinned = branch === MAIN_PREVIEW_BRANCH || hasPins;
+  let sourceMainRevision = null;
+  if (pinned) {
+    const { expected, main } = previewPins(env);
+    if (checkout.revision !== expected) throw new Error('Staging checkout SHA does not match RACEHORSE_PREVIEW_EXPECTED_SHA.');
+    if (!checkout.mainIsAncestor) throw new Error('Pinned main SHA is not a verified ancestor of the checkout. Make its Git history available before building.');
+    sourceMainRevision = main;
+  }
+  return {
+    revision: checkout.revision,
+    sourceBranch: branch,
+    sourceMainRevision,
+    workingTreeDirty: Boolean(checkout.dirty),
+    sourceKind: sourceMainRevision ? 'main-snapshot' : branch === 'integration/fe-product-main' ? 'historical-integration' : 'local',
+  };
 }
 
 export function safeOutput(name = 'dist-staging') {

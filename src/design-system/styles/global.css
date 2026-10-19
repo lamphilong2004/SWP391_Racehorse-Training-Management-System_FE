@@ -59,3 +59,18 @@ textarea {
   white-space: nowrap;
   border: 0;
 }
+
+/* Shared v2 utilities: no business data, storage or role-specific themes. */
+[data-design-system='v2'] { color: var(--color-text-primary); background: var(--color-bg-page); }
+[data-design-system='v2'] :focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 2px; }
+[data-design-system='v2'] .text-metric,
+[data-design-system='v2'] .text-metric-l,
+[data-design-system='v2'] time { font-variant-numeric: tabular-nums; }
+[data-design-system='v2'] .table-scroll { max-width: 100%; overflow-x: auto; }
+body:has(dialog[open]) { overflow: hidden; }
+
+@media (max-width: 767px) {
+  [data-design-system='v2'] button,
+  [data-design-system='v2'] input:not([type='checkbox'], [type='radio']),
+  [data-design-system='v2'] select { min-height: var(--touch-target-min); }
+}

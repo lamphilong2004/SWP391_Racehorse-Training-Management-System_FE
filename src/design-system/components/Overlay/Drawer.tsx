@@ -13,11 +13,12 @@ export interface DrawerProps {
   footer?: ReactNode;
   children?: ReactNode;
   className?: string;
+  dismissible?: boolean;
 }
 
 /** Figma Drawer Shell (75:267): right side, 480px, elev/3, header 64, body 24, footer 72. */
-export function Drawer({ open, onClose, title, subtitle, footer, children, className }: DrawerProps) {
-  const ref = useModalDialog(open, onClose);
+export function Drawer({ open, onClose, title, subtitle, footer, children, className, dismissible = true }: DrawerProps) {
+  const ref = useModalDialog(open, () => { if (dismissible) onClose(); });
   const titleId = useId();
   return (
     <dialog ref={ref} aria-labelledby={titleId} className={cx(styles.drawer, className)}>
@@ -30,7 +31,7 @@ export function Drawer({ open, onClose, title, subtitle, footer, children, class
               </h2>
               {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
             </div>
-            <button type="button" className={styles.close} onClick={onClose} aria-label="Close">
+            <button type="button" className={styles.close} onClick={onClose} aria-label="Close" disabled={!dismissible} title={!dismissible ? 'Finish or discard changes before closing.' : undefined}>
               <Icon name="x" size={20} />
             </button>
           </header>

@@ -1,0 +1,8 @@
+.region { display: grid; gap: var(--space-sm); min-width: 0; }
+.toast { display: flex; align-items: center; gap: var(--space-md); padding: var(--space-md) var(--space-lg); border: 1px solid currentColor; border-radius: var(--radius-md); animation: appear var(--motion-base, 0ms) var(--motion-ease-out, ease-out); }
+.toast p { flex: 1; overflow-wrap: anywhere; } .toast > :first-child { flex-shrink: 0; }
+.info { color: var(--color-info-600); background: var(--color-primary-50); }
+.success { color: var(--color-success-600); background: var(--color-success-50); }
+.error { color: var(--color-danger-600); background: var(--color-danger-50); }
+@keyframes appear { from { opacity: 0; transform: translateY(4px); } }
+@media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
