@@ -13,7 +13,7 @@ export interface GroomTaskInstruction { assignedGroomUserId: number; instruction
 export interface TreatmentPlanRequest { treatmentMedicationInstructions: string; restInstructions?: string; careInstructions?: string; groomTasks?: GroomTaskInstruction[]; reexaminationDate?: string }
 export interface ReexaminationRequest { recoveryStatus: RecoveryStatus; findings: string; examinedAt: string; healthStatus?: HealthStatus; diagnosis?: string; severity?: ClinicalSeverity; bodyCondition?: string }
 export interface MedicalCase { id: number; horseId: number; status: 'OPEN' | 'CLOSED'; openedAt: string; closedAt?: string; reason?: string; incidentIds: number[]; examinations: Examination[]; injuries: Injury[]; treatmentPlan?: TreatmentPlan; reexaminations: Reexamination[] }
-export interface Examination { id: number; caseId: number; horseId: number; examinedAt: string; symptoms: string; diagnosis?: string; severity?: ClinicalSeverity; healthStatus?: HealthStatus }
+export interface Examination { id: number; caseId: number; horseId: number; examinedAt: string; symptoms?: string; diagnosis?: string; severity?: ClinicalSeverity; healthStatus?: HealthStatus; bodyCondition?: string }
 export interface Injury { id: number; caseId: number; bodyRegion: string; severity: ClinicalSeverity; recoveryStatus: RecoveryStatus; position3d?: string; side?: string }
 export interface TreatmentPlan { id: number; caseId: number; treatmentMedicationInstructions: string; restInstructions?: string; careInstructions?: string; reexaminationDate?: string; createdAt: string }
 export interface Reexamination { id: number; caseId: number; horseId: number; recoveryStatus: RecoveryStatus; findings: string; examinedAt: string }
@@ -25,6 +25,8 @@ export interface MedicalRestriction { id: number; horseId: number; level: 'LIMIT
 export interface HerdHealthOverview { totalHorses: number; fit: number; monitoring: number; injured: number; quarantined: number; unassessed: number }
 
 export interface MedicalService {
+  listHerdHorses(): Promise<import('./horseRead').HerdHorse[]>;
+  getHorse(id: number): Promise<import('./horseRead').HorseIdentity>;
   listCases(page?: number): Promise<Page<MedicalCase>>;
   getCase(id: number): Promise<MedicalCase>;
   createCase(input: MedicalCaseCreateRequest): Promise<MedicalCase>;
@@ -34,10 +36,6 @@ export interface MedicalService {
   listCaseTasks(id: number, page?: number): Promise<Page<CaseTreatmentTask>>;
   addReexamination(id: number, input: ReexaminationRequest): Promise<Reexamination>;
   closeCase(id: number): Promise<MedicalCase>;
-  listIncidents(page?: number): Promise<Page<Incident>>;
-  getIncident(id: number): Promise<Incident>;
-  reviewIncident(id: number, action: 'OPEN_CASE' | 'RESOLVE' | 'LINK_CASE', medicalCaseId?: number): Promise<Incident>;
   getAvailability(horseId: number): Promise<TrainingAvailability>;
-  listRestrictions(page?: number): Promise<Page<MedicalRestriction>>;
   getHerdHealth(): Promise<HerdHealthOverview>;
 }

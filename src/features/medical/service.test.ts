@@ -2,28 +2,6 @@ import { createMedicalService } from './service';
 
 const ok = (data: unknown) => new Response(JSON.stringify({ success: true, data }), { status: 200 });
 describe('CORE-006 HTTP adapter', () => {
-  it('sends the approved Vet incident-review shape with the authenticated transport', async () => {
-    const fetcher = vi.fn().mockImplementation(async () => ok({ id: 42, status: 'UNDER_REVIEW' }));
-    const service = createMedicalService('jwt', undefined, { baseUrl: 'https://api.example.test/', fetcher });
-    await service.reviewIncident(42, 'OPEN_CASE');
-    expect(fetcher).toHaveBeenNthCalledWith(1, 'https://api.example.test/api/incidents/42/review',
-      expect.objectContaining({ method: 'POST', body: '{"action":"OPEN_CASE"}', headers: expect.any(Headers) }));
-    expect(new Headers(fetcher.mock.calls[0][1].headers).get('Authorization')).toBe('Bearer jwt');
-    expect(fetcher).toHaveBeenCalledOnce();
-  });
-  it('uses only approved review actions and sends a case ID only when linking', async () => {
-    const fetcher = vi.fn().mockImplementation(async () => ok({ id: 42 }));
-    const service = createMedicalService('jwt', undefined, { baseUrl: '', fetcher });
-    await service.reviewIncident(42, 'LINK_CASE', 9);
-    await service.reviewIncident(42, 'RESOLVE');
-    expect(fetcher.mock.calls.map(([, options]) => options.body)).toEqual([
-      '{"action":"LINK_CASE","medicalCaseId":9}',
-      '{"action":"RESOLVE"}',
-    ]);
-    expect(fetcher.mock.calls.map(([url]) => url)).toEqual([
-      '/api/incidents/42/review', '/api/incidents/42/review',
-    ]);
-  });
   it('keeps independent case creation free of incident linkage and saves assigned treatment tasks', async () => {
     const fetcher = vi.fn().mockImplementation(async () => ok({ id: 9 }));
     const service = createMedicalService('jwt', undefined, { baseUrl: '', fetcher });
@@ -41,7 +19,7 @@ describe('CORE-006 HTTP adapter', () => {
   });
   it('rejects invalid resource IDs before a request is made', async () => {
     const fetcher = vi.fn();
-    expect(() => createMedicalService('jwt', undefined, { baseUrl: '', fetcher }).getCase(Number.NaN)).toThrow('valid numeric ID');
+    await expect(createMedicalService('jwt', undefined, { baseUrl: '', fetcher }).getCase(Number.NaN)).rejects.toThrow('valid numeric ID');
     expect(fetcher).not.toHaveBeenCalled();
   });
   it('fails closed on a success envelope without data and on forbidden clinical access', async () => {

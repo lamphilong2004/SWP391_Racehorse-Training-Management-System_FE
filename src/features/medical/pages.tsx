@@ -1,19 +1,48 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { AlertBanner, Button, Card, DataTable, EmptyState, KeyValue, SelectField, StatusBadge, TextField, Tabs } from '../../design-system';
+import { AlertBanner, Button, Card, DataTable, EmptyState, KeyValue, MetricCard, StatusBadge, TextField, Tabs } from '../../design-system';
 import { PageHeader } from '../../layout/PageHeader';
-import { ROUTES } from '../../app/routePaths';
+import { MEDICAL_ROUTES as ROUTES } from './paths';
 import { MedicalForm } from './MedicalForm';
 import { TreatmentPlanEditor } from './TreatmentPlanEditor';
 import { InjuryMap } from './InjuryMap';
-import { BODY_REGIONS } from './bodyRegions';
-import type { ClinicalSeverity, Incident, MedicalCase, RecoveryStatus, TrainingAvailability } from './models';
+import type { ClinicalSeverity, MedicalCase, MedicalService, RecoveryStatus, TrainingAvailability } from './models';
 import { useMedicalRuntime } from './runtimeContext';
 import { medicalErrorMessage } from './errors';
 import './medical.css';
 
 const casePath = (id: number) => ROUTES.medicalCaseDetail.replace(':caseId', String(id));
-const incidentPath = (id: number) => ROUTES.incidents + '/' + id;
+const latest = <T extends { examinedAt: string },>(items: T[]) => [...items].sort((a, b) => Date.parse(b.examinedAt) - Date.parse(a.examinedAt))[0];
+async function collectCases(service: MedicalService) {
+  const first = await service.listCases(0), rows = [...first.items];
+  for (let page = 1; page < Math.ceil(first.totalElements / first.size); page++) {
+    const next = await service.listCases(page);
+    if (next.size !== first.size || next.totalElements !== first.totalElements) throw new Error('Medical cases changed while loading. Reload to retry.');
+    rows.push(...next.items);
+  }
+  if (rows.length !== first.totalElements || new Set(rows.map((r) => r.id)).size !== rows.length) throw new Error('Medical case overview is incomplete. Reload to retry.');
+  return rows;
+}
+function HorseHeading({ horseId, title, description }: { horseId: number; title: string; description: string }) {
+  const { service } = useMedicalRuntime();
+  const { data, error } = useResource(useCallback(() => service.getHorse(horseId), [service, horseId]));
+  return <><PageHeader title={`${title} · ${data?.name ?? `Horse ${horseId}`}`} description={data ? `${data.horseCode}${data.currentBoxCode ? ` · Box ${data.currentBoxCode}` : ''} · ${description}` : description}
+    actions={data && <div className="medical-actions">{data.healthStatus && <StatusBadge family="health" status={data.healthStatus} />}<StatusBadge family="availability" status={data.trainingAvailability} /></div>} />
+    {error && <p className="text-caption">Horse identity details are unavailable.</p>}</>;
+}
+function TreatmentCaseSummary({ item }: { item: MedicalCase }) {
+  const { service } = useMedicalRuntime();
+  const horse = useResource(useCallback(() => service.getHorse(item.horseId), [service, item.horseId]));
+  const availability = useResource(useCallback(() => service.getAvailability(item.horseId), [service, item.horseId]));
+  const review = latest(item.reexaminations);
+  return <Card className="medical-groom-panel" title="Case summary"><div className="medical-stack">
+    <KeyValue label="Health status" value={horse.data?.healthStatus ? <StatusBadge family="health" status={horse.data.healthStatus} /> : 'Unavailable'} />
+    {availability.data ? <AvailabilityDetails availability={availability.data} /> : <ResourceState error={availability.error} retry={availability.reload} />}
+    <KeyValue label="Last re-examination" value={review ? `${review.examinedAt} · ${review.recoveryStatus}` : 'None'} />
+    <KeyValue label="Next review" value={item.treatmentPlan?.reexaminationDate ?? 'Not scheduled'} />
+    <p className="text-caption">Training Availability is changed separately. Saving this plan does not change it.</p>
+  </div></Card>;
+}
 const positiveId = (value: string) => {
   const id = Number(value);
   if (!Number.isSafeInteger(id) || id < 1) throw new Error('Enter a valid positive numeric ID.');
@@ -46,8 +75,10 @@ function AvailabilityCard({ horseId }: { horseId: number }) {
   </Card>;
 }
 function AvailabilityDetails({ availability }: { availability: TrainingAvailability }) {
-  return <div className="medical-actions"><StatusBadge family="availability" status={availability.availability} />
-    <span>{availability.reason || 'No active medical restriction'}</span></div>;
+  return <div className="medical-stack"><div className="medical-actions"><StatusBadge family="availability" status={availability.availability} />
+    <span>{availability.reason || (availability.availability === 'AVAILABLE' ? 'No active medical restriction' : 'Reason unavailable')}</span></div>
+    {availability.exerciseRules?.map((rule, index) => <KeyValue key={index} label={rule.ruleType === 'ALLOWED' ? 'Permitted' : 'Prohibited'} value={rule.exerciseTypeNote ?? `Exercise ${rule.exerciseId}`} />)}
+  </div>;
 }
 
 export function CaseListPage() {
@@ -58,7 +89,7 @@ export function CaseListPage() {
   const { data, error, reload } = useResource(load);
   const rows = data?.items.filter((item) => [item.id, item.horseId, item.reason].join(' ').toLowerCase().includes(query.toLowerCase())) ?? [];
   return <><PageHeader title="Medical Cases" description="Veterinary case records" />
-    <div className="medical-actions"><Link to={ROUTES.medicalCaseNew}>Create independent case</Link><Link to={ROUTES.herdHealth}>Herd health</Link><Link to={ROUTES.incidents}>Incidents</Link></div>
+    <div className="medical-actions"><Link to={ROUTES.medicalCaseNew}>Create independent case</Link><Link to={ROUTES.herdHealth}>Herd health</Link></div>
     <Card title="Cases"><TextField label="Search current page" value={query} onChange={(event) => setQuery(event.target.value)} />
       {!data ? <ResourceState error={error} retry={reload} /> :
         <div className="medical-stack"><DataTable<MedicalCase> caption="Medical cases" rows={rows} rowKey={(item) => item.id} empty={<EmptyState title="No medical cases" />} columns={[
@@ -84,18 +115,41 @@ export function CreateCasePage() {
 }
 
 export function HerdHealthPage() {
+  const navigate = useNavigate();
   const { service } = useMedicalRuntime();
   const load = useCallback(() => service.getHerdHealth(), [service]);
   const { data, error, reload } = useResource(load);
-  return <><div className="medical-actions medical-page-heading"><PageHeader title="Herd Health Overview" description="Health Status and Training Availability are separate" /><Link to={ROUTES.medical}>View Medical Cases</Link></div>
+  const horses = useResource(useCallback(() => service.listHerdHorses(), [service]));
+  const cases = useResource(useCallback(() => collectCases(service), [service]));
+  const [health, setHealth] = useState('');
+  const visible = horses.data?.filter((horse) => !health || (health === 'UNASSESSED' ? horse.healthStatus === null : horse.healthStatus === health)) ?? [];
+  return <><PageHeader title="Herd Health Overview" description="Health Status and Training Availability are shown separately" actions={<Button onClick={() => navigate(ROUTES.medical)}>View Medical Cases</Button>} />
     {!data ? <ResourceState error={error} retry={reload} /> : <div className="medical-stack">
       <p className="text-caption">{data.totalHorses} horses · {data.unassessed} unassessed</p>
-      <div className="medical-grid medical-herd-grid">
+      <p className="medical-overline">Health Status · club totals</p><div className="medical-grid medical-herd-grid">
         {[['Fit', data.fit], ['Monitoring', data.monitoring], ['Injured', data.injured], ['Quarantined', data.quarantined]].map(([label, value]) =>
-          <Card key={label} title={String(label)}><p className="medical-metric">{value}</p></Card>)}
+          <MetricCard key={label} label={String(label)} value={String(value)} />)}
       </div>
-      <Card title="Training availability"><p>Availability is derived separately per horse. Open a medical case or incident to view the current availability and restriction reason.</p></Card>
-    </div>}</>;
+    </div>}
+    {!horses.data ? <ResourceState error={horses.error} retry={horses.reload} /> : <div className="medical-stack">
+      <Card><div className="medical-actions"><span className="medical-overline">Training availability · {horses.data.length} active horses</span>
+        {(['AVAILABLE', 'LIMITED', 'LOCKED'] as const).map((level) => <span key={level} className="medical-actions"><StatusBadge family="availability" status={level} />{horses.data!.filter((horse) => horse.trainingAvailability === level).length}</span>)}
+      </div></Card>
+      <div className="medical-actions" role="group" aria-label="Active horse health filters">
+        {['', 'FIT', 'MONITORING', 'INJURED', 'QUARANTINED', 'UNASSESSED'].map((status) => <button className="medical-chip" key={status} type="button" aria-pressed={health === status} onClick={() => setHealth(status)}>
+          {status || 'All'} · {horses.data!.filter((horse) => !status || (status === 'UNASSESSED' ? horse.healthStatus === null : horse.healthStatus === status)).length}
+        </button>)}
+      </div>
+      {cases.error && <div className="medical-actions"><p className="text-caption">Case summaries are unavailable.</p><Button variant="secondary" onClick={cases.reload}>Retry case summaries</Button></div>}
+      {!visible.length ? <EmptyState title="No active horses for this filter" /> : <div className="medical-grid medical-herd-grid">{visible.map((horse) => <Card key={horse.id} className="medical-herd-horse">
+        <h3 className="text-h3">{horse.name}</h3><p className="text-caption">{horse.horseCode}{horse.currentBoxCode ? ` · Box ${horse.currentBoxCode}` : ''}</p>
+        <div className="medical-actions">{horse.healthStatus ? <StatusBadge family="health" status={horse.healthStatus} /> : <span className="text-caption">{horse.healthStatus === null ? 'Unassessed' : 'Health status unavailable'}</span>}<StatusBadge family="availability" status={horse.trainingAvailability} /></div>
+        {cases.data ? cases.data.filter((item) => item.horseId === horse.id && item.status === 'OPEN').length ? cases.data.filter((item) => item.horseId === horse.id && item.status === 'OPEN').map((item) => <div key={item.id} className="medical-case-preview">
+          <p>Open case · {item.reason ?? `Case ${item.id}`}</p><p className="text-caption">{item.treatmentPlan?.reexaminationDate ? `Next review ${item.treatmentPlan.reexaminationDate}` : 'Review not scheduled'}</p><Link to={casePath(item.id)}>Open case →</Link>
+        </div>) : <p className="text-caption">No open case</p> : <p className="text-caption">{cases.error ? 'Case summary unavailable' : 'Loading case summary…'}</p>}
+      </Card>)}</div>}
+    </div>}
+  </>;
 }
 
 export function CaseDetailPage() {
@@ -130,8 +184,8 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
       { value: 'recovery', label: 'Re-examination' },
     ]} />
     <div role="tabpanel" id="case-panel-record" aria-labelledby="case-tab-record" hidden={panel !== 'record'} className="medical-stack">
-      <Card title="Current condition"><KeyValue label="Latest diagnosis" value={item.examinations.at(-1)?.diagnosis ?? 'Awaiting examination'} />
-        <KeyValue label="Recovery" value={item.reexaminations.at(-1)?.recoveryStatus ?? 'Not assessed'} />
+      <Card title="Current condition"><KeyValue label="Latest diagnosis" value={latest(item.examinations)?.diagnosis ?? (item.examinations.length ? 'No diagnosis recorded' : 'Awaiting examination')} />
+        <KeyValue label="Recovery" value={latest(item.reexaminations)?.recoveryStatus ?? 'Not assessed'} />
         <KeyValue label="Next review" value={item.treatmentPlan?.reexaminationDate ?? 'Not scheduled'} /></Card>
       {!closed && <Card title="Close medical case"><p>The server requires an examination or re-examination. If an injury or treatment plan exists, the latest re-examination must be RECOVERED. Treatment tasks must be complete, linked incidents resolved and case restrictions lifted.</p>
         {closeError && <AlertBanner type="danger" title={closeError} />}
@@ -161,7 +215,7 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
       <Card title="Injury records"><History count={item.injuries.length} empty="No injuries">{item.injuries.map((injury) =>
         <li key={injury.id}>{injury.bodyRegion} · {injury.severity} · {injury.recoveryStatus}{injury.position3d && <p>Position marker: {injury.position3d}</p>}</li>)}</History>
         {!closed && <MedicalForm submitLabel="Save injury" fields={[
-          { name: 'bodyRegion', label: 'Body region', options: BODY_REGIONS, required: true },
+          { name: 'bodyRegion', label: 'Body region', maxLength: 100, required: true },
           { name: 'severity', label: 'Severity', options: ['MILD', 'MODERATE', 'SEVERE'], required: true },
           { name: 'recoveryStatus', label: 'Recovery status', options: ['NOT_RECOVERED', 'IMPROVING', 'RECOVERED'], required: true },
           { name: 'position3d', label: 'Position marker (optional)', maxLength: 100 },
@@ -209,12 +263,18 @@ export function TreatmentPlanPage() {
     const medicalCase = await service.getCase(id);
     const tasks = [] as Awaited<ReturnType<typeof service.listCaseTasks>>['items'];
     if (medicalCase.treatmentPlan) {
+      let total: number | undefined;
+      let size: number | undefined;
       for (let page = 0; ; page += 1) {
         const result = await service.listCaseTasks(id, page);
+        total ??= result.totalElements;
+        size ??= result.size;
+        if (result.totalElements !== total || result.size !== size) throw new Error('Treatment tasks changed while loading. Reload before editing.');
         tasks.push(...result.items);
         if (tasks.length >= result.totalElements) break;
         if (result.items.length === 0 || result.size < 1) throw new Error('Treatment tasks could not be loaded completely. Editing is unavailable.');
       }
+      if (new Set(tasks.map((task) => task.id)).size !== tasks.length || tasks.length !== total) throw new Error('Treatment task history is inconsistent. Reload before editing.');
     }
     return { medicalCase, tasks };
   }, [service, id]);
@@ -227,17 +287,14 @@ export function TreatmentPlanPage() {
     groomTasks: tasks.filter((task) => task.status === 'PENDING').map((task) => ({ assignedGroomUserId: task.assignedGroomUserId, instruction: task.instruction, taskDate: task.taskDate, scheduledSlot: task.scheduledSlot })),
   };
   return <><Link to={casePath(id)}>Back to medical case</Link>
-    <PageHeader title={'Treatment Plan · Horse ' + medicalCase.horseId} description={'Medical case ' + id} />
+    <HorseHeading title="Treatment Plan" horseId={medicalCase.horseId} description={'Medical case ' + id} />
     {saved && <AlertBanner type="success" title="Treatment plan saved" />}
     <div className="medical-grid medical-treatment-layout"><div className="medical-stack">
-      <Card title="Plan period"><KeyValue label="Case opened" value={medicalCase.openedAt} /><KeyValue label="Next re-examination" value={medicalCase.treatmentPlan?.reexaminationDate ?? 'Not scheduled'} /></Card>
       {medicalCase.status === 'CLOSED' ? <AlertBanner type="danger" title="Closed cases cannot be edited" /> :
-        <TreatmentPlanEditor key={medicalCase.treatmentPlan?.id ?? 'new'} initial={initial} onCancel={() => navigate(casePath(id))} onSave={async (input) => { await service.saveTreatment(id, input); setSaved(true); reload(); }} />}
+        <TreatmentPlanEditor key={medicalCase.treatmentPlan?.id ?? 'new'} openedAt={medicalCase.openedAt} initial={initial} onCancel={() => navigate(casePath(id))} onSave={async (input) => { await service.saveTreatment(id, input); setSaved(true); reload(); }} />}
       <CaseTasks caseId={id} />
     </div><div className="medical-stack">
-      <Card title="Case summary"><KeyValue label="Status" value={medicalCase.status} /><KeyValue label="Reason" value={medicalCase.reason ?? '—'} />
-        <KeyValue label="Latest re-examination" value={medicalCase.reexaminations.at(-1)?.examinedAt ?? 'None'} /></Card>
-      <AvailabilityCard horseId={medicalCase.horseId} />
+      <TreatmentCaseSummary item={medicalCase} />
       <Card title="Plan delivery"><p>Groom sees assigned care instructions only. Clinical diagnosis and medication details stay in the veterinary record.</p></Card>
     </div></div></>;
 }
@@ -251,77 +308,4 @@ function CaseTasks({ caseId }: { caseId: number }) {
       <li key={task.id}>{task.taskDate} · Groom {task.assignedGroomUserId} · {task.status}<p>{task.instruction}</p></li>)}</History>
     <div className="medical-actions"><Button variant="secondary" disabled={page === 0} onClick={() => setPage(page - 1)}>Previous</Button><span>Page {page + 1} · {data.totalElements} total</span><Button variant="secondary" disabled={(page + 1) * data.size >= data.totalElements} onClick={() => setPage(page + 1)}>Next</Button></div>
   </div>}</Card>;
-}
-
-export function IncidentListPage() {
-  const { service } = useMedicalRuntime();
-  const [page, setPage] = useState(0);
-  const [query, setQuery] = useState('');
-  const [status, setStatus] = useState('');
-  const load = useCallback(() => service.listIncidents(page), [service, page]);
-  const { data, error, reload } = useResource(load);
-  const rows = data?.items.filter((item) => (!status || item.status === status) &&
-    [item.incidentCode, item.horseId, item.description].join(' ').toLowerCase().includes(query.toLowerCase())) ?? [];
-  return <><PageHeader title="Incidents" description="Reported observations for veterinary review" />
-    <Card title="Incident list"><div className="medical-actions"><TextField label="Search current page" value={query} onChange={(event) => setQuery(event.target.value)} />
-      <SelectField label="Status" value={status} placeholder="All statuses" options={['REPORTED', 'UNDER_REVIEW', 'RESOLVED'].map((value) => ({ value, label: value }))} onChange={(event) => setStatus(event.target.value)} /></div>
-      {!data ? <ResourceState error={error} retry={reload} /> :
-      <div className="medical-stack"><DataTable<Incident> caption="Incidents" rows={rows} rowKey={(item) => item.id} empty={<EmptyState title="No incidents" />} columns={[
-        { key: 'code', header: 'Incident', render: (item) => <Link to={incidentPath(item.id)}>{item.incidentCode}</Link> },
-        { key: 'horse', header: 'Horse', render: (item) => item.horseId },
-        { key: 'observation', header: 'Observation', render: (item) => <span>{item.incidentType} · {item.observedSeverity}</span> },
-        { key: 'reporter', header: 'Reported by', render: (item) => item.reportedByUserId },
-        { key: 'status', header: 'Status', render: (item) => <StatusBadge family="incident" status={item.status} /> },
-        { key: 'reported', header: 'Reported', render: (item) => item.reportedAt },
-      ]} /><div className="medical-actions"><Button variant="secondary" disabled={page === 0} onClick={() => setPage(page - 1)}>Previous</Button><span>Page {page + 1} · {data.totalElements} total</span><Button variant="secondary" disabled={(page + 1) * data.size >= data.totalElements} onClick={() => setPage(page + 1)}>Next</Button></div></div>}</Card></>;
-}
-/** Vet-only review view for the canonical /incidents/:incidentId route. */
-export function VetIncidentReview() {
-  const { incidentId = '' } = useParams();
-  const { service } = useMedicalRuntime();
-  const navigate = useNavigate();
-  const id = Number(incidentId);
-  const load = useCallback(async () => {
-    if (!Number.isSafeInteger(id) || id < 1) throw new Error('Invalid incident ID.');
-    return service.getIncident(id);
-  }, [service, id]);
-  const { data, error, reload } = useResource(load);
-  const [actionError, setActionError] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [linkCaseId, setLinkCaseId] = useState('');
-  if (!Number.isSafeInteger(id) || id < 1) return <EmptyState title="Incident not found" />;
-  if (!data) return <ResourceState error={error} retry={reload} />;
-  const review = async (action: 'OPEN_CASE' | 'RESOLVE' | 'LINK_CASE') => {
-    if (busy) return;
-    setBusy(true); setActionError('');
-    try {
-      const updated = await service.reviewIncident(data.id, action, action === 'LINK_CASE' ? positiveId(linkCaseId) : undefined);
-      if (action === 'OPEN_CASE' && updated.medicalCaseId) navigate(casePath(updated.medicalCaseId));
-      else reload();
-    } catch (failure) { setActionError(medicalErrorMessage(failure, 'Unable to review incident.')); }
-    finally { setBusy(false); }
-  };
-  return <><Link to={ROUTES.incidents}>Back to incidents</Link><PageHeader title={'Incident · ' + data.incidentCode} description={'Horse ' + data.horseId} />
-    <div className="medical-progress" aria-label="Incident review progress"><span className="medical-progress-active">Reported</span><span className={data.status !== 'REPORTED' ? 'medical-progress-active' : ''}>Under review</span><span className={data.status === 'RESOLVED' ? 'medical-progress-active' : ''}>Resolved</span></div>
-    <div className="medical-grid medical-treatment-layout"><div className="medical-stack"><Card title="Observation"><div className="medical-stack">
-      <div className="medical-actions"><span>Status</span><StatusBadge family="incident" status={data.status} /></div><KeyValue label="Type" value={data.incidentType} />
-      <KeyValue label="Observed severity" value={data.observedSeverity} /><KeyValue label="Observed at" value={data.observedAt} />
-      <KeyValue label="Reported at" value={data.reportedAt} /><KeyValue label="Reporter ID" value={data.reportedByUserId} /><p>{data.description || 'No description supplied.'}</p>
-      {data.medicalCaseId && <Link to={casePath(data.medicalCaseId)}>Medical case {data.medicalCaseId}</Link>}
-    </div></Card>
-      <Card title="Source and timeline"><div className="medical-stack">
-        <KeyValue label="Pre-session check" value={data.preSessionCheckId ?? 'Not linked'} />
-        <KeyValue label="Training session" value={data.trainingSessionId ?? 'Not linked'} />
-        <KeyValue label="Care task" value={data.careTaskId ?? 'Not linked'} />
-        <KeyValue label="Observed" value={data.observedAt} /><KeyValue label="Reported" value={data.reportedAt} />
-      </div></Card></div><div className="medical-stack"><Card title="Horse status"><KeyValue label="Horse ID" value={data.horseId} /><KeyValue label="Incident" value={data.status} /></Card><AvailabilityCard horseId={data.horseId} /></div></div>
-    {data.status !== 'RESOLVED' && <Card title="Veterinary review"><p>Opening or linking a case changes the incident to UNDER_REVIEW. Resolve explicitly after review.</p>
-      {actionError && <AlertBanner type="danger" title={actionError} />}
-      <div className="medical-actions">
-        {data.status === 'REPORTED' && !data.medicalCaseId && <><Button disabled={busy} onClick={() => review('OPEN_CASE')}>Open medical case</Button>
-          <TextField label="Existing open case ID" type="number" min={1} step={1} value={linkCaseId} onChange={(event) => setLinkCaseId(event.target.value)} />
-          <Button variant="secondary" disabled={busy || !linkCaseId} onClick={() => review('LINK_CASE')}>Link case</Button></>}
-        <Button variant="secondary" disabled={busy} onClick={() => review('RESOLVE')}>Resolve incident</Button>
-      </div></Card>}
-  </>;
 }

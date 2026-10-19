@@ -1,5 +1,7 @@
 import type { MedicalService } from './models';
 import { ApiError, requestApi } from '../../shared/auth/authApi';
+import { readAvailability, readCase, readCaseTask, readHerd, readPage } from './validation';
+import { readActiveHerd, readHorseIdentity } from './horseRead';
 
 export function createMedicalService(accessToken: string, onApiError?: (error: unknown) => boolean, options: { baseUrl?: string; fetcher?: typeof fetch } = {}): MedicalService {
   if (!accessToken.trim()) throw new Error('A signed-in session is required for medical requests.');
@@ -20,23 +22,28 @@ export function createMedicalService(accessToken: string, onApiError?: (error: u
     if (!Number.isSafeInteger(id) || id < 1) throw new Error('A valid numeric ID is required.');
     return id;
   };
-  const pageQuery = (page: number) => `?page=${Math.max(0, Math.trunc(page))}&size=20`;
+  const pageQuery = (page: number) => {
+    if (!Number.isSafeInteger(page) || page < 0) throw new Error('A valid page is required.');
+    return `?page=${page}&size=20`;
+  };
   const cases = '/api/medical/cases';
   return {
-    listCases: (page = 0) => request(cases + pageQuery(page)),
-    getCase: (id) => request(`${cases}/${positiveId(id)}`),
+    listHerdHorses: () => readActiveHerd(accessToken, onApiError, options),
+    getHorse: (id) => readHorseIdentity(accessToken, id, onApiError, options),
+    listCases: async (page = 0) => readPage(await request(cases + pageQuery(page)), readCase, page),
+    getCase: async (id) => {
+      const item = readCase(await request(`${cases}/${positiveId(id)}`));
+      if (item.id !== id) throw new ApiError(200, 'INVALID_RESPONSE', 'Medical case identity does not match the request.');
+      return item;
+    },
     createCase: (input) => request(cases, 'POST', input),
     addExamination: (id, input) => request(`${cases}/${positiveId(id)}/examinations`, 'POST', input),
     addInjury: (id, input) => request(`${cases}/${positiveId(id)}/injuries`, 'POST', input),
     saveTreatment: (id, input) => request(`${cases}/${positiveId(id)}/treatment-plan`, 'PUT', input),
-    listCaseTasks: (id, page = 0) => request(`${cases}/${positiveId(id)}/treatment-tasks` + pageQuery(page)),
+    listCaseTasks: async (id, page = 0) => readPage(await request(`${cases}/${positiveId(id)}/treatment-tasks` + pageQuery(page)), (item) => readCaseTask(item, id), page),
     addReexamination: (id, input) => request(`${cases}/${positiveId(id)}/re-examinations`, 'POST', input),
     closeCase: (id) => request(`${cases}/${positiveId(id)}/close`, 'POST'),
-    listIncidents: (page = 0) => request('/api/incidents' + pageQuery(page)),
-    getIncident: (id) => request(`/api/incidents/${positiveId(id)}`),
-    reviewIncident: (id, action, medicalCaseId) => request(`/api/incidents/${positiveId(id)}/review`, 'POST', action === 'LINK_CASE' ? { action, medicalCaseId: positiveId(medicalCaseId ?? 0) } : { action }),
-    getAvailability: (horseId) => request(`/api/horses/${positiveId(horseId)}/training-availability`),
-    listRestrictions: (page = 0) => request('/api/medical/restrictions' + pageQuery(page)),
-    getHerdHealth: () => request('/api/medical/herd-health'),
+    getAvailability: async (horseId) => readAvailability(await request(`/api/horses/${positiveId(horseId)}/training-availability`), horseId),
+    getHerdHealth: async () => readHerd(await request('/api/medical/herd-health')),
   };
 }

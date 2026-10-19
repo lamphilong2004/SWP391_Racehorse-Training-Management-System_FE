@@ -34,3 +34,18 @@ it('keeps a failed save editable and cancels without submitting', async () => {
   expect(onCancel).toHaveBeenCalledOnce();
   expect(onSave).toHaveBeenCalledOnce();
 });
+
+it('sends normalized strings at the exact approved length boundaries', async () => {
+  const onSave = vi.fn().mockResolvedValue(undefined);
+  render(<TreatmentPlanEditor initial={{ treatmentMedicationInstructions: ' Protocol ', restInstructions: ' ' + 'r'.repeat(100) + ' ', careInstructions: ' ' + 'c'.repeat(2000) + ' ',
+    groomTasks: [{ assignedGroomUserId: 6, instruction: ' ' + 'i'.repeat(2000) + ' ', scheduledSlot: ' ' + 's'.repeat(50) + ' ', taskDate: '2026-10-19' }],
+  }} onSave={onSave} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Save treatment plan' }));
+  await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
+  const payload = onSave.mock.calls[0][0];
+  expect(payload.treatmentMedicationInstructions).toBe('Protocol');
+  expect(payload.restInstructions).toHaveLength(100);
+  expect(payload.careInstructions).toHaveLength(2000);
+  expect(payload.groomTasks[0].instruction).toHaveLength(2000);
+  expect(payload.groomTasks[0].scheduledSlot).toHaveLength(50);
+});

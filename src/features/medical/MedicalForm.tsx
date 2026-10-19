@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { AlertBanner, Button, SelectField, TextAreaField, TextField } from '../../design-system';
 import { medicalErrorMessage } from './errors';
+import { validDate } from './groomService';
 
 export interface FormField { name: string; label: string; required?: boolean; type?: string; options?: string[]; maxLength?: number }
 export function MedicalForm({ fields, initial = {}, submitLabel, onSave, onCancel }: {
@@ -12,23 +13,25 @@ export function MedicalForm({ fields, initial = {}, submitLabel, onSave, onCance
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [result, setResult] = useState<{ error?: string; success?: string }>({});
   const [pending, setPending] = useState(false);
+  const submitting = useRef(false);
   return <form className="medical-form" noValidate onSubmit={async (event) => {
     event.preventDefault();
-    if (pending) return;
+    if (submitting.current) return;
     const validation: Record<string, string> = {};
     fields.forEach((field) => {
       const value = values[field.name]?.trim() ?? '';
       if (field.required && !value) validation[field.name] = field.label + ' is required';
       if (field.maxLength && value.length > field.maxLength) validation[field.name] = `${field.label} must be ${field.maxLength} characters or fewer`;
       if (field.type === 'number' && value && (!Number.isSafeInteger(Number(value)) || Number(value) < 1)) validation[field.name] = 'Enter a positive numeric ID';
-      if (field.type === 'date' && value && !/^\d{4}-\d{2}-\d{2}$/.test(value)) validation[field.name] = 'Enter a valid date';
+      if (field.type === 'date' && value && !validDate(value)) validation[field.name] = 'Enter a valid date';
+      if (field.options && value && !field.options.includes(value)) validation[field.name] = 'Choose a valid option';
     });
     setErrors(validation); setResult({});
     if (Object.keys(validation).length) return;
-    setPending(true);
+    submitting.current = true; setPending(true);
     try { await onSave(Object.fromEntries(Object.entries(values).map(([key, value]) => [key, value.trim()]))); setResult({ success: 'Saved successfully' }); }
     catch (error) { setResult({ error: medicalErrorMessage(error, 'Unable to save. Please retry.') }); }
-    finally { setPending(false); }
+    finally { submitting.current = false; setPending(false); }
   }}>
     {fields.map((field) => field.options ?
       <SelectField key={field.name} label={field.label} options={field.options.map((value) => ({ value, label: value }))} placeholder="Select…" value={values[field.name] ?? ''} error={errors[field.name]} disabled={pending} onChange={(event) => setValues({ ...values, [field.name]: event.target.value })} /> :

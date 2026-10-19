@@ -5,7 +5,7 @@ import { ManagementDashboardEntry, ManagementAuditEntry } from './ManagementEntr
 import { AccountPage } from '../pages/AccountPage';
 import { ProgramCreationPage, BaselinePage, CreateSessionPage, SessionDetailPage, RestrictionsPage, LiveMonitoringPage, SessionEvaluationPage, PerformancePage, GroomTodayPage, PrecheckPage,
   RiderDashboardPage, RiderAssignmentsPage, RiderAssignmentPage, RiderSessionPage, RiderFeedbackPage, RiderHistoryPage,
-  TreatmentTasksPage, CaseListPage, CreateCasePage, CaseDetailPage, TreatmentPlanPage, HerdHealthPage } from './DeferredPages';
+  CaseListPage, CreateCasePage, CaseDetailPage, TreatmentPlanPage, HerdHealthPage } from './DeferredPages';
 import { HorseManagementLayout } from '../features/horses/shared/HorseManagementLayout';
 import { HorseListPage, HorseProfilePage } from '../features/horses/HorsePages';
 import { RegisterHorsePage } from '../features/horses/create/RegisterHorsePage';
@@ -13,8 +13,9 @@ import { PedigreeOwnershipPage } from '../features/horses/create/PedigreeOwnersh
 import { PendingActivationPage } from '../features/horses/activation/PendingActivationPage';
 import { PublicOnly, RequireAuth } from './RequireAuth';
 import { ROUTES } from './routePaths';
-import { Core046Route } from '../features/core046/auth';
-import { IncidentLayout, IncidentListRoute, IncidentDetailRoute } from './IncidentRoutes';
+import { IncidentAccess } from '../features/medical/Incidents';
+import { GroomTreatmentAccess } from '../features/medical/GroomTasks';
+import { MedicalSummaryAccess } from '../features/medical/MedicalSummary';
 import { MedicalAccess } from '../features/medical/runtime';
 import { AssignedProgramsPage } from '../features/training/assigned/AssignedProgramsPage';
 import { TrainingCalendarPage } from '../features/training/calendar/TrainingCalendarPage';
@@ -25,12 +26,11 @@ import { registrationRoutes } from '../features/registration/routes';
 import { ROLE_CODES, type RoleCode } from '../shared/auth/roles';
 
 /** Route integration only. Owners: CORE-022 program list, CORE-041 templates, CORE-031 monitoring,
- * CORE-036 medical summary, CORE-020 restrictions, CORE-050 accounts, CORE-052 audit, CORE-056 Owner,
+ * CORE-020 restrictions, CORE-050 accounts, CORE-052 audit, CORE-056 Owner,
  * CORE-054 notifications. DEC-009 requires the minimum Owner workspace; it is not deferred. */
 const pendingScreens: { path: string; title: string; section: string; roles: RoleCode[] }[] = [
   { path: ROUTES.trainingPrograms, title: 'Horse Training Programs', section: 'Training', roles: ['HEAD_TRAINER'] },
   { path: ROUTES.programTemplates, title: 'Program Templates', section: 'Training', roles: ['HEAD_TRAINER'] },
-  { path: ROUTES.medicalSummary, title: 'Medical Summary', section: 'Medical', roles: ['HEAD_TRAINER'] },
   { path: ROUTES.staffUsers, title: 'Staff & Users', section: 'Administration', roles: ['CLUB_MANAGER'] },
   { path: ROUTES.rolesPermissions, title: 'Roles & Permissions', section: 'Administration', roles: ['CLUB_MANAGER'] },
   { path: ROUTES.notifications, title: 'Notifications', section: 'Workspace', roles: [...ROLE_CODES] },
@@ -127,11 +127,11 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
     { path: ROUTES.medicalCaseDetail, element: <RequireAuth><MedicalAccess><CaseDetailPage /></MedicalAccess></RequireAuth> },
     { path: ROUTES.treatmentPlan, element: <RequireAuth><MedicalAccess><TreatmentPlanPage /></MedicalAccess></RequireAuth> },
     { path: ROUTES.herdHealth, element: <RequireAuth><MedicalAccess><HerdHealthPage /></MedicalAccess></RequireAuth> },
-    { element: <RequireAuth><Core046Route allowedRoles={['GROOM']} /></RequireAuth>, children: [{ path: ROUTES.treatmentTasks, element: <TreatmentTasksPage /> }] },
-    { element: <RequireAuth><IncidentLayout /></RequireAuth>, children: [
-      { path: ROUTES.incidents, element: <IncidentListRoute /> },
-      { path: ROUTES.incidentDetail, element: <IncidentDetailRoute /> },
-    ] },
+    { path: ROUTES.medicalSummary, element: <RequireAuth><MedicalSummaryAccess /></RequireAuth> },
+    { path: ROUTES.careTasks, element: <RequireAuth><GroomTreatmentAccess /></RequireAuth> },
+    { path: ROUTES.treatmentTasks, element: <Navigate to={ROUTES.careTasks} replace /> },
+    { path: ROUTES.incidents, element: <RequireAuth><IncidentAccess /></RequireAuth> },
+    { path: ROUTES.incidentDetail, element: <RequireAuth><IncidentAccess detail /></RequireAuth> },
     // Sidebar destinations whose owning CORE screen is not integrated yet: explicit unavailable state instead of a 404.
     ...pendingScreens.map(({ path, title, section, roles }) => ({ path, element: <RequireAuth allowedRoles={roles}><OwnerHandoffPage title={title} section={section} /></RequireAuth> })),
     { path: '*', element: <RequireAuth><NotFoundPage /></RequireAuth> },

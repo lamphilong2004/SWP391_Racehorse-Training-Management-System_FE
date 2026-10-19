@@ -34,8 +34,8 @@ describe('router', () => {
       '/training/sessions/:id/evaluation', '/training/performance', '/groom/today', '/training/my-sessions/:id/pre-check',
       '/rider', '/rider/assignments', '/rider/assignments/:id', '/rider/assignments/:id/start', '/rider/sessions/:id/active', '/rider/sessions/:id/feedback', '/rider/history',
       '/training/my-sessions', '/training/my-rides', '/training/rides/assigned', '/training/rides/history', '/training/rides/:id', '/training/rides/:id/start', '/training/rides/:id/execute', '/training/rides/:id/feedback',
-      '/rides', '/rides/assignments', '/rides/history', '/rides/report-issue', '/medical', '/medical/cases/new', '/medical/cases/:caseId', '/medical/cases/:caseId/treatment-plan', '/medical/herd-health', undefined, undefined,
-      '/training/programs', '/training/templates', '/medical/summary',
+      '/rides', '/rides/assignments', '/rides/history', '/rides/report-issue', '/medical', '/medical/cases/new', '/medical/cases/:caseId', '/medical/cases/:caseId/treatment-plan', '/medical/herd-health', '/medical/summary', '/care/tasks', '/medical/my-tasks', '/incidents', '/incidents/:incidentId',
+      '/training/programs', '/training/templates',
       '/admin/users', '/admin/roles', '/notifications', '*']);
     const router = renderAt('/dev/components', false);
     expect(await screen.findByRole('heading', { name: 'Sign in to Racehorse Ops' })).toBeInTheDocument();
