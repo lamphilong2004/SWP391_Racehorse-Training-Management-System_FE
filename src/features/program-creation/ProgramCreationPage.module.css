@@ -1,0 +1,25 @@
+.page, .stack { display: flex; flex-direction: column; gap: var(--space-xl); }
+.formBody { border: 0; padding: 0 0 var(--space-xl); margin: 0; min-width: 0; }
+.heading, .footer, .context, .row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-lg); }
+.heading p, .muted { color: var(--color-text-secondary); }
+.context { justify-content: flex-start; padding: var(--space-lg); background: var(--color-bg-surface); border: 1px solid var(--color-border-default); border-radius: var(--radius-md); flex-wrap: wrap; }
+.columns { display: grid; grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); gap: var(--space-xl); align-items: start; }
+.table { overflow-x: auto; }
+.table table { width: 100%; border-collapse: collapse; }
+.table th, .table td { padding: var(--space-md); text-align: left; border-bottom: 1px solid var(--color-border-default); vertical-align: top; }
+.table th { background: var(--color-bg-subtle); color: var(--color-text-secondary); }
+.horseChoice { display: flex; align-items: center; gap: var(--space-sm); cursor: pointer; }
+.horseChoice small { display: block; margin-top: var(--space-xs); }
+.horseChoice input { accent-color: var(--color-primary-600); }
+.horseSummary { width: 100%; max-width: none; }
+.profileFacts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-lg); }
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg); }
+.candidates { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-xl); }
+.choice { padding: var(--space-lg); border: 1px solid var(--color-border-default); border-radius: var(--radius-md); }
+.selected { border-color: var(--color-primary-600); background: var(--color-primary-50); }
+.choice h3, .choice p { margin-bottom: var(--space-sm); }
+.footer { border-top: 1px solid var(--color-border-default); padding-top: var(--space-xl); }
+.error { color: var(--color-danger-600); }
+.summary { white-space: pre-wrap; overflow-wrap: anywhere; }
+.reasons { padding-left: var(--space-xl); color: var(--color-text-secondary); }
+@media (max-width: 1100px) { .columns { grid-template-columns: minmax(0, 1fr); } .candidates { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

@@ -1,0 +1,16 @@
+node_modules
+dist
+dist-staging*
+.vercel
+coverage
+*.local
+.env
+.env.*
+!.env.example
+.vite
+*.tsbuildinfo
+.DS_Store
+.idea
+.vscode/*
+!.vscode/extensions.json
+npm-debug.log*

@@ -1,0 +1,25 @@
+.shell {
+  display: flex;
+  height: 100vh;
+  min-width: 1280px;
+  background: var(--color-bg-page);
+}
+
+/* Desktop viewport width includes the browser scrollbar; the containing block does not. */
+@media (min-width: 1280px) {
+  .shell { min-width: 0; }
+}
+
+.main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.content {
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-2xl);
+  overflow-y: auto;
+}

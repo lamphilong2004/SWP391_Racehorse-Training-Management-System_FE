@@ -1,0 +1,17 @@
+.heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-xl);
+  margin-bottom: var(--space-xl);
+}
+
+.heading h1,
+.heading p {
+  margin: 0;
+}
+
+.heading p {
+  margin-top: var(--space-sm);
+  color: var(--color-text-secondary);
+}

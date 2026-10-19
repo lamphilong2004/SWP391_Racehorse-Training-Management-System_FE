@@ -1,0 +1,38 @@
+CORE-056 OWNER FE — APPROVED DELIVERY SCOPE
+
+PR12 branch: delivery/CORE-056-owner-fe; dev base f7c290d.
+The Owner/History integration source was delivered separately through PR10, merge7f44ca4. Current FE Integration baseline is9fb747d. This PR ports only the Owner feature plus its route mounting into dev; no Integration history, shared auth/navigation, CORE017 or other CORE changes are included.
+
+Scope and Figma
+- My Horses299:4305; Profile300:4380; Health301:4447; Training303:4522, file tm7dpgAQbHReZ7tlQeQJlc.
+- Four read-only screens using canonical AppShell, design-system components, shared AuthProvider/authSession and requestApi.
+- Preserve the three Profile/Health/Training tabs and supported data/interaction behavior.
+- Trial-run videos, including its placeholder, is explicitly deferred/excluded by the Task Playbook, DEC009 and current Leader instruction. The panel and unused local style have been removed. No video endpoint, fake data or replacement control is added. This approved scope exclusion takes precedence over the illustrative Figma video panel.
+- Financial Summary and Race History remain explicitly outside this increment; no fake destinations.
+
+Routes and role boundary
+- /owner/horses and /owner/horses/:horseId?tab=profile|health|training; invalid ids/tabs fail locally.
+- Legacy /my-horses and /my-horses/:id redirect to canonical paths while preserving query/hash.
+- Dev RequireAuth is auth-only. OwnerPage requires ACTIVE+HORSE_OWNER before data reads; legacy aliases enforce that same boundary before redirecting. Shared auth is not modified.
+- Existing My Horses navigation is reused. Shared shell, active menu matching and the separate login return-query proposal remain with their owners.
+
+Approved API mapping
+CORE004 docs/api/flow1-horse.openapi.yaml, original pin f8e7895ba4ad4816f951c56d6480fd01178f1bc5, merged via f55b9e7 and retained on BEdev9dc594d:
+https://github.com/lamphilong2004/SWP391_Racehorse-Training-Management-System_BE/blob/f55b9e7ae5836d5ecbfaf71f269050cd67ed737d/docs/api/flow1-horse.openapi.yaml
+- GET /api/owner/horses returns Envelope.data ARRAY<OwnerHorseCard>; no invented pagination/filter/ownerId or staff all-horses request.
+- GET /api/owner/horses/{id}/profile authorizes the horse before summary requests; only myOwnership is projected.
+- GET /api/owner/horses/{id}/health-summary uses allowlisted status/readiness/review fields and at most12 weights.
+- GET /api/owner/horses/{id}/training-summary uses allowlisted current-program/count/session summaries.
+- API-only application binding. Errors, malformed responses,401/403/404 and network failure never select sample transport or partial successful detail.
+- Clinical findings, diagnosis, treatments, prescriptions, restriction reasons, telemetry, raw feedback and other-owner data are not exposed.
+- Search is client-side within the returned owned list; q is only an FE view parameter, never an API filter.
+
+Missing data / metrics
+The Leader explicitly accepts truthful unavailable states when Backend lacks a contract-supported projection. Preserve those states without claiming absent data is zero, deriving progress percentages, or enriching from staff/clinical endpoints. Keep raw completed/planned counts only when returned; do not change their meaning.
+Unsupported list program/next-session, profile stable/grandparents, trainer name, phase ordinal/total, session focus/distance, trainer update and next-session projections require approved contract changes before adding data. Evaluation-label vocabulary and business metric formulas remain contract-owner decisions. These missing fields do not block the already-authorized screen mounting, and no design/contract extension is self-approved.
+
+Fixture and verification limits
+Sample services remain explicit test injections using the canonical source only. No runtime source switch, second store, automatic seed or API-error fallback is introduced. Sample isolation checks are fixture evidence, not SQL authorization proof.
+Prior source verification: author100/100 and independent19/19 route checks on fc2c3fd. This video/documentation-only remediation uses targeted tests/build; it does not repeat or relabel the earlier100/716 suites.
+Final-HEAD GitHub approval, Hoang UI consistency review and resolved review conversations are required before Ready/merge. No self-approval, branch-rule bypass or automatic CORE Done claim.
+Real Backend/SQL/RBAC for Owner: NOT VERIFIED; the four Owner endpoints are not yet published. Existing historical source, screenshots and test evidence remain in their original handoff locations outside the feature diff.

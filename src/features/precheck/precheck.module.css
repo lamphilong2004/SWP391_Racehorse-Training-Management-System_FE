@@ -1,0 +1,21 @@
+.stack { display: grid; gap: var(--space-xl); }
+.header, .actions { display: flex; align-items: center; justify-content: space-between; gap: var(--space-lg); flex-wrap: wrap; }
+.heading { margin: 0 0 var(--space-sm); font-size: 24px; }
+.muted { color: var(--color-text-secondary); }
+.columns { display: grid; grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); gap: var(--space-xl); align-items: start; }
+.metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-lg); }
+.item { border-bottom: 1px solid var(--color-border-default); padding: var(--space-lg) 0; display: grid; gap: var(--space-sm); }
+.abnormal { background: var(--color-danger-50); border-radius: var(--radius-sm); padding: var(--space-lg); }
+.session { display: flex; gap: var(--space-xl); align-items: center; padding: var(--space-lg) 0; border-bottom: 1px solid var(--color-border-default); flex-wrap: wrap; }
+.sessionInfo { flex: 1; min-width: 220px; }
+.sessionInfo h3 { margin: 0 0 var(--space-sm); }
+.summary { display: grid; gap: var(--space-lg); }
+.link { color: var(--color-primary-600); }
+@media (max-width: 900px) { .columns, .metrics { grid-template-columns: 1fr; } }
+/* Figma 248:667: one compact row per check, label and hint on the left, Normal / Abnormal segmented on the right. */
+.checkRow { position: relative; padding-right: 252px; min-height: 40px; }
+.checkRow [role="radiogroup"] { position: absolute; top: 0; right: 0; width: 236px; gap: 0; }
+.checkRow [role="radiogroup"] > label { padding: 6px var(--space-md); border-radius: 0; }
+.checkRow [role="radiogroup"] > label:first-child { border-radius: var(--radius-md) 0 0 var(--radius-md); }
+.checkRow [role="radiogroup"] > label:last-child { border-radius: 0 var(--radius-md) var(--radius-md) 0; margin-left: -1px; }
+.observation label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
