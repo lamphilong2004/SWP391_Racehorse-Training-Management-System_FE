@@ -1,0 +1,39 @@
+CORE-017 SCOPED HANDOFF — LOCAL IMPLEMENTATION
+
+Branch feat/CORE-017-horse-ht-fe. Exact source/base HEAD0b3aa42ac04960d6cc9b763e5b70426fe1451c4c (official Integration snapshot). This is intentionally a stacked feature worktree so existing screens/contributors are preserved; it is NOT based on current FE devf7c290d. Do not merge the Integration branch wholesale or claim a clean dev PR. Source remains uncommitted pending independent checkpoint/base coordination.
+
+Existing versus new:
+- Existing Horse List, onboarding forms, pedigree/owner writes, stable assignment and Pending Activation screen retained. No shared router/auth/navigation/source changes.
+- Horse Profile is extended in place, with identity/sex/age/latestWeight/lifecycle fields, actor/session-keyed resource reset, invalid-id rejection before reads, accessible URL-backed section tabs and a View Pedigree & History link.
+- History reuses /horses/:id?tab=history; no new shared route. Back link uses ?tab=overview. New Origin/Identity, pedigree tree, role-restricted ownership/stable histories and paginated non-clinical timeline.
+- Head Trainer-only readiness acknowledgement appears on existing overview. CM/Vet may read the checklist, other roles do not request it. Duplicate submits locked; 204 confirmation before success; re-read checklist; failure never claims success. No manual activation, score, assessment input, health/restriction write or readiness gating of activation.
+
+Pinned CORE-004:
+https://github.com/lamphilong2004/SWP391_Racehorse-Training-Management-System_BE/blob/f8e7895ba4ad4816f951c56d6480fd01178f1bc5/docs/api/flow1-horse.openapi.yaml
+GET /api/horses/{id}/timeline?page=N&size=20 -> PageMeta.items, newest first; preserve unknown eventType neutrally, render only time/title.
+GET /api/horses/{id}/ownerships -> Ownership[]; CM/HT only.
+GET /api/horses/{id}/stable-assignments -> StableAssignment[]; CM/HT only; no arbitrary reason shown.
+GET /api/horses/{id}/activation-status -> exactly5 mandatory items +1 recommended nonblocking review; modern id/requirement/state schema, never legacy4 item/complete DTO.
+POST /api/horses/{id}/readiness-review -> no body,204 only after successful audit persistence; repeat invocation allowed;401/403/404/500 preserved. No endpoint/enum/business state invented.
+HTTP uses shared requestApi/authSession; no API failure selects samples. Backend authorizes real assignment/RBAC.
+
+Canonical sample extension:
+Central historyService chooses the implementation, not component mock conditionals. Same canonical readSamples/saveSamples/getBusinessActor and racehorse.business-samples.v1 only. Readiness events are a feature extension horseReadinessEvents within that snapshot, not a separate store/key. Each success persists the actual authenticated actor id, horse id, timestamp and approved HEAD_TRAINER_READINESS_REVIEWED action. Preserve original registry/cases/tasks/incidents/lifecycle/availability. Failure to save rejects the operation.
+Trainer timeline is scoped by actual currentTrainer.id in assigned programs, not UI hiding. Wrong-role, inactive, unknown/missing actor and session-change reads fail closed. Ownership/stable history denied outside CM/HT. Project only allowed fields, strip clinical/private fields. Current canonical sample retains only present ownership/assignment rows; no fake prior owner/stable records are seeded. Sample timeline is empty until approved eventType/source mappings exist. Activation start is displayed from existing activatedAt separately, not manufactured as an unapproved event enum. Sample checklist is a presentation of available fields, not CORE016 SQL/activation implementation. Optional breed/sex/foaledDate are not invented as required identity fields.
+
+Figma:
+Profile200:8678; Pedigree & History200:8809; List200:8614 (existing list is not rebuilt). Canonical Card/KeyValue/Tabs/Button/AlertBanner/Loading/Empty/Error and existing AppShell reused. Pedigree arrows are the design's text glyphs, not substituted SVGs. Header/sidebar assets are existing canonical assets.
+Deviations/pending decisions: breeder, grandparent details and separate microchip are absent from this contract; unavailable/omitted states, no invented values or extra parent lookups. Timeline/pagination and readiness block fulfill explicit new functional scope but their placement, additional records and missing-data layouts need Leader/design acceptance. Existing Overview/Training widgets not supplied by approved DTOs remain outside this patch, no fake metrics. Shared nested Horses active highlight/search/notification behavior remains Integration Owner scope.
+
+Confirmed dependencies / blockers:
+1 RESOLVED: CORE004 PR9 merged into BE dev at f55b9e7ae5836d5ecbfaf71f269050cd67ed737d. The original f8e7895 contract is an ancestor and its YAML is byte-identical. This resolves contract effectiveness only, not runtime Backend/SQL/RBAC verification or open mapping decisions.
+2 Original source stack was Integration0b3aa42. The isolated candidate review/CORE-017-056-integration-gate ports ONLY the scoped Horse diff onto Integration8d73133; it does not merge the stacked branch. FE dev remains f7c290d. Integration Owner must coordinate delivery order; never absorb the whole Integration into dev through a feature PR.
+3 Canonical existing CORE013 Pending Activation API/type/sample producer still uses legacy4-item DTO. New CORE017 readiness consumer uses pinned6-item contract; no silent conversion/falsely claiming whole app aligned. Coordinate producer/Pending Activation reconciliation with Integration Owner/CORE013; shared transport untouched.
+4 Timeline eventType/source mappings remain NEEDS CLARIFICATION in pin. Backend/SQL Server/RBAC/audit runtime NOT VERIFIED. Sample review persistence is not proof of SQL audit.
+5 Shared Login currently returns pathname but drops query after anonymous deep-link login; reproduction: sign out -> /horses/7?tab=history -> sign in -> /horses/7 overview. Already-authenticated direct links and refresh retain history. Shared auth/login source unchanged; Integration Owner owns correction.
+
+Integration instructions:
+Apply only feature diff against the reviewed Integration baseline, keeping existing routes/layout/auth. No router patch is required for ?tab=history. The feature default is API-only at runtime; sample construction/selection is compiled only for MODE=test and explicit test providers remain injectable; coordinate canonical horseReadinessEvents field before shared adapter consolidation. Preserve the approved audit semantics: no readiness payload, no hard status rejection, repeated reviews allowed, failure must not show success. Do not map unknown timeline events or add clinical details.
+Test/browser artifacts and exact patch live in outputs/CORE-017, outside feature diff. Author verification only; no independent PASS/Done/real BE claim. Preserve CORE036/046/048/052 and all12 Owner source files.
+
+CURRENT REVIEW CHECKPOINT (2026-10-18): published source c4e35ab and original evidence remain unchanged. API-bound route fixture regressions exercise History, restricted ownership/stable reads, strict failure and bodyless204 readiness through the actual router. Production bundle excludes sample store and readiness sample events. Real Backend/SQL/audit persistence NOT VERIFIED. Timeline event/source mapping, ownership permission-matrix synchronization, existing CORE013 legacy checklist consumer, shared login return-query correction and design placement still need their respective owners. No shared auth/login proposal was applied.
