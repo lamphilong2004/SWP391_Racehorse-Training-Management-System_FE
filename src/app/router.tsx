@@ -4,7 +4,7 @@ import { LoginPage } from '../pages/LoginPage';
 import { LandingPage } from '../pages/LandingPage';
 import { ManagementDashboardEntry, ManagementAuditEntry } from './ManagementEntry';
 import { AccountPage } from '../pages/AccountPage';
-import { ProgramCreationPage, BaselinePage, CreateSessionPage, SessionDetailPage, RestrictionsPage, LiveMonitoringPage, SessionEvaluationPage, PerformancePage, GroomTodayPage, PrecheckPage,
+import { ProgramCreationPage, ProgramListPage, ProgramDetailPage, BaselinePage, CreateSessionPage, SessionDetailPage, RestrictionsPage, LiveMonitoringPage, SessionEvaluationPage, PerformancePage, GroomTodayPage, PrecheckPage,
   RiderDashboardPage, RiderAssignmentsPage, RiderAssignmentPage, RiderSessionPage, RiderFeedbackPage, RiderHistoryPage,
   CaseListPage, CreateCasePage, CaseDetailPage, TreatmentPlanPage, HerdHealthPage } from './DeferredPages';
 import { HorseManagementLayout } from '../features/horses/shared/HorseManagementLayout';
@@ -30,7 +30,6 @@ import { ROLE_CODES, type RoleCode } from '../shared/auth/roles';
  * CORE-020 restrictions, CORE-050 accounts, CORE-052 audit, CORE-056 Owner,
  * CORE-054 notifications. DEC-009 requires the minimum Owner workspace; it is not deferred. */
 const pendingScreens: { path: string; title: string; section: string; roles: RoleCode[] }[] = [
-  { path: ROUTES.trainingPrograms, title: 'Horse Training Programs', section: 'Training', roles: ['HEAD_TRAINER'] },
   { path: ROUTES.programTemplates, title: 'Program Templates', section: 'Training', roles: ['HEAD_TRAINER'] },
   { path: ROUTES.staffUsers, title: 'Staff & Users', section: 'Administration', roles: ['CLUB_MANAGER'] },
   { path: ROUTES.rolesPermissions, title: 'Roles & Permissions', section: 'Administration', roles: ['CLUB_MANAGER'] },
@@ -96,7 +95,7 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
     { path: '/training/exercise-library', element: <RequireAuth allowedRoles={['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER', 'WORK_RIDER']}><ExerciseLibraryPage /></RequireAuth> },
     { path: '/training/exercise-library/new', element: <RequireAuth allowedRoles={['TRAINER']}><ExerciseLibraryPage /></RequireAuth> },
     { path: ROUTES.exerciseLibrary, element: <RequireAuth allowedRoles={['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER', 'WORK_RIDER']}><ExerciseLibraryPage /></RequireAuth> },
-    { path: '/training/programs/:id', element: <RequireAuth allowedRoles={['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER', 'GROOM']}><OwnerHandoffPage title="Program details" /></RequireAuth> },
+    { path: '/training/programs/:id', element: <RequireAuth allowedRoles={['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER', 'GROOM']}><ProgramDetailPage /></RequireAuth> },
     { path: '/training/session/:id', element: <RequireAuth allowedRoles={['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER']}><SessionDetailPage /></RequireAuth> },
     { path: '/training/schedule/session/new', element: <RequireAuth allowedRoles={['TRAINER']}><CreateSessionPage /></RequireAuth> },
     { path: ROUTES.sessionEvaluation, element: <RequireAuth><SessionEvaluationPage /></RequireAuth> },
@@ -134,6 +133,7 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
     { path: ROUTES.incidents, element: <RequireAuth><IncidentAccess /></RequireAuth> },
     { path: ROUTES.incidentDetail, element: <RequireAuth><IncidentAccess detail /></RequireAuth> },
     // Sidebar destinations whose owning CORE screen is not integrated yet: explicit unavailable state instead of a 404.
+    { path: ROUTES.trainingPrograms, element: <RequireAuth allowedRoles={['HEAD_TRAINER']}><ProgramListPage /></RequireAuth> },
     ...pendingScreens.map(({ path, title, section, roles }) => ({ path, element: <RequireAuth allowedRoles={roles}><OwnerHandoffPage title={title} section={section} /></RequireAuth> })),
     { path: '*', element: <RequireAuth><NotFoundPage /></RequireAuth> },
   ];
