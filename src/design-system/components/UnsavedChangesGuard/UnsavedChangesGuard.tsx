@@ -3,10 +3,15 @@ import { useBeforeUnload, useBlocker } from 'react-router';
 import { Button } from '../Button/Button';
 import { Modal } from '../Overlay/Modal';
 
-export interface UnsavedChangesGuardProps { dirty: boolean }
+export interface UnsavedChangesGuardProps {
+  dirty: boolean;
+  /** Allow query-only navigation on the same route (tabs/views kept mounted by the screen). Defaults to false. */
+  allowSameRoute?: boolean;
+}
 /** One per editable route inside a data router. Memory-only; never blocks session expiry/sign-out to /login. */
-export function UnsavedChangesGuard({ dirty }: UnsavedChangesGuardProps) {
-  const blocker = useBlocker(({ nextLocation }) => dirty && nextLocation.pathname !== '/login');
+export function UnsavedChangesGuard({ dirty, allowSameRoute = false }: UnsavedChangesGuardProps) {
+  const blocker = useBlocker(({ currentLocation, nextLocation }) => dirty && nextLocation.pathname !== '/login'
+    && !(allowSameRoute && nextLocation.pathname === currentLocation.pathname));
   useEffect(() => {
     if (!dirty && blocker.state === 'blocked') blocker.reset();
   }, [dirty, blocker]);

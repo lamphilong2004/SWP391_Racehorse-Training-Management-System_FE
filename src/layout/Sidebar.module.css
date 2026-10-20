@@ -90,3 +90,23 @@
 .active .itemIcon {
   color: var(--color-sidebar-text-active, var(--color-primary-600));
 }
+
+.item:focus-visible { outline: 2px solid var(--color-sidebar-text-active, var(--color-border-focus)); outline-offset: -2px; }
+
+/* Design System v2 §E: below 1024px the sidebar is a drawer opened from the Header menu button. */
+@media (max-width: 1023px) {
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 50;
+    box-shadow: var(--elev-3);
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform var(--motion-panel, 0ms) var(--motion-ease-out, ease-out), visibility 0s linear var(--motion-panel, 0ms);
+  }
+  .open {
+    transform: none;
+    visibility: visible;
+    transition: transform var(--motion-panel, 0ms) var(--motion-ease-out, ease-out);
+  }
+}

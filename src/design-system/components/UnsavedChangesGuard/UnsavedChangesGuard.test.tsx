@@ -48,3 +48,16 @@ it('does not write draft data to any browser storage', async () => {
   await userEvent.click(screen.getByRole('link', { name: 'Leave form' })); await userEvent.click(await screen.findByRole('button', { name: 'Continue editing' }));
   expect(write).not.toHaveBeenCalled(); write.mockRestore();
 });
+it('can allow query-only view changes on the same route while still guarding a route leave', async () => {
+  function Form() {
+    return <><UnsavedChangesGuard dirty allowSameRoute /><input aria-label="Draft input" defaultValue="Retained" />
+      <Link to="/edit?view=history">History view</Link><Link to="/other">Leave form</Link></>;
+  }
+  const router = createMemoryRouter([{ path: '/edit', Component: Form }, { path: '/other', element: <h1>Destination</h1> }], { initialEntries: ['/edit'] });
+  render(<RouterProvider router={router} />);
+  await userEvent.click(screen.getByRole('link', { name: 'History view' }));
+  expect(router.state.location.search).toBe('?view=history'); expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole('link', { name: 'Leave form' }));
+  expect(await screen.findByRole('dialog', { name: 'Unsaved changes' })).toBeInTheDocument();
+  expect(router.state.location.pathname).toBe('/edit');
+});
