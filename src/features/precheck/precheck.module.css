@@ -19,3 +19,12 @@
 .checkRow [role="radiogroup"] > label:first-child { border-radius: var(--radius-md) 0 0 var(--radius-md); }
 .checkRow [role="radiogroup"] > label:last-child { border-radius: 0 var(--radius-md) var(--radius-md) 0; margin-left: -1px; }
 .observation label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Design System v2 §I narrow web: text links are 44px touch targets; check rows keep the segmented control usable. */
+@media (max-width: 767px) {
+  .link { display: inline-flex; align-items: center; min-height: 44px; }
+  .sessionInfo { min-width: 0; flex-basis: 100%; }
+  .checkRow { padding-right: 0; }
+  .checkRow [role="radiogroup"] { position: static; width: 100%; margin-top: var(--space-sm); }
+  .checkRow [role="radiogroup"] > label { min-height: 44px; flex: 1; }
+}
