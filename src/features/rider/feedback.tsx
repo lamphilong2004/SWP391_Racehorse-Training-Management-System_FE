@@ -1,6 +1,6 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router';
-import { AlertBanner, Button, Card, EmptyState, RadioGroup, StatusBadge, TextAreaField } from '../../design-system';
+import { AlertBanner, Button, Card, EmptyState, RadioGroup, StatusBadge, TextAreaField, UnsavedChangesGuard } from '../../design-system';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { ApiError } from '../../shared/auth/authApi';
 import type { RiderApi } from './api';
@@ -41,8 +41,10 @@ function Feedback({ id, api }: { id: number; api: RiderApi }) {
     } finally { pending.current = false; setBusy(false); }
   }
   const selected = existing?.responses ?? responses;
+  // Feedback text stays in memory only; leaving before the server confirms it asks first.
+  const dirty = !saved && !existing && !session.hasRiderFeedback && Object.values(responses).some((text) => Boolean(text?.trim()));
   function update(key: keyof RiderFeedbackInput['responses'], text: string) { setResponses((old) => ({ ...old, [key]: text })); }
-  return <div className={styles.stack}><Link className={styles.link} to={`/rider/assignments/${id}`}>← Assignment</Link><h1 className={styles.heading}>Rider Feedback</h1><p className={styles.muted}>Submit when safely able — from the trackside workstation or office.</p>{!isTerminal(session.status) ? <AlertBanner type="warning" title="Feedback is not available yet">Finish the session or wait for an interrupted outcome. Current status: {session.status}.</AlertBanner> : <div className={styles.columns}><Card><form onSubmit={submit} className={styles.stack}>
+  return <div className={styles.stack}><UnsavedChangesGuard dirty={dirty} /><Link className={styles.link} to={`/rider/assignments/${id}`}>← Assignment</Link><h1 className={styles.heading}>Rider Feedback</h1><p className={styles.muted}>Submit when safely able — from the trackside workstation or office.</p>{!isTerminal(session.status) ? <AlertBanner type="warning" title="Feedback is not available yet">Finish the session or wait for an interrupted outcome. Current status: {session.status}.</AlertBanner> : <div className={styles.columns}><Card><form onSubmit={submit} className={styles.stack}>
     <RadioGroup label={interrupted ? 'Horse response before the stop' : 'How did he respond?'} value={selected.horseResponse ?? ''} onChange={(text) => update('horseResponse', text)} disabled={locked} options={['Strong', 'Normal', 'Sluggish'].map((text) => ({ value: text, label: text }))} />
     <RadioGroup label={interrupted ? 'Balance and handling before the stop' : 'Balance and handling'} value={selected.balance ?? ''} onChange={(text) => update('balance', text)} disabled={locked} options={['Good', 'Some issues', 'Difficult'].map((text) => ({ value: text, label: text }))} />
     <TextAreaField label="Breathing observations" value={selected.breathing ?? ''} disabled={locked} maxLength={500} onChange={(event) => update('breathing', event.target.value)} />

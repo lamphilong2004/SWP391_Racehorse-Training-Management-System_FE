@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { flushSync } from 'react-dom';
 import { useNavigate, useParams } from 'react-router';
-import { AlertBanner, Button, Card, StatusBadge, ErrorState, Icon, PhotoAttachmentTile, SelectField, TextField } from '../../../design-system';
+import { AlertBanner, Button, Card, StatusBadge, ErrorState, Icon, PhotoAttachmentTile, SelectField, TextField, DesignSystemScope, UnsavedChangesGuard, focusFirstInvalid } from '../../../design-system';
 import { ApiRequestError } from '../api/horsesApi';
 import { useHorsesApi } from '../api/HorsesApiContext';
 import { useBreadcrumb } from '../shared/HorseManagementLayout';
@@ -27,7 +28,12 @@ interface PendingPhoto {
  * POST /api/horses, then uploads the selected photos (POST /api/horses/{id}/photos, dev storage — Q-18) and continues
  * to step 2 (/horses/:id/edit). Health Status and Training Availability are never set here.
  */
+/** Design System v2 scope for this CORE-013 screen; the shared horse layout stays owner-neutral. */
 export function RegisterHorsePage() {
+  return <DesignSystemScope><RegisterHorsePageContent /></DesignSystemScope>;
+}
+
+function RegisterHorsePageContent() {
   const api = useHorsesApi();
   const navigate = useNavigate();
   const editId = Number(useParams().id);
@@ -38,6 +44,10 @@ export function RegisterHorsePage() {
   useBreadcrumb([{ label: 'Horses', to: '/horses' }, { label: editing ? 'Edit identity' : 'Register Horse' }]);
 
   const [values, setValues] = useState<Values>(EMPTY);
+  // Loaded identity in edit mode; the form is dirty only when the user changed it (memory-only, never stored).
+  const [baseline, setBaseline] = useState<Values>(EMPTY);
+  const [saved, setSaved] = useState(false);
+  const form = useRef<HTMLFormElement>(null);
   const [customSex, setCustomSex] = useState(false), [customBreed, setCustomBreed] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const [formError, setFormError] = useState<string>();
@@ -48,7 +58,7 @@ export function RegisterHorsePage() {
   useEffect(() => {
     if (!editing) return;
     let active = true;
-    api.getHorse(editId).then((horse) => { if (active) { country.current = horse.countryOfOrigin; setValues({ name: horse.name, horseCode: horse.horseCode, foaledDate: horse.foaledDate ?? '', sex: horse.sex ?? '', breed: horse.breed ?? '', registrationNo: horse.registrationNo ?? '' }); setCustomSex(Boolean(horse.sex && !SEX_OPTIONS.some((option) => option.value === horse.sex))); setCustomBreed(Boolean(horse.breed && !BREED_OPTIONS.some((option) => option.value === horse.breed))); setLoading(false); } }, (error: unknown) => { if (active) { setFormError(error instanceof Error ? error.message : 'Horse unavailable.'); } });
+    api.getHorse(editId).then((horse) => { if (active) { country.current = horse.countryOfOrigin; const loaded = { name: horse.name, horseCode: horse.horseCode, foaledDate: horse.foaledDate ?? '', sex: horse.sex ?? '', breed: horse.breed ?? '', registrationNo: horse.registrationNo ?? '' }; setValues(loaded); setBaseline(loaded); setCustomSex(Boolean(horse.sex && !SEX_OPTIONS.some((option) => option.value === horse.sex))); setCustomBreed(Boolean(horse.breed && !BREED_OPTIONS.some((option) => option.value === horse.breed))); setLoading(false); } }, (error: unknown) => { if (active) { setFormError(error instanceof Error ? error.message : 'Horse unavailable.'); } });
     return () => { active = false; };
   }, [api, editId, editing, loadAttempt]);
 
@@ -87,7 +97,7 @@ export function RegisterHorsePage() {
     }
     setErrors(missing);
     setFormError(undefined);
-    if (Object.keys(missing).length > 0) return;
+    if (Object.keys(missing).length > 0) { focusFirstInvalid(form.current); return; }
 
     pending.current = true; setSaving(true);
     try {
@@ -104,6 +114,8 @@ export function RegisterHorsePage() {
           photoFailed = true;
         }
       }
+      // Server confirmed the save: release the unsaved-changes guard before leaving.
+      flushSync(() => setSaved(true));
       navigate(`/horses/${horse.id}${editing ? '' : '/edit'}`, { state: { photoUploadFailed: photoFailed } });
     } catch (e) {
       if (e instanceof ApiRequestError) {
@@ -112,7 +124,7 @@ export function RegisterHorsePage() {
           if (d.field && d.field in EMPTY) fieldErrors[d.field as Field] = e.status === 409 ? e.message : `${labelOf(d.field as Field)} ${d.message}.`;
         }
         setErrors(fieldErrors);
-        if (Object.keys(fieldErrors).length === 0) setFormError(e.message);
+        if (Object.keys(fieldErrors).length === 0) setFormError(e.message); else focusFirstInvalid(form.current);
       } else {
         setFormError('The horse could not be saved. Please try again.');
       }
@@ -121,8 +133,11 @@ export function RegisterHorsePage() {
     }
   };
 
+  const dirty = !saved && (photos.length > 0 || (Object.keys(EMPTY) as Field[]).some((field) => values[field] !== baseline[field]));
+
   return (
-    <form className={styles.page} onSubmit={submit} noValidate>
+    <form ref={form} className={styles.page} onSubmit={submit} noValidate>
+      <UnsavedChangesGuard dirty={dirty} />
       <button type="button" className={styles.back} onClick={() => navigate('/horses')}>{'←  Back to Horses'}</button>
 
       <div className={styles.titleRow}>

@@ -1,0 +1,47 @@
+[
+  {
+    "name": "First Tab reaches the visible skip link",
+    "pass": true,
+    "detail": "{\"text\":\"Skip to main content\",\"visible\":true}"
+  },
+  {
+    "name": "Skip link moves focus to main",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "Keyboard focus has a visible outline in v2 content",
+    "pass": true,
+    "detail": "{\"tag\":\"A\",\"outline\":\"solid\",\"width\":\"2px\"}"
+  },
+  {
+    "name": "Navy sidebar: idle links #CBD5E1, single active link white on #1D3A69",
+    "pass": true,
+    "detail": "{\"bg\":\"rgb(16, 27, 50)\",\"idle\":\"rgb(203, 213, 225)\",\"active\":\"rgb(255, 255, 255)\",\"activeBg\":\"rgb(29, 58, 105)\"}"
+  },
+  {
+    "name": "Menu button opens the navigation drawer",
+    "pass": true,
+    "detail": "{\"left\":0,\"visibility\":\"visible\"}"
+  },
+  {
+    "name": "Escape closes the drawer and returns focus to the menu button",
+    "pass": true,
+    "detail": "{\"visibility\":\"hidden\",\"focus\":\"Open navigation\"}"
+  },
+  {
+    "name": "No horizontal document overflow at 375",
+    "pass": true,
+    "detail": "0"
+  },
+  {
+    "name": "Reduced motion sets v2 motion tokens to zero duration",
+    "pass": true,
+    "detail": "0s"
+  },
+  {
+    "name": "200% zoom equivalent (640 CSS px) has no horizontal overflow on Pending Activation",
+    "pass": true,
+    "detail": "{\"doc\":0,\"main\":0}"
+  }
+]

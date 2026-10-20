@@ -1,5 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
+import userEvent from '@testing-library/user-event';
+import { createMemoryRouter, MemoryRouter, RouterProvider } from 'react-router';
 import { ROUTES } from '../app/routePaths';
 import { ICON_NAMES } from '../design-system/icons/iconNames';
 import { ROLE_CODES, ROLE_LABELS } from '../shared/auth/roles';
@@ -122,5 +123,50 @@ describe('AppShell', () => {
     expect(screen.getByRole('link', { name: 'Staff & Users' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('button', { name: 'Notifications, 3 unread' })).toBeInTheDocument();
     expect(screen.getByText('NT')).toBeInTheDocument();
+  });
+});
+
+describe('responsive navigation drawer (Design System v2 §E)', () => {
+  function mountShell() {
+    const router = createMemoryRouter([
+      { path: '/rider', element: <AppShell user={{ fullName: 'Demo Rider', role: 'WORK_RIDER' }} breadcrumb={[{ label: 'My Rides' }]}><p>Rides</p></AppShell> },
+      { path: '/rider/assignments', element: <AppShell user={{ fullName: 'Demo Rider', role: 'WORK_RIDER' }} breadcrumb={[{ label: 'Assignments' }]}><p>Assignments page</p></AppShell> },
+    ], { initialEntries: ['/rider'] });
+    render(<RouterProvider router={router} />);
+    return router;
+  }
+
+  it('applies the v2 scope to the shell chrome and offers a skip link', () => {
+    mountShell();
+    expect(screen.getByRole('complementary', { name: 'Workspace navigation' })).toHaveAttribute('data-design-system', 'v2');
+    expect(screen.getByRole('banner')).toHaveAttribute('data-design-system', 'v2');
+    expect(screen.getByRole('link', { name: 'Skip to main content' })).toHaveAttribute('href', '#main-content');
+    expect(screen.getByRole('main')).not.toHaveAttribute('data-design-system');
+  });
+
+  it('opens from the header, closes on Escape and returns focus to the menu button', async () => {
+    mountShell();
+    const menu = screen.getByRole('button', { name: 'Open navigation' });
+    expect(menu).toHaveAttribute('aria-controls', 'app-navigation');
+    expect(menu).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.click(menu);
+    expect(screen.getByRole('button', { name: 'Close navigation', expanded: true })).toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+    expect(screen.getByRole('button', { name: 'Open navigation' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('button', { name: 'Open navigation' })).toHaveFocus();
+  });
+
+  it('closes after following a navigation link', async () => {
+    const router = mountShell();
+    await userEvent.click(screen.getByRole('button', { name: 'Open navigation' }));
+    await userEvent.click(within(screen.getByRole('navigation', { name: 'Main' })).getByRole('link', { name: 'Assignments' }));
+    expect(await screen.findByText('Assignments page')).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/rider/assignments');
+    expect(screen.getByRole('button', { name: 'Open navigation' })).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('scopes reviewed page content to v2 only when the screen opts in', () => {
+    render(<MemoryRouter><AppShell designSystem="v2" user={{ fullName: 'Demo Rider', role: 'WORK_RIDER' }} breadcrumb={[{ label: 'My Rides' }]}><p>Rides</p></AppShell></MemoryRouter>);
+    expect(screen.getByRole('main')).toHaveAttribute('data-design-system', 'v2');
   });
 });

@@ -47,6 +47,7 @@ export { LoadingState, type LoadingStateProps } from './components/LoadingState/
 export { ErrorState, type ErrorStateProps } from './components/ErrorState/ErrorState';
 export { cx } from './utils/cx';
 export { initials } from './utils/initials';
+export { focusFirstInvalid } from './utils/focusFirstInvalid';
 export { DesignSystemScope, Stack, ResponsiveGrid } from './components/Foundation/Foundation';
 export { Skeleton, type SkeletonProps } from './components/Skeleton/Skeleton';
 export { ToastRegion, type ToastMessage, type ToastRegionProps } from './components/Toast/ToastRegion';

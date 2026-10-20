@@ -79,3 +79,17 @@
 .boxValueMain { font: 500 14px/17px var(--font-family); color: var(--color-text-primary); }
 .boxValueSub { font: 400 12px/15px var(--font-family); color: var(--color-text-secondary); }
 @media (max-width: 1100px) { .twoCol { flex-direction: column; } .colSide { width: 100%; } .row { flex-wrap: wrap; } }
+
+/* Design System v2 §E/§I responsive layout (CSS only; no change to fields, actions or data). */
+@media (max-width: 1023px) {
+  .twoCol { flex-direction: column; align-items: stretch; }
+  .colSide { width: auto; }
+}
+@media (max-width: 767px) {
+  .titleRow { flex-wrap: wrap; }
+  .row { flex-direction: column; }
+  .row > * { width: 100%; }
+  .footer { flex-wrap: wrap; }
+  .footer > * { flex: 1 1 160px; min-height: 48px; }
+  .kvLabel { width: 104px; }
+}

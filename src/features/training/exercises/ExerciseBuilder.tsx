@@ -1,5 +1,5 @@
 import { useId, useRef, useState, type FormEvent } from 'react';
-import { AlertBanner, Button, Modal, SelectField, TextAreaField, TextField } from '../../../design-system';
+import { AlertBanner, Button, Modal, SelectField, TextAreaField, TextField, focusFirstInvalid } from '../../../design-system';
 import { useAuth } from '../../../shared/auth/AuthProvider';
 import { ApiError } from '../../../shared/auth/authApi';
 import type { Exercise, ExerciseInput, SupportingApi } from '../assigned/supportingApi';
@@ -14,12 +14,13 @@ export function ExerciseBuilder({ api, initial, onClose, onSaved }: { api: Suppo
   const [errors, setErrors] = useState<Record<string, string>>({}); const [failure, setFailure] = useState('');
   const [busy, setBusy] = useState(false); const pending = useRef(false); const [conflict, setConflict] = useState(false);
   const [customGait, setCustomGait] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
   if (!user?.roles.includes('TRAINER')) return <AlertBanner type="danger" title="Access denied">Only the Trainer can use this exercise builder.</AlertBanner>;
   const knownGaits = [...new Set(['Walk', 'Trot', 'Canter', 'Gallop', ...(fields.exerciseType ? [fields.exerciseType] : [])])];
   const set = (key: keyof ExerciseInput, text: string) => setFields((old) => ({ ...old, [key]: text }));
   async function save(event: FormEvent) {
     event.preventDefault(); if (pending.current || conflict) return;
-    const invalid = exerciseErrors(fields); setErrors(invalid); if (Object.keys(invalid).length) return;
+    const invalid = exerciseErrors(fields); setErrors(invalid); if (Object.keys(invalid).length) { focusFirstInvalid(formRef.current); return; }
     pending.current = true; setBusy(true); setFailure('');
     try {
       const saved = await api.saveExercise(exercisePayload(fields), initial?.id);
@@ -35,7 +36,10 @@ export function ExerciseBuilder({ api, initial, onClose, onSaved }: { api: Suppo
       }
     } finally { pending.current = false; setBusy(false); }
   }
-  return <Modal open title={initial ? 'Edit Exercise' : 'New Exercise'} onClose={busy ? () => undefined : onClose} footer={<><Button variant="secondary" disabled={busy} onClick={onClose}>{conflict ? 'Close and reload library' : 'Cancel'}</Button><Button type="submit" form={formId} disabled={busy || conflict}>{busy ? 'Saving…' : 'Save Exercise'}</Button></>}><form id={formId} onSubmit={save} noValidate className={shared.stack}>
+  const start = initial ?? { name: '', exerciseType: null, description: null, targetMetric: null };
+  const dirty = (['name', 'exerciseType', 'description', 'targetMetric'] as const).some((key) => (fields[key] ?? '') !== (start[key] ?? ''));
+  // Escape/backdrop never discard typed definitions; Cancel is the explicit discard (UX Playbook v2.1 §1.1).
+  return <Modal open dismissible={!busy && !dirty} title={initial ? 'Edit Exercise' : 'New Exercise'} onClose={busy ? () => undefined : onClose} footer={<><Button variant="secondary" disabled={busy} onClick={onClose}>{conflict ? 'Close and reload library' : 'Cancel'}</Button><Button type="submit" form={formId} disabled={busy || conflict}>{busy ? 'Saving…' : 'Save Exercise'}</Button></>}><form ref={formRef} id={formId} onSubmit={save} noValidate className={shared.stack}>
     <TextField label="Exercise name" required maxLength={150} value={fields.name} disabled={busy || conflict} error={errors.name} onChange={(event) => set('name', event.target.value)} />
     <TextAreaField label="Purpose" maxLength={2000} value={fields.description ?? ''} disabled={busy || conflict} error={errors.description} onChange={(event) => set('description', event.target.value)} />
     <div className={styles.fields}><div className={shared.smallStack}><SelectField label="Gait / exercise type" value={customGait ? '__custom__' : fields.exerciseType ?? ''} placeholder="Not specified" disabled={busy || conflict} onChange={(event) => { const custom = event.target.value === '__custom__'; setCustomGait(custom); set('exerciseType', custom ? '' : event.target.value); }} options={[...knownGaits.map((value) => ({ value, label: value })), { value: '__custom__', label: 'Other…' }]} error={errors.exerciseType} />{customGait && <TextField label="Custom gait / exercise type" maxLength={50} value={fields.exerciseType ?? ''} disabled={busy || conflict} onChange={(event) => set('exerciseType', event.target.value)} />}</div><TextField label="Intensity" disabled value="Set per session" /><TextField label="Surface" disabled value="Set per session" /></div>

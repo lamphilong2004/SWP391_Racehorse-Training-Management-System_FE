@@ -1,13 +1,7 @@
 .shell {
   display: flex;
   height: 100vh;
-  min-width: 1280px;
   background: var(--color-bg-page);
-}
-
-/* Desktop viewport width includes the browser scrollbar; the containing block does not. */
-@media (min-width: 1280px) {
-  .shell { min-width: 0; }
 }
 
 .main {
@@ -17,9 +11,52 @@
   min-width: 0;
 }
 
+/* Design System v2 §E: content gutter 24 @1280, 32 @1440+, 16 on narrow web. */
 .content {
   flex: 1;
   min-height: 0;
-  padding: var(--space-2xl);
+  min-width: 0;
+  padding: var(--space-xl);
   overflow-y: auto;
+  overflow-x: auto;
+}
+
+.content:focus { outline: none; }
+
+@media (min-width: 1440px) {
+  .content { padding: var(--space-2xl); }
+}
+
+@media (max-width: 767px) {
+  .content { padding: var(--space-lg); }
+}
+
+.skip {
+  position: fixed;
+  top: var(--space-sm);
+  left: var(--space-sm);
+  z-index: 60;
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface);
+  color: var(--color-primary-600);
+  box-shadow: var(--elev-2);
+  transform: translateY(-200%);
+}
+
+.skip:focus { transform: none; }
+
+.scrim {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: block;
+    border: 0;
+    background: color-mix(in srgb, var(--color-text-primary) 40%, transparent);
+  }
 }

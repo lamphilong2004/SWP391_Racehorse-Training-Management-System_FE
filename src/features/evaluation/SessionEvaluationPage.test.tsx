@@ -146,3 +146,15 @@ describe('performance history contract', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Try again' })); expect(await screen.findByText('No performance history')).toBeInTheDocument();
   });
 });
+describe('evaluation draft resilience', () => {
+  it('keeps an unsaved evaluation through Performance History and back without a leave prompt', async () => {
+    renderAt(); await openForm(); await chooseAssessment();
+    fireEvent.change(screen.getByLabelText(/Evaluation summary/), { target: { value: 'Faded after rep three' } });
+    await userEvent.click(screen.getByRole('button', { name: 'Performance History' }));
+    expect(screen.queryByRole('dialog', { name: 'Unsaved changes' })).not.toBeInTheDocument();
+    await userEvent.click(await screen.findByRole('button', { name: 'Back to evaluation' }));
+    await openForm();
+    expect(screen.getByRole('radio', { name: 'Did not meet target' })).toBeChecked();
+    expect(screen.getByLabelText(/Evaluation summary/)).toHaveValue('Faded after rep three');
+  });
+});
