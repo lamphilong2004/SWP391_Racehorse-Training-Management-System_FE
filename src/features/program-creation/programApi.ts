@@ -2,6 +2,8 @@ import type {
   CandidateList, CreateProgramRequest, HorseSelection, Page, ProgramDetail,
   TemplateDetail, TemplateRecommendation, TemplateSummary,
 } from './programTypes';
+import type { AssignedProgram, ProgramStatus } from '../training/assigned/supportingApi';
+import { ApiError } from '../../shared/auth/authApi';
 
 /** Bind the app's authenticated envelope transport here. This module never supplies a mock transport. */
 export type ProgramTransport = <T>(path: string, init?: RequestInit) => Promise<T>;
@@ -55,6 +57,17 @@ export function programCreationPayload(input: CreateProgramRequest): CreateProgr
 
 export function createProgramCreationApi(request: ProgramTransport) {
   return {
+    listPrograms: async (query: { page?: number; status?: ProgramStatus } = {}, signal?: AbortSignal) => {
+      const params = new URLSearchParams({ page: String(query.page ?? 0), size: '20' });
+      if (query.status) params.set('status', query.status);
+      const result = await request<Page<AssignedProgram>>(`/api/training-programs?${params}`, { signal });
+      if (!result || !Array.isArray(result.items) || result.page !== (query.page ?? 0)
+        || !Number.isSafeInteger(result.size) || result.size < 1
+        || !Number.isSafeInteger(result.totalItems) || result.totalItems < 0
+        || !Number.isSafeInteger(result.totalPages) || result.totalPages < 0)
+        throw new ApiError(200, 'INVALID_RESPONSE', 'Program list pagination is unavailable. Reload to retry.');
+      return result;
+    },
     listHorses: (query: ListQuery = {}, signal?: AbortSignal) =>
       request<Page<HorseSelection>>(`/api/horses?${listQuery(query, { lifecycle: 'ACTIVE' })}`, { signal }),
     listTemplates: (query: ListQuery = {}, signal?: AbortSignal) =>

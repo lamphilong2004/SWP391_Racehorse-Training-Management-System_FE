@@ -27,7 +27,7 @@ export interface SessionResultView {
     sampleCount?: number; simulated?: boolean;
   };
   samples?: { recordedAt: string; source: 'MANUAL' | 'SIMULATOR'; heartRate?: number | null; speedKmh?: number | null; distanceM?: number | null }[];
-  alerts: { id: number; sessionId: number; metric: 'HEART_RATE'; metricValue: number; thresholdApplied: number; severity: 'CRITICAL'; raisedAt: string; acknowledgedAt?: string | null; actionTaken?: string | null; escalatedToVetAt?: string | null }[];
+  alerts: { id: number; sessionId: number; metric: 'HEART_RATE'; metricValue: number; thresholdApplied: number; severity: 'CRITICAL'; raisedAt: string; acknowledgedAt?: string | null; acknowledgedBy?: UserRef | null; actionTaken?: string | null; escalatedToVetAt?: string | null }[];
   riderFeedback?: { id: number; sessionId: number; submittedBy: UserRef; submittedAt: string; responses: { horseResponse?: string | null; balance?: string | null; breathing?: string | null; strideFeeling?: string | null; abnormalBehavior?: string | null; preInterruptionDescription?: string | null; notes?: string | null } } | null;
   evaluation?: SessionResult | null;
 }

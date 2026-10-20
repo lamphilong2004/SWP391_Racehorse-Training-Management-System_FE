@@ -20,7 +20,8 @@ export interface SessionDraft {
 export interface CreateSessionInput extends SessionDraft { workRiderUserId: number; riderWarningAcknowledged: boolean; surface?: string | null; focus?: string | null }
 export interface TrainingSession extends ExistingSession {
   horseProgramPhaseId: number; trainingAvailability: TrainingAvailability; blocked: boolean; blockedReasons: string[];
-  blockedMessage?: string | null; hasRiderFeedback?: boolean; preCheckResult?: 'ALL_NORMAL' | 'ABNORMAL' | null;
+  blockedMessage?: string | null; hasRiderFeedback?: boolean;
+  preSessionCheck?: { overallResult: 'ALL_NORMAL' | 'ABNORMAL' } | null;
 }
 export interface Suitability {
   trainingAvailability: TrainingAvailability; sessionBlocked: boolean; blockedMessage?: string;

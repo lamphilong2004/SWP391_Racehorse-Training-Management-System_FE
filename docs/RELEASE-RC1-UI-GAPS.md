@@ -1,6 +1,8 @@
 # Release rc1: required UI gaps
 
-Current source audit: `origin/main` at `bfa814776d16e2b7cb054e5600714cd6382e1662`, 19 October 2026, inspected in `_gate-monitor/fe-v2-foundation`. The earlier rc1 inventory used `c2bdc96df360b86a1a1d0fe4224d3a36a1ae4fba`. This is a source and design-access inventory, not a CORE completion, browser interaction test or Figma fidelity PASS. Existing contributor source is preserved. No missing feature is implemented by this audit.
+20 October Hoàng handoff update, integrated with main `f3676d1` (PR #20/#21): [final readiness](HOANG-FE-FINAL-READINESS.md) records Leader-approved Program List, read-only Program Detail/Progress/History, Alert Detail and Vet Threshold Override. These minimum surfaces are implemented in PR #22. Preserve the v2/source/ownership evidence below; expanded CORE-041 management and CORE-050/054 are not part of this handoff. No live Backend/SQL PASS or release decision is claimed.
+
+Historical source audit before this handoff: `origin/main` at `bfa814776d16e2b7cb054e5600714cd6382e1662`, 19 October 2026, inspected in `_gate-monitor/fe-v2-foundation`. The earlier rc1 inventory used `c2bdc96df360b86a1a1d0fe4224d3a36a1ae4fba`. This is a source and design-access inventory, not a CORE completion, browser interaction test or Figma fidelity PASS. Existing contributor source is preserved. No missing feature is implemented by this audit.
 
 ## Exact authoritative sources
 
@@ -26,29 +28,29 @@ Ownership follows project-context. CORE-022 and CORE-041 are Hoàng's distinct t
 
 | Figma node(s) | Route / surface | Required scope | CORE / owner | Existing source | Status |
 |---|---|---|---|---|---|
-| `77:317` | `/training/programs` | Flow 2 | CORE-022 / Hoàng | `src/app/router.tsx`, `OwnerHandoffPage.tsx` unavailable placeholder | MISSING |
+| `77:317` | `/training/programs` | Flow 2 | CORE-022 / Hoàng | ProgramListPage with canonical JWT list, paging/status and existing wizard entry | Minimum implemented; summary/goal/progress unavailable where absent from contract; live pending |
 | `84:286` … `91:299` | `/training/programs/new`, seven wizard steps and result state | Flow 2 | CORE-022 / Hoàng | `features/program-creation/ProgramCreationPage.tsx:21`, `ProgramSteps.tsx`: existing wizard, template selection and created-program readback; full detail/navigation and all Figma projections are not established by this audit | PARTIAL; existing wizard is not missing or a substitute for the list/detail |
 | `120:5086` | `/training/templates` | Flow 2 template subflow | CORE-041 / Hoàng | Same placeholder; wizard selection is not template management | MISSING |
 | `124:5277`, `126:5297`, `127:5321`, `140:5824` | Template detail drawer | Flow 2 | CORE-041 / Hoàng | Template selection/readback exists in `features/program-creation`; management drawer absent | MISSING |
 | `128:5342`, `131:5475`, `136:5613` | `/training/templates/new`, `/training/templates/:id/edit`; version/duplicate form states | Flow 2 | CORE-041 / Hoàng | Management forms/routes absent; these are not extra independent routes per state | MISSING |
-| `78:288`, `79:288`, `80:423`, `96:286` | `/training/programs/:id`, Overview/Progress/History | Flow 2 | CORE-041 / Hoàng | Unavailable placeholder; wizard result and assigned list are different surfaces | MISSING |
+| `78:288`, `79:288`, `80:423`, `96:286` | `/training/programs/:id`, Overview/Progress/History | Flow 2 | CORE-041 / Hoàng | Read-only detail, pinned template/version, phases/workload and approved role-scoped progress/history; List/Assigned Programs/create-result navigation | Minimum implemented; live and unsupported analytics pending |
 | `80:778`, `116:303`, `141:5774` | Program adjustment/request/review dialogs | Flow 2 | CORE-041 / Hoàng | No management/request/review UI | MISSING |
 | `288:3192`, `289:3336`, `289:3538` | `/admin/users`, `/admin/users/new`, `/admin/users/:id/edit`; activate/deactivate state | Shared administration required by DEC-009 | CORE-050 / Dũng in tracker; current FE unassigned | List placeholder; create/edit routes absent; registration approval is separate. Live Figma shows filter/table/create/edit behavior, not a placeholder. | MISSING |
 | `290:3537` | `/admin/roles` | Shared administration required by DEC-009 | CORE-050 / Dũng in tracker; current FE unassigned | Unavailable placeholder; live frame is a read-only permission matrix, not a permissions editor | MISSING |
 | `292:3637` | `/account` | Shared account UI | CORE-050 / Dũng in tracker; current FE unassigned | `src/pages/AccountPage.tsx:10`: identity, roles and logout; full My Account frame not implemented by these basic fields | PARTIAL |
 | `291:3630` | `/forgot-password`, `/reset-password`; request/reset states | Approved shared account scope, subject to production-readiness restrictions | CORE-050 / Dũng in tracker; current FE unassigned | `src/pages/LoginPage.tsx:122` shows unavailable; pages absent. Do not enable a production reset workflow before its approved readiness conditions are satisfied. | MISSING |
 | `321:5356`, `322:5410` | Header notification drawer, `/notifications` | Shared support / Flow 2 alerts required by DEC-009 | CORE-054 / Hoàng | Placeholder; session-specific monitoring stream is not this shared layer | MISSING |
-| `151:6627`, `155:7089`, `156:7383` | `/training/monitoring?sessionId=…`, Alert Detail | Flow 2 | CORE-031 / Hoàng | `features/live-monitoring/LiveMonitoringPage.tsx`: Pause/Stop/Acknowledge, no Resume or Alert Detail dialog | PARTIAL |
-| `272:1791` | Threshold override dialog | Flow 3 interlock | CORE-020 / Hoàng | `features/restrictions`: threshold reads; override write UI absent | MISSING |
+| `151:6627`, `155:7089`, `156:7383` | `/training/monitoring?sessionId=…`, Alert Detail | Flow 2 | CORE-031 / Hoàng | Pause/Resume/Stop/Acknowledge and Alert Detail using existing REST/STOMP fields | Minimum implemented; live/unsupported fields pending |
+| `272:1791` | Threshold override dialog | Flow 3 interlock | CORE-020 / Hoàng | Vet-only GET/PUT/POST end with validation, confirmation, errors and reload | Minimum implemented; live pending |
 | `210:9145` | Medical case Injury tab | Flow 3 | CORE-036 / Đức | `features/medical/InjuryMap.tsx`: unconditional 2D fallback, no 3D interaction | PARTIAL |
 | `293:3710` | Access denied / public not-found variants | Shared foundation | CORE-008 / Hoàng | Inline denial exists; explicit `/403` absent; wildcard is auth-protected | PARTIAL |
 
 ## Consequences and owner boundaries
 
-- Program creation has source and is mounted. It does not complete the missing HT landing/list or the separate program Overview/Progress/History screens. Trainer `features/training/assigned/AssignedProgramsPage.tsx:40` links to the unavailable program-detail route; a working assigned list is not evidence that its destination is complete.
+- Program creation remains mounted and now links to read-only Program Detail. The required HT list and separate Overview/Progress/History are implemented by this handoff; Trainer Assigned Programs navigation is regression-tested. This does not establish live persistence or full unsupported Figma projections.
 - Template detail, archived/read-only variants, create/version/duplicate, program adjustment and Trainer-request review are mandatory CORE-041 surfaces. Reusing wizard template selection alone does not satisfy them. Backend fields or operations still requiring approval must remain explicitly unavailable, never fabricated to match a design.
 - Notifications require both the drawer and center, unread/mark-read interactions and guarded target navigation. `features/live-monitoring/sessionStream.ts:12` only subscribes to three session topics. It does not provide the CORE-054 session-wide notification layer or its reconnect/notification behavior.
-- `features/live-monitoring/LiveMonitoringPage.tsx:77` only declares `pause`, `stop`, `acknowledge`; its Trainer action area at line99 has no Resume control. The Rider's PAUSED view directs the user to the Trainer, so this remains a required interaction gap, not just an absent decorative modal. Alert Detail and the Vet threshold override remain separate required dialogs; do not add an unapproved reduce-intensity API.
+- The earlier missing Resume, Alert Detail and Vet threshold dialog are implemented in this handoff with the existing approved operations. Unsupported reduce-intensity remains unimplemented; no new API or severity formula is introduced.
 - No owner screen is implemented or duplicated in this audit. Separate authorized FE PRs should address the gaps after their owner and current approved contract/design are confirmed. Long decides whether any known gap blocks a release; this document does not make that decision.
 
 Corrections to the older `FE-COVERAGE-MATRIX.md`: Head Trainer Medical Summary (`/medical/summary`) and Owner Portal are now mounted. Baseline, Horse History and readiness acknowledgement also have source/entry points. Do not continue reporting these as wholly missing. `/incidents` and `/incidents/:incidentId` intentionally share `IncidentAccess`; `/medical/my-tasks` redirects to `/care/tasks`.

@@ -1,5 +1,7 @@
 # Hoàng FE delivery — 2026-10-19
 
+20 October correction: this delivery is included in FE main `bfa8147` through merged Release PR #18; PR #14 remains open and must not be merged/cherry-picked again. CORE-010 Landing is also present on main. The current audit, local fixes, API readiness and scope boundaries are recorded in [final readiness](HOANG-FE-FINAL-READINESS.md). The checks and screenshots below remain historical evidence from the original delivery.
+
 Feature branch: `feat/hoang-core015-025-fe-ready`, based on FE Integration `9fb747db7f985c7002373099fbae341f40d59e82`.
 Contract source: BE dev `9dc594d`, `docs/api/flow3-medical.openapi.yaml`, `flow2-training.openapi.yaml`, `flow1-horse.openapi.yaml`, `flow2-stomp.md`.
 
@@ -54,8 +56,8 @@ Recorded checks: 11 focused adapter/form/stream tests PASS; 32 scoped route/RBAC
 
 Integration coverage matrix currently identifies CORE-041 as Hoàng, CORE-050 as Dũng and CORE-054 as Hoàng. These owner notes are not a new canonical-board verification. GitHub Projects access returned `error: your authentication token is missing required scopes [read:project]`; no Task Playbook file is present in the fetched FE/BE trees. No optional CORE-041/050/054 implementation was added.
 
-Landing `400:6` is approved. The fetched FE branches and GitHub PR list contain no CORE-010/Landing delivery. No accessible chat could be identified as Dũng's Landing task, so direct progress confirmation with him remains outstanding. This branch does not build a duplicate Landing.
+Landing `400:6` is approved and implemented by `34768b7`, included in main through Release PR #18. Earlier absence/coordination notes are superseded; no Dũng confirmation or duplicate Landing is required.
 
 ## Session checkpoint
 
-Implementation resumed from the user-approved baselines, in a new checkout. Existing checkouts and BE files were preserved. Feature routes are integrated only on this feature branch for PR review. Next external actions are API deployment/account configuration, owner confirmation for optional scope and Landing coordination. Integration merge remains a reviewer action.
+Original implementation used a separate checkout and preserved existing checkouts and BE files. Release PR #18 now contains the delivery. Leader's follow-up authorizes commit/push/PR for the final-readiness fixes, minimum read-only Program Detail, Alert Detail and Vet Threshold Override. These are implemented on `fix/hoang-fe-final-readiness`; see the current report. Real Backend testing remains pending; expanded template/adjustment management and CORE-050/054 are not included. V2 remains opt-in.

@@ -3,6 +3,7 @@ import { MemoryRouter, Route, Routes } from 'react-router';
 import { BaselinePage } from '../baseline/BaselinePage';
 import { CreateSessionPage } from '../trainer-session/CreateSessionPage';
 import { RestrictionsPage } from '../restrictions/RestrictionsPage';
+import { SessionDetailPage } from '../trainer-session/SessionDetailPage';
 
 const state = vi.hoisted(() => ({ request: vi.fn(), user: { id: 2, fullName: 'Test Vet', roles: ['VETERINARIAN'], accountStatus: 'ACTIVE' } }));
 vi.mock('../../shared/auth/AuthProvider', () => ({ useAuth: () => ({ user: state.user }) }));
@@ -10,6 +11,14 @@ vi.mock('./api', async (original) => ({ ...await original<typeof import('./api')
 const horse = { id: 7, horseCode: 'RD-015', name: 'Test Horse', lifecycle: 'DRAFT', trainingAvailability: 'AVAILABLE', breed: 'Thoroughbred' };
 beforeEach(() => { state.request.mockReset(); state.user.roles = ['VETERINARIAN']; });
 const change = (label: string, value: string) => fireEvent.change(screen.getByLabelText(label, { exact: false }), { target: { value } });
+
+it('reads completed Groom checks from the approved nested preSessionCheck response', async () => {
+  state.user.roles = ['TRAINER'];
+  state.request.mockResolvedValue({ id: 42, sessionCode: 'SES-42', horse, status: 'SCHEDULED', scheduledStart: '2026-11-05T06:00:00Z', phaseName: 'Base', trainingAvailability: 'AVAILABLE', blocked: false, blockedReasons: [], exercises: [], preSessionCheck: { overallResult: 'ALL_NORMAL' } });
+  render(<MemoryRouter initialEntries={['/training/session/42']}><Routes><Route path="/training/session/:id" element={<SessionDetailPage />} /></Routes></MemoryRouter>);
+  expect(await screen.findByText('ALL_NORMAL')).toBeInTheDocument();
+  expect(screen.queryByText('Pending', { exact: true })).not.toBeInTheDocument();
+});
 
 it('keeps a failed baseline draft for retry and confirms only a real save response', async () => {
   let fail = true;

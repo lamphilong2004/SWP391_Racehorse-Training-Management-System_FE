@@ -9,6 +9,7 @@ const horse: HorseSelection = { id: 7, horseCode: 'TB-001', name: 'Thunder Bolt'
 
 function fixtureApi(): ProgramCreationApi {
   return {
+    listPrograms: vi.fn().mockResolvedValue({ items: [] }),
     listHorses: vi.fn().mockResolvedValue({ items: [horse] }),
     listTemplates: vi.fn().mockResolvedValue({ items: [template.template] }),
     templateRecommendations: vi.fn().mockResolvedValue([]),
