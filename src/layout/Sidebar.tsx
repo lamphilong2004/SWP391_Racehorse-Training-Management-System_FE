@@ -7,13 +7,16 @@ import styles from './Sidebar.module.css';
 
 export interface SidebarProps {
   role: RoleCode;
+  id?: string;
+  /** Drawer state below 1024px; the desktop sidebar is always visible. */
+  open?: boolean;
 }
 
-/** Figma Sidebar (74:110): 240px, brand, workspace label, role-filtered sections. */
-export function Sidebar({ role }: SidebarProps) {
+/** Figma Sidebar (74:110): 240px navy (Design System v2), brand, workspace label, role-filtered sections. */
+export function Sidebar({ role, id, open = false }: SidebarProps) {
   const nav = NAVIGATION[role];
   return (
-    <aside className={styles.sidebar}>
+    <aside id={id} className={cx(styles.sidebar, open && styles.open)} data-design-system="v2" aria-label="Workspace navigation">
       <div className={styles.brand}>
         <Icon name="horseshoe" size={24} className={styles.brandIcon} />
         <span className={styles.brandName}>Racehorse Ops</span>

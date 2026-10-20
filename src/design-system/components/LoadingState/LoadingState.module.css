@@ -34,6 +34,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .ring {
-    animation-duration: 2.4s;
+    animation: none;
   }
 }

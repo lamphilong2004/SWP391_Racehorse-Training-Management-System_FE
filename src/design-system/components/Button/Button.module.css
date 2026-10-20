@@ -1,5 +1,6 @@
 /* Figma Button 6:28 — Type × State */
 .button {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -13,16 +14,17 @@
   white-space: nowrap;
   cursor: pointer;
   text-decoration: none;
+  transition: background-color var(--motion-fast, 0ms) var(--motion-ease, ease), border-color var(--motion-fast, 0ms) var(--motion-ease, ease);
 }
 
 .sm {
-  height: 32px;
+  height: var(--control-height-sm, 32px);
 }
 .md {
-  height: 40px;
+  height: var(--control-height-md, 40px);
 }
 .lg {
-  height: 48px;
+  height: var(--control-height-lg, 48px);
 }
 
 .button:disabled {
@@ -73,3 +75,11 @@
 .destructive:disabled {
   background: var(--color-bg-subtle);
 }
+
+.icon { padding: 0; aspect-ratio: 1; background: transparent; color: var(--color-text-secondary); }
+.icon:hover:not(:disabled) { background: var(--color-bg-subtle); }
+.pendingLabel { opacity: 0; }
+.button[aria-busy='true'] .spinner { color: var(--color-primary-600); }
+.spinner { position: absolute; width: 18px; height: 18px; border: 2px solid currentColor; border-right-color: transparent; border-radius: var(--radius-full); animation: pending .8s linear infinite; }
+@keyframes pending { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .button { transition: none; } .spinner { animation: none; } }

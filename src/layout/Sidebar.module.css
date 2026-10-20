@@ -6,7 +6,7 @@
   width: var(--layout-sidebar-width);
   height: 100%;
   padding: 20px var(--space-md);
-  background: var(--color-bg-surface);
+  background: var(--color-brand-navy, var(--color-bg-surface));
   border-right: 1px solid var(--color-border-default);
   overflow-y: auto;
 }
@@ -26,7 +26,7 @@
   font-size: 16px;
   line-height: 24px;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: var(--color-sidebar-text-active, var(--color-text-primary));
   white-space: nowrap;
 }
 
@@ -37,7 +37,7 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--color-text-secondary);
+  color: var(--color-sidebar-text, var(--color-text-secondary));
   white-space: nowrap;
 }
 
@@ -66,27 +66,47 @@
   border-radius: var(--radius-md);
   font-size: 14px;
   line-height: 20px;
-  color: var(--color-text-primary);
+  color: var(--color-sidebar-text, var(--color-text-primary));
   text-decoration: none;
   white-space: nowrap;
 }
 
 .item:hover {
-  background: var(--color-bg-subtle);
+  background: var(--color-brand-navy-hover, var(--color-bg-subtle));
 }
 
 .itemIcon {
-  color: var(--color-text-secondary);
+  color: var(--color-sidebar-text, var(--color-text-secondary));
 }
 
 .active,
 .active:hover {
-  background: var(--color-primary-50);
+  background: var(--color-sidebar-active, var(--color-primary-50));
   border-left: 3px solid var(--color-primary-600);
   font-weight: 500;
-  color: var(--color-primary-600);
+  color: var(--color-sidebar-text-active, var(--color-primary-600));
 }
 
 .active .itemIcon {
-  color: var(--color-primary-600);
+  color: var(--color-sidebar-text-active, var(--color-primary-600));
+}
+
+.item:focus-visible { outline: 2px solid var(--color-sidebar-text-active, var(--color-border-focus)); outline-offset: -2px; }
+
+/* Design System v2 §E: below 1024px the sidebar is a drawer opened from the Header menu button. */
+@media (max-width: 1023px) {
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 50;
+    box-shadow: var(--elev-3);
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform var(--motion-panel, 0ms) var(--motion-ease-out, ease-out), visibility 0s linear var(--motion-panel, 0ms);
+  }
+  .open {
+    transform: none;
+    visibility: visible;
+    transition: transform var(--motion-panel, 0ms) var(--motion-ease-out, ease-out);
+  }
 }

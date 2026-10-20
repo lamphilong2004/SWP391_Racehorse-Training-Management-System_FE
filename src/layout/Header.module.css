@@ -7,6 +7,7 @@
   padding: 0 var(--space-2xl);
   background: var(--color-bg-surface);
   border-bottom: 1px solid var(--color-border-default);
+  gap: var(--space-lg);
 }
 
 .left,
@@ -139,4 +140,44 @@
   font-size: 12px;
   line-height: 16px;
   color: var(--color-text-secondary);
+}
+
+.menu {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.menu:hover, .bell:hover { background: var(--color-bg-subtle); }
+
+/* Design System v2 §E/§I: keep the header usable at every supported width without horizontal overflow. */
+@media (max-width: 1279px) {
+  .header { padding: 0 var(--space-xl); }
+  .left { gap: var(--space-lg); }
+  .search { width: 240px; }
+}
+
+@media (max-width: 1023px) {
+  .menu { display: flex; }
+}
+
+@media (max-width: 767px) {
+  .header { padding: 0 var(--space-sm) 0 var(--space-xs); }
+  .search { display: none; }
+  .bell { width: 44px; height: 44px; }
+  .left :global(nav) { min-width: 0; overflow: hidden; }
+}
+
+@media (max-width: 639px) {
+  .name, .chevron { display: none; }
+  .user { min-width: 44px; min-height: 44px; justify-content: center; }
 }

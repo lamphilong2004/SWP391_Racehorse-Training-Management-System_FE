@@ -60,3 +60,42 @@
 .elapsed { display: flex; align-items: baseline; gap: var(--space-md); }
 .elapsed span { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
 .elapsed strong { font-size: 36px; line-height: 44px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* Design System v2 §I — Work Rider responsive web: no horizontal overflow, 48px actions, one-column stacks. */
+.stack > *, .columns > *, .metrics > *, .metrics3 > *, .smallStack > * { min-width: 0; }
+@media (max-width: 767px) {
+  .header { align-items: stretch; }
+  .header > *, .actions { width: 100%; }
+  .actions { justify-content: stretch; }
+  .actions > a, .actions > button { flex: 1 1 auto; }
+  .primaryLink, .secondaryLink { min-height: 48px; justify-content: center; }
+  .nextRide { flex-direction: column; }
+  .timeTile { width: 100%; min-height: 88px; }
+  .endActions > * { flex: 1; }
+  .facts { grid-template-columns: 1fr; }
+}
+
+/* Design System v2 §I: on narrow web the Work Rider's primary ride actions stay reachable near the bottom safe area. */
+@media (max-width: 767px) {
+  .riderActionBar {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 30;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    padding: var(--space-md) var(--space-lg) calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
+    background: var(--color-bg-surface);
+    border-top: 1px solid var(--color-border-default);
+    box-shadow: var(--elev-2);
+  }
+  .riderActionBar:empty { display: none; }
+  .riderActionBar > * { flex: 1 1 140px; min-height: 48px; justify-content: center; }
+  :global(main):has(.riderActionBar) { padding-bottom: 152px; }
+}
+@media (max-width: 767px) {
+  .link { display: inline-flex; align-items: center; min-height: 44px; }
+}
+@media (max-width: 600px) {
+  .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-md); }
+}

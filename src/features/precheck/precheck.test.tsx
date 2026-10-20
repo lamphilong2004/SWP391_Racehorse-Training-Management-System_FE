@@ -109,3 +109,13 @@ it('sends exact checklist-only payload with canonical token and propagates the s
   await expect(client.session(40)).rejects.toMatchObject({ status: 403 });
   await waitFor(() => expect(actor.handleApiError).toHaveBeenCalledTimes(1));
 });
+it('guards unsubmitted observations and focuses the first unanswered check', async () => {
+  const client = api(); mount(client); await screen.findByRole('heading', { name: 'Observation checklist' });
+  fireEvent.click(within(screen.getByRole('radiogroup', { name: CHECK_ITEMS[0].label })).getByRole('radio', { name: 'Normal' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Complete Pre-Session Check' }));
+  await waitFor(() => expect(within(screen.getByRole('radiogroup', { name: CHECK_ITEMS[1].label })).getAllByRole('radio')[0]).toHaveFocus());
+  fireEvent.click(screen.getByRole('link', { name: '← Back to Today' }));
+  expect(await screen.findByRole('dialog', { name: 'Unsaved changes' })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Continue editing' }));
+  expect(within(screen.getByRole('radiogroup', { name: CHECK_ITEMS[0].label })).getByRole('radio', { name: 'Normal' })).toBeChecked();
+});

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
-import { AlertBanner, Button, Card, ChartContainer, DataTable, EmptyState, ErrorState, KeyValue, LoadingState, MetricCard, StatusBadge, Tabs } from '../../design-system';
+import { AlertBanner, Button, Card, ChartContainer, DataTable, EmptyState, ErrorState, KeyValue, LoadingState, MetricCard, Modal, StatusBadge, Tabs, UnsavedChangesGuard } from '../../design-system';
 import { AppShell } from '../../layout/AppShell';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { ApiError } from '../../shared/auth/authApi';
@@ -26,7 +26,7 @@ export function SessionEvaluationPage({ api = evaluationApi }: { api?: Evaluatio
   if (!auth.user) return null; // RequireAuth owns restore/sign-in/error navigation.
   if (!role) return <AlertBanner type="danger" title="Access denied" children="Your role cannot view session results." />;
   if (!/^\d+$/.test(id) || !Number.isSafeInteger(sessionId) || sessionId < 1) return <EmptyState title="Session not found" description="Use a valid session ID." />;
-  return <AppShell user={{ fullName: auth.user.fullName, role }} breadcrumb={[{ label: 'Training' }, { label: 'Session evaluation' }]}>
+  return <AppShell designSystem="v2" user={{ fullName: auth.user.fullName, role }} breadcrumb={[{ label: 'Training' }, { label: 'Session evaluation' }]}>
     <EvaluationContent key={`${auth.user.id}:${sessionId}`} sessionId={sessionId} api={api} />
   </AppShell>;
 }
@@ -39,6 +39,8 @@ function EvaluationContent({ sessionId, api }: { sessionId: number; api: Evaluat
   const [state, setState] = useState<{ data?: SessionResultView; error?: unknown }>({});
   const [saved, setSaved] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [confirmReload, setConfirmReload] = useState(false);
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
@@ -49,7 +51,16 @@ function EvaluationContent({ sessionId, api }: { sessionId: number; api: Evaluat
     }).catch((error: unknown) => { if (active && !handleApiError(error)) setState({ error }); });
     return () => { active = false; controller.abort(); };
   }, [sessionId, api, attempt, handleApiError]);
-  const reload = () => { setState({}); setAttempt(attempt + 1); };
+  const reload = () => {
+    if (submitting) return;
+    setConfirmReload(false); setDirty(false); setSaved(false);
+    setState({}); setAttempt((previous) => previous + 1);
+  };
+  const requestReload = () => {
+    if (submitting) return;
+    if (dirty && !saved) setConfirmReload(true);
+    else reload();
+  };
   if (state.error) {
     const error = state.error;
     if (error instanceof ApiError && error.status === 403) return <AlertBanner type="danger" title="Access denied" children="This session is outside your permitted scope. Your session is still active." />;
@@ -64,14 +75,22 @@ function EvaluationContent({ sessionId, api }: { sessionId: number; api: Evaluat
   const changeTab = (view: string) => setSearch((previous) => { const next = new URLSearchParams(previous); next.set('view', view); return next; });
   const selected = ['result', 'comparison', 'evaluation'].includes(tab) ? tab : 'result';
   return <div className="evaluation-stack">
+    <UnsavedChangesGuard dirty={dirty && !saved} allowSameRoute />
     <div className="evaluation-actions"><div className="evaluation-stack-sm"><h1 className="text-h1">Session Evaluation · {session.focus || session.sessionCode}</h1><p>{session.horse.name} · {session.horse.horseCode} · {session.sessionCode}</p></div><StatusBadge family="session" status={session.status} />
       {SESSION_DETAIL_ROLES.some((role) => user?.roles.includes(role)) && <Link className="evaluation-link-button" to={`/training/session/${session.id}`}>Session Detail</Link>}
       {canHistory && <Button variant="secondary" disabled={submitting} onClick={() => changeTab(tab === 'history' ? 'result' : 'history')}>{tab === 'history' ? 'Back to evaluation' : 'Performance History'}</Button>}
-      <Button variant="secondary" disabled={submitting} onClick={reload}>Reload session</Button>
+      <Button variant="secondary" disabled={submitting} onClick={requestReload}>Reload session</Button>
     </div>
+    <Modal open={confirmReload} title="Discard evaluation changes?" onClose={() => setConfirmReload(false)}
+      footer={<><Button variant="secondary" autoFocus onClick={() => setConfirmReload(false)}>Continue editing</Button>
+        <Button variant="danger" disabled={submitting} onClick={reload}>Discard and reload</Button></>}>
+      <p>Your evaluation has not been saved. Reloading discards your input and retrieves the latest session from the server.</p>
+    </Modal>
     {session.status === 'INTERRUPTED' ? <AlertBanner type="danger" title="INTERRUPTED — reviewable, not completed" children={`${session.interruptionReason || 'The session was stopped.'} Saving an evaluation keeps the status INTERRUPTED.`} /> : session.status === 'COMPLETED' ? <AlertBanner type="success" title="COMPLETED — review recorded results" children="Record your evaluation and recommendation for this executed session." /> : <AlertBanner type="warning" title="Evaluation unavailable" children="Only COMPLETED or INTERRUPTED sessions can be evaluated." />}
     <Card><div className="evaluation-facts"><KeyValue label="Scheduled start" value={dateTime(session.scheduledStart)} /><KeyValue label="Scheduled end" value={dateTime(session.scheduledEnd)} /><KeyValue label="Session focus" value={display(session.focus)} /><KeyValue label="Surface" value={display(session.surface)} /><KeyValue label="Trainer" value={display(session.trainer?.fullName)} /><KeyValue label="Work Rider" value={session.workRider.fullName} /><KeyValue label="Program / Phase" value={`Program ${session.programId} · ${session.phaseName}`} /></div><p className="text-caption">This evaluation covers this executed session only. It does not change the program strategy or its source template.</p></Card>
-    {tab === 'history' ? canHistory ? <PerformanceHistory key={session.horse.id} horseId={session.horse.id} api={api} onError={handleApiError} /> : <AlertBanner type="danger" title="Access denied" children="Your role cannot view horse performance history." /> : <>
+    {tab === 'history' && (canHistory ? <PerformanceHistory key={session.horse.id} horseId={session.horse.id} api={api} onError={handleApiError} /> : <AlertBanner type="danger" title="Access denied" children="Your role cannot view horse performance history." />)}
+    {/* Kept mounted while History is shown so an unsaved evaluation draft is not lost (UX Playbook v2.1 §1.1). */}
+    <div className="evaluation-stack" hidden={tab === 'history'}>
       <Tabs label="Session evaluation" idPrefix="evaluation" value={selected} onChange={changeTab} items={[{ value: 'result', label: 'Result' }, { value: 'comparison', label: 'Planned vs Actual' }, { value: 'evaluation', label: 'Evaluation & Recommendation' }]} />
       {selected !== 'evaluation' && <div role="tabpanel" id={`evaluation-panel-${selected}`} aria-labelledby={`evaluation-tab-${selected}`}>
         {selected === 'result' ? <ResultPanel data={data} /> : <ComparisonPanel data={data} />}
@@ -80,7 +99,7 @@ function EvaluationContent({ sessionId, api }: { sessionId: number; api: Evaluat
           <div className="evaluation-columns"><div className="evaluation-stack">
             {saved && <AlertBanner type="success" title="Evaluation saved" children={`Session status remains ${session.status}.`} />}
             {data.evaluation ? <Card title="Recorded evaluation"><div className="evaluation-stack"><p>{RESULT_LABELS[data.evaluation.result]}</p><KeyValue label="Summary" value={display(data.evaluation.evaluatedSummary)} /><KeyValue label="Professional notes" value={display(data.evaluation.evaluationNotes)} /><KeyValue label="Recommendation" value={display(data.evaluation.recommendation)} /><p className="text-caption">{data.evaluation.evaluatedBy.fullName} · {data.evaluation.evaluatedAt}</p></div></Card> : session.hasEvaluation ? <AlertBanner type="warning" title="Evaluation already recorded" children="Reload the session to retrieve the recorded evaluation. A second submission is not allowed." /> : canEvaluate ?
-              <EvaluationForm onPendingChange={setSubmitting} interrupted={session.status === 'INTERRUPTED'} onSave={async (input) => {
+              <EvaluationForm onPendingChange={setSubmitting} onDirtyChange={setDirty} interrupted={session.status === 'INTERRUPTED'} onSave={async (input) => {
                 try {
                   const evaluation = await api.submit(sessionId, input);
                   if (evaluation.sessionId !== sessionId) throw new ApiError(201, 'INVALID_RESPONSE', 'The server returned an evaluation for a different session. Reload before retrying.');
@@ -89,7 +108,7 @@ function EvaluationContent({ sessionId, api }: { sessionId: number; api: Evaluat
               }} /> : <AlertBanner type="warning" title="Read-only result" children="Only the assigned Trainer may submit an evaluation for a terminal session. The server enforces assignment scope." />}
           </div><aside className="evaluation-stack"><Card title="Strategic change needed?"><p>Program goals, source templates, phase strategy and approved workload ranges require Head Trainer approval. Recommendations here do not modify the plan.</p></Card><FeedbackCard data={data} /></aside></div>
       </div>
-    </>}
+    </div>
     {actual.simulated && <StatusBadge family="simulated" status="SIMULATED" />}
   </div>;
 }

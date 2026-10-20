@@ -4,10 +4,10 @@
 
 This branch completes the Leader-approved final FE scope: CORE-022 Program List, CORE-041 minimum read-only Program Detail, CORE-031 Alert Detail and CORE-020 Threshold Override, together with the previously verified readiness fixes.
 
-- Base: FE main `bfa814776d16e2b7cb054e5600714cd6382e1662`. The earlier delivery `a46f80d` and CORE-010 Landing already belong to main through Release PR #18. Do not merge/cherry-pick PR #14 again.
+- Original base: FE main `bfa814776d16e2b7cb054e5600714cd6382e1662`. Updated against `f3676d142d617087892531cbe74cc1f91d0408d4` after the team merged PR #20/#21 during handoff. The earlier delivery `a46f80d` and CORE-010 Landing already belong to main through Release PR #18. Do not merge/cherry-pick PR #14 again.
 - Branch: `fix/hoang-fe-final-readiness`; PR targets FE `main`. Leader explicitly authorizes commit, push and PR creation. No merge or deploy.
 - Contract: BE dev `5867f07`, `docs/api/flow2-training.openapi.yaml`, `flow2-stomp.md`, `flow3-medical.openapi.yaml`. Fetch confirms no API-contract change since the initial handoff.
-- Shared v2 remains opt-in and is on a separate branch. This diff does not modify `src/design-system`, dependencies/lockfile, hosting configuration, Backend, OpenAPI, SQL schema or the Codex release candidate.
+- The team's v2 foundation/finalization is now in main and is preserved. Shell chrome uses the team's v2 behavior; page content keeps its existing opt-in boundary. Compared with current main, this PR does not modify `src/design-system`, layout, dependencies/lockfile, hosting configuration, Backend, OpenAPI, SQL schema or the Codex release candidate. Only `docs/RELEASE-RC1-UI-GAPS.md` required content-conflict resolution; both source/ownership evidence and updated screen statuses are retained.
 - CORE-041 expanded template/adjustment management remains after this minimum detail delivery. CORE-050/054 are not expanded.
 
 ## Routes and delivered behavior
@@ -73,14 +73,14 @@ Medical list pagination uses page/size/totalElements rather than Flow 2 totalPag
 ## Verification
 
 - Focused route/feature regression: PASS 54/54 across six files, including list/assigned navigation, JWT, role boundaries, deferred reads, API failures, threshold validation/confirmation/DTOs, Alert Detail severity/acknowledgement/sparse STOMP updates.
-- Full suite: PASS 886/886 tests across 70/70 files, exit 0, 206.72 seconds. Command: `node node_modules/vitest/vitest.mjs run --pool=threads --maxWorkers=1 --no-file-parallelism --isolate`. No assertions/timeouts or file isolation weakened.
+- Final after main/v2 integration: full suite PASS 922/922 tests across 74/74 files, exit 0, 236.77 seconds. Before integration the feature branch also passed 886/886 across 70 files. Command: `node node_modules/vitest/vitest.mjs run --pool=threads --maxWorkers=1 --no-file-parallelism --isolate`. No assertions/timeouts or file isolation weakened.
 - Lint and typecheck: PASS, exit 0.
 - Production build and production bundle guard: PASS, exit 0; no sample/dev/test identity/local API origin bundled.
-- Staging policy: PASS 7/7, exit 0.
+- Current-main staging/design-system policies: PASS 18/18, exit 0 (earlier base: staging 7/7).
 - Diff whitespace check: PASS.
 - Real Backend/SQL/authenticated STOMP: NOT RUN as instructed.
 
-Logs are preserved in the workspace `project-context/HOANG-FE-GITHUB-tests.log` and `HOANG-FE-GITHUB-build.log`. Historical pre-fix logs from the previous pass are not final evidence.
+Final integrated-main logs are preserved in workspace `project-context/HOANG-FE-GITHUB-main-v2-tests.log` and `HOANG-FE-GITHUB-main-v2-build.log`; earlier feature-base logs are `HOANG-FE-GITHUB-tests.log` and `HOANG-FE-GITHUB-build.log`. Historical pre-fix logs from the previous pass are not final evidence.
 
 ## Remaining limits
 

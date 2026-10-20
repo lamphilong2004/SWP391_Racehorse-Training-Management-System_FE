@@ -13,7 +13,7 @@ const forbidden = [
 ];
 const found = forbidden.filter((text) => source.includes(text));
 if (found.length) throw new Error(`Production bundle contains test/sample/developer code: ${found.join(', ')}`);
-if (files.some((file) => /^(sampleTransport|sampleStore|horseSamples|sessionSamples|supportingSamples|managementSamples|RoleTestEntry|roleTestAuthApi|ComponentsPage|ShellPreviewPage)-/.test(file))) {
+if (files.some((file) => /^(sampleTransport|sampleStore|horseSamples|sessionSamples|supportingSamples|managementSamples|RoleTestEntry|roleTestAuthApi|ComponentsPage|ShellPreviewPage|FoundationV2Page)-/.test(file))) {
   throw new Error('Production bundle contains a sample, role-test or dev-only chunk.');
 }
 console.log(`PRODUCTION_BUNDLE_OK output=${outDir}`);

@@ -28,3 +28,18 @@
 .footer p { margin: 0; }
 .cellStack { display: grid; gap: 2px; }
 .disabledAction { display: inline-flex; align-items: center; gap: var(--space-xs); color: var(--color-text-disabled); font-weight: 500; cursor: not-allowed; }
+
+/* Design System v2 §E/§I: the one-row toolbar wraps below 1280px instead of overflowing; 44px targets on narrow web. */
+@media (max-width: 1279px) {
+  .filters { flex-wrap: wrap; }
+  .filters > * { flex: 1 1 180px; }
+  .filters > :first-child { flex: 1 1 100%; }
+}
+@media (max-width: 767px) {
+  .primaryLink, .link { min-height: 44px; display: inline-flex; align-items: center; }
+  .header > * { min-width: 0; }
+}
+/* Grid children must be allowed to shrink so wide tables scroll inside their region instead of widening the page. */
+.stack > *, .smallStack > * { min-width: 0; }
+.header > * { min-width: 0; }
+.notice { white-space: normal; }
