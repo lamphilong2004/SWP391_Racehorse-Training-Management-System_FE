@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
-import { AlertBanner, Button, Card, ChartContainer, DataTable, EmptyState, ErrorState, KeyValue, LoadingState, MetricCard, StatusBadge, Tabs, UnsavedChangesGuard } from '../../design-system';
+import { AlertBanner, Button, Card, ChartContainer, DataTable, EmptyState, ErrorState, KeyValue, LoadingState, MetricCard, Modal, StatusBadge, Tabs, UnsavedChangesGuard } from '../../design-system';
 import { AppShell } from '../../layout/AppShell';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { ApiError } from '../../shared/auth/authApi';
@@ -40,6 +40,7 @@ function EvaluationContent({ sessionId, api }: { sessionId: number; api: Evaluat
   const [saved, setSaved] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [confirmReload, setConfirmReload] = useState(false);
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
@@ -50,7 +51,16 @@ function EvaluationContent({ sessionId, api }: { sessionId: number; api: Evaluat
     }).catch((error: unknown) => { if (active && !handleApiError(error)) setState({ error }); });
     return () => { active = false; controller.abort(); };
   }, [sessionId, api, attempt, handleApiError]);
-  const reload = () => { setState({}); setAttempt(attempt + 1); };
+  const reload = () => {
+    if (submitting) return;
+    setConfirmReload(false); setDirty(false); setSaved(false);
+    setState({}); setAttempt((previous) => previous + 1);
+  };
+  const requestReload = () => {
+    if (submitting) return;
+    if (dirty && !saved) setConfirmReload(true);
+    else reload();
+  };
   if (state.error) {
     const error = state.error;
     if (error instanceof ApiError && error.status === 403) return <AlertBanner type="danger" title="Access denied" children="This session is outside your permitted scope. Your session is still active." />;
@@ -69,8 +79,13 @@ function EvaluationContent({ sessionId, api }: { sessionId: number; api: Evaluat
     <div className="evaluation-actions"><div className="evaluation-stack-sm"><h1 className="text-h1">Session Evaluation · {session.focus || session.sessionCode}</h1><p>{session.horse.name} · {session.horse.horseCode} · {session.sessionCode}</p></div><StatusBadge family="session" status={session.status} />
       {SESSION_DETAIL_ROLES.some((role) => user?.roles.includes(role)) && <Link className="evaluation-link-button" to={`/training/session/${session.id}`}>Session Detail</Link>}
       {canHistory && <Button variant="secondary" disabled={submitting} onClick={() => changeTab(tab === 'history' ? 'result' : 'history')}>{tab === 'history' ? 'Back to evaluation' : 'Performance History'}</Button>}
-      <Button variant="secondary" disabled={submitting} onClick={reload}>Reload session</Button>
+      <Button variant="secondary" disabled={submitting} onClick={requestReload}>Reload session</Button>
     </div>
+    <Modal open={confirmReload} title="Discard evaluation changes?" onClose={() => setConfirmReload(false)}
+      footer={<><Button variant="secondary" autoFocus onClick={() => setConfirmReload(false)}>Continue editing</Button>
+        <Button variant="danger" disabled={submitting} onClick={reload}>Discard and reload</Button></>}>
+      <p>Your evaluation has not been saved. Reloading discards your input and retrieves the latest session from the server.</p>
+    </Modal>
     {session.status === 'INTERRUPTED' ? <AlertBanner type="danger" title="INTERRUPTED — reviewable, not completed" children={`${session.interruptionReason || 'The session was stopped.'} Saving an evaluation keeps the status INTERRUPTED.`} /> : session.status === 'COMPLETED' ? <AlertBanner type="success" title="COMPLETED — review recorded results" children="Record your evaluation and recommendation for this executed session." /> : <AlertBanner type="warning" title="Evaluation unavailable" children="Only COMPLETED or INTERRUPTED sessions can be evaluated." />}
     <Card><div className="evaluation-facts"><KeyValue label="Scheduled start" value={dateTime(session.scheduledStart)} /><KeyValue label="Scheduled end" value={dateTime(session.scheduledEnd)} /><KeyValue label="Session focus" value={display(session.focus)} /><KeyValue label="Surface" value={display(session.surface)} /><KeyValue label="Trainer" value={display(session.trainer?.fullName)} /><KeyValue label="Work Rider" value={session.workRider.fullName} /><KeyValue label="Program / Phase" value={`Program ${session.programId} · ${session.phaseName}`} /></div><p className="text-caption">This evaluation covers this executed session only. It does not change the program strategy or its source template.</p></Card>
     {tab === 'history' && (canHistory ? <PerformanceHistory key={session.horse.id} horseId={session.horse.id} api={api} onError={handleApiError} /> : <AlertBanner type="danger" title="Access denied" children="Your role cannot view horse performance history." />)}

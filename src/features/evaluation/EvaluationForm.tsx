@@ -14,7 +14,7 @@ export function EvaluationForm({ onSave, interrupted, onPendingChange, onDirtyCh
   const [saving, setSaving] = useState(false);
   const pending = useRef(false);
   const form = useRef<HTMLFormElement>(null);
-  const dirty = Boolean(result || evaluatedSummary.trim() || evaluationNotes.trim() || recommendation.trim());
+  const dirty = Boolean(result || evaluatedSummary || evaluationNotes || recommendation);
   useEffect(() => { onDirtyChange?.(dirty); }, [dirty, onDirtyChange]);
   return <form ref={form} className="evaluation-stack" noValidate onSubmit={async (event) => {
     event.preventDefault();

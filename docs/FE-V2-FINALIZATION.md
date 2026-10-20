@@ -1,5 +1,13 @@
 # FE v2 finalization — Leader scope
 
+## PR20 review fixes — 20 October 2026
+
+Applied after PR21 merge `67f4d570a760f63577080e4f9da687e8d0309f5c`, preserving all contributor commits. Hidden evaluation/history panels now have an explicit scoped `display:none` rule while the draft form stays mounted. Reloading a dirty evaluation requires the shared confirmation modal. Cancel preserves all inputs; confirmed discard fetches the latest session once. Pending submission blocks reload. Whitespace-only edits also count as dirty. Drafts remain memory-only and retain the existing beforeunload guard.
+
+Verification of this patch: 23/23 focused evaluation tests; full Vitest 877/877 tests in 70 files, no skipped or failed tests; ESLint, TypeScript, Production build and bundle policy, 18/18 staging/design-system policies and diff check PASS. The Windows npm shim mishandled the workspace's ampersand, so the installed ESLint/TypeScript/Vite entrypoints were invoked directly with Node24.19.0, without changing source or assertions.
+
+Browser verification is NOT PASS: a local fixture Chromium attempt timed out waiting for the evaluation form. Subsequently the browser tool reported `Local browser use is disabled in Work settings`; browser work stopped, with no alternate-browser retry after that denial. Computed styles, keyboard exclusion and the five viewport sweep remain pending authorized browser access. Fixture tests do not prove live Backend/SQL persistence. Independent re-review on the new PR HEAD remains mandatory; no merge or deployment is implied by these results.
+
 Branch `feat/long-fe-v2-finalization`, built on FE PR #20 (`feat/long-fe-v2-foundation` @ `69d8972`), which sits directly on `main` @ `bfa8147`. PR #20 and `main` history and authors are preserved. Preview branch `preview/role-test-main` @ `6a1a333` is unchanged.
 
 Design source: `Racehorse_UI_v2_Equestrian_Command.zip` (`Racehorse_Design_System_v2.md`, `Racehorse_UX_Playbook_v2.1.md`, `racehorse-v2.tokens.css`), already encoded in `src/design-system/styles/tokens.css` by PR #20. No new tokens, theme or parallel component set were created. Approved Figma `tm7dpgAQbHReZ7tlQeQJlc` remains the per-screen layout reference; the v2 documents are marked PROPOSED, so this branch is a review candidate, not a Production rollout.

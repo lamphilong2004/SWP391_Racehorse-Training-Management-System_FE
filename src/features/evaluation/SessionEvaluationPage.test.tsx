@@ -104,6 +104,10 @@ describe('evaluation payload, validation and retry', () => {
     fireEvent.submit(save.closest('form')!); fireEvent.submit(save.closest('form')!);
     await waitFor(() => expect(evaluationCalls()).toHaveLength(1)); expect(screen.getByRole('button', { name: 'Saving…' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Reload session' })).toBeDisabled();
+    const resultReads = fetcher.mock.calls.filter(([url]) => String(url).endsWith('/42/result')).length;
+    fireEvent.click(screen.getByRole('button', { name: 'Reload session' }));
+    expect(screen.queryByRole('dialog', { name: 'Discard evaluation changes?' })).not.toBeInTheDocument();
+    expect(fetcher.mock.calls.filter(([url]) => String(url).endsWith('/42/result'))).toHaveLength(resultReads);
     await userEvent.click(screen.getByRole('tab', { name: 'Result' }));
     await userEvent.click(screen.getByRole('tab', { name: 'Evaluation & Recommendation' }));
     expect(screen.getByRole('button', { name: 'Saving…' })).toBeDisabled();
@@ -135,6 +139,8 @@ describe('performance history contract', () => {
     renderAt(); await screen.findByRole('tab', { name: 'Result' });
     fetcher.mockImplementation(async () => ok([{ sessionId: 42, sessionCode: 'SES-0042', date: '2026-10-17', status: 'INTERRUPTED', totalDistanceM: null, durationMin: 0, maxHeartRate: 185, avgSpeedKmh: 0, result: null }]));
     await userEvent.click(screen.getByRole('button', { name: 'Performance History' }));
+    expect(screen.getByLabelText(/Evaluation summary/)).not.toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Save Evaluation' })).not.toBeInTheDocument();
     const table = await screen.findByRole('table', { name: 'Session history, newest first' }); expect(within(table).getByText('Not measured')).toBeInTheDocument(); expect(within(table).getByText('0 km/h')).toBeInTheDocument(); expect(within(table).getByText('Pending review')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('From'), { target: { value: '2026-10-01' } }); fireEvent.change(screen.getByLabelText('To'), { target: { value: '2026-10-17' } });
     await userEvent.click(screen.getByRole('button', { name: 'Apply dates' })); await waitFor(() => expect(fetcher.mock.calls.some(([url]) => String(url).endsWith('/api/horses/7/performance?from=2026-10-01&to=2026-10-17'))).toBe(true));
@@ -156,5 +162,35 @@ describe('evaluation draft resilience', () => {
     await openForm();
     expect(screen.getByRole('radio', { name: 'Did not meet target' })).toBeChecked();
     expect(screen.getByLabelText(/Evaluation summary/)).toHaveValue('Faded after rep three');
+  });
+  it('cancel keeps every draft field and beforeunload protection without reloading', async () => {
+    renderAt(); await openForm(); await chooseAssessment();
+    fireEvent.change(screen.getByLabelText('Evaluation summary'), { target: { value: 'Draft summary' } });
+    fireEvent.change(screen.getByLabelText('Professional notes'), { target: { value: 'Draft notes' } });
+    fireEvent.change(screen.getByLabelText('Recommendation note'), { target: { value: 'Draft recommendation' } });
+    const reads = fetcher.mock.calls.filter(([url]) => String(url).endsWith('/42/result')).length;
+    await userEvent.click(screen.getByRole('button', { name: 'Reload session' }));
+    const dialog = screen.getByRole('dialog', { name: 'Discard evaluation changes?' });
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Continue editing' }));
+    expect(screen.getByRole('radio', { name: 'Did not meet target' })).toBeChecked();
+    expect(screen.getByLabelText('Evaluation summary')).toHaveValue('Draft summary');
+    expect(screen.getByLabelText('Professional notes')).toHaveValue('Draft notes');
+    expect(screen.getByLabelText('Recommendation note')).toHaveValue('Draft recommendation');
+    expect(fetcher.mock.calls.filter(([url]) => String(url).endsWith('/42/result'))).toHaveLength(reads);
+    const event = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(event); expect(event.defaultPrevented).toBe(true);
+  });
+  it('confirmed reload discards the draft and reads the server once', async () => {
+    renderAt(); await openForm(); await chooseAssessment();
+    fireEvent.change(screen.getByLabelText('Professional notes'), { target: { value: 'Discard only after confirmation' } });
+    const reads = fetcher.mock.calls.filter(([url]) => String(url).endsWith('/42/result')).length;
+    await userEvent.click(screen.getByRole('button', { name: 'Reload session' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Discard and reload' }));
+    expect(await screen.findByRole('button', { name: 'Save Evaluation' })).toBeEnabled();
+    expect(screen.getByLabelText('Professional notes')).toHaveValue('');
+    expect(screen.getByRole('radio', { name: 'Did not meet target' })).not.toBeChecked();
+    expect(fetcher.mock.calls.filter(([url]) => String(url).endsWith('/42/result'))).toHaveLength(reads + 1);
+    const event = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(event); expect(event.defaultPrevented).toBe(false);
   });
 });
