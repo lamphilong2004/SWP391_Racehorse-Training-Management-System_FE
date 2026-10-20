@@ -7,7 +7,7 @@ import { errorMessage } from './data';
 export function RiderShell({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   if (!user?.roles.includes('WORK_RIDER')) return <AlertBanner type="danger" title="Access denied">Only Work Riders may use this workspace.</AlertBanner>;
-  return <AppShell user={{ fullName: user.fullName, role: 'WORK_RIDER' }} breadcrumb={[{ label: 'My Rides', to: '/rider' }, { label: 'Work Rider' }]}>{children}</AppShell>;
+  return <AppShell designSystem="v2" user={{ fullName: user.fullName, role: 'WORK_RIDER' }} breadcrumb={[{ label: 'My Rides', to: '/rider' }, { label: 'Work Rider' }]}>{children}</AppShell>;
 }
 export function ReadState({ error, loading, retry }: { error?: unknown; loading: boolean; retry: () => void }) {
   if (error instanceof ApiError && error.status === 403) return <AlertBanner type="danger" title="Access denied">This ride is outside your permitted scope. Your session remains active.</AlertBanner>;

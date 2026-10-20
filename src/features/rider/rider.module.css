@@ -60,3 +60,17 @@
 .elapsed { display: flex; align-items: baseline; gap: var(--space-md); }
 .elapsed span { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
 .elapsed strong { font-size: 36px; line-height: 44px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* Design System v2 §I — Work Rider responsive web: no horizontal overflow, 48px actions, one-column stacks. */
+.stack > *, .columns > *, .metrics > *, .metrics3 > *, .smallStack > * { min-width: 0; }
+@media (max-width: 767px) {
+  .header { align-items: stretch; }
+  .header > *, .actions { width: 100%; }
+  .actions { justify-content: stretch; }
+  .actions > a, .actions > button { flex: 1 1 auto; }
+  .primaryLink, .secondaryLink { min-height: 48px; justify-content: center; }
+  .nextRide { flex-direction: column; }
+  .timeTile { width: 100%; min-height: 88px; }
+  .endActions > * { flex: 1; }
+  .facts { grid-template-columns: 1fr; }
+}

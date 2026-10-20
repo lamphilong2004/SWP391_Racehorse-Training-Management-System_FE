@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { AlertBanner, Button, Card, EmptyState, ErrorState, StatusBadge, Icon, LoadingState, type IconName } from '../../../design-system';
+import { AlertBanner, Button, Card, EmptyState, ErrorState, StatusBadge, Icon, LoadingState, type IconName, DesignSystemScope } from '../../../design-system';
 import { useHorsesApi } from '../api/HorsesApiContext';
 import type { ActivationItem, ActivationStatus, HorseDetail } from '../api/types';
 import { ageInYears, formatDate } from '../shared/format';
@@ -30,7 +30,12 @@ const ITEMS: Record<ActivationItem, { label: string; who: 'Club Manager' | 'Vete
  * Activation is automatic (DEC-009 §1): there is NO approve or activate action anywhere on this page. The Head Trainer
  * readiness review is shown as "Recommended — does not block activation".
  */
+/** Design System v2 scope for this CORE-013 screen; the shared horse layout stays owner-neutral. */
 export function PendingActivationPage() {
+  return <DesignSystemScope><PendingActivationPageContent /></DesignSystemScope>;
+}
+
+function PendingActivationPageContent() {
   const api = useHorsesApi();
   const navigate = useNavigate();
   const location = useLocation() as { state?: { completedHorseId?: number } };

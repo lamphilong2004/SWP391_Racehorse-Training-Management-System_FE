@@ -132,3 +132,10 @@ it('uses shared bearer identity, canonical assignedToMe and exact exercise paylo
   fetcher.mockResolvedValueOnce(new Response(JSON.stringify({ success: false, error: { code: 'FORBIDDEN', message: 'Not assigned', details: [] } }), { status: 403 }));
   await expect(client.exercises()).rejects.toMatchObject({ status: 403 }); expect(auth.handleApiError).toHaveBeenCalledWith(expect.objectContaining({ status: 403 }));
 });
+it('keeps a typed exercise definition when Escape is pressed on the dirty builder', async () => {
+  mount(api(), '/training/exercise-library/new'); const dialog = await screen.findByRole('dialog', { name: 'New Exercise' });
+  fireEvent.change(within(dialog).getByLabelText('Exercise name'), { target: { value: 'Hill repeats' } });
+  fireEvent(dialog, new Event('cancel', { cancelable: true }));
+  expect(screen.getByRole('dialog', { name: 'New Exercise' })).toBeInTheDocument();
+  expect(within(dialog).getByLabelText('Exercise name')).toHaveValue('Hill repeats');
+});

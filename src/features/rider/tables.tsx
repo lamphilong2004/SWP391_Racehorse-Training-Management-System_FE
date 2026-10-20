@@ -72,7 +72,9 @@ export function AssignmentsTable({ api }: { api: RiderApi }) {
     chevron,
   ];
   const table = (rows: RiderSession[], today: boolean, caption: string, empty: string) => (
-    <DataTable columns={columns(today)} rows={rows} rowKey={(ride) => ride.id} onRowClick={open} caption={caption} empty={<EmptyState title={empty} description="There are no rides for this selection." />} />
+    <div className="table-scroll" role="region" aria-label={caption} tabIndex={0}>
+      <DataTable columns={columns(today)} rows={rows} rowKey={(ride) => ride.id} onRowClick={open} caption={caption} empty={<EmptyState title={empty} description="There are no rides for this selection." />} />
+    </div>
   );
   const state = tab === 'completed' ? completed : active;
   return (
@@ -144,7 +146,9 @@ export function HistoryTable({ api }: { api: RiderApi }) {
             <MetricCard label="Interrupted" value={String(rides.filter((ride) => ride.status === 'INTERRUPTED').length)} />
           </div>
           <Card className={styles.tableCard}>
-            <DataTable columns={columns} rows={shown} rowKey={(ride) => ride.id} caption="Riding history" onRowClick={(ride) => navigate(`/rider/assignments/${ride.id}`)} empty={<EmptyState title="No rides yet" description="Completed and interrupted rides appear here." />} />
+            <div className="table-scroll" role="region" aria-label="Riding history" tabIndex={0}>
+              <DataTable columns={columns} rows={shown} rowKey={(ride) => ride.id} caption="Riding history" onRowClick={(ride) => navigate(`/rider/assignments/${ride.id}`)} empty={<EmptyState title="No rides yet" description="Completed and interrupted rides appear here." />} />
+            </div>
           </Card>
         </>
       )}

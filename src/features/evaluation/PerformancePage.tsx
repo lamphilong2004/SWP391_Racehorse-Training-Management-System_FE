@@ -18,7 +18,7 @@ export function PerformancePage({ api = evaluationApi, loadHorses = loadPerforma
   if (!user) return null;
   const role = READ_ROLES.find((candidate) => user.roles.includes(candidate));
   if (!role) return <AlertBanner type="danger" title="Access denied">Your role cannot view horse performance history.</AlertBanner>;
-  return <AppShell user={{ fullName: user.fullName, role }} breadcrumb={[{ label: 'Training' }, { label: 'Performance History' }]}>
+  return <AppShell designSystem="v2" user={{ fullName: user.fullName, role }} breadcrumb={[{ label: 'Training' }, { label: 'Performance History' }]}>
     <PerformanceWorkspace key={user.id} api={api} loadHorses={loadHorses} assignedToMe={user.roles.includes('TRAINER')} />
   </AppShell>;
 }

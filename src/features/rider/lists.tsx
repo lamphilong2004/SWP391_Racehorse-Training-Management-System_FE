@@ -78,14 +78,14 @@ function Dashboard({ api }: { api: RiderApi }) {
           {later.length === 0 ? <p className={styles.muted}>No other rides later today.</p> : later.map((ride) => <div key={ride.id} className={styles.laterRide}><span className={styles.timeChip}>{clock(ride.scheduledStart)}</span><div className={styles.cellStack}><strong>{ride.horse.name} · {ride.horse.horseCode}</strong><span className={styles.muted}>{ride.focus || ride.sessionCode} · {ride.phaseName}</span><span className={styles.muted}>Trainer {ride.trainer?.fullName ?? 'not supplied'}</span><div className={styles.badges}><StatusBadge family="session" status={ride.status} /></div>
             <span className={preCheck(ride) === 'ALL_NORMAL' ? styles.toneSuccess : styles.toneWarning}>{preCheckText(ride)}</span></div></div>)}</div></Card>
       </div>
-      <Card title="Today's schedule"><DataTable<RiderSession> caption="Today's schedule" rows={today} rowKey={(ride) => ride.id} empty={<EmptyState title="No rides today" description="Open View all assignments for other days." />} columns={[
+      <Card title="Today's schedule"><div className="table-scroll" role="region" aria-label="Today's schedule" tabIndex={0}><DataTable<RiderSession> caption="Today's schedule" rows={today} rowKey={(ride) => ride.id} empty={<EmptyState title="No rides today" description="Open View all assignments for other days." />} columns={[
         { key: 'time', header: 'Time', render: (ride) => clock(ride.scheduledStart) },
         { key: 'horse', header: 'Horse', render: (ride) => <div className={styles.cellStack}><span className={styles.strong}>{ride.horse.name}</span><span className={styles.caption}>{ride.horse.horseCode}</span></div> },
         { key: 'session', header: 'Session', render: (ride) => ride.focus || ride.sessionCode },
         { key: 'trainer', header: 'Trainer', render: (ride) => ride.trainer?.fullName ?? 'Not supplied' },
         { key: 'status', header: 'Status', render: (ride) => <StatusBadge family="session" status={ride.status} /> },
         { key: 'open', header: 'Open', render: (ride) => <Link className={styles.link} to={`/rider/assignments/${ride.id}`} aria-label={`View Assignment ${ride.sessionCode}`}><Icon name="chevron-right" size={16} /></Link> },
-      ]} /></Card>
+      ]} /></div></Card>
     </>}
   </div>;
 }

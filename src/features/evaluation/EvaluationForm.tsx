@@ -1,9 +1,9 @@
-import { useRef, useState } from 'react';
-import { AlertBanner, Button, Card, RadioGroup, TextAreaField } from '../../design-system';
+import { useEffect, useRef, useState } from 'react';
+import { AlertBanner, Button, Card, RadioGroup, TextAreaField, focusFirstInvalid } from '../../design-system';
 import { ApiError } from '../../shared/auth/authApi';
 import { RESULT_LABELS, type EvaluationRequest, type EvaluationResult } from './models';
 
-export function EvaluationForm({ onSave, interrupted, onPendingChange }: { onSave: (input: EvaluationRequest) => Promise<void>; interrupted: boolean; onPendingChange: (pending: boolean) => void }) {
+export function EvaluationForm({ onSave, interrupted, onPendingChange, onDirtyChange }: { onSave: (input: EvaluationRequest) => Promise<void>; interrupted: boolean; onPendingChange: (pending: boolean) => void; onDirtyChange?: (dirty: boolean) => void }) {
   const [result, setResult] = useState('');
   const [evaluatedSummary, setSummary] = useState('');
   const [evaluationNotes, setNotes] = useState('');
@@ -13,7 +13,10 @@ export function EvaluationForm({ onSave, interrupted, onPendingChange }: { onSav
   const [conflict, setConflict] = useState(false);
   const [saving, setSaving] = useState(false);
   const pending = useRef(false);
-  return <form className="evaluation-stack" noValidate onSubmit={async (event) => {
+  const form = useRef<HTMLFormElement>(null);
+  const dirty = Boolean(result || evaluatedSummary.trim() || evaluationNotes.trim() || recommendation.trim());
+  useEffect(() => { onDirtyChange?.(dirty); }, [dirty, onDirtyChange]);
+  return <form ref={form} className="evaluation-stack" noValidate onSubmit={async (event) => {
     event.preventDefault();
     if (pending.current || conflict) return;
     const issues: Record<string, string> = {};
@@ -22,7 +25,7 @@ export function EvaluationForm({ onSave, interrupted, onPendingChange }: { onSav
       if (value.length > 2000) issues[field] = 'Use at most 2000 characters.';
     }
     setErrors(issues); setFailure('');
-    if (Object.keys(issues).length) return;
+    if (Object.keys(issues).length) { focusFirstInvalid(form.current); return; }
     pending.current = true; setSaving(true); onPendingChange(true);
     try {
       await onSave({ result: result as EvaluationResult, evaluatedSummary: evaluatedSummary.trim() || null, evaluationNotes: evaluationNotes.trim() || null, recommendation: recommendation.trim() || null });

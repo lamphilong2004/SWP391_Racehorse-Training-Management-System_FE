@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { flushSync } from 'react-dom';
 import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import {
   AlertBanner, Button, Card, Checkbox, ErrorState, StatusBadge, Icon, LoadingState, SelectField, TextField,
-} from '../../../design-system';
+ DesignSystemScope, UnsavedChangesGuard, focusFirstInvalid } from '../../../design-system';
 import { ApiRequestError } from '../api/horsesApi';
 import { useHorsesApi } from '../api/HorsesApiContext';
 import type { ActivationStatus, HorseDetail, StableAssignment, UserSummary } from '../api/types';
@@ -26,7 +27,12 @@ type Field = 'sire' | 'dam' | 'owner';
  * the contract's ref-XOR-name rule is satisfied by never sending both), links the owner and opens the Assign Stable Box
  * modal. Completing these items can activate the horse automatically (DEC-009 §1); there is no approve action.
  */
+/** Design System v2 scope for this CORE-013 screen; the shared horse layout stays owner-neutral. */
 export function PedigreeOwnershipPage() {
+  return <DesignSystemScope><PedigreeOwnershipPageContent /></DesignSystemScope>;
+}
+
+function PedigreeOwnershipPageContent() {
   const api = useHorsesApi();
   const navigate = useNavigate();
   const location = useLocation() as { state?: { photoUploadFailed?: boolean } };
@@ -48,6 +54,8 @@ export function PedigreeOwnershipPage() {
   const [formError, setFormError] = useState<string>();
   const [saving, setSaving] = useState(false);
   const [boxModalOpen, setBoxModalOpen] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const form = useRef<HTMLFormElement>(null);
 
   useBreadcrumb([{ label: 'Horses', to: '/horses' }, { label: data?.horse.name ?? 'Horse' }, { label: 'Pedigree & Ownership' }]);
 
@@ -127,7 +135,7 @@ export function PedigreeOwnershipPage() {
     if (!alreadyOwned && (!Number.isFinite(Number(share)) || Number(share) <= 0 || Number(share) > 100 || !effectiveFrom)) missing.owner = 'Enter an ownership share (greater than 0, at most 100) and effective date.';
     setErrors(missing);
     setFormError(undefined);
-    if (Object.keys(missing).length > 0) return;
+    if (Object.keys(missing).length > 0) { focusFirstInvalid(form.current); return; }
 
     pending.current = true; setSaving(true);
     try {
@@ -136,6 +144,8 @@ export function PedigreeOwnershipPage() {
       if (!horse.currentOwnerships.some((o) => o.owner.id === Number(ownerId))) {
         await api.addOwnership(horse.id, { ownerUserId: Number(ownerId), sharePercentage: Number(share), effectiveFrom, isManagingOwner: managing });
       }
+      // Server confirmed both writes: release the unsaved-changes guard before leaving.
+      flushSync(() => setSaved(true));
       navigate('/horses/pending-activation', { state: { completedHorseId: horse.id } });
     } catch (e) {
       setFormError(e instanceof ApiRequestError ? e.message : 'The changes could not be saved. Please try again.');
@@ -144,8 +154,13 @@ export function PedigreeOwnershipPage() {
     }
   };
 
+  // Memory-only dirty state against the loaded horse; ownership/pedigree drafts are never stored locally.
+  const dirty = !saved && (sire !== (horse.pedigree.sire.name || horse.pedigree.sire.horseCode || '') || dam !== (horse.pedigree.dam.name || horse.pedigree.dam.horseCode || '')
+    || ownerId !== String(horse.currentOwnerships[0]?.owner.id ?? '') || share !== '' || managing);
+
   return (
-    <form className={styles.page} onSubmit={submit} noValidate>
+    <form ref={form} className={styles.page} onSubmit={submit} noValidate>
+      <UnsavedChangesGuard dirty={dirty} />
       <button type="button" className={styles.back} onClick={() => navigate(-1)}>{'←  Back'}</button>
 
       <div className={styles.titleRow}>
