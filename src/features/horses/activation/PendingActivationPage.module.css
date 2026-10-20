@@ -28,3 +28,12 @@
 .howText { font: 400 13px/16px var(--font-family); color: var(--color-text-primary); }
 .howMuted { font: 400 13px/16px var(--font-family); color: var(--color-text-secondary); }
 .lifecycle { display: flex; align-items: center; gap: var(--space-sm); color: var(--color-text-secondary); }
+
+/* Design System v2 §I narrow web: wrap header, checklist values and actions instead of overflowing. */
+@media (max-width: 767px) {
+  .horseHeader { flex-wrap: wrap; }
+  .check { align-items: flex-start; flex-wrap: wrap; }
+  .checkValue { white-space: normal; }
+  .actions { flex-wrap: wrap; }
+  .actions > * { flex: 1 1 160px; min-height: 48px; }
+}

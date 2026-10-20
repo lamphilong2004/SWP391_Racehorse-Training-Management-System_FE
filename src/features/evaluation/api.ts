@@ -22,7 +22,11 @@ export function createEvaluationApi(options: { fetcher?: typeof fetch; baseUrl?:
       const query = new URLSearchParams();
       if (dates.from) query.set('from', dates.from);
       if (dates.to) query.set('to', dates.to);
-      return request(`/api/horses/${id}/performance${query.size ? `?${query}` : ''}`, { signal });
+      // A non-list body is a contract mismatch: surface it as an error state instead of crashing the history view.
+      return request<PerformancePoint[]>(`/api/horses/${id}/performance${query.size ? `?${query}` : ''}`, { signal }).then((rows) => {
+        if (!Array.isArray(rows)) throw new ApiError(200, 'INVALID_RESPONSE', 'Performance history does not match the approved contract. Reload to retry.');
+        return rows;
+      });
     },
   };
 }

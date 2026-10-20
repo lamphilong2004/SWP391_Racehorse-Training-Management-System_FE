@@ -169,3 +169,18 @@ it('clears former Horse content when shared session switches or logs out', async
   await userEvent.click(screen.getByRole('button', { name: 'Fixture logout' }));
   await screen.findByRole('heading', { name: 'Sign in to Racehorse Ops' }); expect(screen.queryByText('Fixture Draft')).not.toBeInTheDocument();
 });
+it('guards a dirty Register Horse form, keeps input on Continue editing and focuses the first invalid field', async () => {
+  const { router } = mount('/horses/new');
+  await screen.findByRole('heading', { name: 'Register Horse' });
+  fireEvent.click(screen.getByRole('button', { name: 'Save Draft & Continue' }));
+  await waitFor(() => expect(screen.getByLabelText('Horse name *')).toHaveFocus());
+  fireEvent.change(screen.getByLabelText('Horse name *'), { target: { value: 'Keep me' } });
+  await userEvent.click(screen.getByRole('button', { name: /Back to Horses/ }));
+  expect(await screen.findByRole('dialog', { name: 'Unsaved changes' })).toBeInTheDocument();
+  await userEvent.click(screen.getByRole('button', { name: 'Continue editing' }));
+  expect(router.state.location.pathname).toBe('/horses/new');
+  expect(screen.getByLabelText('Horse name *')).toHaveValue('Keep me');
+  await userEvent.click(screen.getByRole('button', { name: /Back to Horses/ }));
+  await userEvent.click(await screen.findByRole('button', { name: 'Discard changes' }));
+  await waitFor(() => expect(router.state.location.pathname).toBe('/horses'));
+});

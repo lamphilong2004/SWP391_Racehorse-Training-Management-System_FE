@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
-import { AlertBanner, Button, Card, EmptyState, ErrorState, KeyValue, LoadingState, MetricCard, RadioGroup, StatusBadge, TextField } from '../../design-system';
+import { AlertBanner, Button, Card, EmptyState, ErrorState, KeyValue, LoadingState, MetricCard, RadioGroup, StatusBadge, TextField, UnsavedChangesGuard } from '../../design-system';
 import { AppShell } from '../../layout/AppShell';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { ApiError } from '../../shared/auth/authApi';
@@ -15,7 +15,7 @@ function message(error: unknown) { return error instanceof Error ? error.message
 function GroomShell({ children }: { children: ReactNode }) {
   const auth = useAuth();
   if (!auth.user?.roles.includes('GROOM')) return <AlertBanner type="danger" title="Access denied">Only the assigned Groom may access pre-session checks.</AlertBanner>;
-  return <AppShell user={{ fullName: auth.user.fullName, role: 'GROOM' }} breadcrumb={[{ label: 'Stable Care', to: '/groom/today' }, { label: 'Pre-session checks' }]}>{children}</AppShell>;
+  return <AppShell designSystem="v2" user={{ fullName: auth.user.fullName, role: 'GROOM' }} breadcrumb={[{ label: 'Stable Care', to: '/groom/today' }, { label: 'Pre-session checks' }]}>{children}</AppShell>;
 }
 
 export function GroomTodayPage({ api: suppliedApi }: { api?: PrecheckApi }) {
@@ -71,6 +71,7 @@ function PrecheckContent({ id, api }: { id: number; api: PrecheckApi }) {
   const [session, setSession] = useState<PrecheckSession>();
   const [check, setCheck] = useState<PreSessionCheck>();
   const [draft, setDraft] = useState<Partial<Checklist>>({});
+  const checklist = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<unknown>();
   const [actionError, setActionError] = useState('');
   const [attempt, setAttempt] = useState(0);
@@ -96,7 +97,13 @@ function PrecheckContent({ id, api }: { id: number; api: PrecheckApi }) {
   const startGate = check ? 'Reload the session to confirm the remaining start gates.' : session?.blocked ? session.blockedMessage || session.blockedReasons.join(', ') || 'Blocked' : 'No reported block';
   async function save() {
     if (pending.current || check || conflict) return;
-    if (CHECK_ITEMS.some(({ key }) => !draft[key]?.result)) { setActionError('Choose Normal or Abnormal for all five checks.'); return; }
+    if (CHECK_ITEMS.some(({ key }) => !draft[key]?.result)) {
+      setActionError('Choose Normal or Abnormal for all five checks.');
+      // Focus the first unanswered check (UX Playbook v2.1 §2).
+      const unanswered = [...(checklist.current?.querySelectorAll<HTMLElement>('[role="radiogroup"]') ?? [])].find((group) => !group.querySelector('input:checked'));
+      unanswered?.querySelector<HTMLInputElement>('input')?.focus();
+      return;
+    }
     if (CHECK_ITEMS.some(({ key }) => (draft[key]?.observation?.length ?? 0) > 1000)) { setActionError('Each observation must be at most 1000 characters.'); return; }
     pending.current = true; setBusy(true); setActionError('');
     try {
@@ -116,12 +123,15 @@ function PrecheckContent({ id, api }: { id: number; api: PrecheckApi }) {
   }
   if (error) return <ErrorState title={error instanceof ApiError && error.status === 403 ? 'Access denied' : 'Pre-session check unavailable'} description={message(error)} onRetry={reload} />;
   if (!session) return <LoadingState label="Loading pre-session check…" />;
+  // Observations stay in memory only; leaving before the server records the check asks first.
+  const dirty = !check && session.status === 'SCHEDULED' && CHECK_ITEMS.some(({ key }) => Boolean(draft[key]?.result || draft[key]?.observation));
   return <div className={styles.stack}>
+    <UnsavedChangesGuard dirty={dirty} />
     <Link className={styles.link} to="/groom/today">← Back to Today</Link>
     <div className={styles.header}><div><h1 className={styles.heading}>Pre-Session Check · {session.horse.name}</h1><p className={styles.muted}>{session.horse.horseCode} · {session.sessionCode} · {when(session.scheduledStart)} · Work Rider {session.workRider.fullName}</p></div><StatusBadge family="session" status={session.status} /></div>
     {incidentCode && <AlertBanner type="success" title={`Incident ${incidentCode} submitted`}>The Veterinarian can review this report. The check does not change Training Availability.</AlertBanner>}
     <div className={styles.columns}><Card title="Observation checklist"><p className={styles.muted}>Record what you observe. Choose Abnormal for anything unusual — you do not need to decide what is wrong.</p>
-      {CHECK_ITEMS.map(({ key, label, hint }) => <div key={key} className={`${styles.item} ${draft[key]?.result === 'ABNORMAL' ? styles.abnormal : ''}`}><RadioGroup label={label} helperText={hint} value={draft[key]?.result ?? ''} onChange={(result) => update(key, { result: result as 'NORMAL' | 'ABNORMAL' })} options={[{ value: 'NORMAL', label: 'Normal' }, { value: 'ABNORMAL', label: 'Abnormal' }]} disabled={locked} className={styles.checkRow} /><TextField label={`${label} observation (optional)`} placeholder="Observation" value={draft[key]?.observation ?? ''} maxLength={1000} disabled={locked} onChange={(event) => update(key, { observation: event.target.value })} className={styles.observation} /></div>)}
+      <div ref={checklist}>{CHECK_ITEMS.map(({ key, label, hint }) => <div key={key} className={`${styles.item} ${draft[key]?.result === 'ABNORMAL' ? styles.abnormal : ''}`}><RadioGroup label={label} helperText={hint} value={draft[key]?.result ?? ''} onChange={(result) => update(key, { result: result as 'NORMAL' | 'ABNORMAL' })} options={[{ value: 'NORMAL', label: 'Normal' }, { value: 'ABNORMAL', label: 'Abnormal' }]} disabled={locked} className={styles.checkRow} /><TextField label={`${label} observation (optional)`} placeholder="Observation" value={draft[key]?.observation ?? ''} maxLength={1000} disabled={locked} onChange={(event) => update(key, { observation: event.target.value })} className={styles.observation} /></div>)}</div>
     </Card><aside className={styles.stack}><Card title="Readiness context (read-only)"><div className={styles.summary}><KeyValue label="Training Availability" value={session.trainingAvailability ?? 'Not supplied'} /><KeyValue label="Start gate" value={startGate} /><KeyValue label="Trainer" value={session.trainer?.fullName ?? 'Not supplied'} /></div></Card><AlertBanner type="info" title="Observation only">Diagnosis, Health Status, Training Availability and restrictions are decided by the Veterinarian.</AlertBanner></aside></div>
     {check ? <AlertBanner type={check.overallResult === 'ABNORMAL' ? 'danger' : 'success'} title={check.overallResult === 'ABNORMAL' ? 'ABNORMAL — this session must not start' : 'ALL NORMAL — pre-session check recorded'}>Checked {when(check.performedAt)} by {check.performedBy.fullName}. {check.overallResult === 'ABNORMAL' ? 'Report an incident so a veterinarian can review. No incident is created until you submit the report.' : 'The Work Rider can start from the assignment when the remaining start gates are clear.'} The session remains {session.status}.</AlertBanner> : abnormal ? <AlertBanner type="danger" title="This horse is not fit to train right now. Report an incident so a veterinarian can review.">Record the abnormal check before reporting. The session stays SCHEDULED and blocked; no incident is automatically created.</AlertBanner> : <AlertBanner type="info" title="Complete all five observations">Completing a normal check clears this gate; it does not start the session.</AlertBanner>}
     {actionError && <AlertBanner type="danger" title="Check could not be confirmed">{actionError}</AlertBanner>}

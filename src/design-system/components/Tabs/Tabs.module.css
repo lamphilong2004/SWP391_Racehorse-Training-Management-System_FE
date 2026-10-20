@@ -5,6 +5,7 @@
 }
 
 .tab {
+  transition: color var(--motion-fast, 0ms) var(--motion-ease, ease), border-color var(--motion-fast, 0ms) var(--motion-ease, ease);
   display: flex;
   align-items: center;
   height: 44px;
@@ -26,3 +27,6 @@
   color: var(--color-text-primary);
   border-bottom-color: var(--color-primary-600);
 }
+
+:global([data-design-system='v2']) .bar { max-width: 100%; overflow-x: auto; }
+@media (prefers-reduced-motion: reduce) { .tab { transition: none; } }

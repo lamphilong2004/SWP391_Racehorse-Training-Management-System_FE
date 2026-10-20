@@ -171,3 +171,13 @@ it('shows the completed assignment with Your ride and Your Rider Feedback before
   const headings = screen.getAllByRole('heading').map((heading) => heading.textContent);
   expect(headings.indexOf('Your Rider Feedback')).toBeLessThan(headings.indexOf('Training Instructions'));
 });
+it('keeps typed issue details when Escape is pressed on the dirty Report Issue dialog', async () => {
+  const client = api({ ...base, status: 'IN_PROGRESS' }); mount(client, '/rider/sessions/50/active');
+  fireEvent.click(await screen.findByRole('button', { name: 'Report Issue' }));
+  const dialog = await screen.findByRole('dialog', { name: 'Report an issue' });
+  fireEvent.change(within(dialog).getByLabelText('Describe what you see'), { target: { value: 'Short stride on the left fore' } });
+  fireEvent(dialog, new Event('cancel', { cancelable: true }));
+  expect(screen.getByRole('dialog', { name: 'Report an issue' })).toBeInTheDocument();
+  expect(within(dialog).getByLabelText('Describe what you see')).toHaveValue('Short stride on the left fore');
+  expect(within(dialog).getByRole('button', { name: 'Close' })).toBeDisabled();
+});

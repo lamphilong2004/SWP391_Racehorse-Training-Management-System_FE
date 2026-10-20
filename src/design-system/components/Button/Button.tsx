@@ -2,7 +2,7 @@ import type { ButtonHTMLAttributes } from 'react';
 import { cx } from '../../utils/cx';
 import styles from './Button.module.css';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'destructive';
+export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'destructive' | 'danger' | 'icon';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -13,8 +13,14 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   /** sm 32 / md 40 / lg 48. */
   size?: ButtonSize;
+  /** Controlled pending state; never implies a successful server write. */
+  loading?: boolean;
 }
 
-export function Button({ variant = 'primary', size = 'md', type = 'button', className, ...rest }: ButtonProps) {
-  return <button type={type} className={cx(styles.button, styles[variant], styles[size], className)} {...rest} />;
+export function Button({ variant = 'primary', size = 'md', type = 'button', className, loading = false, disabled, children, ...rest }: ButtonProps) {
+  return <button {...rest} type={type} disabled={disabled || loading} aria-busy={loading || rest['aria-busy']}
+    aria-disabled={disabled || loading || rest['aria-disabled']}
+    className={cx(styles.button, styles[variant === 'danger' ? 'destructive' : variant], styles[size], className)}>
+    {loading ? <><span className={styles.pendingLabel}>{children}</span><span className={styles.spinner} aria-hidden="true" /></> : children}
+  </button>;
 }

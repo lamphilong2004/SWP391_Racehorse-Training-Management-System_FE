@@ -9,7 +9,7 @@
 }
 
 .label {
-  font-size: 11px;
+  font-size: var(--badge-label-font-size, 11px);
   line-height: 16px;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -38,7 +38,7 @@
 }
 /* Dashed border = not real data (Badge / Simulated 69:221). */
 .simulated {
-  background: var(--color-warning-50);
-  color: var(--color-warning-600);
-  border: 1px dashed var(--color-warning-600);
+  background: var(--color-simulated-bg, var(--color-warning-50));
+  color: var(--color-simulated-text, var(--color-warning-600));
+  border: 1px dashed currentColor;
 }

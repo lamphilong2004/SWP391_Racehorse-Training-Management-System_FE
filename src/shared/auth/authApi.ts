@@ -111,6 +111,9 @@ export async function requestApi<T>(path: string, init: RequestInit = {}, option
     envelope = (await response.json()) as ApiEnvelope<T>;
   } catch {
     if (response.status === 401) options.onUnauthorized?.();
+    // Static hosting may return HTML/plain text when no Auth API is connected. Never treat that as sign-in.
+    if (path === '/api/auth/login' && [404, 405, 502, 503, 504].includes(response.status))
+      throw new ApiError(response.status, 'SERVER_UNAVAILABLE', 'Sign-in service is unavailable. Please try again later.');
     throw new ApiError(response.status, 'INVALID_RESPONSE', 'The server returned an unreadable response.');
   }
 

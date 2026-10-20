@@ -1,4 +1,6 @@
 .evaluation-stack { display: flex; flex-direction: column; gap: var(--space-xl); }
+/* Keep drafts mounted without overriding the browser's hidden semantics. */
+.evaluation-stack[hidden], .evaluation-stack [hidden] { display: none !important; }
 .evaluation-stack-sm { display: flex; flex-direction: column; gap: var(--space-sm); }
 .evaluation-stack p, .evaluation-stack h1 { margin: 0; }
 .evaluation-stack p { white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -18,3 +20,7 @@
 .evaluation-horse-select { max-width: 360px; }
 .evaluation-charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-md); }
 @media (max-width: 900px) { .evaluation-charts { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 767px) {
+  .evaluation-link-button { min-height: 44px; }
+  .evaluation-actions > * { min-width: 0; }
+}

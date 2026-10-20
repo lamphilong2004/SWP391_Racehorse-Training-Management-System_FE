@@ -21,22 +21,24 @@
 }
 
 .modal .surface {
-  border-radius: var(--radius-lg);
+  border-radius: var(--dialog-radius, var(--radius-lg));
   overflow: hidden;
   max-height: calc(100vh - var(--space-3xl) * 2);
 }
 
 .md {
   width: 560px;
+  max-width: calc(100vw - var(--space-lg) * 2);
 }
 
 .lg {
   width: 720px;
+  max-width: calc(100vw - var(--space-lg) * 2);
 }
 
 .drawer {
   margin: 0 0 0 auto;
-  width: 480px;
+  width: min(480px, 100vw);
   height: 100vh;
 }
 
@@ -84,7 +86,16 @@
   color: var(--color-text-secondary);
   cursor: pointer;
   border-radius: var(--radius-sm);
+  min-width: 32px;
+  min-height: 32px;
+  align-items: center;
+  justify-content: center;
 }
+
+.modal[open] .surface { animation: enter var(--motion-base, 0ms) var(--motion-ease-out, ease-out); }
+.drawer[open] .surface { animation: enter var(--motion-panel, 0ms) var(--motion-ease-out, ease-out); }
+@keyframes enter { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .modal[open] .surface, .drawer[open] .surface { animation: none; } }
 
 .body {
   padding: var(--space-xl);

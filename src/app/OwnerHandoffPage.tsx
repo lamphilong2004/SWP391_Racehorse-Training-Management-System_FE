@@ -11,7 +11,7 @@ import styles from './OwnerHandoffPage.module.css';
 export function OwnerHandoffPage({ title, section = 'Training' }: { title: string; section?: string }) {
   const { user } = useAuth();
   if (!user) return null;
-  return <AppShell user={{ fullName: user.fullName, role: user.roles[0] }} breadcrumb={[{ label: section }, { label: title }]}>
+  return <AppShell designSystem="v2" user={{ fullName: user.fullName, role: user.roles[0] }} breadcrumb={[{ label: section }, { label: title }]}>
     <div className={styles.stack}>
       <EmptyState title={`${title} unavailable`} description="This screen is not available in this build." />
       <Link className={styles.link} to="/dashboard">Back to workspace</Link>

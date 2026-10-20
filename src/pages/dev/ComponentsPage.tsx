@@ -129,6 +129,7 @@ export function ComponentsPage() {
       <header className={styles.pageHeader}>
         <p className="text-overline">SWP391 · CORE-002</p>
         <h1 className="text-display">Racehorse Ops Design System</h1>
+        <Link to="/dev/foundation-v2">Review Equestrian Command v2 foundation</Link>
         <p className={styles.lead}>
           Shared tokens, components and the desktop app shell, built from the Figma file “Racehorse Training &
           Management System” page 01 - Design System. Feature screens must reuse these.

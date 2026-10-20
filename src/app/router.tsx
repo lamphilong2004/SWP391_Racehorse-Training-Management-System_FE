@@ -14,6 +14,7 @@ import { PedigreeOwnershipPage } from '../features/horses/create/PedigreeOwnersh
 import { PendingActivationPage } from '../features/horses/activation/PendingActivationPage';
 import { PublicOnly, RequireAuth } from './RequireAuth';
 import { ROUTES } from './routePaths';
+import { RouteErrorPage } from './RouteErrorPage';
 import { IncidentAccess } from '../features/medical/Incidents';
 import { GroomTreatmentAccess } from '../features/medical/GroomTasks';
 import { MedicalSummaryAccess } from '../features/medical/MedicalSummary';
@@ -44,6 +45,10 @@ const pendingScreens: { path: string; title: string; section: string; roles: Rol
 const devRoutes: RouteObject[] = import.meta.env.DEV
   ? [
       {
+        path: '/dev/foundation-v2',
+        lazy: async () => ({ Component: (await import('../pages/dev/FoundationV2Page')).FoundationV2Page }),
+      },
+      {
         path: ROUTES.devComponents,
         lazy: async () => ({ Component: (await import('../pages/dev/ComponentsPage')).ComponentsPage }),
       },
@@ -66,7 +71,7 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
       return { Component: () => <PublicOnly><RoleTestEntry /></PublicOnly> };
     } }
     : { path: ROUTES.login, element: <PublicOnly><LoginPage /></PublicOnly> };
-  return [
+  const routeList: RouteObject[] = [
     ...(includeDevRoutes
       ? [{ path: ROUTES.root, element: <Navigate to={ROUTES.devComponents} replace /> }, ...devRoutes]
       : [{ path: ROUTES.root, element: <PublicOnly><LandingPage /></PublicOnly> }]),
@@ -137,8 +142,12 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
     ...pendingScreens.map(({ path, title, section, roles }) => ({ path, element: <RequireAuth allowedRoles={roles}><OwnerHandoffPage title={title} section={section} /></RequireAuth> })),
     { path: '*', element: <RequireAuth><NotFoundPage /></RequireAuth> },
   ];
+  // Every top-level route recovers from render or chunk-load failures with a calm, recoverable screen.
+  for (const route of routeList) route.errorElement ??= <RouteErrorPage />;
+  return routeList;
 }
 
-export const routes = buildRoutes(false);
+// Keep the app's public root; make the existing review galleries reachable only in a Vite dev server.
+export const routes = [...buildRoutes(false), ...(import.meta.env.DEV ? devRoutes : [])];
 
 export const router = createBrowserRouter(routes);

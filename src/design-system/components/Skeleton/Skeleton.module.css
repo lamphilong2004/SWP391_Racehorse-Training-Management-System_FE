@@ -1,0 +1,7 @@
+.root { display: grid; gap: var(--space-sm); min-width: 0; }
+.placeholder { display: block; background: var(--color-bg-subtle); border-radius: var(--radius-sm); animation: pulse 1.6s ease-in-out infinite; }
+.text { height: 20px; } .text:last-child { width: 70%; }
+.card { height: 96px; border-radius: var(--radius-lg); }
+.circle { width: 40px; height: 40px; border-radius: var(--radius-full); }
+@keyframes pulse { 50% { opacity: .5; } }
+@media (prefers-reduced-motion: reduce) { .placeholder { animation: none; } }

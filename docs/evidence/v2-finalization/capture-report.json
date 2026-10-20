@@ -1,0 +1,162 @@
+[
+  {
+    "label": "before",
+    "name": "rider-dashboard",
+    "size": "1440",
+    "over": 0,
+    "v2": false,
+    "errors": 0
+  },
+  {
+    "label": "before",
+    "name": "rider-dashboard",
+    "size": "375",
+    "over": 0,
+    "v2": false,
+    "errors": 0
+  },
+  {
+    "label": "before",
+    "name": "rider-assignment",
+    "size": "1440",
+    "over": 0,
+    "v2": false,
+    "errors": 0
+  },
+  {
+    "label": "before",
+    "name": "rider-assignment",
+    "size": "375",
+    "over": 0,
+    "v2": false,
+    "errors": 0
+  },
+  {
+    "label": "before",
+    "name": "pending-activation",
+    "size": "1440",
+    "over": 0,
+    "v2": false,
+    "errors": 0
+  },
+  {
+    "label": "before",
+    "name": "pending-activation",
+    "size": "375",
+    "over": 0,
+    "v2": false,
+    "errors": 0
+  },
+  {
+    "label": "before",
+    "name": "assigned-programs",
+    "size": "1440",
+    "over": 0,
+    "v2": false,
+    "errors": 0
+  },
+  {
+    "label": "before",
+    "name": "assigned-programs",
+    "size": "375",
+    "over": 0,
+    "v2": false,
+    "errors": 0
+  },
+  {
+    "label": "before",
+    "name": "groom-precheck",
+    "size": "1440",
+    "over": 0,
+    "v2": false,
+    "errors": 0
+  },
+  {
+    "label": "before",
+    "name": "groom-precheck",
+    "size": "375",
+    "over": 0,
+    "v2": false,
+    "errors": 0
+  },
+  {
+    "label": "after",
+    "name": "rider-dashboard",
+    "size": "1440",
+    "over": 0,
+    "v2": true,
+    "errors": 0
+  },
+  {
+    "label": "after",
+    "name": "rider-dashboard",
+    "size": "375",
+    "over": 0,
+    "v2": true,
+    "errors": 0
+  },
+  {
+    "label": "after",
+    "name": "rider-assignment",
+    "size": "1440",
+    "over": 0,
+    "v2": true,
+    "errors": 0
+  },
+  {
+    "label": "after",
+    "name": "rider-assignment",
+    "size": "375",
+    "over": 0,
+    "v2": true,
+    "errors": 0
+  },
+  {
+    "label": "after",
+    "name": "pending-activation",
+    "size": "1440",
+    "over": 0,
+    "v2": true,
+    "errors": 0
+  },
+  {
+    "label": "after",
+    "name": "pending-activation",
+    "size": "375",
+    "over": 0,
+    "v2": true,
+    "errors": 0
+  },
+  {
+    "label": "after",
+    "name": "assigned-programs",
+    "size": "1440",
+    "over": 0,
+    "v2": true,
+    "errors": 0
+  },
+  {
+    "label": "after",
+    "name": "assigned-programs",
+    "size": "375",
+    "over": 0,
+    "v2": true,
+    "errors": 0
+  },
+  {
+    "label": "after",
+    "name": "groom-precheck",
+    "size": "1440",
+    "over": 0,
+    "v2": true,
+    "errors": 0
+  },
+  {
+    "label": "after",
+    "name": "groom-precheck",
+    "size": "375",
+    "over": 0,
+    "v2": true,
+    "errors": 0
+  }
+]
