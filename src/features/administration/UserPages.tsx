@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { AlertBanner, Button, ButtonLink, Card, DataTable, EmptyState, ErrorState, LoadingState, RadioGroup, SelectField, StatusBadge, TextField, UnsavedChangesGuard } from '../../design-system';
+import { AlertBanner, Button, ButtonLink, Card, Checkbox, DataTable, EmptyState, ErrorState, LoadingState, RadioGroup, SelectField, StatusBadge, TextField, UnsavedChangesGuard } from '../../design-system';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { ROLE_CODES, ROLE_LABELS, type RoleCode } from '../../shared/auth/roles';
 import { FlowShell } from '../main-flows/FlowShell';
 import { errorMessage, idOf, useFlowRequest } from '../main-flows/api';
 import { useResource } from '../main-flows/useResource';
-import { accountApi, type UserDetail, type UserInput } from './accountApi';
+import { accountApi, type SkillKind, type UserDetail, type UserInput } from './accountApi';
 import styles from './Administration.module.css';
 import { CORE_ROLE_MATRIX } from './approvedRoleMatrix';
 
@@ -51,12 +51,20 @@ function UserEditor({ initial }: { initial: UserDetail | null }) {
   const [name, setName] = useState(initial?.fullName ?? ''), [email, setEmail] = useState(initial?.email ?? ''), [role, setRole] = useState<RoleCode>(initial?.roles[0] ?? 'GROOM');
   const [current, setCurrent] = useState(initial), [busy, setBusy] = useState(false), [error, setError] = useState(''); const inFlight = useRef(false);
   const [saved, setSaved] = useState(false);
+  const initialSkills = useMemo(() => initial?.skills.map((skill) => skill.id) ?? [], [initial]);
+  const [years, setYears] = useState(initial?.experienceYears == null ? '' : String(initial.experienceYears)), [level, setLevel] = useState(initial?.experienceLevel ?? '');
+  const [skillIds, setSkillIds] = useState<number[]>(initialSkills);
   useEffect(() => { if (saved) void navigate('/admin/users'); }, [saved, navigate]);
-  const dirty = name !== (initial?.fullName ?? '') || email !== (initial?.email ?? '') || role !== (initial?.roles[0] ?? 'GROOM');
+  const staff = role !== 'HORSE_OWNER', kind = SKILL_KIND[role];
+  const yearsError = years !== '' && !(/^\d+$/.test(years) && Number(years) <= 32767) ? 'Enter whole years from 0 to 32767.' : undefined;
+  const dirty = name !== (initial?.fullName ?? '') || email !== (initial?.email ?? '') || role !== (initial?.roles[0] ?? 'GROOM')
+    || years !== (initial?.experienceYears == null ? '' : String(initial.experienceYears)) || level !== (initial?.experienceLevel ?? '') || skillIds.join() !== initialSkills.join();
+  // Skills belong to one role (Trainer specialization / Work Rider skill); a role change starts from that role's saved skills.
+  const changeRole = (next: RoleCode) => { setRole(next); setSkillIds(next === initial?.roles[0] ? initialSkills : []); };
   async function submit(event: FormEvent) {
-    event.preventDefault(); if (inFlight.current) return; inFlight.current = true; setBusy(true); setError('');
-    const input: UserInput = { fullName: name.trim(), email: email.trim(), roleCode: role, experienceYears: initial?.experienceYears ?? null, experienceLevel: initial?.experienceLevel ?? null,
-      skillIds: role === initial?.roles[0] ? initial.skills.map((s) => s.id) : [] };
+    event.preventDefault(); if (inFlight.current || yearsError) return; inFlight.current = true; setBusy(true); setError('');
+    const input: UserInput = { fullName: name.trim(), email: email.trim(), roleCode: role, experienceYears: staff && years !== '' ? Number(years) : null,
+      experienceLevel: staff && level.trim() ? level.trim() : null, skillIds: kind ? skillIds : [] };
     try { if (initial) await api.update(initial.id, input); else await api.create(input); setSaved(true); }
     catch (failure) { setError(errorMessage(failure)); } finally { inFlight.current = false; setBusy(false); }
   }
@@ -70,12 +78,28 @@ function UserEditor({ initial }: { initial: UserDetail | null }) {
     <div className={styles.columns}><div className={styles.stack}><Card title="Profile"><div className={styles.filters}>
       <TextField label="Full name" required maxLength={150} value={name} disabled={busy} onChange={(e) => setName(e.target.value)} /><TextField label="Email" type="email" required maxLength={254} value={email} disabled={busy} onChange={(e) => setEmail(e.target.value)} />
     </div><p className={styles.muted}>{initial ? `User ID ${initial.userCode} cannot be changed.` : 'User ID is assigned automatically. Initial status is ACTIVE under the approved API contract.'}</p></Card>
-    <Card title="Role"><RadioGroup label="Application role" required value={role} disabled={busy} options={roleOptions} onChange={(value) => setRole(value as RoleCode)} helperText="Changing a role changes access; historical records are retained. There are no custom roles." /></Card>
+    <Card title="Role"><RadioGroup label="Application role" required value={role} disabled={busy} options={roleOptions} onChange={(value) => changeRole(value as RoleCode)} helperText="Changing a role changes access; historical records are retained. There are no custom roles." /></Card>
+    {staff && <Card title="Experience & skills"><div className={styles.stack}><div className={styles.filters}>
+      <TextField label="Experience (years)" type="number" min={0} max={32767} step={1} inputMode="numeric" value={years} error={yearsError} disabled={busy} onChange={(e) => setYears(e.target.value)} />
+      <TextField label="Experience level" maxLength={50} value={level} disabled={busy} onChange={(e) => setLevel(e.target.value)} helperText="Free text, e.g. Senior." />
+    </div>{kind ? <SkillPicker kind={kind} value={skillIds} disabled={busy} onChange={setSkillIds} /> : <p className={styles.muted}>Skills apply to Trainers (specializations) and Work Riders (riding skills) only.</p>}
+      <p className={styles.muted}>Used by Head Trainer recommendations; recommendations never decide on their own.</p></div></Card>}
     {current && <Card title="Account status"><StatusBadge family="account" status={current.accountStatus} /><p>Inactive accounts cannot sign in. Their records are kept.</p><Button type="button" className={styles.statusAction} variant={current.accountStatus === 'ACTIVE' ? 'danger' : 'secondary'} disabled={busy || current.id === user?.id} onClick={() => { void changeStatus(); }}>{current.accountStatus === 'ACTIVE' ? 'Deactivate Account' : 'Activate Account'}</Button></Card>}
     </div><Card title="What this role can access"><p>{ROLE_LABELS[role]}</p><p>Permissions are fixed by the approved role and Backend row scope.</p><ButtonLink variant="secondary" to="/admin/roles">View Roles & Permissions</ButtonLink><p>Horse Owners see only their linked horses. Managers do not assign passwords.</p></Card></div>
     {error && <AlertBanner type="danger" title="User was not saved">{error}</AlertBanner>}
     <div className={styles.actions}>{busy ? <Button type="button" variant="secondary" disabled>Cancel</Button> : <ButtonLink variant="secondary" to="/admin/users">Cancel</ButtonLink>}<Button type="submit" disabled={busy}>{busy ? 'Saving…' : initial ? 'Save Changes' : 'Create User'}</Button></div>
   </form></>;
+}
+const SKILL_KIND: Partial<Record<RoleCode, SkillKind>> = { TRAINER: 'TRAINER_SPECIALIZATION', WORK_RIDER: 'RIDER_SKILL' };
+function SkillPicker({ kind, value, disabled, onChange }: { kind: SkillKind; value: number[]; disabled: boolean; onChange: (ids: number[]) => void }) {
+  const request = useFlowRequest(), api = useMemo(() => accountApi(request), [request]);
+  const load = useMemo(() => (signal: AbortSignal) => api.skills(kind, signal), [api, kind]), resource = useResource(load);
+  const legend = kind === 'TRAINER_SPECIALIZATION' ? 'Trainer specializations' : 'Work Rider skills';
+  return <fieldset className={styles.skills}><legend>{legend}</legend>
+    {resource.pending && <LoadingState label="Loading skills…" />}{resource.error && <ErrorState title="Skills unavailable" description={resource.error} onRetry={resource.reload} />}
+    {resource.data && (resource.data.length ? <div className={styles.skillGrid}>{resource.data.map((skill) => <Checkbox key={skill.id} label={skill.name} checked={value.includes(skill.id)} disabled={disabled}
+      onChange={(event) => onChange(event.currentTarget.checked ? [...value, skill.id] : value.filter((id) => id !== skill.id))} />)}</div> : <p className={styles.muted}>No {legend.toLowerCase()} are configured.</p>)}
+  </fieldset>;
 }
 export function RolesPage() {
   const request = useFlowRequest(), api = useMemo(() => accountApi(request), [request]);

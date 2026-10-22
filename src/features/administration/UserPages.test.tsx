@@ -50,3 +50,27 @@ it('does not issue business requests for an invalid user ID', async () => {
   await waitFor(() => expect(screen.getByText('Invalid user ID')).toBeInTheDocument());
   expect(request).not.toHaveBeenCalled();
 });
+it('edits Trainer experience and specializations with the role-matched skill list', async () => {
+  const trainer = { id: 5, userCode: 'TR-5', fullName: 'Demo TRAINER', email: 'trainer@example.test', roles: ['TRAINER'], accountStatus: 'ACTIVE', lastLoginAt: null,
+    experienceYears: 3, experienceLevel: 'Mid', skills: [{ id: 2, name: 'Endurance', kind: 'TRAINER_SPECIALIZATION' }] };
+  request.mockImplementation(async (path: string, init?: RequestInit) => path === '/api/admin/users/5' ? (init?.method === 'PUT' ? trainer : trainer)
+    : path === '/api/admin/skills?kind=TRAINER_SPECIALIZATION' ? [{ id: 1, name: 'Sprint', kind: 'TRAINER_SPECIALIZATION' }, { id: 2, name: 'Endurance', kind: 'TRAINER_SPECIALIZATION' }] : undefined);
+  mount('/admin/users/5/edit'); const user = userEvent.setup();
+  expect(await screen.findByRole('checkbox', { name: 'Endurance' })).toBeChecked();
+  await user.click(screen.getByRole('checkbox', { name: 'Sprint' }));
+  await user.clear(screen.getByLabelText('Experience (years)')); await user.type(screen.getByLabelText('Experience (years)'), '5');
+  await user.click(screen.getByRole('button', { name: 'Save Changes' }));
+  await waitFor(() => expect(request).toHaveBeenCalledWith('/api/admin/users/5', expect.objectContaining({ method: 'PUT' })));
+  const body = JSON.parse(request.mock.calls.find(([path, init]) => path === '/api/admin/users/5' && init?.method === 'PUT')![1].body);
+  expect(body).toMatchObject({ roleCode: 'TRAINER', experienceYears: 5, experienceLevel: 'Mid', skillIds: [2, 1] });
+});
+it('sends no skills or experience for a Horse Owner and clears skills on a role change', async () => {
+  request.mockResolvedValue([]);
+  mount(); const user = userEvent.setup();
+  await user.click(await screen.findByRole('radio', { name: 'Horse Owner' }));
+  expect(screen.queryByText('Experience & skills')).not.toBeInTheDocument();
+  await user.type(screen.getByLabelText(/Full name/), 'Owner Account'); await user.type(screen.getByLabelText(/^Email/), 'owner@example.test');
+  await user.click(screen.getByRole('button', { name: 'Create User' }));
+  await waitFor(() => expect(request).toHaveBeenCalledWith('/api/admin/users', expect.anything()));
+  expect(JSON.parse(request.mock.calls.find(([path]) => path === '/api/admin/users')![1].body)).toMatchObject({ roleCode: 'HORSE_OWNER', experienceYears: null, experienceLevel: null, skillIds: [] });
+});

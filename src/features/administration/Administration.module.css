@@ -16,4 +16,7 @@
 .scroll { border-radius: var(--radius-md); }
 .scroll table { min-width: 720px; }
 .statusAction { align-self: flex-start; }
+.skills { border: 0; margin: 0; padding: 0; min-width: 0; display: flex; flex-direction: column; gap: var(--space-sm); }
+.skills legend { padding: 0; margin-bottom: var(--space-sm); font-size: 13px; font-weight: 600; }
+.skillGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--space-sm) var(--space-lg); }
 @media (max-width: 767px) { .filters > * { flex-basis: 100%; } .actions { width: 100%; } }
