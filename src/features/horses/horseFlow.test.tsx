@@ -32,7 +32,7 @@ it('registers, declares ownership, assigns a FREE box and shows pending baseline
   const id = Number(router.state.location.pathname.split('/')[2]);
   await user.type(screen.getByLabelText('Sire *'), 'Northern Crest');
   await user.type(screen.getByLabelText('Dam *'), 'Silver Lining');
-  await user.selectOptions(screen.getByLabelText('Owner *'), '17');
+  await user.selectOptions(screen.getByLabelText('Owner'), '17');
   await user.type(screen.getByLabelText('Ownership share (%)'), '65');
   await user.click(screen.getByRole('button', { name: 'Assign Stable Box' }));
   await user.click(await screen.findByRole('button', { name: /B-07/ }));
@@ -145,7 +145,7 @@ it.each(['owners', 'assignments', 'activation'] as const)('keeps the form visibl
   await screen.findByRole('heading', { name: 'Pedigree & Ownership · Thunder Bolt' });
   expect(screen.getByLabelText('Sire *')).toBeEnabled();
   expect(screen.getByRole('button', { name: 'Save & Continue' })).toBeDisabled();
-  expect(screen.getByLabelText('Owner *')).toHaveProperty('disabled', missing === 'owners');
+  expect(screen.getByLabelText('Owner')).toHaveProperty('disabled', missing === 'owners');
   if (missing === 'assignments') {
     expect(screen.getByText('Box history unavailable')).toBeInTheDocument();
     expect(screen.queryByText(/Box history: none/)).not.toBeInTheDocument();
@@ -168,7 +168,7 @@ it('retains typed and deliberately cleared fields across setup retry, then sends
     const path = new URL(String(input), 'http://localhost').pathname;
     const failed = path.endsWith('/activation-status') && !available;
     const data = path === '/api/admin/users' ? { items: [{ id: 17, fullName: 'Test Owner', userCode: 'OWNER-17', email: 'owner@example.test', roles: ['HORSE_OWNER'], accountStatus: 'ACTIVE' }], page: 0, size: 100, totalItems: 1, totalPages: 1 }
-      : path.endsWith('/activation-status') ? activation : path.endsWith('/stable-assignments') ? [] : path.endsWith('/pending-activation') ? { items: [], page: 0, size: 50, totalItems: 0, totalPages: 0 } : horse;
+      : path.endsWith('/activation-status') ? activation : path.endsWith('/stable-assignments') ? [] : path.endsWith('/pending-activation') || path === '/api/horses' ? { items: [], page: 0, size: 50, totalItems: 0, totalPages: 0 } : horse;
     return Promise.resolve(new Response(JSON.stringify(failed ? { success: false, error: { code: 'NOT_FOUND', message: 'Not implemented' } } : { success: true, data }), { status: failed ? 404 : init?.method === 'POST' ? 201 : 200 }));
   });
   vi.stubGlobal('fetch', fetcher);
@@ -176,14 +176,14 @@ it('retains typed and deliberately cleared fields across setup retry, then sends
   await screen.findByRole('heading', { name: 'Pedigree & Ownership · Thunder Bolt' });
   fireEvent.change(screen.getByLabelText('Sire *'), { target: { value: '' } });
   fireEvent.change(screen.getByLabelText('Dam *'), { target: { value: 'Edited Dam' } });
-  fireEvent.change(screen.getByLabelText('Owner *'), { target: { value: '17' } });
+  fireEvent.change(screen.getByLabelText('Owner'), { target: { value: '17' } });
   fireEvent.change(screen.getByLabelText('Ownership share (%)'), { target: { value: '65' } });
   available = true;
   fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
   await waitFor(() => expect(screen.getByRole('button', { name: 'Save & Continue' })).toBeEnabled());
   expect(screen.getByLabelText('Sire *')).toHaveValue('');
   expect(screen.getByLabelText('Dam *')).toHaveValue('Edited Dam');
-  expect(screen.getByLabelText('Owner *')).toHaveValue('17');
+  expect(screen.getByLabelText('Owner')).toHaveValue('17');
   expect(screen.getByLabelText('Ownership share (%)')).toHaveValue(65);
   fireEvent.click(screen.getByRole('button', { name: 'Save & Continue' }));
   expect(await screen.findByText('Enter the sire.')).toBeInTheDocument();
