@@ -31,3 +31,14 @@
 /* Figma 97:286 current-time indicator on today. */
 .nowLine { position: absolute; left: 0; right: 0; z-index: 2; height: 0; border-top: 2px solid var(--color-danger-600); pointer-events: none; }
 .nowLine::before { content: ""; position: absolute; left: -4px; top: -5px; width: 8px; height: 8px; border-radius: 50%; background: var(--color-danger-600); }
+
+.calendar { border-radius: var(--card-radius); box-shadow: var(--elev-1); }
+.dayHead { font-weight: 600; }
+.range { font-family: var(--font-family-headline); font-weight: 700; }
+.event { box-shadow: var(--elev-1); }
+@media (max-width: 767px) {
+  .tools, .filters, .toolbar { min-width: 0; max-width: 100%; }
+  .filters { width: 100%; }
+  .filters > * { flex: 1 1 140px; min-width: 0; }
+  .range { min-width: 0; overflow-wrap: anywhere; }
+}

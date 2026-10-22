@@ -24,3 +24,12 @@
   .evaluation-link-button { min-height: 44px; }
   .evaluation-actions > * { min-width: 0; }
 }
+
+.evaluation-stack, .evaluation-columns > *, .evaluation-charts > * { min-width: 0; }
+.evaluation-filters { padding: var(--space-lg); background: var(--color-bg-surface); border: 1px solid var(--color-border-default); border-radius: var(--card-radius); }
+.evaluation-link-button { font-weight: 600; }
+@media (max-width: 600px) {
+  .evaluation-metrics { grid-template-columns: minmax(0, 1fr); }
+  .evaluation-filters > * { flex: 1 1 100%; min-width: 0; }
+  .evaluation-horse-select { max-width: none; }
+}

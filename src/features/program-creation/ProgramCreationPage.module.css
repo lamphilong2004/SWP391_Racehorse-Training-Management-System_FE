@@ -23,3 +23,18 @@
 .summary { white-space: pre-wrap; overflow-wrap: anywhere; }
 .reasons { padding-left: var(--space-xl); color: var(--color-text-secondary); }
 @media (max-width: 1100px) { .columns { grid-template-columns: minmax(0, 1fr); } .candidates { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* V3 wizard, program detail, versioned templates and decision forms. */
+.page, .stack, .columns > *, .fields > *, .candidates > * { min-width: 0; }
+.heading, .footer, .row { flex-wrap: wrap; }
+.heading h1 { font: 700 28px/36px var(--font-family-headline); letter-spacing: -.025em; }
+.context, .choice { box-shadow: var(--elev-1); }
+.selected { box-shadow: inset 0 0 0 1px var(--color-primary-600); }
+.table th { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+.table td { padding-block: var(--space-lg); }
+@media (max-width: 767px) {
+  .fields, .candidates, .profileFacts { grid-template-columns: minmax(0, 1fr); }
+  .heading { align-items: flex-start; }
+  .heading > *, .row > * { min-width: 0; max-width: 100%; }
+  .footer { gap: var(--space-md); }
+}
