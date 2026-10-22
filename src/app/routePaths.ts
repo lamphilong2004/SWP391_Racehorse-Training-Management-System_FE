@@ -60,6 +60,9 @@ export const ROUTES = {
   reports: '/reports',
   auditLog: '/admin/audit-log',
   register: '/register',
+  /** DEC-008 R9 public reset; the dev outbox link targets /reset-password?token=… */
+  forgotPassword: '/forgot-password',
+  resetPassword: '/reset-password',
   registrations: '/admin/registrations',
   myHorses: '/owner/horses',
   notifications: '/notifications',

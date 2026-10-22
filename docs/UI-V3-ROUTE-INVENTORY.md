@@ -84,6 +84,8 @@ while preserving its exact content, actions, API, state transitions and guards.
 | `/training/programs` | ProgramListPage | HEAD_TRAINER | src/app/router.tsx:138 | Pending visual approval; unchanged |
 | `*` | NotFoundPage | Parent / feature guard; see source | src/app/router.tsx:139 | Pending visual approval; unchanged |
 | `/register` | RegisterPage | Public only | src/features/registration/routes.tsx:8 | Pending visual approval; unchanged |
+| `/forgot-password` | ForgotPasswordPage | Public only | src/features/registration/routes.tsx:10 | Added 2026-10-22 (DEC-008 R9 contract); V3 auth layout |
+| `/reset-password` | ResetPasswordPage | Public only | src/features/registration/routes.tsx:11 | Added 2026-10-22 (DEC-008 R9; dev outbox link target); V3 auth layout |
 | `/admin/registrations` | RegistrationReviewPage | Parent / feature guard; see source | src/features/registration/routes.tsx:9 | Pending visual approval; unchanged |
 | `/owner/horses` | OwnerPage | HORSE_OWNER (parent) | src/features/owner/ownerRoutes.tsx:7 | Pending visual approval; unchanged |
 | `/owner/horses/:horseId` | OwnerPage | HORSE_OWNER (parent) | src/features/owner/ownerRoutes.tsx:8 | Pending visual approval; unchanged |

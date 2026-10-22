@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { useLocation, useNavigate } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { AlertBanner } from '../design-system/components/AlertBanner/AlertBanner';
 import { Button } from '../design-system/components/Button/Button';
 import { Checkbox } from '../design-system/components/Checkbox/Checkbox';
@@ -8,6 +8,7 @@ import { TextField } from '../design-system/components/TextField/TextField';
 import { ApiError } from '../shared/auth/authApi';
 import { useAuth } from '../shared/auth/AuthProvider';
 import styles from './LoginPage.module.css';
+import { ROUTES } from '../app/routePaths';
 
 interface LoginLocationState {
   from?: { pathname?: string };
@@ -119,7 +120,7 @@ export function LoginPage() {
             </div>
             <div className={styles.formOptions}>
               <Checkbox label="Remember me" checked={remember} onChange={(event) => setRemember(event.currentTarget.checked)} />
-              <button type="button" className={styles.forgotLink} onClick={() => setFormError('Password reset is not available in this login flow yet. Contact your Club Manager.')}>Forgot password?</button>
+              <Link className={styles.forgotLink} to={ROUTES.forgotPassword}>Forgot password?</Link>
             </div>
             <Button type="submit" size="lg" disabled={submitting} className={styles.submitButton}>
               {submitting ? 'Signing in…' : 'Sign In'}

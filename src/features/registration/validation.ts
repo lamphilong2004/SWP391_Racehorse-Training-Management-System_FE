@@ -1,11 +1,16 @@
 import { REGISTRATION_STATUSES, type RegisterRequest, type RegistrationQuery } from './types';
 
+/** DEC-008 password policy shared by registration and password reset (the server re-validates). */
+export function passwordAllowed(password: string) {
+  const length = Array.from(password).length;
+  return length >= 8 && length <= 64 && /\p{L}/u.test(password) && /\p{Nd}/u.test(password) && new TextEncoder().encode(password).length <= 72;
+}
+
 export function validateRegistration(input: RegisterRequest): Partial<Record<keyof RegisterRequest, string>> {
   const errors: Partial<Record<keyof RegisterRequest, string>> = {};
   if (!input.fullName.trim() || input.fullName.trim().length > 150) errors.fullName = 'Enter your full name, up to 150 characters.';
   if (!/^[^\s@]+@[^\s@]+$/u.test(input.email.trim()) || input.email.trim().length > 254) errors.email = 'Enter a valid email, up to 254 characters.';
-  const length = Array.from(input.password).length;
-  if (length < 8 || length > 64 || !/\p{L}/u.test(input.password) || !/\p{Nd}/u.test(input.password) || new TextEncoder().encode(input.password).length > 72 || input.password === input.email.trim()) {
+  if (!passwordAllowed(input.password) || input.password === input.email.trim()) {
     errors.password = 'Use 8–64 characters with a letter and a digit, at most 72 UTF-8 bytes, different from your email.';
   }
   if (!input.confirmPassword || input.confirmPassword !== input.password) errors.confirmPassword = 'Passwords must match.';
