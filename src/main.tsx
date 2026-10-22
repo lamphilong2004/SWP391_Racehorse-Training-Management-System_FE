@@ -4,6 +4,7 @@ import { RouterProvider } from 'react-router';
 import './design-system/styles/global.css';
 import { router } from './app/router';
 import { AuthProvider } from './shared/auth/AuthProvider';
+import { NotificationsProvider } from './shared/notifications/NotificationsProvider';
 
 const root = createRoot(document.getElementById('root')!);
 
@@ -14,7 +15,7 @@ if (import.meta.env.MODE === 'staging-preview' && import.meta.env.VITE_ROLE_TEST
   root.render(
     <StrictMode>
       <AuthProvider>
-        <RouterProvider router={router} />
+        <NotificationsProvider><RouterProvider router={router} /></NotificationsProvider>
       </AuthProvider>
     </StrictMode>,
   );

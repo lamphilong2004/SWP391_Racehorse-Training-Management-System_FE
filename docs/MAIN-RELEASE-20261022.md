@@ -1,5 +1,10 @@
 # Local main release candidate — 22 October 2026
 
+**PR23 follow-up:** the shared header unread badge is now backed by the same
+session-scoped REST state as the notification center/drawer. See
+`PR23-NOTIFICATION-REVIEW-20261022.md` for the focused fix, new checks and the exact
+historical42/56/5 evidence attachment. Realtime STOMP remains a separate gap.
+
 **Latest directive:** runnable local baseline supersedes the earlier phase order.
 FE executable source `e48f8383c19464d01d2d45fc288d8a393ec52bc4` now runs API-only
 at `http://localhost:5173/login` with BE release `23cd849` at port8080. Real seven-role

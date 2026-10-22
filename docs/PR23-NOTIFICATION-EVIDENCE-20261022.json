@@ -1,0 +1,719 @@
+{
+  "pr": "https://github.com/lamphilong2004/SWP391_Racehorse-Training-Management-System_FE/pull/23",
+  "parent": "ce3cb1943f93cc08a2a9588af1962e1f8194c251",
+  "sourceSha256LfNormalized": {
+    "src/main.tsx": "d2828d2ef4d5b3f7923558a35822de84e65295c86bbf8dc94187986c8125e869",
+    "src/staging/RoleTestRoot.tsx": "29dd5a8307e69feaf3de6006bb50521184d05e9d4a48395383509cb6ce169a78",
+    "src/layout/AppShell.tsx": "a05ddb0d3dc3aebea5c2c8f057a158022cf25a41d978cef547ace4aa949eb988",
+    "src/layout/Header.tsx": "6cc06bc006607a5fc2394fbc98bb6a494f185008b58651b5fccbfec4c4a4b2c7",
+    "src/features/administration/NotificationsPage.tsx": "8ea83f131585273f05a203d8d562b6f01a696fea9dd148db7a863015bf528871",
+    "src/shared/notifications/NotificationsProvider.tsx": "b27ac478afab47dcc5c876fdda70ef7f26067f5a7f03681b972a9452f3a5a4f8",
+    "src/shared/notifications/NotificationsProvider.test.tsx": "767c00c03934d73af83bf1cac14c0665779973728e35316f7cbb5152ecabac96",
+    "src/app/pendingScreens.test.tsx": "d4d6a139efe150141d220e8d4992a5e70db58144aad4a0dc458afcce54d3301a",
+    "src/shared/auth/AuthProvider.test.tsx": "1673e828438423463de83c6097e6fde680545a5c5f4f0c518939952cc3b54d1f"
+  },
+  "focusedTests": {
+    "files": 5,
+    "passed": 83,
+    "failed": 0,
+    "notificationSpecific": 24,
+    "workers": 1
+  },
+  "checks": {
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "productionBuild": "PASS",
+    "productionBundleGuard": "PASS",
+    "stagingPolicy": "13/13 PASS"
+  },
+  "realNotificationApi": {
+    "at": "2026-10-22T03:06:13.235936+00:00",
+    "beExecutableSha": "23cd849d0a88b22cc6d969ca760427e5b6f2505c",
+    "database": "racehorse_local_api128_20261021_163300",
+    "transport": "Real HTTP through FE localhost5173 proxy to BE8080",
+    "scope": "Notification API behavior only; not browser/header acceptance",
+    "requests": [
+      {
+        "role": "",
+        "method": "GET",
+        "path": "/api/notifications/unread-count",
+        "status": 401,
+        "expected": 401
+      },
+      {
+        "role": "",
+        "method": "POST",
+        "path": "/api/auth/login",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "role": "CLUB_MANAGER",
+        "method": "GET",
+        "path": "/api/notifications/unread-count",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "role": "CLUB_MANAGER",
+        "method": "GET",
+        "path": "/api/notifications?read=false&size=100",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "role": "",
+        "method": "POST",
+        "path": "/api/auth/login",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "role": "HEAD_TRAINER",
+        "method": "GET",
+        "path": "/api/notifications/unread-count",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "role": "HEAD_TRAINER",
+        "method": "GET",
+        "path": "/api/notifications?read=false&size=100",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "role": "",
+        "method": "POST",
+        "path": "/api/auth/login",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "role": "TRAINER",
+        "method": "GET",
+        "path": "/api/notifications/unread-count",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "role": "TRAINER",
+        "method": "GET",
+        "path": "/api/notifications?read=false&size=100",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "role": "",
+        "method": "POST",
+        "path": "/api/auth/login",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "role": "WORK_RIDER",
+        "method": "GET",
+        "path": "/api/notifications/unread-count",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "role": "WORK_RIDER",
+        "method": "GET",
+        "path": "/api/notifications?read=false&size=100",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "role": "",
+        "method": "POST",
+        "path": "/api/auth/login",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "role": "VETERINARIAN",
+        "method": "GET",
+        "path": "/api/notifications/unread-count",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "role": "VETERINARIAN",
+        "method": "GET",
+        "path": "/api/notifications?read=false&size=100",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "role": "",
+        "method": "POST",
+        "path": "/api/auth/login",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "role": "GROOM",
+        "method": "GET",
+        "path": "/api/notifications/unread-count",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "role": "GROOM",
+        "method": "GET",
+        "path": "/api/notifications?read=false&size=100",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "role": "",
+        "method": "POST",
+        "path": "/api/auth/login",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "role": "HORSE_OWNER",
+        "method": "GET",
+        "path": "/api/notifications/unread-count",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "role": "HORSE_OWNER",
+        "method": "GET",
+        "path": "/api/notifications?read=false&size=100",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "role": "CLUB_MANAGER",
+        "method": "PATCH",
+        "path": "/api/notifications/11/read",
+        "status": 404,
+        "expected": 404
+      },
+      {
+        "role": "TRAINER",
+        "method": "GET",
+        "path": "/api/notifications/unread-count",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "role": "TRAINER",
+        "method": "PATCH",
+        "path": "/api/notifications/11/read",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "role": "TRAINER",
+        "method": "GET",
+        "path": "/api/notifications/unread-count",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "role": "TRAINER",
+        "method": "PATCH",
+        "path": "/api/notifications/11/read",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "role": "TRAINER",
+        "method": "POST",
+        "path": "/api/notifications/read-all",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "role": "TRAINER",
+        "method": "GET",
+        "path": "/api/notifications/unread-count",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "role": "TRAINER",
+        "method": "GET",
+        "path": "/api/notifications?read=false",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "role": "CLUB_MANAGER",
+        "method": "GET",
+        "path": "/api/notifications/unread-count",
+        "status": 200,
+        "expected": 200
+      },
+      {
+        "role": "CLUB_MANAGER",
+        "method": "POST",
+        "path": "/api/auth/logout",
+        "status": 204,
+        "expected": 204
+      },
+      {
+        "role": "HEAD_TRAINER",
+        "method": "POST",
+        "path": "/api/auth/logout",
+        "status": 204,
+        "expected": 204
+      },
+      {
+        "role": "TRAINER",
+        "method": "POST",
+        "path": "/api/auth/logout",
+        "status": 204,
+        "expected": 204
+      },
+      {
+        "role": "WORK_RIDER",
+        "method": "POST",
+        "path": "/api/auth/logout",
+        "status": 204,
+        "expected": 204
+      },
+      {
+        "role": "VETERINARIAN",
+        "method": "POST",
+        "path": "/api/auth/logout",
+        "status": 204,
+        "expected": 204
+      },
+      {
+        "role": "GROOM",
+        "method": "POST",
+        "path": "/api/auth/logout",
+        "status": 204,
+        "expected": 204
+      },
+      {
+        "role": "HORSE_OWNER",
+        "method": "POST",
+        "path": "/api/auth/logout",
+        "status": 204,
+        "expected": 204
+      }
+    ],
+    "assertions": [
+      {
+        "name": "GET /api/notifications/unread-count status",
+        "pass": true
+      },
+      {
+        "name": "POST /api/auth/login status",
+        "pass": true
+      },
+      {
+        "name": "Success envelope /api/auth/login",
+        "pass": true
+      },
+      {
+        "name": "Real JWT CLUB_MANAGER",
+        "pass": true
+      },
+      {
+        "name": "GET /api/notifications/unread-count status",
+        "pass": true
+      },
+      {
+        "name": "Success envelope /api/notifications/unread-count",
+        "pass": true
+      },
+      {
+        "name": "Non-negative integral count CLUB_MANAGER",
+        "pass": true
+      },
+      {
+        "name": "GET /api/notifications?read=false&size=100 status",
+        "pass": true
+      },
+      {
+        "name": "Success envelope /api/notifications?read=false&size=100",
+        "pass": true
+      },
+      {
+        "name": "Count agrees with unread listing CLUB_MANAGER",
+        "pass": true
+      },
+      {
+        "name": "POST /api/auth/login status",
+        "pass": true
+      },
+      {
+        "name": "Success envelope /api/auth/login",
+        "pass": true
+      },
+      {
+        "name": "Real JWT HEAD_TRAINER",
+        "pass": true
+      },
+      {
+        "name": "GET /api/notifications/unread-count status",
+        "pass": true
+      },
+      {
+        "name": "Success envelope /api/notifications/unread-count",
+        "pass": true
+      },
+      {
+        "name": "Non-negative integral count HEAD_TRAINER",
+        "pass": true
+      },
+      {
+        "name": "GET /api/notifications?read=false&size=100 status",
+        "pass": true
+      },
+      {
+        "name": "Success envelope /api/notifications?read=false&size=100",
+        "pass": true
+      },
+      {
+        "name": "Count agrees with unread listing HEAD_TRAINER",
+        "pass": true
+      },
+      {
+        "name": "POST /api/auth/login status",
+        "pass": true
+      },
+      {
+        "name": "Success envelope /api/auth/login",
+        "pass": true
+      },
+      {
+        "name": "Real JWT TRAINER",
+        "pass": true
+      },
+      {
+        "name": "GET /api/notifications/unread-count status",
+        "pass": true
+      },
+      {
+        "name": "Success envelope /api/notifications/unread-count",
+        "pass": true
+      },
+      {
+        "name": "Non-negative integral count TRAINER",
+        "pass": true
+      },
+      {
+        "name": "GET /api/notifications?read=false&size=100 status",
+        "pass": true
+      },
+      {
+        "name": "Success envelope /api/notifications?read=false&size=100",
+        "pass": true
+      },
+      {
+        "name": "Count agrees with unread listing TRAINER",
+        "pass": true
+      },
+      {
+        "name": "POST /api/auth/login status",
+        "pass": true
+      },
+      {
+        "name": "Success envelope /api/auth/login",
+        "pass": true
+      },
+      {
+        "name": "Real JWT WORK_RIDER",
+        "pass": true
+      },
+      {
+        "name": "GET /api/notifications/unread-count status",
+        "pass": true
+      },
+      {
+        "name": "Success envelope /api/notifications/unread-count",
+        "pass": true
+      },
+      {
+        "name": "Non-negative integral count WORK_RIDER",
+        "pass": true
+      },
+      {
+        "name": "GET /api/notifications?read=false&size=100 status",
+        "pass": true
+      },
+      {
+        "name": "Success envelope /api/notifications?read=false&size=100",
+        "pass": true
+      },
+      {
+        "name": "Count agrees with unread listing WORK_RIDER",
+        "pass": true
+      },
+      {
+        "name": "POST /api/auth/login status",
+        "pass": true
+      },
+      {
+        "name": "Success envelope /api/auth/login",
+        "pass": true
+      },
+      {
+        "name": "Real JWT VETERINARIAN",
+        "pass": true
+      },
+      {
+        "name": "GET /api/notifications/unread-count status",
+        "pass": true
+      },
+      {
+        "name": "Success envelope /api/notifications/unread-count",
+        "pass": true
+      },
+      {
+        "name": "Non-negative integral count VETERINARIAN",
+        "pass": true
+      },
+      {
+        "name": "GET /api/notifications?read=false&size=100 status",
+        "pass": true
+      },
+      {
+        "name": "Success envelope /api/notifications?read=false&size=100",
+        "pass": true
+      },
+      {
+        "name": "Count agrees with unread listing VETERINARIAN",
+        "pass": true
+      },
+      {
+        "name": "POST /api/auth/login status",
+        "pass": true
+      },
+      {
+        "name": "Success envelope /api/auth/login",
+        "pass": true
+      },
+      {
+        "name": "Real JWT GROOM",
+        "pass": true
+      },
+      {
+        "name": "GET /api/notifications/unread-count status",
+        "pass": true
+      },
+      {
+        "name": "Success envelope /api/notifications/unread-count",
+        "pass": true
+      },
+      {
+        "name": "Non-negative integral count GROOM",
+        "pass": true
+      },
+      {
+        "name": "GET /api/notifications?read=false&size=100 status",
+        "pass": true
+      },
+      {
+        "name": "Success envelope /api/notifications?read=false&size=100",
+        "pass": true
+      },
+      {
+        "name": "Count agrees with unread listing GROOM",
+        "pass": true
+      },
+      {
+        "name": "POST /api/auth/login status",
+        "pass": true
+      },
+      {
+        "name": "Success envelope /api/auth/login",
+        "pass": true
+      },
+      {
+        "name": "Real JWT HORSE_OWNER",
+        "pass": true
+      },
+      {
+        "name": "GET /api/notifications/unread-count status",
+        "pass": true
+      },
+      {
+        "name": "Success envelope /api/notifications/unread-count",
+        "pass": true
+      },
+      {
+        "name": "Non-negative integral count HORSE_OWNER",
+        "pass": true
+      },
+      {
+        "name": "GET /api/notifications?read=false&size=100 status",
+        "pass": true
+      },
+      {
+        "name": "Success envelope /api/notifications?read=false&size=100",
+        "pass": true
+      },
+      {
+        "name": "Count agrees with unread listing HORSE_OWNER",
+        "pass": true
+      },
+      {
+        "name": "PATCH /api/notifications/11/read status",
+        "pass": true
+      },
+      {
+        "name": "GET /api/notifications/unread-count status",
+        "pass": true
+      },
+      {
+        "name": "Success envelope /api/notifications/unread-count",
+        "pass": true
+      },
+      {
+        "name": "Foreign read does not change recipient count",
+        "pass": true
+      },
+      {
+        "name": "PATCH /api/notifications/11/read status",
+        "pass": true
+      },
+      {
+        "name": "Success envelope /api/notifications/11/read",
+        "pass": true
+      },
+      {
+        "name": "Server confirms read timestamp",
+        "pass": true
+      },
+      {
+        "name": "GET /api/notifications/unread-count status",
+        "pass": true
+      },
+      {
+        "name": "Success envelope /api/notifications/unread-count",
+        "pass": true
+      },
+      {
+        "name": "Real read decrements persisted count",
+        "pass": true
+      },
+      {
+        "name": "PATCH /api/notifications/11/read status",
+        "pass": true
+      },
+      {
+        "name": "Success envelope /api/notifications/11/read",
+        "pass": true
+      },
+      {
+        "name": "Repeated read is idempotent",
+        "pass": true
+      },
+      {
+        "name": "POST /api/notifications/read-all status",
+        "pass": true
+      },
+      {
+        "name": "Success envelope /api/notifications/read-all",
+        "pass": true
+      },
+      {
+        "name": "Server read-all confirmation",
+        "pass": true
+      },
+      {
+        "name": "GET /api/notifications/unread-count status",
+        "pass": true
+      },
+      {
+        "name": "Success envelope /api/notifications/unread-count",
+        "pass": true
+      },
+      {
+        "name": "Refreshed count zero after read-all",
+        "pass": true
+      },
+      {
+        "name": "GET /api/notifications?read=false status",
+        "pass": true
+      },
+      {
+        "name": "Success envelope /api/notifications?read=false",
+        "pass": true
+      },
+      {
+        "name": "Unread listing empty after read-all",
+        "pass": true
+      },
+      {
+        "name": "GET /api/notifications/unread-count status",
+        "pass": true
+      },
+      {
+        "name": "Success envelope /api/notifications/unread-count",
+        "pass": true
+      },
+      {
+        "name": "Other account unchanged",
+        "pass": true
+      },
+      {
+        "name": "POST /api/auth/logout status",
+        "pass": true
+      },
+      {
+        "name": "POST /api/auth/logout status",
+        "pass": true
+      },
+      {
+        "name": "POST /api/auth/logout status",
+        "pass": true
+      },
+      {
+        "name": "POST /api/auth/logout status",
+        "pass": true
+      },
+      {
+        "name": "POST /api/auth/logout status",
+        "pass": true
+      },
+      {
+        "name": "POST /api/auth/logout status",
+        "pass": true
+      },
+      {
+        "name": "POST /api/auth/logout status",
+        "pass": true
+      }
+    ],
+    "writeGate": "PASS: real read/read-all and HTTP readback in the authorized isolated DB",
+    "sqlReadback": {
+      "recipientId": 3,
+      "notificationId": 11,
+      "otherRecipientId": 1,
+      "otherUnread": 0
+    },
+    "result": "PASS"
+  },
+  "independentNotificationSqlReadback": {
+    "result": "PASS",
+    "strictTls": true,
+    "selectOnly": true,
+    "assertions": 3
+  },
+  "historicalEvidence": {
+    "feExecutableSha": "e48f8383c19464d01d2d45fc288d8a393ec52bc4",
+    "beExecutableSha": "23cd849d0a88b22cc6d969ca760427e5b6f2505c",
+    "httpRequests": 42,
+    "httpAssertions": 56,
+    "sqlAssertions": 5,
+    "immutableEvidence": "https://github.com/lamphilong2004/SWP391_Racehorse-Training-Management-System_BE/blob/9f07b2d2ce038fe37d02687e20a2384f447027dc/docs/integration/RUNNABLE-BASELINE-EVIDENCE-20261022.json",
+    "scope": "Historical HTTP proxy/SQL proof; not this FE patch acceptance or full browser E2E; not rerun"
+  },
+  "browserE2E": "NOT RUN; fixture component regressions and real HTTP/SQL behavior recorded separately",
+  "independentGate": "PENDING independent reviewer; no self-approval or merge",
+  "remaining": [
+    "Notification STOMP push/reconnect outside this patch",
+    "Required FE reviews and inherited BE review hold unchanged"
+  ]
+}

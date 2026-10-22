@@ -1,12 +1,14 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { buildRoutes } from './router';
 import { ROLE_CODES } from '../shared/auth/roles';
 import { fireEvent } from '@testing-library/react';
+import { NotificationsProvider } from '../shared/notifications/NotificationsProvider';
+import { authSession } from '../shared/auth/authSession';
 
 const auth = vi.hoisted(() => ({
   status: 'authenticated', user: { id: 7, fullName: 'Fixture User', roles: ['HEAD_TRAINER'], accountStatus: 'ACTIVE' },
-  handleApiError: vi.fn(() => false), logout: vi.fn(),
+  handleApiError: vi.fn(() => false), logout: vi.fn(), expiresAt: 0,
 }));
 vi.mock('../shared/auth/AuthProvider', () => ({ useAuth: () => auth }));
 const request = vi.hoisted(() => vi.fn(async (path: string) => {
@@ -24,9 +26,17 @@ const pending = [
 ] as const;
 
 function mount(path: string) {
-  render(<RouterProvider router={createMemoryRouter(buildRoutes(false), { initialEntries: [path] })} />);
+  render(<NotificationsProvider><RouterProvider router={createMemoryRouter(buildRoutes(false), { initialEntries: [path] })} /></NotificationsProvider>);
 }
-beforeEach(() => { auth.status = 'authenticated'; request.mockClear(); });
+beforeEach(() => {
+  auth.status = 'authenticated'; request.mockClear();
+  auth.expiresAt = authSession.save('fixture-router-jwt', 3600, false).expiresAt;
+  vi.stubGlobal('fetch', vi.fn<typeof fetch>(async (url) => {
+    const parsed = new URL(String(url));
+    return new Response(JSON.stringify({ success: true, data: await request(parsed.pathname + parsed.search) }), { status: 200 });
+  }));
+});
+afterEach(() => { authSession.clear(); vi.unstubAllGlobals(); });
 
 it.each(pending)('mounts its API-backed required screen at %s', async (path, role, title) => {
   auth.user.roles = [role];
@@ -41,14 +51,15 @@ it.each(pending)('keeps role boundaries on the unavailable route %s', async (pat
   auth.user.roles = ['GROOM'];
   mount(path);
   expect(await screen.findByText('Your account does not have permission to access this page.')).toBeInTheDocument();
-  expect(request).not.toHaveBeenCalled();
+  expect(request.mock.calls.every(([path]) => path === '/api/notifications/unread-count')).toBe(true);
 });
 
 it.each(ROLE_CODES)('allows %s to reach the API-backed notification center from the header', async (role) => {
   auth.user.roles = [role];
   mount('/dashboard');
-  fireEvent.click(await screen.findByRole('button', { name: /^Notifications$/ }));
-  expect(await screen.findByRole('heading', { name: 'Notifications' })).toBeInTheDocument();
-  expect(await screen.findByText('No matching notifications')).toBeInTheDocument();
-  expect(request).toHaveBeenCalledWith('/api/notifications/unread-count', expect.objectContaining({ signal: expect.any(AbortSignal) }));
+  fireEvent.click(await screen.findByRole('button', { name: /^Notifications(?:, checking unread count)?$/ }));
+  const drawer = await screen.findByRole('dialog', { name: 'Notifications' });
+  expect(await within(drawer).findByRole('heading', { name: 'Notifications', level: 2 })).toBeInTheDocument();
+  expect(await within(drawer).findByText('No matching notifications')).toBeInTheDocument();
+  expect(request).toHaveBeenCalledWith('/api/notifications/unread-count');
 });
