@@ -57,7 +57,7 @@ it('schedules one session through all four steps using the approved draft/recomm
   fireEvent.click(screen.getByRole('button', { name: 'Next: Exercises' }));
   await screen.findByRole('option', { name: 'Walk' }); change('Add exercise', '8');
   fireEvent.click(screen.getByRole('button', { name: 'Next: Work Rider' }));
-  fireEvent.click(await screen.findByRole('button', { name: 'Select Rider' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Select Test Rider' }));
   fireEvent.click(screen.getByRole('button', { name: 'Next: Review' }));
   fireEvent.click(await screen.findByRole('button', { name: 'Save & Notify' }));
   expect(await screen.findByRole('heading', { name: 'Saved session detail' })).toBeInTheDocument(); expect(posts).toBe(1);

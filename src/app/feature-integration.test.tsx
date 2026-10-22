@@ -50,7 +50,7 @@ describe('dev + CORE-022 + CORE-033 + clean CORE-036 / production routes', () =>
   it.each(allowed)('restores %s into %s with the shared API base/session', async (role, path, heading, endpoint) => {
     const { router, fetcher } = mount(role, path);
     expect(await screen.findByRole('heading', { name: heading })).toBeInTheDocument();
-    if (role === 'HEAD_TRAINER') await screen.findByRole('radio', { name: /^Select Thunder\ Bolt \(/ });
+    if (role === 'HEAD_TRAINER') await screen.findByRole('radio', { name: /^Select Thunder Bolt \(/ });
     if (role === 'VETERINARIAN') await screen.findByText('Fixture lameness');
     if (role === 'TRAINER') {
       fireEvent.click(screen.getByRole('tab', { name: 'Evaluation & Recommendation' }));

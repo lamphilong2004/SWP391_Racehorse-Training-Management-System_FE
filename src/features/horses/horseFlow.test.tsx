@@ -245,7 +245,7 @@ it('makes pending horses after the first page reachable', async () => {
 });
 it.each(['GROOM', 'WORK_RIDER'] as const)('provides shared header account logout for %s without a role chooser', async (role) => {
   open(role === 'GROOM' ? '/groom/today' : '/rider', { ...manager, roles: [role] });
-  await screen.findByRole('heading', { name: 'Good morning, Test Manager' });
+  await screen.findByRole('heading', { name: /^Good (morning|afternoon|evening), Test Manager$/ });
   fireEvent.click(screen.getByRole('button', { name: 'Account menu' }));
   await screen.findByRole('heading', { name: 'My Account' });
   fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
