@@ -1,5 +1,15 @@
 # Local main release candidate — 22 October 2026
 
+**Latest directive:** runnable local baseline supersedes the earlier phase order.
+FE executable source `e48f8383c19464d01d2d45fc288d8a393ec52bc4` now runs API-only
+at `http://localhost:5173/login` with BE release `23cd849` at port8080. Real seven-role
+JWT/me,401/403, logout and Horse SQL write/readback passed through the FE proxy;
+authenticated browser click acceptance remains unverified. Full suites and UI/new
+feature work are deferred. Main is unchanged: required independent approval remains
+open. See `RUNNABLE-BASELINE-SCREEN-GAPS-20261022.json` and BE's corresponding
+`docs/integration/RUNNABLE-BASELINE-20261022.md` for the Windows startup handoff and
+sanitized evidence. No hosted deployment or Production setting was changed.
+
 Phase 2 preparation follows the Phase 1 BE candidate. BE main promotion is blocked by inherited PR25 CHANGES_REQUESTED; this independent FE work does not claim that Phase 1 has passed or bypass its priority.
 
 ## Preserved source
