@@ -124,6 +124,22 @@ describe('AppShell', () => {
     expect(screen.getByRole('button', { name: 'Notifications, 3 unread' })).toBeInTheDocument();
     expect(screen.getByText('NT')).toBeInTheDocument();
   });
+
+  it.each([
+    ['CLUB_MANAGER', '/horses/6', 'Horses'],
+    ['CLUB_MANAGER', '/horses/6/identity', 'Horses'],
+    ['CLUB_MANAGER', ROUTES.pendingActivation, 'Pending Activation'],
+    ['HORSE_OWNER', `${ROUTES.myHorses}/9`, 'My Horses'],
+    ['WORK_RIDER', ROUTES.assignments, 'Assignments'],
+  ] as Array<[RoleCode, string, string]>)('keeps exactly one entry current for %s at %s', (role, path, label) => {
+    render(
+      <MemoryRouter initialEntries={[path]}>
+        <AppShell user={{ fullName: 'Le Quoc Bao', role }} breadcrumb={[{ label }]}><p>content</p></AppShell>
+      </MemoryRouter>,
+    );
+    const current = within(screen.getByRole('navigation', { name: 'Main' })).getAllByRole('link').filter((link) => link.getAttribute('aria-current') === 'page');
+    expect(current.map((link) => link.textContent)).toEqual([label]);
+  });
 });
 
 describe('responsive navigation drawer (Design System v2 §E)', () => {
