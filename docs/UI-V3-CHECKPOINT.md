@@ -2,8 +2,12 @@
 
 ## CURRENT STATE (Claude takeover, 2026-10-22 evening) — read first
 
+- FINAL VERIFICATION (2026-10-22 21:20): full suite 964/964 PASS (81 files), full lint CLEAN, `tsc -b` CLEAN.
+  `docs/UI-V3-COVERAGE.json` regenerated: 76 route declarations / 74 unique paths, 133 JSX modules, 443 controls;
+  the only handler-less button candidates are dev-only gallery pages (`src/pages/dev/*`).
+  Nothing pushed; not merged into main. Merge/push awaits the Leader's go-ahead.
 - Batches 1–7 are COMMITTED (0904759 … a000c39); the "uncommitted" notes below are historical.
-- Batch 8 (integration) in progress on `design/ui-v3`, commits after a000c39:
+- Batch 8 (integration) on `design/ui-v3`, commits after a000c39 (later ones: 05b9070, 5faf938, 0f229f9):
   - 47e84dc tests: greeting assertion accepts any local-time greeting, rider button is "Select Test Rider",
     regex escapes removed, rider dashboard uses mounted `now` (no render-time Date.now). Full lint now CLEAN.
   - 7c21037 bare action/back links → ButtonLink (same `to`), case status badge (`medicalCase` OPEN/CLOSED),
@@ -31,7 +35,13 @@
   HORSE_OWNER — portal dashboard, My Horses (list + search), horse detail Profile & Pedigree / Health & Readiness
   / Training & Performance (ACTIVE, DRAFT, LOCKED and a horse with completed sessions), notifications: PASS after
   5faf938 (long session codes wrap instead of overlapping the distance column).
-  Pending sign-in: Club Manager.
+  CLUB_MANAGER — dashboard, horse detail + Edit Identity (opened, not saved), Pending Activation, Staff & Users,
+  Edit User / Create User (not submitted), Registration review, Roles & Permissions, Audit Log: PASS after the
+  batch-8 admin fixes (RadioGroup options wrap on an auto-fit grid instead of squeezing the 7 role labels; user
+  table "Edit" is a compact ButtonLink with the unchanged accessible name "Edit {name}"; Deactivate/Activate
+  sized to content). Wide admin tables (7-column users, 8-column permission matrix, 880px registration and
+  audit tables) scroll inside their frame at 1024px by design.
+  All 7 roles reviewed with real JWT sessions.
 - Known data-level display limits (not styling): incident "Reported by" shows a user id (API returns ids only);
   owner list card says "No program shared" for a horse whose detail shows its program (list summary payload).
 - Existing behaviour kept: sidebar NavLinks use `end` (as on main), so detail routes do not highlight the parent
