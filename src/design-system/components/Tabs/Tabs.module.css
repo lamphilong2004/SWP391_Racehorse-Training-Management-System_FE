@@ -28,5 +28,9 @@
   border-bottom-color: var(--color-primary-600);
 }
 
+:global([data-ui-v3]) .bar { max-width: 100%; overflow-x: auto; gap: var(--space-lg); }
+:global([data-ui-v3]) .tab { font-weight: 600; padding-inline: var(--space-xs); }
+:global([data-ui-v3]) .active { color: var(--color-brand-primary); border-bottom-color: var(--color-brand-secondary); }
+
 :global([data-design-system='v2']) .bar { max-width: 100%; overflow-x: auto; }
 @media (prefers-reduced-motion: reduce) { .tab { transition: none; } }

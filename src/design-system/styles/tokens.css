@@ -125,3 +125,69 @@
 @media (prefers-reduced-motion: reduce) {
   [data-design-system='v2'] { --motion-fast: 0ms; --motion-base: 0ms; --motion-panel: 0ms; }
 }
+
+/* Leader-approved UI v3 brand values, 22 October 2026.
+ * Stitch project 9531024772491706807: visual reference only.
+ * The approved first batch is now the shared visual foundation for every route.
+ * Nested legacy v2 scopes receive the same palette without changing component APIs.
+ * Keep semantic status colours separate: brand accents are not automatically
+ * suitable for small text or white-label buttons. */
+[data-ui-v3],
+:root[data-ui-v3] [data-design-system='v2'],
+[data-app-shell]:has([data-ui-v3]),
+[data-app-shell]:has([data-ui-v3]) [data-design-system='v2'],
+[data-design-system='v3'] {
+  --color-brand-primary: #0b132b;
+  --color-brand-secondary: #059669;
+  --color-brand-tertiary: #d97706;
+  --color-brand-neutral: #f8fafc;
+  --color-primary-600: var(--color-brand-primary);
+  --color-primary-700: #131a33;
+  --color-primary-50: #edf1f7;
+  --color-bg-page: var(--color-brand-neutral);
+  --color-bg-surface: #ffffff;
+  --color-bg-subtle: #f2f4f6;
+  --color-text-primary: #191c1e;
+  --color-text-secondary: #45464d;
+  --color-text-disabled: #76767e;
+  --color-border-default: #e2e8f0;
+  --color-border-strong: #c6c6ce;
+  --color-border-focus: var(--color-brand-primary);
+  --color-brand-navy: #ffffff;
+  --color-brand-navy-hover: #f2f4f6;
+  --color-sidebar-text: #45464d;
+  --color-sidebar-text-active: #0b132b;
+  --color-sidebar-active: #edf1f7;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 12px;
+  --card-radius: 12px;
+  --dialog-radius: 12px;
+  --elev-1: 0 1px 8px rgb(11 19 43 / 4%);
+  --elev-2: 0 4px 16px rgb(11 19 43 / 8%);
+  --elev-3: 0 16px 48px rgb(11 19 43 / 16%);
+  --elev-focus: 0 0 0 3px rgb(11 19 43 / 18%);
+  --font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-family-headline: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  --font-family-display: var(--font-family-headline);
+  --motion-fast: 120ms;
+  --motion-base: 180ms;
+  --motion-panel: 240ms;
+  --motion-ease: cubic-bezier(.2, 0, 0, 1);
+  --motion-ease-out: cubic-bezier(.16, 1, .3, 1);
+  --control-height-sm: 36px;
+  --control-height-md: 40px;
+  --control-height-lg: 48px;
+  --table-row-height: 56px;
+  --badge-label-font-size: 11px;
+  --textarea-min-height: 96px;
+  --textarea-resize: vertical;
+  --touch-target-min: 44px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-ui-v3], :root[data-ui-v3] [data-design-system='v2'] {
+    --motion-fast: 0ms; --motion-base: 0ms; --motion-panel: 0ms;
+  }
+}

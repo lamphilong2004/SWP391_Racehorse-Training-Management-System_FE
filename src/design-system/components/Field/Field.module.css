@@ -86,3 +86,12 @@
   padding: 10px var(--space-md);
   resize: var(--textarea-resize, none);
 }
+
+:global([data-ui-v3]) .label,
+:global([data-app-shell]:has([data-ui-v3])) .label { font-size: 12px; font-weight: 600; }
+:global([data-ui-v3]) .control,
+:global([data-app-shell]:has([data-ui-v3])) .control { transition: border-color 120ms ease, box-shadow 120ms ease; }
+@media (prefers-reduced-motion: reduce) {
+  :global([data-ui-v3]) .control,
+  :global([data-app-shell]:has([data-ui-v3])) .control { transition: none; }
+}

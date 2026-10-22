@@ -30,7 +30,7 @@ export function HorseListPage() {
   const [query, setQuery] = useState({ q: '', lifecycle: '', availability: '', page: 0, size: 20 });
   const load = useCallback(() => api.listHorses(query), [api, query]);
   const { data, error, reload } = useHorseResource(load);
-  return <div className={styles.page}>
+  return <div className={styles.page} data-ui-v3>
     <div className={styles.titleRow}><div className={styles.titleBlock}><h1 className="text-h1">Horses</h1><p>Club register · identity, pedigree, ownership and stable boxes</p></div>{canManage && <><ButtonLink to="/horses/pending-activation">Pending Activation</ButtonLink><ButtonLink variant="primary" to="/horses/new">Register Horse</ButtonLink></>}</div>
     <form className={styles.row} onSubmit={(e) => { e.preventDefault(); setQuery({ ...query, q: search, lifecycle, availability, page: 0 }); }}>
       <TextField label="Search horses" value={search} onChange={(e) => setSearch(e.target.value)} />

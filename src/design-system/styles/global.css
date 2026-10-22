@@ -2,6 +2,9 @@
 @import '@fontsource/inter/500.css';
 @import '@fontsource/inter/600.css';
 @import '@fontsource/instrument-serif/400.css';
+@import '@fontsource/plus-jakarta-sans/600.css';
+@import '@fontsource/plus-jakarta-sans/700.css';
+@import '@fontsource/plus-jakarta-sans/800.css';
 @import './tokens.css';
 @import './typography.css';
 
@@ -70,6 +73,20 @@ textarea {
 [data-design-system='v2'] time { font-variant-numeric: tabular-nums; }
 [data-design-system='v2'] .table-scroll { max-width: 100%; overflow-x: auto; }
 body:has(dialog[open]) { overflow: hidden; }
+
+/* Styling only. The original v2 DOM scopes and every control remain intact. */
+:where([data-ui-v3], [data-app-shell]:has([data-ui-v3])) {
+  color: var(--color-text-primary);
+  font-family: var(--font-family);
+}
+:where([data-ui-v3], [data-app-shell]:has([data-ui-v3])) :is(h1, h2, h3, h4, .text-display, .text-h1, .text-h2, .text-h3, .text-metric, .text-metric-l) {
+  font-family: var(--font-family-headline);
+  letter-spacing: -0.02em;
+}
+:where([data-ui-v3], [data-app-shell]:has([data-ui-v3])) :focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 3px;
+}
 
 @media (max-width: 767px) {
   [data-design-system='v2'] button,

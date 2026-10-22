@@ -52,7 +52,7 @@ export function LoginPage() {
   }
 
   return (
-    <main className={styles.page}>
+    <main className={styles.page} data-ui-v3>
       <section className={styles.photoPanel} aria-label="Racehorse Ops">
         <img className={styles.photo} src="/assets/login-horse.jpeg" alt="" />
         <div className={styles.photoFade} />

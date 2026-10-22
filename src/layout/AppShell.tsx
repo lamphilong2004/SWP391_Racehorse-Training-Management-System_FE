@@ -48,7 +48,7 @@ export function AppShell({ children, designSystem, ...headerProps }: AppShellPro
   const close = () => { setNavOpen(false); menuButton.current?.focus(); };
 
   return (
-    <div className={styles.shell}>
+    <div className={styles.shell} data-app-shell>
       <a className={styles.skip} href="#main-content">Skip to main content</a>
       <Sidebar role={headerProps.user.role} id="app-navigation" open={navOpen} />
       {navOpen && <button type="button" className={styles.scrim} aria-label="Close navigation" tabIndex={-1} onClick={close} />}

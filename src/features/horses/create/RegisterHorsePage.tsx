@@ -30,7 +30,7 @@ interface PendingPhoto {
  */
 /** Design System v2 scope for this CORE-013 screen; the shared horse layout stays owner-neutral. */
 export function RegisterHorsePage() {
-  return <DesignSystemScope><RegisterHorsePageContent /></DesignSystemScope>;
+  return <DesignSystemScope data-ui-v3><RegisterHorsePageContent /></DesignSystemScope>;
 }
 
 function RegisterHorsePageContent() {

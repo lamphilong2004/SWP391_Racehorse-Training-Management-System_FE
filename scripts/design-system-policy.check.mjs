@@ -34,3 +34,21 @@ test('responsive primitives and overlays bound narrow viewports without changing
   assert.match(read('components/Foundation/Foundation.module.css'), /max-width: 767px/);
   const overlay = read('components/Overlay/Overlay.module.css'); assert.match(overlay, /width: 560px/); assert.match(overlay, /width: min\(480px, 100vw\)/); assert.match(overlay, /max-width: calc\(100vw/);
 });
+
+test('v3 exposes the approved brand and typography only in an explicit scope', () => {
+  const v3 = tokens.split("[data-design-system='v3'] {")[1].split('}')[0];
+  for (const [name, hex] of Object.entries({ primary: '#0b132b', secondary: '#059669', tertiary: '#d97706', neutral: '#f8fafc' })) {
+    assert(v3.includes(`--color-brand-${name}: ${hex};`));
+  }
+  assert.match(v3, /--font-family: 'Inter',/);
+  assert.match(v3, /--font-family-headline: 'Plus Jakarta Sans', 'Inter',/);
+  assert.match(v3, /--color-primary-600: var\(--color-brand-primary\);/);
+  assert.match(v3, /--color-bg-page: var\(--color-brand-neutral\);/);
+  assert(!tokens.slice(0, tokens.indexOf("[data-design-system='v3'] {")).includes('--color-brand-tertiary:'));
+});
+
+test('v3 primary supports white action labels without replacing clinical status colours', () => {
+  assert(ratio('#ffffff', '#0b132b') >= 4.5);
+  const v3 = tokens.split("[data-design-system='v3'] {")[1].split('}')[0];
+  assert(!/--color-(success|warning|danger)-/.test(v3));
+});
