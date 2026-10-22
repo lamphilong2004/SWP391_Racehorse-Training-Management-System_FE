@@ -1,4 +1,4 @@
-import {
+import { ButtonLink,
   AlertBanner, Button, CandidateCard, Card, ChartContainer, Checkbox, EmptyState, HorseCard, KeyValue,
   SelectField, StatusBadge, TextAreaField, TextField,
 } from '../../design-system';
@@ -140,6 +140,7 @@ export function ProgramResult({ flow, reload, reloading, readError }: { flow: Pr
   const program = flow.created!;
   return <div className={styles.stack}>
     <AlertBanner type="success" title="Program created">Program ID: {program.id}</AlertBanner>
+      <ButtonLink to={`/training/programs/${program.id}`}>Open Program Detail</ButtonLink>
     <Card title={program.name}><div className={styles.stack}>
       <StatusBadge family="program" status={program.status} /><KeyValue label="Horse" value={`${program.horse.name} · ${program.horse.horseCode}`} />
       <KeyValue label="Period" value={`${program.periodStart} — ${program.periodEnd}`} /><KeyValue label="Template version" value={`v${program.sourceTemplateVersion}`} />

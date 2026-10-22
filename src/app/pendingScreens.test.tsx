@@ -3,45 +3,63 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import { buildRoutes } from './router';
 import { ROLE_CODES } from '../shared/auth/roles';
 import { fireEvent } from '@testing-library/react';
+import { NotificationsProvider } from '../shared/notifications/NotificationsProvider';
+import { authSession } from '../shared/auth/authSession';
 
 const auth = vi.hoisted(() => ({
   status: 'authenticated', user: { id: 7, fullName: 'Fixture User', roles: ['HEAD_TRAINER'], accountStatus: 'ACTIVE' },
-  handleApiError: vi.fn(() => false), logout: vi.fn(),
+  handleApiError: vi.fn(() => false), logout: vi.fn(), expiresAt: 0,
 }));
 vi.mock('../shared/auth/AuthProvider', () => ({ useAuth: () => auth }));
+const request = vi.hoisted(() => vi.fn(async (path: string) => {
+  if (path.startsWith('/api/admin/users')) return { items: [], page: 0, size: 20, totalItems: 0, totalPages: 0 };
+  if (path === '/api/admin/roles') return [{ roleCode: 'CLUB_MANAGER', displayName: 'Club Manager', scoping: 'Club administration' }];
+  if (path.startsWith('/api/notifications?')) return { items: [], page: 0, size: 20, totalItems: 0, totalPages: 0 };
+  if (path === '/api/notifications/unread-count') return { unread: 0 };
+  throw new Error(`Unexpected fixture request: ${path}`);
+}));
+vi.mock('../features/main-flows/api', async (load) => ({ ...await load<object>(), useFlowRequest: () => request }));
 
 const pending = [
-  ['/training/programs', 'HEAD_TRAINER', 'Horse Training Programs'],
-  ['/training/templates', 'HEAD_TRAINER', 'Program Templates'],
   ['/admin/users', 'CLUB_MANAGER', 'Staff & Users'],
   ['/admin/roles', 'CLUB_MANAGER', 'Roles & Permissions'],
 ] as const;
 
 function mount(path: string) {
-  render(<RouterProvider router={createMemoryRouter(buildRoutes(false), { initialEntries: [path] })} />);
+  render(<NotificationsProvider><RouterProvider router={createMemoryRouter(buildRoutes(false), { initialEntries: [path] })} /></NotificationsProvider>);
 }
-beforeEach(() => { auth.status = 'authenticated'; });
+beforeEach(() => {
+  auth.status = 'authenticated'; request.mockClear();
+  auth.expiresAt = authSession.save('fixture-router-jwt', 3600, false).expiresAt;
+  vi.stubGlobal('fetch', vi.fn<typeof fetch>(async (url) => {
+    const parsed = new URL(String(url));
+    return new Response(JSON.stringify({ success: true, data: await request(parsed.pathname + parsed.search) }), { status: 200 });
+  }));
+});
+afterEach(() => { authSession.clear(); vi.unstubAllGlobals(); });
 
-it.each(pending)('shows an explicit unavailable state instead of a 404 at %s', async (path, role, title) => {
+it.each(pending)('mounts its API-backed required screen at %s', async (path, role, title) => {
   auth.user.roles = [role];
   mount(path);
-  expect(await screen.findByText(`${title} unavailable`)).toBeInTheDocument();
-  expect(screen.getByText('This screen is not available in this build.')).toBeInTheDocument();
-  const main = screen.getByRole('main');
-  expect(within(main).queryByRole('button')).not.toBeInTheDocument();
-  expect(within(main).getByRole('link', { name: 'Back to workspace' })).toHaveAttribute('href', '/dashboard');
+  expect(await screen.findByRole('heading', { name: title })).toBeInTheDocument();
+  expect((await screen.findAllByRole('table')).length).toBe(path === '/admin/users' ? 1 : 2);
+  expect(request).toHaveBeenCalledWith(expect.stringContaining(path === '/admin/users' ? '/api/admin/users?' : '/api/admin/roles'), expect.objectContaining({ signal: expect.any(AbortSignal) }));
+  expect(screen.queryByText('This screen is not available in this build.')).not.toBeInTheDocument();
 });
 
 it.each(pending)('keeps role boundaries on the unavailable route %s', async (path) => {
   auth.user.roles = ['GROOM'];
   mount(path);
   expect(await screen.findByText('Your account does not have permission to access this page.')).toBeInTheDocument();
+  expect(request.mock.calls.every(([path]) => path === '/api/notifications/unread-count')).toBe(true);
 });
 
-it.each(ROLE_CODES)('allows %s to reach its explicit notification handoff from the header', async (role) => {
+it.each(ROLE_CODES)('allows %s to reach the API-backed notification center from the header', async (role) => {
   auth.user.roles = [role];
   mount('/dashboard');
-  fireEvent.click(await screen.findByRole('button', { name: /^Notifications$/ }));
-  expect(await screen.findByText('Notifications unavailable', { exact: true })).toBeInTheDocument();
-  expect(screen.getByRole('link', { name: 'Back to workspace' })).toHaveAttribute('href', '/dashboard');
+  fireEvent.click(await screen.findByRole('button', { name: /^Notifications(?:, checking unread count)?$/ }));
+  const drawer = await screen.findByRole('dialog', { name: 'Notifications' });
+  expect(await within(drawer).findByRole('heading', { name: 'Notifications', level: 2 })).toBeInTheDocument();
+  expect(await within(drawer).findByText('No matching notifications')).toBeInTheDocument();
+  expect(request).toHaveBeenCalledWith('/api/notifications/unread-count');
 });

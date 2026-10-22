@@ -27,6 +27,10 @@
   height: var(--control-height-lg, 48px);
 }
 
+.navigation { width: fit-content; max-width: 100%; min-height: var(--control-height-md, 40px); height: auto; padding-top: var(--space-sm); padding-bottom: var(--space-sm); white-space: normal; text-align: center; }
+.navigation.sm { min-height: var(--control-height-sm, 32px); }
+.navigation.lg { min-height: var(--control-height-lg, 48px); }
+
 .button:disabled {
   cursor: not-allowed;
   color: var(--color-text-disabled);

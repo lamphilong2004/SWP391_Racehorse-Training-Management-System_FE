@@ -10,6 +10,8 @@ function deferred(load: () => Promise<{ default: ComponentType }>) {
 }
 
 export const ProgramCreationPage = deferred(() => import('../features/program-creation/ProgramCreationPage').then((m) => ({ default: m.ProgramCreationPage })));
+export const ProgramListPage = deferred(() => import('../features/program-creation/ProgramListPage').then((m) => ({ default: m.ProgramListPage })));
+export const ProgramDetailPage = deferred(() => import('../features/program-creation/ProgramDetailPage').then((m) => ({ default: m.ProgramDetailPage })));
 export const BaselinePage = deferred(() => import('../features/baseline/BaselinePage').then((m) => ({ default: m.BaselinePage })));
 export const TrainerDashboardPage = deferred(() => import('../features/trainer-session/TrainerDashboardPage').then((m) => ({ default: m.TrainerDashboardPage })));
 export const CreateSessionPage = deferred(() => import('../features/trainer-session/CreateSessionPage').then((m) => ({ default: m.CreateSessionPage })));
@@ -31,3 +33,7 @@ export const CreateCasePage = deferred(() => import('../features/medical/pages')
 export const CaseDetailPage = deferred(() => import('../features/medical/pages').then((m) => ({ default: m.CaseDetailPage })));
 export const TreatmentPlanPage = deferred(() => import('../features/medical/pages').then((m) => ({ default: m.TreatmentPlanPage })));
 export const HerdHealthPage = deferred(() => import('../features/medical/pages').then((m) => ({ default: m.HerdHealthPage })));
+export const UserListPage = deferred(() => import('../features/administration/UserPages').then((m) => ({ default: m.UserListPage })));
+export const UserEditorPage = deferred(() => import('../features/administration/UserPages').then((m) => ({ default: m.UserEditorPage })));
+export const RolesPage = deferred(() => import('../features/administration/UserPages').then((m) => ({ default: m.RolesPage })));
+export const NotificationsPage = deferred(() => import('../features/administration/NotificationsPage').then((m) => ({ default: m.NotificationsPage })));

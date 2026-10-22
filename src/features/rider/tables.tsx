@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Card, DataTable, EmptyState, Icon, MetricCard, StatusBadge, Tabs, type DataTableColumn } from '../../design-system';
+import { ButtonLink, Card, DataTable, EmptyState, Icon, MetricCard, StatusBadge, Tabs, type DataTableColumn } from '../../design-system';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import type { RiderApi, RiderHistory } from './api';
 import { ReadState } from './common';
@@ -27,7 +27,7 @@ const sessionLabel = (ride: RiderSession) => [ride.focus, ride.phaseName].filter
 function HorseCell({ ride }: { ride: RiderSession }) {
   return <div className={styles.cellStack}><span className={styles.strong}>{ride.horse.name}</span><span className={styles.caption}>{ride.horse.horseCode}</span></div>;
 }
-const chevron: DataTableColumn<RiderSession> = { key: 'open', header: '', width: 40, render: () => <Icon name="chevron-right" size={16} /> };
+const chevron: DataTableColumn<RiderSession> = { key: 'open', header: 'Actions', width: 144, render: (ride) => <ButtonLink size="sm" to={`/rider/assignments/${ride.id}`} aria-label={`View ride ${ride.horse.name}`} onClick={(event) => event.stopPropagation()}>View ride<Icon name="chevron-right" size={16} /></ButtonLink> };
 
 function preCheck(ride: RiderSession, today: boolean) {
   const result = ride.preSessionCheck?.overallResult ?? ride.preCheckResult;

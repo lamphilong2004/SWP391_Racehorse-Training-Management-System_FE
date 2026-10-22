@@ -4,10 +4,11 @@ import type { GroomTaskInstruction, TreatmentPlanRequest } from './models';
 import { medicalErrorMessage } from './errors';
 import { validDate } from './groomService';
 
-export function TreatmentPlanEditor({ initial, onSave, onCancel, openedAt }: {
+export function TreatmentPlanEditor({ initial, onSave, onCancel, openedAt, retainedTaskCount = 0 }: {
   initial?: Partial<TreatmentPlanRequest>; onSave: (input: TreatmentPlanRequest) => Promise<void>;
   onCancel?: () => void;
   openedAt?: string;
+  retainedTaskCount?: number;
 }) {
   const [plan, setPlan] = useState<TreatmentPlanRequest>({
     treatmentMedicationInstructions: initial?.treatmentMedicationInstructions ?? '',
@@ -43,7 +44,7 @@ export function TreatmentPlanEditor({ initial, onSave, onCancel, openedAt }: {
       treatmentMedicationInstructions: plan.treatmentMedicationInstructions.trim(),
       restInstructions: plan.restInstructions?.trim(),
       careInstructions: plan.careInstructions?.trim(),
-      groomTasks: tasks.map((task) => ({ ...task, instruction: task.instruction.trim(), scheduledSlot: task.scheduledSlot?.trim() })),
+      groomTasks: tasks.map((task, index) => index < retainedTaskCount ? task : ({ ...task, instruction: task.instruction.trim(), scheduledSlot: task.scheduledSlot?.trim() })),
     }); }
     catch (failure) { setError(medicalErrorMessage(failure, 'Unable to save treatment plan.')); }
     finally { submitting.current = false; setSaving(false); }
@@ -57,13 +58,14 @@ export function TreatmentPlanEditor({ initial, onSave, onCancel, openedAt }: {
     <Card title="Medication"><TextAreaField label="Treatment and medication instructions" required value={plan.treatmentMedicationInstructions} disabled={saving} onChange={(event) => setPlan({ ...plan, treatmentMedicationInstructions: event.target.value })} /></Card>
     <Card title="Care tasks for the Groom"><fieldset disabled={saving} className="medical-form">
       <legend className="text-h3">Assigned Groom tasks</legend>
-      {tasks.map((task, index) => <div className="medical-form" key={index}>
+      {tasks.map((task, index) => <fieldset disabled={index < retainedTaskCount} className="medical-form" key={index}>
+        <legend>{index < retainedTaskCount ? 'Saved task — history retained' : 'New task'}</legend>
         <TextField label={`Groom user ID ${index + 1}`} type="number" min={1} step={1} value={task.assignedGroomUserId || ''} onChange={(event) => changeTask(index, { assignedGroomUserId: Number(event.target.value) })} />
         <TextAreaField label={`Groom-safe instruction ${index + 1}`} value={task.instruction} onChange={(event) => changeTask(index, { instruction: event.target.value })} />
         <TextField label={`Task date ${index + 1}`} type="date" value={task.taskDate} onChange={(event) => changeTask(index, { taskDate: event.target.value })} />
         <TextField label={`Scheduled slot ${index + 1}`} value={task.scheduledSlot ?? ''} onChange={(event) => changeTask(index, { scheduledSlot: event.target.value || undefined })} />
         <Button type="button" variant="secondary" onClick={() => setPlan({ ...plan, groomTasks: tasks.filter((_, i) => i !== index) })}>Remove task</Button>
-      </div>)}
+      </fieldset>)}
       <Button type="button" variant="secondary" onClick={() => setPlan({ ...plan, groomTasks: [...tasks, { assignedGroomUserId: 0, instruction: '', taskDate: '' }] })}>Add Groom task</Button>
     </fieldset></Card>
     {error && <AlertBanner type="danger" title={error} />}

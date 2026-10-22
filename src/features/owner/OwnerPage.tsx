@@ -59,7 +59,7 @@ function OwnerContent() {
   const search = (value: string) => { const next = new URLSearchParams(); if (value.trim()) next.set('q', value.trim()); navigate(`${ROUTES.myHorses}${next.size ? `?${next}` : ''}`); };
   const query = (params.get('q') ?? '').toLocaleLowerCase();
   const horses = current?.horses?.filter((item) => `${item.name} ${item.code}`.toLocaleLowerCase().includes(query));
-  return <AppShell key={searchEpoch} user={{ fullName: user!.fullName, role: 'HORSE_OWNER' }} breadcrumb={[{ label: 'My Horses', to: ROUTES.myHorses }, ...(horseId ? [{ label: horse?.name ?? 'Horse detail' }] : [])]} searchPlaceholder="Search my horses…" onSearch={search}>
+  return <AppShell designSystem="v2" key={searchEpoch} user={{ fullName: user!.fullName, role: 'HORSE_OWNER' }} breadcrumb={[{ label: 'My Horses', to: ROUTES.myHorses }, ...(horseId ? [{ label: horse?.name ?? 'Horse detail' }] : [])]} searchPlaceholder="Search my horses…" onSearch={search}>
     <div className={styles.page}>
       {service.source === 'sample' && <AlertBanner title="Sample data · This preview has not been verified against Backend records." />}
       {horseId && <Link className={styles.back} to={ROUTES.myHorses}>← My Horses</Link>}

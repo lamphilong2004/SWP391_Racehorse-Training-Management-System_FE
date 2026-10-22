@@ -4,9 +4,9 @@ import { LoginPage } from '../pages/LoginPage';
 import { LandingPage } from '../pages/LandingPage';
 import { ManagementDashboardEntry, ManagementAuditEntry } from './ManagementEntry';
 import { AccountPage } from '../pages/AccountPage';
-import { ProgramCreationPage, BaselinePage, CreateSessionPage, SessionDetailPage, RestrictionsPage, LiveMonitoringPage, SessionEvaluationPage, PerformancePage, GroomTodayPage, PrecheckPage,
+import { ProgramCreationPage, ProgramListPage, ProgramDetailPage, BaselinePage, CreateSessionPage, SessionDetailPage, RestrictionsPage, LiveMonitoringPage, SessionEvaluationPage, PerformancePage, GroomTodayPage, PrecheckPage,
   RiderDashboardPage, RiderAssignmentsPage, RiderAssignmentPage, RiderSessionPage, RiderFeedbackPage, RiderHistoryPage,
-  CaseListPage, CreateCasePage, CaseDetailPage, TreatmentPlanPage, HerdHealthPage } from './DeferredPages';
+  CaseListPage, CreateCasePage, CaseDetailPage, TreatmentPlanPage, HerdHealthPage, UserListPage, UserEditorPage, RolesPage, NotificationsPage } from './DeferredPages';
 import { HorseManagementLayout } from '../features/horses/shared/HorseManagementLayout';
 import { HorseListPage, HorseProfilePage } from '../features/horses/HorsePages';
 import { RegisterHorsePage } from '../features/horses/create/RegisterHorsePage';
@@ -22,21 +22,10 @@ import { MedicalAccess } from '../features/medical/runtime';
 import { AssignedProgramsPage } from '../features/training/assigned/AssignedProgramsPage';
 import { TrainingCalendarPage } from '../features/training/calendar/TrainingCalendarPage';
 import { ExerciseLibraryPage } from '../features/training/exercises/ExerciseLibraryPage';
-import { OwnerHandoffPage } from './OwnerHandoffPage';
 import { ownerApplicationRoutes } from '../features/owner/ownerApplicationRoutes';
 import { registrationRoutes } from '../features/registration/routes';
-import { ROLE_CODES, type RoleCode } from '../shared/auth/roles';
+import { TemplateLibraryPage } from '../features/program-creation/TemplateLibraryPage';
 
-/** Route integration only. Owners: CORE-022 program list, CORE-041 templates, CORE-031 monitoring,
- * CORE-020 restrictions, CORE-050 accounts, CORE-052 audit, CORE-056 Owner,
- * CORE-054 notifications. DEC-009 requires the minimum Owner workspace; it is not deferred. */
-const pendingScreens: { path: string; title: string; section: string; roles: RoleCode[] }[] = [
-  { path: ROUTES.trainingPrograms, title: 'Horse Training Programs', section: 'Training', roles: ['HEAD_TRAINER'] },
-  { path: ROUTES.programTemplates, title: 'Program Templates', section: 'Training', roles: ['HEAD_TRAINER'] },
-  { path: ROUTES.staffUsers, title: 'Staff & Users', section: 'Administration', roles: ['CLUB_MANAGER'] },
-  { path: ROUTES.rolesPermissions, title: 'Roles & Permissions', section: 'Administration', roles: ['CLUB_MANAGER'] },
-  { path: ROUTES.notifications, title: 'Notifications', section: 'Workspace', roles: [...ROLE_CODES] },
-];
 
 /**
  * Dev-only routes (DEC-010): the component gallery and the per-role shell preview. They are lazy-loaded inside an
@@ -79,6 +68,11 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
     { path: ROUTES.dashboard, element: <RequireAuth><ManagementDashboardEntry /></RequireAuth> },
     { path: ROUTES.auditLog, element: <RequireAuth allowedRoles={['CLUB_MANAGER']}><ManagementAuditEntry /></RequireAuth> },
     { path: ROUTES.account, element: <RequireAuth><AccountPage /></RequireAuth> },
+    { path: ROUTES.staffUsers, element: <RequireAuth allowedRoles={['CLUB_MANAGER']}><UserListPage /></RequireAuth> },
+    { path: '/admin/users/new', element: <RequireAuth allowedRoles={['CLUB_MANAGER']}><UserEditorPage /></RequireAuth> },
+    { path: '/admin/users/:id/edit', element: <RequireAuth allowedRoles={['CLUB_MANAGER']}><UserEditorPage /></RequireAuth> },
+    { path: ROUTES.rolesPermissions, element: <RequireAuth allowedRoles={['CLUB_MANAGER']}><RolesPage /></RequireAuth> },
+    { path: ROUTES.notifications, element: <RequireAuth><NotificationsPage /></RequireAuth> },
     // CORE-048 (DEC-008): public access request and Club Manager review; each page enforces its own boundary.
     ...registrationRoutes,
     // CORE-056 candidate mount: canonical API provider plus legacy deep-link aliases.
@@ -92,6 +86,7 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
       { path: '/horses/pending-activation', element: <RequireAuth allowedRoles={['CLUB_MANAGER']}><PendingActivationPage /></RequireAuth> },
     ] },
     { path: ROUTES.trainingProgramCreate, element: <RequireAuth allowedRoles={['HEAD_TRAINER']}><ProgramCreationPage /></RequireAuth> },
+    { path: ROUTES.programTemplates, element: <RequireAuth allowedRoles={['HEAD_TRAINER']}><TemplateLibraryPage /></RequireAuth> },
     { path: '/horses/:id/baseline', element: <RequireAuth allowedRoles={['VETERINARIAN']}><BaselinePage /></RequireAuth> },
     { path: ROUTES.restrictions, element: <RequireAuth allowedRoles={['VETERINARIAN', 'HEAD_TRAINER', 'TRAINER', 'CLUB_MANAGER']}><RestrictionsPage /></RequireAuth> },
     { path: ROUTES.realtimeMonitoring, element: <RequireAuth allowedRoles={['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER']}><LiveMonitoringPage /></RequireAuth> },
@@ -101,7 +96,7 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
     { path: '/training/exercise-library', element: <RequireAuth allowedRoles={['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER', 'WORK_RIDER']}><ExerciseLibraryPage /></RequireAuth> },
     { path: '/training/exercise-library/new', element: <RequireAuth allowedRoles={['TRAINER']}><ExerciseLibraryPage /></RequireAuth> },
     { path: ROUTES.exerciseLibrary, element: <RequireAuth allowedRoles={['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER', 'WORK_RIDER']}><ExerciseLibraryPage /></RequireAuth> },
-    { path: '/training/programs/:id', element: <RequireAuth allowedRoles={['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER', 'GROOM']}><OwnerHandoffPage title="Program details" /></RequireAuth> },
+    { path: '/training/programs/:id', element: <RequireAuth allowedRoles={['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER', 'GROOM']}><ProgramDetailPage /></RequireAuth> },
     { path: '/training/session/:id', element: <RequireAuth allowedRoles={['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER']}><SessionDetailPage /></RequireAuth> },
     { path: '/training/schedule/session/new', element: <RequireAuth allowedRoles={['TRAINER']}><CreateSessionPage /></RequireAuth> },
     { path: ROUTES.sessionEvaluation, element: <RequireAuth><SessionEvaluationPage /></RequireAuth> },
@@ -139,7 +134,7 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
     { path: ROUTES.incidents, element: <RequireAuth><IncidentAccess /></RequireAuth> },
     { path: ROUTES.incidentDetail, element: <RequireAuth><IncidentAccess detail /></RequireAuth> },
     // Sidebar destinations whose owning CORE screen is not integrated yet: explicit unavailable state instead of a 404.
-    ...pendingScreens.map(({ path, title, section, roles }) => ({ path, element: <RequireAuth allowedRoles={roles}><OwnerHandoffPage title={title} section={section} /></RequireAuth> })),
+    { path: ROUTES.trainingPrograms, element: <RequireAuth allowedRoles={['HEAD_TRAINER']}><ProgramListPage /></RequireAuth> },
     { path: '*', element: <RequireAuth><NotFoundPage /></RequireAuth> },
   ];
   // Every top-level route recovers from render or chunk-load failures with a calm, recoverable screen.

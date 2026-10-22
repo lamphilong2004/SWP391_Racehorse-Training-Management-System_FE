@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router';
-import { AlertBanner, Button, CandidateCard, Card, Checkbox, EmptyState, ErrorState, KeyValue, LoadingState, SelectField, StatusBadge, TextAreaField, TextField, WizardStepper } from '../../design-system';
+import { useNavigate, useSearchParams } from 'react-router';
+import { ButtonLink, AlertBanner, Button, CandidateCard, Card, Checkbox, EmptyState, ErrorState, KeyValue, LoadingState, SelectField, StatusBadge, TextAreaField, TextField, WizardStepper } from '../../design-system';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import type { CandidateList, Intensity } from '../program-creation/programTypes';
 import { FlowShell } from '../main-flows/FlowShell';
@@ -62,7 +62,7 @@ export function CreateSessionPage() {
     } catch (cause) { setError(errorMessage(cause)); }
     finally { pending.current = false; setBusy(false); }
   }
-  return <FlowShell title="Create Training Session" description={`Step ${step + 1} of 4 · ${STEPS[step]}`} section="Training Calendar" role="TRAINER" actions={<Link to="/training/calendar">Cancel</Link>}>
+  return <FlowShell title="Create Training Session" description={`Step ${step + 1} of 4 · ${STEPS[step]}`} section="Training Calendar" role="TRAINER" actions={<ButtonLink to="/training/calendar">Cancel</ButtonLink>}>
     <WizardStepper steps={STEPS} currentStep={step} onStepClick={(value) => { if (!busy) setStep(value); }} />
     {program.data && <Card><div className={styles.row}><strong>{program.data.horse.name}</strong><span>{program.data.horse.horseCode} · {program.data.name} · {phase?.name ?? 'Choose phase'}</span>{availability.data && <StatusBadge family="availability" status={availability.data.availability} />}</div></Card>}
     {error && <AlertBanner type="danger" title="Session not scheduled">{error}</AlertBanner>}

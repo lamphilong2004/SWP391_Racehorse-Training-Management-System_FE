@@ -77,7 +77,7 @@ export function ProgramCreationPage() {
     finally { readPending.current = false; setReloading(false); }
   };
 
-  return <AppShell user={{ fullName: user.fullName, role: 'HEAD_TRAINER' }} breadcrumb={[{ label: 'Training Programs' }, { label: 'Create Program' }]}>
+  return <AppShell designSystem="v2" user={{ fullName: user.fullName, role: 'HEAD_TRAINER' }} breadcrumb={[{ label: 'Training Programs' }, { label: 'Create Program' }]}>
     <div className={styles.page}>
       <div className={styles.heading}><div><h1 ref={heading} tabIndex={-1} className="text-h1">Create Training Program</h1>
         <p> {flow.created ? 'Program created and activated' : `Step ${step + 1} of 7 · ${STEP_TITLES[step]}`}</p></div>

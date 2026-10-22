@@ -215,12 +215,15 @@ describe('CORE-008 auth flow', () => {
     window.sessionStorage.setItem('racehorse.auth.session.v1', 'stale');
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       if (String(input).endsWith('/api/auth/me')) return envelope(user);
+      if (String(input).endsWith('/api/account')) return envelope({ ...user, lastLoginAt: null, experienceYears: null, experienceLevel: null, skills: [] });
       return new Response(null, { status: 204 });
     });
     vi.stubGlobal('fetch', fetchMock);
     const router = renderApp('/dashboard');
     const actor = userEvent.setup();
 
+    await actor.click(await screen.findByRole('button', { name: 'Account menu' }));
+    expect(router.state.location.pathname).toBe('/account');
     await actor.click(await screen.findByRole('button', { name: 'Sign out' }));
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/login'));
@@ -236,12 +239,15 @@ describe('CORE-008 auth flow', () => {
     savedSession('localStorage');
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       if (String(input).endsWith('/api/auth/me')) return envelope(user);
+      if (String(input).endsWith('/api/account')) return envelope({ ...user, lastLoginAt: null, experienceYears: null, experienceLevel: null, skills: [] });
       throw new Error('network unavailable');
     });
     vi.stubGlobal('fetch', fetchMock);
     const router = renderApp('/dashboard');
     const actor = userEvent.setup();
 
+    await actor.click(await screen.findByRole('button', { name: 'Account menu' }));
+    expect(router.state.location.pathname).toBe('/account');
     await actor.click(await screen.findByRole('button', { name: 'Sign out' }));
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/login'));

@@ -29,7 +29,7 @@ export function HorseManagementLayout() {
     }
   } }), [handleApiError]);
   if (!auth.user) return null;
-  return <HorsesApiProvider api={api}><AppShell user={{ fullName: auth.user.fullName, role: auth.user.roles[0] }} breadcrumb={breadcrumb}><Outlet context={context} /></AppShell></HorsesApiProvider>;
+  return <HorsesApiProvider api={api}><AppShell designSystem="v2" user={{ fullName: auth.user.fullName, role: auth.user.roles[0] }} breadcrumb={breadcrumb}><Outlet context={context} /></AppShell></HorsesApiProvider>;
 }
 // eslint-disable-next-line react-refresh/only-export-components
 export function useBreadcrumb(items: BreadcrumbItem[]) {

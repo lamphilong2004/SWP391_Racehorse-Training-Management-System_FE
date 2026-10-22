@@ -19,8 +19,10 @@ export interface SessionDraft {
 }
 export interface CreateSessionInput extends SessionDraft { workRiderUserId: number; riderWarningAcknowledged: boolean; surface?: string | null; focus?: string | null }
 export interface TrainingSession extends ExistingSession {
+  groom?: { id: number; userCode?: string; fullName: string } | null;
   horseProgramPhaseId: number; trainingAvailability: TrainingAvailability; blocked: boolean; blockedReasons: string[];
-  blockedMessage?: string | null; hasRiderFeedback?: boolean; preCheckResult?: 'ALL_NORMAL' | 'ABNORMAL' | null;
+  blockedMessage?: string | null; hasRiderFeedback?: boolean;
+  preSessionCheck?: { overallResult: 'ALL_NORMAL' | 'ABNORMAL' } | null;
 }
 export interface Suitability {
   trainingAvailability: TrainingAvailability; sessionBlocked: boolean; blockedMessage?: string;
@@ -46,6 +48,9 @@ export function createSessionApi(request: FlowRequest) {
     exercises: async (signal?: AbortSignal) => list(await request<Exercise[]>('/api/exercises', { signal })),
     sessions: async (from: string, to: string, signal?: AbortSignal) => list(await request<TrainingSession[]>(`/api/training-sessions?${new URLSearchParams({ from, to })}`, { signal })),
     read: (id: number, signal?: AbortSignal) => request<TrainingSession>(`/api/training-sessions/${idOf(id)}`, { signal }),
+    groomCandidates: async (id: number, signal?: AbortSignal) => list(await request<{ id: number; fullName: string }[]>(`/api/training-sessions/${idOf(id)}/groom-candidates`, { signal })),
+    assignGroom: (id: number, groomUserId: number) => request<TrainingSession>(`/api/training-sessions/${idOf(id)}/groom-assignment`, jsonBody('POST', { groomUserId: idOf(groomUserId) })),
+    reduceIntensity: (id: number, intensity: Intensity) => request<TrainingSession>(`/api/training-sessions/${idOf(id)}/reduce-intensity`, jsonBody('POST', { intensity })),
     result: (id: number, signal?: AbortSignal) => request<SessionResultView>(`/api/training-sessions/${idOf(id)}/result`, { signal }),
     suitability: (draft: SessionDraft) => request<Suitability>('/api/training-sessions/suitability-check', jsonBody('POST', draftPayload(draft))),
     riders: (draft: SessionDraft) => request<CandidateList>('/api/training-sessions/work-rider-recommendations', jsonBody('POST', draftPayload(draft))),

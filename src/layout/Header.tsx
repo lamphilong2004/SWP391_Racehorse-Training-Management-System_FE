@@ -19,6 +19,7 @@ export interface HeaderProps {
   searchPlaceholder?: string;
   onSearch?: (query: string) => void;
   unreadCount?: number;
+  unreadStatus?: 'loading' | 'unavailable';
   onNotificationsClick?: () => void;
   onUserMenuClick?: () => void;
   /** Supplied by AppShell: opens the navigation drawer below 1024px. */
@@ -35,6 +36,7 @@ export function Header({
   searchPlaceholder = 'Search…',
   onSearch,
   unreadCount = 0,
+  unreadStatus,
   onNotificationsClick,
   onUserMenuClick,
   onMenuClick,
@@ -63,7 +65,8 @@ export function Header({
           }}
         >
           <Icon name="search" size={16} className={styles.searchIcon} />
-          <input name="q" type="search" placeholder={searchPlaceholder} aria-label={searchPlaceholder} />
+          <input name="q" type="search" placeholder={searchPlaceholder} aria-label={searchPlaceholder}
+            disabled={!onSearch} title={onSearch ? undefined : 'Global search is unavailable on this screen. Use its module filters.'} />
         </form>
       </div>
       <div className={styles.right}>
@@ -71,10 +74,11 @@ export function Header({
           type="button"
           className={styles.bell}
           onClick={onNotificationsClick ?? (() => navigate(ROUTES.notifications))}
-          aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
+          aria-label={unreadStatus === 'unavailable' ? 'Notifications, unread count unavailable' : unreadStatus === 'loading' ? 'Notifications, checking unread count' : unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
+          title={unreadStatus === 'unavailable' ? 'Unread count unavailable. Open notifications to retry.' : undefined}
         >
           <Icon name="bell" size={22} />
-          {unreadCount > 0 && <span className={styles.count}>{unreadCount > 99 ? '99+' : unreadCount}</span>}
+          {!unreadStatus && unreadCount > 0 && <span className={styles.count}>{unreadCount > 99 ? '99+' : unreadCount}</span>}
         </button>
         <button type="button" className={styles.user} onClick={onUserMenuClick ?? (() => navigate(ROUTES.account))} aria-label="Account menu">
           <span className={styles.avatar} aria-hidden="true">

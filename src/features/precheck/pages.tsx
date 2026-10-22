@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Link, useParams } from 'react-router';
-import { AlertBanner, Button, Card, EmptyState, ErrorState, KeyValue, LoadingState, MetricCard, RadioGroup, StatusBadge, TextField, UnsavedChangesGuard } from '../../design-system';
+import { useParams } from 'react-router';
+import { ButtonLink, AlertBanner, Button, Card, EmptyState, ErrorState, KeyValue, LoadingState, MetricCard, RadioGroup, StatusBadge, TextField, UnsavedChangesGuard } from '../../design-system';
 import { AppShell } from '../../layout/AppShell';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { ApiError } from '../../shared/auth/authApi';
@@ -44,17 +44,17 @@ function GroomToday({ api }: { api: PrecheckApi }) {
   }, [api, date, attempt, handleApiError]);
   const retry = () => { setSessions(null); setError(undefined); setAttempt((value) => value + 1); };
   return <div className={styles.stack}>
-    <div className={styles.header}><div><h1 className={styles.heading}>Good morning, {user?.fullName}</h1><p className={styles.muted}>Your assigned pre-session checks, treatment tasks and incidents</p></div><Link className={styles.link} to="/incidents">View Incidents</Link></div>
+    <div className={styles.header}><div><h1 className={styles.heading}>Good morning, {user?.fullName}</h1><p className={styles.muted}>Your assigned pre-session checks, treatment tasks and incidents</p></div><ButtonLink to="/incidents">View Incidents</ButtonLink></div>
     <TextField label="Session date" type="date" value={date} onChange={(event) => { setSessions(null); setError(undefined); setDate(event.target.value); }} />
     <div className={styles.metrics}><MetricCard label="Pre-session checks" value={sessions ? String(sessions.length) : '—'} /><MetricCard label="Open treatment tasks" value={summary.tasks === undefined ? '—' : String(summary.tasks)} /><MetricCard label="My reported incidents" value={summary.incidents === undefined ? '—' : String(summary.incidents)} /></div>
     {summary.unavailable && <AlertBanner type="warning" title="Some summaries are unavailable">Open the treatment or incident screen to retry. Pre-session checks remain available.</AlertBanner>}
     <div className={styles.columns}><Card title="Pre-session checks">
       {error ? <ErrorState title={error instanceof ApiError && error.status === 403 ? 'Access denied' : 'Could not load your sessions'} description={message(error)} onRetry={retry} /> : !sessions ? <LoadingState label="Loading assigned sessions…" /> : sessions.length === 0 ? <EmptyState title="No assigned pre-session checks" description="There are no sessions assigned to you for this date." /> : [...sessions].sort((a, b) => a.scheduledStart.localeCompare(b.scheduledStart)).map((session) => <article key={session.id} className={styles.session}>
         <div className={styles.sessionInfo}><h3>{session.horse.name} · {session.horse.horseCode}</h3><p>{when(session.scheduledStart)} · {session.focus || session.phaseName}</p><p className={styles.muted}>Work Rider {session.workRider.fullName}{session.trainer ? ` · Trainer ${session.trainer.fullName}` : ''}</p><StatusBadge family="session" status={session.status} /> <span>{session.preCheckResult ? session.preCheckResult === 'ALL_NORMAL' ? 'Check cleared' : 'Abnormal — start blocked' : 'Check pending'}</span></div>
-        <Link className={styles.link} to={`/training/my-sessions/${session.id}/pre-check`}>{session.preCheckResult ? 'View Pre-Session Check' : 'Start Pre-Session Check'}</Link>
+        <ButtonLink variant="primary" to={`/training/my-sessions/${session.id}/pre-check`}>{session.preCheckResult ? 'View Pre-Session Check' : 'Start Pre-Session Check'}</ButtonLink>
       </article>)}
       <p className={styles.muted}>Record observations only. If anything is abnormal, the session stays scheduled and blocked until reviewed.</p>
-    </Card><aside className={styles.stack}><Card title="Treatment tasks"><p>Follow the Veterinarian’s instructions and record completion only.</p><Link className={styles.link} to="/medical/my-tasks">View Treatment Tasks</Link></Card><Card title="My incidents"><p>View the handling status of incidents you reported.</p><Link className={styles.link} to="/incidents">View Incidents</Link></Card></aside></div>
+    </Card><aside className={styles.stack}><Card title="Treatment tasks"><p>Follow the Veterinarian’s instructions and record completion only.</p><ButtonLink to="/medical/my-tasks">View Treatment Tasks</ButtonLink></Card><Card title="My incidents"><p>View the handling status of incidents you reported.</p><ButtonLink to="/incidents">View Incidents</ButtonLink></Card></aside></div>
   </div>;
 }
 
@@ -127,7 +127,7 @@ function PrecheckContent({ id, api }: { id: number; api: PrecheckApi }) {
   const dirty = !check && session.status === 'SCHEDULED' && CHECK_ITEMS.some(({ key }) => Boolean(draft[key]?.result || draft[key]?.observation));
   return <div className={styles.stack}>
     <UnsavedChangesGuard dirty={dirty} />
-    <Link className={styles.link} to="/groom/today">← Back to Today</Link>
+    <ButtonLink to="/groom/today">← Back to Today</ButtonLink>
     <div className={styles.header}><div><h1 className={styles.heading}>Pre-Session Check · {session.horse.name}</h1><p className={styles.muted}>{session.horse.horseCode} · {session.sessionCode} · {when(session.scheduledStart)} · Work Rider {session.workRider.fullName}</p></div><StatusBadge family="session" status={session.status} /></div>
     {incidentCode && <AlertBanner type="success" title={`Incident ${incidentCode} submitted`}>The Veterinarian can review this report. The check does not change Training Availability.</AlertBanner>}
     <div className={styles.columns}><Card title="Observation checklist"><p className={styles.muted}>Record what you observe. Choose Abnormal for anything unusual — you do not need to decide what is wrong.</p>
@@ -135,7 +135,7 @@ function PrecheckContent({ id, api }: { id: number; api: PrecheckApi }) {
     </Card><aside className={styles.stack}><Card title="Readiness context (read-only)"><div className={styles.summary}><KeyValue label="Training Availability" value={session.trainingAvailability ?? 'Not supplied'} /><KeyValue label="Start gate" value={startGate} /><KeyValue label="Trainer" value={session.trainer?.fullName ?? 'Not supplied'} /></div></Card><AlertBanner type="info" title="Observation only">Diagnosis, Health Status, Training Availability and restrictions are decided by the Veterinarian.</AlertBanner></aside></div>
     {check ? <AlertBanner type={check.overallResult === 'ABNORMAL' ? 'danger' : 'success'} title={check.overallResult === 'ABNORMAL' ? 'ABNORMAL — this session must not start' : 'ALL NORMAL — pre-session check recorded'}>Checked {when(check.performedAt)} by {check.performedBy.fullName}. {check.overallResult === 'ABNORMAL' ? 'Report an incident so a veterinarian can review. No incident is created until you submit the report.' : 'The Work Rider can start from the assignment when the remaining start gates are clear.'} The session remains {session.status}.</AlertBanner> : abnormal ? <AlertBanner type="danger" title="This horse is not fit to train right now. Report an incident so a veterinarian can review.">Record the abnormal check before reporting. The session stays SCHEDULED and blocked; no incident is automatically created.</AlertBanner> : <AlertBanner type="info" title="Complete all five observations">Completing a normal check clears this gate; it does not start the session.</AlertBanner>}
     {actionError && <AlertBanner type="danger" title="Check could not be confirmed">{actionError}</AlertBanner>}
-    <div className={styles.actions}><Link className={styles.link} to="/groom/today">Back to Today</Link><div className={styles.actions}>{conflict && <Button variant="secondary" onClick={reload} disabled={busy}>Reload session</Button>}{check?.overallResult === 'ABNORMAL' && !incidentCode ? <Button onClick={() => setReportOpen(true)}>Report Incident</Button> : !check && !conflict && session.status === 'SCHEDULED' ? <Button disabled={busy} onClick={save}>{busy ? 'Recording…' : abnormal ? 'Report Incident' : 'Complete Pre-Session Check'}</Button> : null}</div></div>
+    <div className={styles.actions}><ButtonLink to="/groom/today">Back to Today</ButtonLink><div className={styles.actions}>{conflict && <Button variant="secondary" onClick={reload} disabled={busy}>Reload session</Button>}{check?.overallResult === 'ABNORMAL' && !incidentCode ? <Button onClick={() => setReportOpen(true)}>Report Incident</Button> : !check && !conflict && session.status === 'SCHEDULED' ? <Button disabled={busy} onClick={save}>{busy ? 'Recording…' : abnormal ? 'Report Incident' : 'Complete Pre-Session Check'}</Button> : null}</div></div>
     {reportOpen && check?.overallResult === 'ABNORMAL' && <IncidentReportModal open source={{ kind: 'groom', horseId: session.horse.id, horseLabel: `${session.horse.name} · ${session.horse.horseCode}`, preSessionCheckId: check.id, contextLabel: `From pre-session check #${check.id} · ${session.sessionCode}` }} onClose={() => setReportOpen(false)} onSubmit={async (body) => { const incident = await api.reportIncident(body); setIncidentCode(incident.incidentCode); setReportOpen(false); }} />}
   </div>;
 }

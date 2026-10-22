@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useLocation } from 'react-router';
 import { Header, type HeaderProps } from './Header';
 import { Sidebar } from './Sidebar';
@@ -6,6 +6,8 @@ import styles from './AppShell.module.css';
 import { AlertBanner } from '../design-system';
 import { businessDataMode } from '../shared/data/businessData';
 import { ROLE_TEST_LOGIN } from '../staging/stagingMode';
+import { useNotifications } from '../shared/notifications/NotificationsProvider';
+const NotificationDrawer = lazy(() => import('../features/administration/NotificationsPage').then((module) => ({ default: module.NotificationDrawer })));
 
 export interface AppShellProps extends HeaderProps {
   children: ReactNode;
@@ -23,6 +25,8 @@ export interface AppShellProps extends HeaderProps {
  */
 export function AppShell({ children, designSystem, ...headerProps }: AppShellProps) {
   const [navOpen, setNavOpen] = useState(false);
+  const [noticesOpen, setNoticesOpen] = useState(false);
+  const notifications = useNotifications();
   const menuButton = useRef<HTMLButtonElement>(null);
   const { pathname } = useLocation();
   const [openedAt, setOpenedAt] = useState(pathname);
@@ -49,7 +53,10 @@ export function AppShell({ children, designSystem, ...headerProps }: AppShellPro
       <Sidebar role={headerProps.user.role} id="app-navigation" open={navOpen} />
       {navOpen && <button type="button" className={styles.scrim} aria-label="Close navigation" tabIndex={-1} onClick={close} />}
       <div className={styles.main}>
-        <Header {...headerProps} menuButtonRef={menuButton} navigationId="app-navigation" navigationOpen={navOpen} onMenuClick={toggle} />
+        <Header {...headerProps} unreadCount={notifications ? notifications.unreadCount : headerProps.unreadCount}
+          unreadStatus={notifications?.error ? 'unavailable' : notifications?.pending ? 'loading' : undefined}
+          onNotificationsClick={headerProps.onNotificationsClick ?? (() => setNoticesOpen(true))} menuButtonRef={menuButton} navigationId="app-navigation" navigationOpen={navOpen} onMenuClick={toggle} />
+        {noticesOpen && <Suspense fallback={<p role="status">Loading notifications…</p>}><NotificationDrawer onClose={() => setNoticesOpen(false)} /></Suspense>}
         <main id="main-content" tabIndex={-1} className={styles.content} data-design-system={designSystem}>
           {ROLE_TEST_LOGIN && <AlertBanner type="warning" title="Protected test sign-in — UI inspection only">Server operations are unavailable for test roles. Nothing is created, changed or saved.</AlertBanner>}
           {businessDataMode() === 'sample' && <AlertBanner type="info" title="Sample business data (test fixtures)">Records come from the test-only sample store.</AlertBanner>}
