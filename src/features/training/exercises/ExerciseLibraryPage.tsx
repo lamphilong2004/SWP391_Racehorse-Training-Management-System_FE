@@ -22,7 +22,7 @@ function Library({ api }: { api: SupportingApi }) {
   const rows = useSupportingLoad(() => api.exercises(filters), [api, filters.q, filters.exerciseType]);
   const returnTo = exerciseSelectionTarget(params.get('returnTo'));
   const canWrite = user?.roles.includes('TRAINER');
-  const gaits = [...new Set((rows.data ?? []).flatMap((item) => item.exerciseType ? [item.exerciseType] : []))];
+  const gaits = [...new Set((rows.data ?? []).flatMap((item) => item.exerciseType ? [item.exerciseType.toUpperCase()] : []))];
   const search = () => setFilters({ q: query, exerciseType: gait });
   function select(exercise: Exercise) {
     if (!returnTo) return;

@@ -8,6 +8,7 @@ import { IncidentReportModal } from '../../shared/incidents';
 import { createPrecheckApi, type PrecheckApi } from './api';
 import { CHECK_ITEMS, type CheckKey, type Checklist, type PrecheckSession, type PreSessionCheck } from './types';
 import styles from './precheck.module.css';
+import { greeting } from '../../shared/greeting';
 
 function localDay() { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`; }
 function when(value: string) { return new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }); }
@@ -44,7 +45,7 @@ function GroomToday({ api }: { api: PrecheckApi }) {
   }, [api, date, attempt, handleApiError]);
   const retry = () => { setSessions(null); setError(undefined); setAttempt((value) => value + 1); };
   return <div className={styles.stack}>
-    <div className={styles.header}><div><h1 className={styles.heading}>Good morning, {user?.fullName}</h1><p className={styles.muted}>Your assigned pre-session checks, treatment tasks and incidents</p></div><ButtonLink to="/incidents">View Incidents</ButtonLink></div>
+    <div className={styles.header}><div><h1 className={styles.heading}>{greeting()}, {user?.fullName}</h1><p className={styles.muted}>Your assigned pre-session checks, treatment tasks and incidents</p></div><ButtonLink to="/incidents">View Incidents</ButtonLink></div>
     <TextField label="Session date" type="date" value={date} onChange={(event) => { setSessions(null); setError(undefined); setDate(event.target.value); }} />
     <div className={styles.metrics}><MetricCard label="Pre-session checks" value={sessions ? String(sessions.length) : '—'} /><MetricCard label="Open treatment tasks" value={summary.tasks === undefined ? '—' : String(summary.tasks)} /><MetricCard label="My reported incidents" value={summary.incidents === undefined ? '—' : String(summary.incidents)} /></div>
     {summary.unavailable && <AlertBanner type="warning" title="Some summaries are unavailable">Open the treatment or incident screen to retry. Pre-session checks remain available.</AlertBanner>}

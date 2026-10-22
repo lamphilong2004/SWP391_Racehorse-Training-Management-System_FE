@@ -8,6 +8,7 @@ import { useRiderApi } from './data';
 import type { RiderSession } from './types';
 import styles from './rider.module.css';
 import { AssignmentsTable, HistoryTable } from './tables';
+import { greeting } from '../../shared/greeting';
 
 export function RiderDashboardPage({ api: supplied }: { api?: RiderApi }) {
   const api = useRiderApi(supplied);
@@ -53,7 +54,7 @@ function Dashboard({ api }: { api: RiderApi }) {
   const next = sorted.find((ride) => ACTIVE.includes(ride.status));
   const later = today.filter((ride) => ride.id !== next?.id && ride.status === 'SCHEDULED' && Date.parse(ride.scheduledStart) > now);
   return <div className={styles.stack}>
-    <div className={styles.header}><div><h1 className={styles.heading}>Good morning, {user?.fullName}</h1><p className={styles.muted}>{items ? `${today.length} ${today.length === 1 ? 'ride' : 'rides'} assigned to you today · ${DAY.format(new Date(now))}` : 'Only rides returned for your signed-in account are shown.'}</p></div>
+    <div className={styles.header}><div><h1 className={styles.heading}>{greeting()}, {user?.fullName}</h1><p className={styles.muted}>{items ? `${today.length} ${today.length === 1 ? 'ride' : 'rides'} assigned to you today · ${DAY.format(new Date(now))}` : 'Only rides returned for your signed-in account are shown.'}</p></div>
       <div className={styles.actions}><Link className={styles.secondaryLink} to="/rider/history">Riding History</Link><Link className={styles.secondaryLink} to="/rider/assignments">View all assignments</Link></div></div>
     <div className={styles.metrics}>
       <MetricCard label="Today's rides" value={items ? String(today.length) : '—'} />

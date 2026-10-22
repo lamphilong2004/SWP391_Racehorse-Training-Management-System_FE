@@ -26,7 +26,7 @@ function setup({ role = 'HEAD_TRAINER', path = '/training/programs/new', overrid
 function change(label: string, value: string) { fireEvent.change(screen.getByLabelText(label, { exact: false }), { target: { value } }); }
 async function next(actor: Actor) { await actor.click(screen.getByRole('button', { name: 'Continue' })); }
 async function chooseTemplate(actor: Actor) {
-  await actor.click(await screen.findByRole('radio', { name: 'Select Thunder Bolt' }));
+  await actor.click(await screen.findByRole('radio', { name: /^Select Thunder\ Bolt \(/ }));
   await waitFor(() => expect(screen.getByRole('button', { name: 'Continue' })).toBeEnabled());
   await next(actor); await next(actor);
   await actor.click(await screen.findByRole('button', { name: 'Use recommended Race Preparation 1600m' }));
@@ -63,7 +63,7 @@ describe('CORE-022 UI + production router + real transport with HTTP fixtures (n
     const { actor, router, posts, fetchMock } = setup({ path: '/dashboard' });
     await actor.click(await screen.findByRole('link', { name: 'Create program' }));
     expect(router.state.location.pathname).toBe('/training/programs/new');
-    expect(await screen.findByRole('radio', { name: 'Select Locked Horse' })).toBeDisabled();
+    expect(await screen.findByRole('radio', { name: /^Select Locked\ Horse \(/ })).toBeDisabled();
     await review(actor);
     expect(screen.queryByLabelText(/Target race|Target date|preferred surface/i)).not.toBeInTheDocument();
     await actor.click(submit());
@@ -121,7 +121,7 @@ describe('CORE-022 UI + production router + real transport with HTTP fixtures (n
     await next(actor);
     expect(screen.getByLabelText('Program start date', { exact: false })).toHaveValue('');
     await actor.click(screen.getByRole('button', { name: 'Horse' }));
-    await actor.click(screen.getByRole('radio', { name: 'Select Silver Star' }));
+    await actor.click(screen.getByRole('radio', { name: /^Select Silver\ Star \(/ }));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Continue' })).toBeEnabled());
     await next(actor); await next(actor);
     expect(screen.queryByLabelText('Template version')).not.toBeInTheDocument();
@@ -155,12 +155,12 @@ describe('CORE-022 UI + production router + real transport with HTTP fixtures (n
     let finish!: (response: Response) => void;
     const { actor, fetchMock, posts } = setup({ override: (url, init) => url.pathname === '/api/program-templates/3'
       ? new Promise((resolve) => { finish = resolve; }) : fixtureResponse(url, init) });
-    await actor.click(await screen.findByRole('radio', { name: 'Select Thunder Bolt' }));
+    await actor.click(await screen.findByRole('radio', { name: /^Select Thunder\ Bolt \(/ }));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Continue' })).toBeEnabled());
     await next(actor); await next(actor);
     await actor.click(screen.getByRole('button', { name: 'Use recommended Race Preparation 1600m' }));
     await actor.click(screen.getByRole('button', { name: 'Horse' }));
-    await actor.click(screen.getByRole('radio', { name: 'Select Silver Star' }));
+    await actor.click(screen.getByRole('radio', { name: /^Select Silver\ Star \(/ }));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Continue' })).toBeEnabled());
     finish(fixtureResponse(new URL('http://localhost:8080/api/program-templates/3?versionNo=2')));
     await next(actor); await next(actor);
