@@ -3,6 +3,7 @@ import { AlertBanner, Button, Card, TextAreaField, TextField } from '../../desig
 import type { GroomTaskInstruction, TreatmentPlanRequest } from './models';
 import { medicalErrorMessage } from './errors';
 import { validDate } from './groomService';
+import { dateTime } from '../evaluation/models';
 
 export function TreatmentPlanEditor({ initial, onSave, onCancel, openedAt, retainedTaskCount = 0 }: {
   initial?: Partial<TreatmentPlanRequest>; onSave: (input: TreatmentPlanRequest) => Promise<void>;
@@ -50,7 +51,7 @@ export function TreatmentPlanEditor({ initial, onSave, onCancel, openedAt, retai
     finally { submitting.current = false; setSaving(false); }
   }}>
     <Card title="Plan period"><div className="medical-grid">
-      <TextField label="Start (case opened)" value={openedAt ?? 'Not available'} readOnly />
+      <TextField label="Start (case opened)" value={openedAt ? dateTime(openedAt) : 'Not available'} readOnly />
       <TextField label="Re-examination date" type="date" value={plan.reexaminationDate ?? ''} disabled={saving} onChange={(event) => setPlan({ ...plan, reexaminationDate: event.target.value || undefined })} />
     </div></Card>
     <Card title="Treatment & care instructions"><TextAreaField label="Care instructions" value={plan.careInstructions ?? ''} disabled={saving} onChange={(event) => setPlan({ ...plan, careInstructions: event.target.value })} /></Card>

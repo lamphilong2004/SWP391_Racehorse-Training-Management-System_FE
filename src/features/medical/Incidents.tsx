@@ -18,7 +18,7 @@ const allowed: RoleCode[] = ['VETERINARIAN', 'HEAD_TRAINER', 'CLUB_MANAGER', 'TR
 const incidentPath = (id: number) => MEDICAL_ROUTES.incidents + '/' + id;
 const casePath = (id: number) => MEDICAL_ROUTES.medicalCaseDetail.replace(':caseId', String(id));
 const displayDate = (value: string) => new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(value));
-const labelType = (value: string) => value.toLowerCase().replaceAll('_', ' ');
+const labelType = (value: string) => { const text = value.toLowerCase().replaceAll('_', ' '); return text.charAt(0).toUpperCase() + text.slice(1); };
 function safeError(error: unknown) {
   if (error instanceof ApiError && error.status === 403) return 'Access denied. This incident is not available to your account.';
   if (error instanceof ApiError && error.status === 404) return 'Incident not found.';
@@ -63,7 +63,7 @@ export function IncidentListPage({ service, role, actorId, horse }: { service: I
     <Card title="Incident list">{!state.data ? <State error={state.error} reload={state.reload} /> : <div className="medical-stack"><DataTable caption="Incidents" rows={rows} rowKey={(item) => item.id} empty={<EmptyState title="No incidents" description="No reports match this page and these filters." />} columns={[
       { key: 'code', header: 'INCIDENT', render: (item) => <Link to={incidentPath(item.id)}>{item.incidentCode}</Link> },
       { key: 'horse', header: 'HORSE', render: (item) => <IncidentHorse horseId={item.horseId} read={horse} /> },
-      { key: 'observation', header: 'OBSERVATION', render: (item) => <span className="medical-capitalize">{labelType(item.incidentType)}<br /><small>{item.observedSeverity}</small></span> },
+      { key: 'observation', header: 'OBSERVATION', render: (item) => <span>{labelType(item.incidentType)}<br /><small>{item.observedSeverity}</small></span> },
       { key: 'reporter', header: 'REPORTED BY', render: (item) => item.reportedByUserId === actorId ? 'You' : `User ${item.reportedByUserId}` },
       { key: 'reported', header: 'REPORTED AT', render: (item) => <time dateTime={item.reportedAt}>{displayDate(item.reportedAt)}</time> },
       { key: 'status', header: 'STATUS', render: (item) => <StatusBadge family="incident" status={item.status} /> },
