@@ -10,3 +10,10 @@
 /* Figma 284:2588 is 880 wide: six 128px tiles per row. The shared lg size (720) stays unchanged. */
 .modal { width: 880px; max-width: calc(100vw - 32px); }
 .subtitle { margin: 0; font: 400 13px/16px var(--font-family); color: var(--color-text-secondary); }
+
+.rowLabel { letter-spacing: .06em; text-transform: uppercase; }
+.topRow { flex-wrap: wrap; }
+@media (max-width: 600px) {
+  .yard { width: 100%; }
+  .counts { flex-basis: 100%; overflow-wrap: anywhere; }
+}
