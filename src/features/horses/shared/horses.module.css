@@ -117,7 +117,12 @@
   .page:global([data-ui-v3]) > .titleRow > .titleBlock { flex-basis: 100%; }
   .row { flex-direction: column; }
   .row > * { width: 100%; }
+  .titleBlock .row { flex-direction: row; flex-wrap: wrap; }
+  .titleBlock .row > * { width: auto; }
   .footer { flex-wrap: wrap; }
   .footer > * { flex: 1 1 160px; min-height: 48px; }
   .kvLabel { width: 104px; }
 }
+
+/* Status badges under the horse name stay compact pills, not equal-width action columns. */
+.titleBlock .row > * { flex: 0 0 auto; }
