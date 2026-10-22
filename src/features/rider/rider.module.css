@@ -99,3 +99,15 @@
 @media (max-width: 600px) {
   .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-md); }
 }
+
+.heading, .rideTitle, .timeTile strong, .elapsed strong { font-family: var(--font-family-headline); letter-spacing: -.025em; }
+.heading { font-weight: 700; }
+.exercise, .tableCard { background: var(--color-bg-surface); box-shadow: var(--elev-1); }
+.exerciseNumber { color: var(--color-brand-primary); }
+.timeTile { border: 1px solid var(--color-border-default); }
+.primaryLink, .secondaryLink { font-weight: 600; }
+@media (max-width: 600px) {
+  .stateRow { align-items: flex-start; flex-wrap: wrap; }
+  .elapsed { flex-wrap: wrap; }
+  .tableCard { overflow-x: auto; }
+}

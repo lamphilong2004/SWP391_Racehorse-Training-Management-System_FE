@@ -61,3 +61,20 @@
 .quote { display: flex; align-items: start; gap: 10px; background: var(--color-bg-subtle); border-radius: var(--radius-md); padding: 12px 14px; font-size: 14px; }
 .searchResult { display: flex; align-items: center; gap: 12px; }
 @media(max-width:1300px) { .columns { grid-template-columns: minmax(0,1fr) 320px; } .fact { grid-template-columns: 120px minmax(0,1fr); } .session { grid-template-columns: 80px minmax(0,1fr) auto; } .session > span:last-child { grid-column: 2 / 4; justify-self: start; } }
+
+.page h1 { font: 700 28px/36px var(--font-family-headline); letter-spacing: -.025em; }
+.horseCard { box-shadow: var(--elev-1); }
+.horseGrid > *, .columns > * { min-width: 0; }
+.viewLink { font-weight: 600; box-shadow: var(--elev-1); }
+.ancestor { border: 1px solid var(--color-border-default); }
+@media(max-width:1000px) { .columns { grid-template-columns: minmax(0,1fr); } }
+@media(max-width:767px) {
+  .horseGrid { grid-template-columns: minmax(0,1fr); }
+  .horseHeader, .cardTop { flex-wrap: wrap; }
+  .fact, .horseCard .fact, .healthFacts .fact { grid-template-columns: minmax(0,1fr); gap: 4px; }
+  .fact dd { margin: 0; }
+  .session { grid-template-columns: minmax(0,1fr); }
+  .session > span:last-child { grid-column: auto; }
+  .pedigree { gap: var(--space-sm); grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .viewLink { min-height: 44px; }
+}
