@@ -4,6 +4,7 @@ import { AlertBanner, Button, Card, EmptyState, ErrorState, StatusBadge, Icon, L
 import { useHorsesApi } from '../api/HorsesApiContext';
 import type { ActivationItem, ActivationStatus, HorseDetail } from '../api/types';
 import { ageInYears, formatDate } from '../shared/format';
+import { sexLabel } from '../shared/options';
 import { useBreadcrumb } from '../shared/HorseManagementLayout';
 import shared from '../shared/horses.module.css';
 import styles from './PendingActivationPage.module.css';
@@ -124,7 +125,7 @@ function missingItems(status: ActivationStatus): ActivationItem[] {
 function PendingHorseCard({ status, horse, onViewRegister }: PendingHorse & { onViewRegister: () => void }) {
   const age = ageInYears(horse.foaledDate);
   const owner = horse.currentOwnerships[0]?.owner.fullName;
-  const meta = [horse.breed, horse.sex, age !== null ? `${age} ${age === 1 ? 'yr' : 'yrs'}` : null,
+  const meta = [horse.breed, sexLabel(horse.sex), age !== null ? `${age} ${age === 1 ? 'yr' : 'yrs'}` : null,
     owner ? `Owner ${owner}` : null, horse.currentBoxCode ? `Box ${horse.currentBoxCode}` : null,
     `registered ${formatDate(horse.createdAt)}`].filter(Boolean).join(' · ');
   const missing = missingItems(status);

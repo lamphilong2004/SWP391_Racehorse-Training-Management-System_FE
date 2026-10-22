@@ -7,6 +7,7 @@ import { AppShell } from '../../layout/AppShell';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { authSession } from '../../shared/auth/authSession';
 import { MEDICAL_ROUTES } from './paths';
+import { sexLabel } from '../horses/shared/options';
 import { createSummaryService, type SummaryService } from './summaryService';
 import { ApiError } from '../../shared/auth/authApi';
 import './medical.css';
@@ -64,7 +65,7 @@ function HorseSummary({ id, service }: { id: number; service: SummaryService }) 
   const birth = horse.data.foaledDate?.split('-').map(Number), today = new Date();
   let age = birth ? today.getFullYear() - birth[0] : null;
   if (age !== null && birth && (today.getMonth() + 1 < birth[1] || (today.getMonth() + 1 === birth[1] && today.getDate() < birth[2]))) age--;
-  const subtitle = [horse.data.horseCode, horse.data.breed, age !== null && age >= 0 ? `${age} yrs` : undefined, horse.data.sex,
+  const subtitle = [horse.data.horseCode, horse.data.breed, age !== null && age >= 0 ? `${age} yrs` : undefined, sexLabel(horse.data.sex),
     [horse.data.yard, horse.data.currentBoxCode ? `Box ${horse.data.currentBoxCode}` : undefined].filter(Boolean).join(', ')].filter(Boolean).join(' · ');
   const open = cases.data?.filter((c) => c.horseId === id && c.status === 'OPEN');
   return <>

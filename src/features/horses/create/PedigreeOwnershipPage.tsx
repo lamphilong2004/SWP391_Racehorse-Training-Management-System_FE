@@ -8,6 +8,7 @@ import { ApiRequestError } from '../api/horsesApi';
 import { useHorsesApi } from '../api/HorsesApiContext';
 import type { ActivationStatus, HorseDetail, StableAssignment, UserSummary } from '../api/types';
 import { formatDate, todayIsoDate } from '../shared/format';
+import { sexLabel } from '../shared/options';
 import { useBreadcrumb } from '../shared/HorseManagementLayout';
 import styles from '../shared/horses.module.css';
 import { AssignBoxModal } from './AssignBoxModal';
@@ -122,7 +123,7 @@ function PedigreeOwnershipPageContent() {
   const baselineDone = baseline ? baseline.state === 'SATISFIED' : undefined;
   const current = horse.currentAssignment;
   const previous = assignments?.filter((a) => a.effectiveTo !== null).length;
-  const facts = [horse.horseCode, horse.breed, horse.sex, horse.foaledDate ? `foaled ${formatDate(horse.foaledDate)}` : null].filter(Boolean).join(' · ');
+  const facts = [horse.horseCode, horse.breed, sexLabel(horse.sex), horse.foaledDate ? `foaled ${formatDate(horse.foaledDate)}` : null].filter(Boolean).join(' · ');
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -243,7 +244,7 @@ function PedigreeOwnershipPageContent() {
             <div className={styles.cardBody}>
               <h2 className={styles.cardTitle}>Horse summary</h2>
               <div className={styles.kv}><span className={styles.kvLabel}>Horse</span><span className={styles.kvValue}>{`${horse.name} · ${horse.horseCode}`}</span></div>
-              <div className={styles.kv}><span className={styles.kvLabel}>Breed · sex</span><span className={styles.kvValue}>{[horse.breed, horse.sex].filter(Boolean).join(' · ') || '—'}</span></div>
+              <div className={styles.kv}><span className={styles.kvLabel}>Breed · sex</span><span className={styles.kvValue}>{[horse.breed, sexLabel(horse.sex)].filter(Boolean).join(' · ') || '—'}</span></div>
               <div className={styles.kv}><span className={styles.kvLabel}>Lifecycle</span><StatusBadge family="lifecycle" status={horse.lifecycle} /></div>
               <div className={styles.kv}><span className={styles.kvLabel}>Health baseline</span>
                 <span className={styles.kvValue}>{baselineDone === undefined ? 'Baseline status unavailable' : baselineDone ? 'Recorded (Veterinarian)' : 'Not yet recorded (Veterinarian)'}</span></div>

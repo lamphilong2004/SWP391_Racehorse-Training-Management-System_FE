@@ -5,7 +5,7 @@ import { AlertBanner, Button, Card, StatusBadge, ErrorState, Icon, PhotoAttachme
 import { ApiRequestError } from '../api/horsesApi';
 import { useHorsesApi } from '../api/HorsesApiContext';
 import { useBreadcrumb } from '../shared/HorseManagementLayout';
-import { BREED_OPTIONS, SEX_OPTIONS } from '../shared/options';
+import { BREED_OPTIONS, SEX_OPTIONS, sexLabel } from '../shared/options';
 import styles from '../shared/horses.module.css';
 
 type Field = 'name' | 'horseCode' | 'foaledDate' | 'sex' | 'breed' | 'countryOfOrigin' | 'registrationNo';
@@ -57,7 +57,7 @@ function RegisterHorsePageContent() {
   useEffect(() => {
     if (!editing) return;
     let active = true;
-    api.getHorse(editId).then((horse) => { if (active) { const loaded = { name: horse.name, horseCode: horse.horseCode, foaledDate: horse.foaledDate ?? '', sex: horse.sex ?? '', breed: horse.breed ?? '', countryOfOrigin: horse.countryOfOrigin ?? '', registrationNo: horse.registrationNo ?? '' }; setValues(loaded); setBaseline(loaded); setCustomSex(Boolean(horse.sex && !SEX_OPTIONS.some((option) => option.value === horse.sex))); setCustomBreed(Boolean(horse.breed && !BREED_OPTIONS.some((option) => option.value === horse.breed))); setLoading(false); } }, (error: unknown) => { if (active) { setFormError(error instanceof Error ? error.message : 'Horse unavailable.'); } });
+    api.getHorse(editId).then((horse) => { if (active) { const loaded = { name: horse.name, horseCode: horse.horseCode, foaledDate: horse.foaledDate ?? '', sex: horse.sex ?? '', breed: horse.breed ?? '', countryOfOrigin: horse.countryOfOrigin ?? '', registrationNo: horse.registrationNo ?? '' }; setValues(loaded); setBaseline(loaded); setCustomSex(false); setCustomBreed(Boolean(horse.breed && !BREED_OPTIONS.some((option) => option.value === horse.breed))); setLoading(false); } }, (error: unknown) => { if (active) { setFormError(error instanceof Error ? error.message : 'Horse unavailable.'); } });
     return () => { active = false; };
   }, [api, editId, editing, loadAttempt]);
 
@@ -167,7 +167,7 @@ function RegisterHorsePageContent() {
               <div className={styles.row}>
                 <TextField label="Date of birth" type="date" value={values.foaledDate}
                   onChange={(e) => set('foaledDate')(e.target.value)} error={errors.foaledDate} />
-                <SelectField label="Sex" placeholder="Select or enter sex" options={[...SEX_OPTIONS, { value: '__CUSTOM__', label: 'Enter another value' }]} value={customSex ? '__CUSTOM__' : values.sex}
+                <SelectField label="Sex" placeholder="Select or enter sex" options={[...SEX_OPTIONS, ...(values.sex && !customSex && !SEX_OPTIONS.some((option) => option.value === values.sex) ? [{ value: values.sex, label: `${sexLabel(values.sex)} (as recorded)` }] : []), { value: '__CUSTOM__', label: 'Enter another value' }]} value={customSex ? '__CUSTOM__' : values.sex}
                   onChange={(e) => { setCustomSex(e.target.value === '__CUSTOM__'); set('sex')(e.target.value === '__CUSTOM__' ? '' : e.target.value); }} error={errors.sex} />
                 <SelectField label="Breed" placeholder="Select or enter breed" options={[...BREED_OPTIONS, { value: '__CUSTOM__', label: 'Other / enter breed' }]} value={customBreed ? '__CUSTOM__' : values.breed}
                   onChange={(e) => { setCustomBreed(e.target.value === '__CUSTOM__'); set('breed')(e.target.value === '__CUSTOM__' ? '' : e.target.value); }} error={errors.breed} />

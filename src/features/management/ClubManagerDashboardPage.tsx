@@ -69,7 +69,7 @@ function DashboardContent() {
           </Card>
         </div>
         <div className={styles.threeColumns}>
-          <Card title="Training today" className={styles.figmaCard}><p className={styles.number}>{total(data.trainingToday.byStatus)} <span className={styles.note}>scheduled sessions</span></p><Breakdown rows={data.trainingToday.byStatus} empty="No sessions scheduled today" /></Card>
+          <Card title="Training today" className={styles.figmaCard}><p className={styles.number}>{total(data.trainingToday.byStatus)} <span className={styles.note}>{total(data.trainingToday.byStatus) === 1 ? 'scheduled session' : 'scheduled sessions'}</span></p><Breakdown rows={data.trainingToday.byStatus} empty="No sessions scheduled today" /></Card>
           <Card title="Incidents" className={styles.figmaCard} action={<Link to={ROUTES.incidents}>View Incidents →</Link>}><p className={styles.number}>{data.openIncidents}</p><p className={styles.subtitle}>Reported or under review</p><p className={styles.note}>Management summary only.</p></Card>
           <Card title="Stable boxes" className={styles.figmaCard}><dl className={styles.stats}><div><dt>Total boxes</dt><dd>{data.boxOccupancy.total}</dd></div><div><dt>Occupied</dt><dd>{data.boxOccupancy.occupied}</dd></div><div><dt>Free</dt><dd>{data.boxOccupancy.free}</dd></div></dl></Card>
         </div>

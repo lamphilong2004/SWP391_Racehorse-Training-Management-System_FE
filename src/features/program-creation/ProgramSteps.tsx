@@ -6,12 +6,13 @@ import type { ProgramCreationFlow } from './useProgramCreation';
 import type { CreateProgramRequest, Intensity, ProgramPhaseInput } from './programTypes';
 import type { ProgramValidationIssue } from './programDraft';
 import styles from './ProgramCreationPage.module.css';
+import { sexLabel } from '../horses/shared/options';
 
 export function HorseSummary({ flow }: { flow: ProgramCreationFlow }) {
   const horse = flow.horse;
   return horse ? <Card title="Selected horse"><HorseCard className={styles.horseSummary} name={horse.name} meta={`${horse.horseCode}${horse.breed ? ` · ${horse.breed}` : ''}`}
     availability={horse.trainingAvailability} facts={[
-      { label: 'Lifecycle', value: horse.lifecycle }, { label: 'Sex', value: horse.sex ?? 'Not provided' },
+      { label: 'Lifecycle', value: horse.lifecycle }, { label: 'Sex', value: sexLabel(horse.sex) ?? 'Not provided' },
       { label: 'Foaled', value: horse.foaledDate ?? 'Not provided' },
     ]} /></Card> : <Card title="Selected horse"><p>Select a horse to view its information.</p></Card>;
 }

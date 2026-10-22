@@ -4,6 +4,7 @@ import { useAuth } from '../../../shared/auth/AuthProvider';
 import { ApiError } from '../../../shared/auth/authApi';
 import type { HorseDetail, Ownership, Page, StableAssignment } from '../api/types';
 import { formatDate } from '../shared/format';
+import { sexLabel } from '../shared/options';
 import { useHorseHistoryService } from './historyService';
 import type { TimelineEvent } from './historyTypes';
 import styles from './history.module.css';
@@ -34,12 +35,12 @@ function History({ horse }: { horse: HorseDetail }) {
   if (!current?.timeline) return <LoadingState label="Loading horse history…" />;
   return <div className={styles.page}>
     <ButtonLink to={`/horses/${horse.id}?tab=overview`} className={styles.back}>← Back to Horse Profile</ButtonLink>
-    <div><h1 className={styles.title}>Pedigree &amp; History</h1><p className={styles.subtitle}>{horse.horseCode} · {horse.name} · {horse.breed ?? missing} · {horse.sex ?? missing} · foaled {formatDate(horse.foaledDate)} · Owner {ownerNames}</p></div>
+    <div><h1 className={styles.title}>Pedigree &amp; History</h1><p className={styles.subtitle}>{horse.horseCode} · {horse.name} · {horse.breed ?? missing} · {sexLabel(horse.sex) ?? missing} · foaled {formatDate(horse.foaledDate)} · Owner {ownerNames}</p></div>
     {service.source === 'sample' && <AlertBanner title="Sample history">Only shared sample records are shown. Additional history is not available in this preview.</AlertBanner>}
     <h2 className={styles.sectionTitle}>Origin &amp; Pedigree</h2>
     <Card className={styles.section}><h3>Origin &amp; Identity</h3><div className={styles.identityGrid}>
       <KeyValue label="Horse Name" value={horse.name} /><KeyValue label="Horse ID" value={horse.horseCode} /><KeyValue label="Breed" value={horse.breed ?? missing} />
-      <KeyValue label="Country of Origin" value={horse.countryOfOrigin ?? missing} /><KeyValue label="Date of Birth" value={formatDate(horse.foaledDate)} /><KeyValue label="Sex" value={horse.sex ?? missing} />
+      <KeyValue label="Country of Origin" value={horse.countryOfOrigin ?? missing} /><KeyValue label="Date of Birth" value={formatDate(horse.foaledDate)} /><KeyValue label="Sex" value={sexLabel(horse.sex) ?? missing} />
       <KeyValue label="Breeder" value={missing} /><KeyValue label="Current Owner" value={ownerNames} /><span aria-hidden="true" /><KeyValue label="Sire" value={horse.pedigree.sire.name ?? horse.pedigree.sire.horseCode ?? missing} /><KeyValue label="Dam" value={horse.pedigree.dam.name ?? horse.pedigree.dam.horseCode ?? missing} />
     </div></Card>
     <Card className={styles.section}><h3>Pedigree Tree</h3><div className={styles.tree}>

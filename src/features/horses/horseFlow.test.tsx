@@ -208,7 +208,9 @@ it('preserves existing parent references and ownership when saving unchanged ped
 });
 it('preserves a server-supplied sex value outside the Figma suggestions while editing identity', async () => {
   open('/horses/7/identity'); await screen.findByDisplayValue('Thunder Bolt');
-  expect(screen.getByLabelText('Sex value')).toHaveValue('GELDING');
+  expect(screen.getByRole('combobox', { name: 'Sex' })).toHaveValue('GELDING');
+  expect(screen.getByRole('option', { name: 'Gelding (as recorded)' })).toBeInTheDocument();
+  expect(screen.queryByLabelText('Sex value')).not.toBeInTheDocument();
   await userEvent.clear(screen.getByLabelText('Horse name *')); await userEvent.type(screen.getByLabelText('Horse name *'), 'Thunder Bolt Updated');
   await userEvent.click(screen.getByRole('button', { name: 'Save identity' }));
   await screen.findByRole('heading', { name: 'Thunder Bolt Updated' });
