@@ -33,6 +33,15 @@ function card(value: unknown): OwnerHorse {
     photo: null, stable: null, stableSince: null, sire: null, dam: null, program: null, sessions: [], nextSession: null,
   };
 }
+function programOf(training: Row): OwnerHorse['program'] {
+  if (training.currentProgram == null) return null;
+  const program = row(training.currentProgram);
+  enumeration(program.status, ['ACTIVE', 'PAUSED', 'COMPLETED']);
+  return { name: string(program.name), phase: optionalString(program.currentPhaseName), from: date(program.periodStart), to: date(program.periodEnd), trainer: null,
+    ...(program.sessionsCompleted === undefined ? {} : { completed: integer(program.sessionsCompleted) }),
+    ...(program.sessionsPlanned === undefined ? {} : { planned: integer(program.sessionsPlanned) }),
+  };
+}
 function detail(profileValue: unknown, healthValue: unknown, trainingValue: unknown, id: number): OwnerHorse {
   const profile = row(profileValue), health = row(healthValue), training = row(trainingValue);
   const horse = card(profile.horse);
@@ -52,14 +61,7 @@ function detail(profileValue: unknown, healthValue: unknown, trainingValue: unkn
     weights: array(health.weights, 12).map((value) => { const item = row(value), weightKg = number(item.weightKg); if (weightKg <= 0 || weightKg > 9999.99 || Math.abs(weightKg * 100 - Math.round(weightKg * 100)) > 0.00001) throw invalid(); return { weightKg, recordedAt: date(item.recordedAt, true) }; }),
   };
   // Preserve the contract's newest-first weight order; do not infer missing records.
-  if (training.currentProgram != null) {
-    const program = row(training.currentProgram);
-    enumeration(program.status, ['ACTIVE', 'PAUSED', 'COMPLETED']);
-    horse.program = { name: string(program.name), phase: optionalString(program.currentPhaseName), from: date(program.periodStart), to: date(program.periodEnd), trainer: null,
-      ...(program.sessionsCompleted === undefined ? {} : { completed: integer(program.sessionsCompleted) }),
-      ...(program.sessionsPlanned === undefined ? {} : { planned: integer(program.sessionsPlanned) }),
-    };
-  }
+  horse.program = programOf(training);
   horse.sessions = array(training.recentSessions, 10).map((value, index) => {
     const item = row(value);
     // Evaluation labels are contract-allowed but their business vocabulary is not yet approved by Dung.
@@ -80,7 +82,16 @@ export function createOwnerApi(options: { fetcher?: typeof fetch; baseUrl?: stri
   };
   return {
     source: 'api',
-    async list(context) { return array(await read('/api/owner/horses', context)).map(card); },
+    async list(context) {
+      const horses = array(await read('/api/owner/horses', context)).map(card);
+      // The card projection has no program; read each owned horse's training summary so the card
+      // never claims "no program" for a horse that has one. A failed read leaves it unknown.
+      await Promise.all(horses.map(async (horse) => {
+        try { horse.program = programOf(row(await read(`/api/owner/horses/${horse.id}/training-summary`, context))); }
+        catch (error) { if (context.signal?.aborted) throw error; horse.program = undefined; }
+      }));
+      return horses;
+    },
     async detail(id, context) {
       if (!Number.isSafeInteger(id) || id <= 0) throw new ApiError(400, 'VALIDATION_ERROR', 'Choose a valid horse.');
       // Authorize/profile first: a denied direct link never triggers summary requests.

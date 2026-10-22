@@ -46,7 +46,7 @@ describe('CORE-056 actual application HTTP route mounting', () => {
     await screen.findByText('A summary for owners. Updated by the club’s Veterinarian.');
     await userEvent.click(screen.getByRole('tab', { name: 'Training & Performance' }));
     await screen.findByRole('heading', { name: 'Recent sessions' });
-    expect(requests).toEqual(['/api/owner/horses', '/api/owner/horses/7/profile', '/api/owner/horses/7/health-summary', '/api/owner/horses/7/training-summary']);
+    expect(requests).toEqual(['/api/owner/horses', '/api/owner/horses/7/training-summary', '/api/owner/horses/7/profile', '/api/owner/horses/7/health-summary', '/api/owner/horses/7/training-summary']);
     expect(document.body).not.toHaveTextContent('CLINICAL-SECRET');
     expect(localStorage.getItem('racehorse.business-samples.v1')).toBeNull();
     expect(screen.queryByRole('button', { name: /Save|Edit|Activate/ })).not.toBeInTheDocument();
