@@ -76,3 +76,16 @@
 .pageSize > div, .pageSize select { height: var(--space-2xl); font-size: 12px; }
 @media (max-width: 1100px) { .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } .twoColumns, .threeColumns, .auditAndShortcuts { grid-template-columns: 1fr; } }
 @media (max-width: 640px) { .metrics { grid-template-columns: minmax(0, 1fr); } .recentList li { grid-template-columns: 1fr; gap: var(--space-xs); } }
+
+.heading h1, .number { font-family: var(--font-family-headline); font-weight: 700; letter-spacing: -.025em; }
+.metrics > *, .twoColumns > *, .threeColumns > *, .auditAndShortcuts > * { min-width: 0; }
+.linkButton { font-weight: 600; box-shadow: var(--elev-1); }
+.datePopover { max-width: calc(100vw - 48px); border-radius: var(--card-radius); }
+.auditCard { box-shadow: var(--elev-1); }
+.auditTable th { font-weight: 600; letter-spacing: .04em; }
+@media (max-width: 767px) {
+  .compactField input, .compactField select, .compactField > div, .dateFilter summary { min-height: 44px; }
+  .dateFilter { flex-basis: 100%; }
+  .datePopover { right: auto; left: 0; }
+  .linkButton { min-height: 44px; }
+}

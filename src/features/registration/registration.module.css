@@ -14,3 +14,9 @@
 .tableScroll td { overflow-wrap: anywhere; max-width: 280px; vertical-align: top; }
 .pagination { justify-content: space-between; color: var(--color-text-secondary); font-size: 13px; }
 @media (max-width: 900px) { .registerPage { grid-template-columns: minmax(0, 1fr); } .registerPage > section:first-child { display: none; } .registerPanel { min-height: 100vh; } }
+
+.registerPanel { background: var(--color-bg-page); }
+.registerContent { padding: var(--space-xl); border: 1px solid var(--color-border-default); border-radius: var(--card-radius); background: var(--color-bg-surface); box-shadow: var(--elev-1); }
+.filters { padding: var(--space-lg); border: 1px solid var(--color-border-default); border-radius: var(--card-radius); background: var(--color-bg-surface); }
+.tableScroll { border-radius: var(--radius-md); }
+@media (max-width: 600px) { .filters > div { width: 100%; } .registerPanel { padding: var(--space-lg); } }
