@@ -31,6 +31,7 @@ describe('StatusBadge', () => {
       incident: ['REPORTED', 'UNDER_REVIEW', 'RESOLVED'],
       lifecycle: ['DRAFT', 'ACTIVE', 'INACTIVE'],
       account: ['ACTIVE', 'INACTIVE'],
+      medicalCase: ['OPEN', 'CLOSED'],
       adjustment: ['PENDING', 'APPROVED', 'REJECTED'],
     });
   });

@@ -1,7 +1,7 @@
 import { UiPreviewNotice } from './UiPreviewNotice';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Link, useSearchParams } from 'react-router';
-import { AlertBanner, Card, EmptyState, ErrorState, Icon, LoadingState, SelectField, StatusBadge } from '../../design-system';
+import { useSearchParams } from 'react-router';
+import { AlertBanner, ButtonLink, Card, EmptyState, ErrorState, Icon, LoadingState, SelectField, StatusBadge } from '../../design-system';
 import { PageHeader } from '../../layout/PageHeader';
 import { AppShell } from '../../layout/AppShell';
 import { useAuth } from '../../shared/auth/AuthProvider';
@@ -46,9 +46,9 @@ export function MedicalSummaryPage({ service }: { service: SummaryService }) {
   const listLoad = useMemo(() => () => service.listHorses(), [service]);
   const horses = useRead(listLoad, service);
   if (id !== null && (!/^\d+$/.test(selected!) || !Number.isSafeInteger(id) || id < 1))
-    return <div className="medical-stack"><Link to={MEDICAL_ROUTES.medicalSummary}>Back to selection</Link><EmptyState title="Horse not found" description="Choose a horse from Medical Summary." /></div>;
+    return <div className="medical-stack"><ButtonLink variant="tertiary" to={MEDICAL_ROUTES.medicalSummary}>← Back to selection</ButtonLink><EmptyState title="Horse not found" description="Choose a horse from Medical Summary." /></div>;
   return <div className="medical-stack">
-    {id === null ? <PageHeader title="Medical Summary" description="Read-only training-relevant information" /> : <Link to={MEDICAL_ROUTES.medicalSummary}>← Back</Link>}
+    {id === null ? <PageHeader title="Medical Summary" description="Read-only training-relevant information" /> : <ButtonLink variant="tertiary" to={MEDICAL_ROUTES.medicalSummary}>← Back</ButtonLink>}
     {id === null && <Card title="Select a horse">{!horses.data ? <State error={horses.error} retry={horses.retry} /> : horses.data.length === 0 ? <EmptyState title="No active horses" /> :
       <SelectField label="Horse" placeholder="Select a horse" value="" options={horses.data.map((h) => ({ value: String(h.id), label: `${h.name} · ${h.horseCode}` }))} onChange={(event) => setParams({ horseId: event.target.value })} />}</Card>}
     {id !== null && <HorseSummary key={id} id={id} service={service} />}

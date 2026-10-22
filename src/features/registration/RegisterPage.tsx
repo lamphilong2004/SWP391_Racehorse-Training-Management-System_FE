@@ -1,7 +1,7 @@
 import { useContext, useId, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import { ROUTES } from '../../app/routePaths';
-import { AlertBanner, Button, Icon, TextField } from '../../design-system';
+import { ButtonLink, AlertBanner, Button, Icon, TextField } from '../../design-system';
 import { ApiError } from '../../shared/auth/authApi';
 import authStyles from '../../pages/LoginPage.module.css';
 import styles from './registration.module.css';
@@ -45,7 +45,7 @@ export function RegisterPage() {
       <div className={styles.registerContent}>
         <Link className={styles.back} to={ROUTES.login} onClick={clear}>← Back to sign in</Link>
         <header className={authStyles.heading}><h1 id="register-title" className="text-landing-display-m">Request access</h1><p className="text-body-l">Submit your details for Club Manager review. Your Club Manager assigns your role.</p></header>
-        {done ? <div className={styles.stack}><AlertBanner type="success" title="Request received">{NEUTRAL_CONFIRMATION}</AlertBanner><p>You can sign in with your password after your request is approved. No email or notification is sent to you.</p><Link to={ROUTES.login}>Return to sign in</Link></div> : <>
+        {done ? <div className={styles.stack}><AlertBanner type="success" title="Request received">{NEUTRAL_CONFIRMATION}</AlertBanner><p>You can sign in with your password after your request is approved. No email or notification is sent to you.</p><ButtonLink variant="primary" to={ROUTES.login}>Return to sign in</ButtonLink></div> : <>
           {error && <AlertBanner type="danger" title="Request not confirmed">{error}</AlertBanner>}
           <form className={styles.stack} onSubmit={submit} noValidate aria-busy={pending}>
             {field('fullName', 'Full name', 'text', 'name', 150)}

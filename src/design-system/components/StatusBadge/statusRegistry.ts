@@ -76,6 +76,11 @@ export const STATUS_REGISTRY = {
     ACTIVE: { tone: 'success', icon: 'check-circle', label: 'ACTIVE' },
     INACTIVE: { tone: 'neutral', icon: 'circle', label: 'INACTIVE' },
   },
+  /** Medical case lifecycle (Flow 3): OPEN until the Veterinarian closes it. */
+  medicalCase: {
+    OPEN: { tone: 'warning', icon: 'stethoscope', label: 'OPEN' },
+    CLOSED: { tone: 'neutral', icon: 'check-circle', label: 'CLOSED' },
+  },
   /** Program Adjustment Request, DEC-005: PENDING → APPROVED / REJECTED (Head Trainer decides). */
   adjustment: {
     PENDING: { tone: 'warning', icon: 'clock', label: 'PENDING' },

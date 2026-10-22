@@ -83,6 +83,18 @@ body:has(dialog[open]) { overflow: hidden; }
   font-family: var(--font-family-headline);
   letter-spacing: -0.02em;
 }
+/* Inline text links without their own class: navy, semibold, quiet underline (Stitch reference). */
+:where([data-ui-v3], [data-app-shell]:has([data-ui-v3])) a:not([class]) {
+  color: var(--color-brand-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: rgb(11 19 43 / 25%);
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--motion-fast) var(--motion-ease);
+}
+:where([data-ui-v3], [data-app-shell]:has([data-ui-v3])) a:not([class]):hover {
+  text-decoration-color: currentColor;
+}
 :where([data-ui-v3], [data-app-shell]:has([data-ui-v3])) :focus-visible {
   outline: 2px solid var(--color-border-focus);
   outline-offset: 3px;

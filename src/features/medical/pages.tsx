@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { AlertBanner, Button, Card, DataTable, EmptyState, KeyValue, MetricCard, StatusBadge, TextField, Tabs } from '../../design-system';
+import { AlertBanner, ButtonLink, Button, Card, DataTable, EmptyState, KeyValue, MetricCard, StatusBadge, TextField, Tabs } from '../../design-system';
 import { PageHeader } from '../../layout/PageHeader';
 import { MEDICAL_ROUTES as ROUTES } from './paths';
 import { MedicalForm } from './MedicalForm';
@@ -97,14 +97,14 @@ export function CaseListPage() {
   const { data, error, reload } = useResource(load);
   const rows = data?.items.filter((item) => [item.id, item.horseId, item.reason].join(' ').toLowerCase().includes(query.toLowerCase())) ?? [];
   return <><PageHeader title="Medical Cases" description="Veterinary case records" />
-    <div className="medical-actions"><Link to={ROUTES.medicalCaseNew}>Create independent case</Link><Link to={ROUTES.herdHealth}>Herd health</Link></div>
+    <div className="medical-actions"><ButtonLink variant="primary" to={ROUTES.medicalCaseNew}>Create independent case</ButtonLink><ButtonLink to={ROUTES.herdHealth}>Herd health</ButtonLink></div>
     <Card title="Cases"><TextField label="Search current page" value={query} onChange={(event) => setQuery(event.target.value)} />
       {!data ? <ResourceState error={error} retry={reload} /> :
         <div className="medical-stack"><DataTable<MedicalCase> caption="Medical cases" rows={rows} rowKey={(item) => item.id} empty={<EmptyState title="No medical cases" />} columns={[
           { key: 'id', header: 'Case', render: (item) => <Link to={casePath(item.id)}>{item.id}</Link> },
           { key: 'horse', header: 'Horse', render: (item) => <HorseName horseId={item.horseId} /> },
           { key: 'reason', header: 'Reason', render: (item) => item.reason ?? '—' },
-          { key: 'status', header: 'Status', render: (item) => item.status },
+          { key: 'status', header: 'Status', render: (item) => <StatusBadge family="medicalCase" status={item.status} /> },
         ]} /><div className="medical-actions"><Button variant="secondary" disabled={page === 0} onClick={() => setPage(page - 1)}>Previous</Button><span>Page {page + 1} · {data.totalElements} total</span><Button variant="secondary" disabled={(page + 1) * data.size >= data.totalElements} onClick={() => setPage(page + 1)}>Next</Button></div></div>}
     </Card></>;
 }
@@ -112,7 +112,7 @@ export function CaseListPage() {
 export function CreateCasePage() {
   const { service } = useMedicalRuntime();
   const navigate = useNavigate();
-  return <><Link to={ROUTES.medical}>Back to cases</Link><PageHeader title="Create Medical Case" />
+  return <><ButtonLink variant="tertiary" to={ROUTES.medical}>← Back to cases</ButtonLink><PageHeader title="Create Medical Case" />
     <Card title="Independent case"><MedicalForm submitLabel="Create case" onCancel={() => navigate(ROUTES.medical)} fields={[
       { name: 'horseId', label: 'Horse ID', type: 'number', required: true },
       { name: 'reason', label: 'Reason', type: 'textarea', required: true, maxLength: 2000 },
@@ -180,10 +180,10 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
   const [closing, setClosing] = useState(false);
   const [confirmClose, setConfirmClose] = useState(false);
   const closed = item.status === 'CLOSED';
-  return <><Link to={ROUTES.medical}>Back to cases</Link>
+  return <><ButtonLink variant="tertiary" to={ROUTES.medical}>← Back to cases</ButtonLink>
     <HorseHeading title={'Medical Case ' + item.id} horseId={item.horseId} description={'Opened ' + dateTime(item.openedAt)} />
     <div className="medical-grid"><Card title="Case overview"><div className="medical-stack">
-      <KeyValue label="Status" value={item.status} /><KeyValue label="Reason" value={item.reason ?? '—'} />
+      <KeyValue label="Status" value={<StatusBadge family="medicalCase" status={item.status} />} /><KeyValue label="Reason" value={item.reason ?? '—'} />
       <KeyValue label="Opened" value={dateTime(item.openedAt)} /><KeyValue label="Linked incidents" value={item.incidentIds.join(', ') || 'None'} />
     </div></Card><AvailabilityCard horseId={item.horseId} /></div>
     <Tabs label="Medical case sections" idPrefix="case" value={panel} onChange={setPanel} items={[
@@ -242,7 +242,7 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
         <KeyValue label="Care" value={item.treatmentPlan.careInstructions ?? '—'} />
         <KeyValue label="Re-examination" value={item.treatmentPlan.reexaminationDate ?? 'Not scheduled'} />
       </div> : <EmptyState title="No treatment plan" />}
-        {!closed && <Link to={casePath(item.id) + '/treatment-plan'}>Open treatment plan editor</Link>}</Card>
+        {!closed && <ButtonLink to={casePath(item.id) + '/treatment-plan'}>Open treatment plan editor</ButtonLink>}</Card>
       <CaseTasks caseId={item.id} />
     </div>
     <div role="tabpanel" id="case-panel-recovery" aria-labelledby="case-tab-recovery" hidden={panel !== 'recovery'} className="medical-stack">
@@ -294,7 +294,7 @@ export function TreatmentPlanPage() {
     ...medicalCase.treatmentPlan,
     groomTasks: tasks.map((task) => ({ assignedGroomUserId: task.assignedGroomUserId, instruction: task.instruction, taskDate: task.taskDate, scheduledSlot: task.scheduledSlot })),
   };
-  return <><Link to={casePath(id)}>Back to medical case</Link>
+  return <><ButtonLink variant="tertiary" to={casePath(id)}>← Back to medical case</ButtonLink>
     <HorseHeading title="Treatment Plan" horseId={medicalCase.horseId} description={'Medical case ' + id} />
     {saved && <AlertBanner type="success" title="Treatment plan saved" />}
     <div className="medical-grid medical-treatment-layout"><div className="medical-stack">

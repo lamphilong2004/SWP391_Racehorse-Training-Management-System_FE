@@ -2,7 +2,7 @@ import { useCallback, useContext, useEffect, useId, useMemo, useRef, useState } 
 import { Link, useSearchParams } from 'react-router';
 import { RequireAuth } from '../../app/RequireAuth';
 import { ROUTES } from '../../app/routePaths';
-import { AlertBanner, Button, Card, DataTable, EmptyState, ErrorState, KeyValue, LoadingState, Modal, SelectField, TextAreaField } from '../../design-system';
+import { ButtonLink, AlertBanner, Button, Card, DataTable, EmptyState, ErrorState, KeyValue, LoadingState, Modal, SelectField, TextAreaField } from '../../design-system';
 import { AppShell } from '../../layout/AppShell';
 import { PageHeader } from '../../layout/PageHeader';
 import { useAuth } from '../../shared/auth/AuthProvider';
@@ -20,7 +20,7 @@ type Decision = { request: RegistrationRequest; kind: 'approve' | 'reject' };
 export function RegistrationReviewPage() { return <RequireAuth><ReviewAccess /></RequireAuth>; }
 function ReviewAccess() {
   const { user } = useAuth();
-  if (!user || user.accountStatus !== 'ACTIVE' || !user.roles.includes('CLUB_MANAGER')) return <main className="auth-problem"><ErrorState title="Access denied" description="Registration review is available to Club Managers only." /><Link to={ROUTES.dashboard}>Back to workspace</Link></main>;
+  if (!user || user.accountStatus !== 'ACTIVE' || !user.roles.includes('CLUB_MANAGER')) return <main className="auth-problem"><ErrorState title="Access denied" description="Registration review is available to Club Managers only." /><ButtonLink variant="tertiary" to={ROUTES.dashboard}>← Back to workspace</ButtonLink></main>;
   return <ReviewContent key={user.id} />;
 }
 function ReviewContent() {

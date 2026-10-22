@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router';
-import { AlertBanner, Button, Card, ChartContainer, EmptyState, ErrorState, KeyValue, LoadingState, MetricCard, StatusBadge, TextAreaField, TextField } from '../../design-system';
+import { useSearchParams } from 'react-router';
+import { ButtonLink, AlertBanner, Button, Card, ChartContainer, EmptyState, ErrorState, KeyValue, LoadingState, MetricCard, StatusBadge, TextAreaField, TextField } from '../../design-system';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { authSession } from '../../shared/auth/authSession';
 import { dateTime, metric, type SessionResultView } from '../evaluation/models';
@@ -18,7 +18,7 @@ type Alert = SessionResultView['alerts'][number] & { simulated?: boolean };
 export function LiveMonitoringPage() {
   const [params, setParams] = useSearchParams(), [selected, setSelected] = useState(params.get('sessionId') ?? '');
   const sessionId = params.get('sessionId');
-  return sessionId ? <LiveSession key={sessionId} rawId={sessionId} /> : <FlowShell title="Live Monitoring" section="Training" role="TRAINER"><form className={styles.row} onSubmit={(event) => { event.preventDefault(); if (Number.isSafeInteger(Number(selected)) && Number(selected) > 0) setParams({ sessionId: selected }); }}><TextField label="Session ID" required type="number" min="1" value={selected} onChange={(event) => setSelected(event.target.value)} /><Button type="submit">Open session</Button></form><EmptyState title="Choose a session to monitor" description="Open Live Monitoring from a session detail or enter a server session ID." /><Link to="/training/calendar">Open Training Calendar</Link></FlowShell>;
+  return sessionId ? <LiveSession key={sessionId} rawId={sessionId} /> : <FlowShell title="Live Monitoring" section="Training" role="TRAINER"><form className={styles.row} onSubmit={(event) => { event.preventDefault(); if (Number.isSafeInteger(Number(selected)) && Number(selected) > 0) setParams({ sessionId: selected }); }}><TextField label="Session ID" required type="number" min="1" value={selected} onChange={(event) => setSelected(event.target.value)} /><Button type="submit">Open session</Button></form><EmptyState title="Choose a session to monitor" description="Open Live Monitoring from a session detail or enter a server session ID." /><ButtonLink to="/training/calendar">Open Training Calendar</ButtonLink></FlowShell>;
 }
 function LiveSession({ rawId }: { rawId: string }) {
   const request = useFlowRequest(), { user } = useAuth(), api = useMemo(() => createSessionApi(request), [request]);
@@ -101,7 +101,7 @@ function LiveSession({ rawId }: { rawId: string }) {
     finally { pending.current = false; setBusy(false); }
   }
   const role = user?.roles.find((value) => ['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER'].includes(value)) ?? 'TRAINER';
-  return <FlowShell title={session ? `${session.horse.name} · ${session.horse.horseCode}` : 'Live Monitoring'} description={session ? `${session.sessionCode} · ${session.focus ?? session.phaseName} · Work Rider ${session.workRider?.fullName ?? 'Not assigned'}` : undefined} section="Live Monitoring" role={role} actions={<div className={styles.row}><span role="status">{live ? 'Connected' : connection.source === data ? connection.status : 'Loading REST data'}</span><Button variant="secondary" onClick={resource.reload}>Reconnect / reload</Button><Link to={`/training/session/${rawId}`}>Session Detail</Link></div>}>
+  return <FlowShell title={session ? `${session.horse.name} · ${session.horse.horseCode}` : 'Live Monitoring'} description={session ? `${session.sessionCode} · ${session.focus ?? session.phaseName} · Work Rider ${session.workRider?.fullName ?? 'Not assigned'}` : undefined} section="Live Monitoring" role={role} actions={<div className={styles.row}><span role="status">{live ? 'Connected' : connection.source === data ? connection.status : 'Loading REST data'}</span><Button variant="secondary" onClick={resource.reload}>Reconnect / reload</Button><ButtonLink to={`/training/session/${rawId}`}>Session Detail</ButtonLink></div>}>
     {resource.pending && <LoadingState label="Loading recorded session and samples before connecting…" />}{resource.error && <ErrorState title="Monitoring unavailable" description={resource.error} onRetry={resource.reload} />}
     {actionError && <AlertBanner type="danger" title="Action not confirmed">{actionError}</AlertBanner>}
     {connection.source === data && connection.message && <AlertBanner type="warning" title="Realtime unavailable">{connection.message}</AlertBanner>}

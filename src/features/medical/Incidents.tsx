@@ -1,7 +1,7 @@
 import { UiPreviewNotice } from './UiPreviewNotice';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { AlertBanner, Button, Card, DataTable, EmptyState, ErrorState, KeyValue, LoadingState, SelectField, StatusBadge, TextField } from '../../design-system';
+import { AlertBanner, ButtonLink, Button, Card, DataTable, EmptyState, ErrorState, KeyValue, LoadingState, SelectField, StatusBadge, TextField } from '../../design-system';
 import { AppShell } from '../../layout/AppShell';
 import { PageHeader } from '../../layout/PageHeader';
 import { useAuth } from '../../shared/auth/AuthProvider';
@@ -85,7 +85,7 @@ function IncidentHorseStatus({ horseId, read }: { horseId: number; read?: HorseR
 }
 export function IncidentDetailPage({ service, role, horse }: { service: IncidentService; role: RoleCode; horse?: HorseReader }) {
   const { incidentId = '' } = useParams(); const id = Number(incidentId);
-  if (!/^\d+$/.test(incidentId) || !Number.isSafeInteger(id) || id < 1) return <div className="medical-stack"><Link to={MEDICAL_ROUTES.incidents}>Back to incidents</Link><EmptyState title="Incident not found" /></div>;
+  if (!/^\d+$/.test(incidentId) || !Number.isSafeInteger(id) || id < 1) return <div className="medical-stack"><ButtonLink variant="tertiary" to={MEDICAL_ROUTES.incidents}>← Back to incidents</ButtonLink><EmptyState title="Incident not found" /></div>;
   return <IncidentDetail key={id} id={id} service={service} role={role} horse={horse} />;
 }
 function IncidentDetail({ id, service, role, horse }: { id: number; service: IncidentService; role: RoleCode; horse?: HorseReader }) {
@@ -104,7 +104,7 @@ function IncidentDetail({ id, service, role, horse }: { id: number; service: Inc
     catch (cause) { if (mounted.current) setError(safeError(cause)); } finally { locked.current = false; if (mounted.current) setBusy(false); }
   }
   const item: Incident | undefined = state.data;
-  return <div className="medical-stack"><Link to={MEDICAL_ROUTES.incidents}>← Back to incidents</Link>
+  return <div className="medical-stack"><ButtonLink variant="tertiary" to={MEDICAL_ROUTES.incidents}>← Back to incidents</ButtonLink>
     {!item ? <State error={state.error} reload={state.reload} /> : <>
       <PageHeader title={item.incidentCode} description={`${labelType(item.incidentType)} · ${displayDate(item.reportedAt)}`} actions={<StatusBadge family="incident" status={item.status} />} />
       <div className="medical-progress" aria-label="Handling status">{(['REPORTED', 'UNDER_REVIEW', 'RESOLVED'] as const).map((status) => <span key={status} className={status === item.status ? 'medical-progress-active' : ''}><StatusBadge family="incident" status={status} /></span>)}<p>Only the Veterinarian advances this status.</p></div>
@@ -113,7 +113,7 @@ function IncidentDetail({ id, service, role, horse }: { id: number; service: Inc
         <Card title="Source"><p>{item.preSessionCheckId ? `Pre-session check ${item.preSessionCheckId}` : item.trainingSessionId ? `Training session ${item.trainingSessionId}` : item.careTaskId ? `Care task ${item.careTaskId}` : 'Direct report'}</p></Card>
         <Card title="Timeline"><p><time dateTime={item.reportedAt}>{displayDate(item.reportedAt)}</time> · Reported</p><p>Current status: {item.status.replace('_', ' ')}</p></Card>
       </div><aside className="medical-stack"><IncidentHorseStatus horseId={item.horseId} read={horse} /><Card title="Handling">
-        {item.medicalCaseId && role === 'VETERINARIAN' && <Link to={casePath(item.medicalCaseId)}>Medical case {item.medicalCaseId}</Link>}
+        {item.medicalCaseId && role === 'VETERINARIAN' && <ButtonLink to={casePath(item.medicalCaseId)}>Medical case {item.medicalCaseId}</ButtonLink>}
         {role !== 'VETERINARIAN' ? <p>Reporter-safe read-only view. Clinical records are restricted to the veterinary team.</p> : item.status === 'RESOLVED' ? <p>This incident is resolved. No further handling actions are available.</p> : <div className="medical-stack">
           {error && <AlertBanner type="danger" title={error} />}
           {item.status === 'REPORTED' && !item.medicalCaseId && <><Button disabled={busy} onClick={() => review('OPEN_CASE')}>Open medical case</Button><TextField label="Existing open case ID" type="number" min={1} step={1} value={caseId} onChange={(event) => setCaseId(event.target.value)} /><Button variant="secondary" disabled={busy || !caseId} onClick={() => review('LINK_CASE')}>Link case</Button></>}

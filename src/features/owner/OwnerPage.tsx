@@ -2,7 +2,7 @@ import { useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { RequireAuth } from '../../app/RequireAuth';
 import { ROUTES } from '../../app/routePaths';
-import { AlertBanner, Button, Card, EmptyState, ErrorState, Icon, KeyValue, LoadingState, StatusBadge, Tabs } from '../../design-system';
+import { ButtonLink, AlertBanner, Button, Card, EmptyState, ErrorState, Icon, KeyValue, LoadingState, StatusBadge, Tabs } from '../../design-system';
 import { AppShell } from '../../layout/AppShell';
 import { PageHeader } from '../../layout/PageHeader';
 import { useAuth } from '../../shared/auth/AuthProvider';
@@ -28,7 +28,7 @@ const meta = (horse: OwnerHorse) => [horse.code, horse.breed, age(horse.born), h
 export function OwnerPage() { return <RequireAuth><OwnerAccess /></RequireAuth>; }
 function OwnerAccess() {
   const { user, expiresAt } = useAuth();
-  if (!user || user.accountStatus !== 'ACTIVE' || !user.roles.includes('HORSE_OWNER')) return <main className="auth-problem"><ErrorState title="Access denied" description="This portal is available to Horse Owners only." /><Link to={ROUTES.dashboard}>Back to workspace</Link></main>;
+  if (!user || user.accountStatus !== 'ACTIVE' || !user.roles.includes('HORSE_OWNER')) return <main className="auth-problem"><ErrorState title="Access denied" description="This portal is available to Horse Owners only." /><ButtonLink variant="tertiary" to={ROUTES.dashboard}>← Back to workspace</ButtonLink></main>;
   return <OwnerContent key={`${user.id}:${expiresAt}`} />;
 }
 function OwnerContent() {
@@ -63,7 +63,7 @@ function OwnerContent() {
     <div className={styles.page}>
       {service.source === 'sample' && <AlertBanner title="Sample data · This preview has not been verified against Backend records." />}
       {horseId && <Link className={styles.back} to={ROUTES.myHorses}>← My Horses</Link>}
-      {!valid ? <ErrorState title="Invalid horse link" description="Check the horse identifier and selected tab." /> : current?.error !== undefined ? <><ErrorState title={current.error === 403 ? 'Access denied' : current.error === 404 ? 'Horse not found' : 'Owner information unavailable'} description={current.error === 403 || current.error === 404 ? 'This horse is not available in your portal.' : 'Please try again later or contact the club.'} onRetry={[403, 404].includes(current.error) ? undefined : () => setRevision((value) => value + 1)} />{!horseId && <Link to={ROUTES.dashboard}>Back to workspace</Link>}</> : !current?.horses ? <LoadingState label="Loading your horses…" /> : horseId && horse ? <>
+      {!valid ? <ErrorState title="Invalid horse link" description="Check the horse identifier and selected tab." /> : current?.error !== undefined ? <><ErrorState title={current.error === 403 ? 'Access denied' : current.error === 404 ? 'Horse not found' : 'Owner information unavailable'} description={current.error === 403 || current.error === 404 ? 'This horse is not available in your portal.' : 'Please try again later or contact the club.'} onRetry={[403, 404].includes(current.error) ? undefined : () => setRevision((value) => value + 1)} />{!horseId && <ButtonLink variant="tertiary" to={ROUTES.dashboard}>← Back to workspace</ButtonLink>}</> : !current?.horses ? <LoadingState label="Loading your horses…" /> : horseId && horse ? <>
         <Card className={styles.horseHeader}><Photo horse={horse} detail /><div className={styles.headerName}><h1>{horse.name}</h1><p>{[meta(horse), horse.stable].filter(Boolean).join(' · ')}</p><Badges horse={horse} /></div><span className={styles.readOnly}><Icon name="eye" size={14} />READ-ONLY</span></Card>
         <Tabs items={tabs} value={tab} label="Horse details" idPrefix="owner-horse" onChange={(value) => { const next = new URLSearchParams(params); next.set('tab', value); setParams(next); }} />
         <div role="tabpanel" id={`owner-horse-panel-${tab}`} aria-labelledby={`owner-horse-tab-${tab}`} tabIndex={0}>
