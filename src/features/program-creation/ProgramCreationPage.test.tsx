@@ -61,7 +61,7 @@ describe('CORE-022 UI + production router + real transport with HTTP fixtures (n
 
   it('lets Head Trainer enter from workspace, complete all steps, send a pinned DTO and read the saved result', async () => {
     const { actor, router, posts, fetchMock } = setup({ path: '/dashboard' });
-    await actor.click(await screen.findByRole('button', { name: 'Create program' }));
+    await actor.click(await screen.findByRole('link', { name: 'Create program' }));
     expect(router.state.location.pathname).toBe('/training/programs/new');
     expect(await screen.findByRole('radio', { name: 'Select Locked Horse' })).toBeDisabled();
     await review(actor);
@@ -93,10 +93,11 @@ describe('CORE-022 UI + production router + real transport with HTTP fixtures (n
     expect(fetchMock.mock.calls.map(([url]) => new URL(String(url)).pathname)).toEqual(['/api/auth/me']);
     expect(posts()).toHaveLength(0);
     await actor.click(screen.getByRole('button', { name: 'Back to workspace' }));
-    await actor.click(await screen.findByRole('button', { name: 'Account menu' }));
-    expect(await screen.findByRole('heading', { name: 'Your account' })).toBeInTheDocument();
+    const accountMenu = await screen.findByRole('button', { name: 'Account menu' });
+    expect(screen.queryByRole('link', { name: 'Create program' })).not.toBeInTheDocument();
+    await actor.click(accountMenu);
+    expect(await screen.findByRole('heading', { name: 'My Account' })).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: 'Sign out' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Create program' })).not.toBeInTheDocument();
     expect(authSession.read()?.accessToken).toBe('fixture-program-jwt');
   });
 

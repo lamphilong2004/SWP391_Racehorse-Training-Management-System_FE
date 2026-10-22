@@ -78,7 +78,7 @@ it('keeps real auth out of samples and clears the sample actor at logout', async
   open('/dashboard'); await screen.findByRole('heading', { name: 'Club Manager Dashboard' });
   expect(getBusinessActor()?.id).toBe(201);
   await userEvent.click(screen.getByRole('button', { name: 'Account menu' }));
-  await screen.findByRole('heading', { name: 'Your account' });
+  await screen.findByRole('heading', { name: 'My Account' });
   await userEvent.click(screen.getByRole('button', { name: 'Sign out' }));
   await screen.findByRole('heading', { name: 'Sign in to Racehorse Ops' }); expect(getBusinessActor()).toBeNull();
 });
@@ -247,7 +247,7 @@ it.each(['GROOM', 'WORK_RIDER'] as const)('provides shared header account logout
   open(role === 'GROOM' ? '/groom/today' : '/rider', { ...manager, roles: [role] });
   await screen.findByRole('heading', { name: 'Good morning, Test Manager' });
   fireEvent.click(screen.getByRole('button', { name: 'Account menu' }));
-  await screen.findByRole('heading', { name: 'Your account' });
+  await screen.findByRole('heading', { name: 'My Account' });
   fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
   expect(await screen.findByRole('heading', { name: 'Sign in to Racehorse Ops' })).toBeInTheDocument();
   expect(authSession.read()).toBeNull(); expect(getBusinessActor()).toBeNull();

@@ -76,13 +76,13 @@ it('Vet assigns treatment -> normal Groom login completes -> Vet rereads progres
   fireEvent.click(screen.getByRole('button', { name: 'Save treatment plan' }));
   await screen.findByText('Treatment plan saved');
   async function login(user: CurrentUser) {
-    await act(() => router.navigate('/dashboard'));
+    await act(() => router.navigate('/account'));
     fireEvent.click(await screen.findByRole('button', { name: 'Sign out' }));
     await screen.findByRole('heading', { name: 'Sign in to Racehorse Ops' });
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: user.email } });
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'fixture-password' } });
     fireEvent.click(screen.getByRole('button', { name: 'Sign In' }));
-    await screen.findByRole('button', { name: 'Sign out' });
+    await screen.findByRole('button', { name: 'Account menu' });
   }
   await login(groom);
   fireEvent.click(await screen.findByRole('link', { name: 'Care Tasks' }));

@@ -157,7 +157,9 @@ describe('CORE-008 auth flow', () => {
     ['HORSE_OWNER', 'Horse Owner Portal', 'My Horses', '/owner/horses'],
   ])('uses canonical workspace and navigation for %s', async (role, workspace, navItem, navPath) => {
     savedSession('sessionStorage');
-    vi.stubGlobal('fetch', vi.fn<typeof fetch>(async (input) => String(input).includes('/api/dashboard/club-manager') ? envelope(dashboardFixture) : envelope({ ...user, roles: [role] })));
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>(async (input) => String(input).includes('/api/dashboard/club-manager') ? envelope(dashboardFixture)
+      : String(input).includes('/api/horses?') ? envelope({ items: [], page: 0, size: 6, totalItems: 0, totalPages: 0 })
+      : envelope({ ...user, roles: [role] })));
     renderApp('/dashboard');
 
     expect(await screen.findByRole('heading', { name: workspace })).toBeInTheDocument();
