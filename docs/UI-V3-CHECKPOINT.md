@@ -28,8 +28,14 @@
   no new defects.
   WORK_RIDER — My Rides, Assignments (Today/Upcoming/Completed), Riding History, Report Issue entry: PASS after
   05b9070 (one active sidebar item when two entries share a route; tab bars no longer scroll vertically).
-  Pending sign-in: Horse Owner, Club Manager.
-- Known data-level display limits (not styling): incident "Reported by" shows a user id (API returns ids only).
+  HORSE_OWNER — portal dashboard, My Horses (list + search), horse detail Profile & Pedigree / Health & Readiness
+  / Training & Performance (ACTIVE, DRAFT, LOCKED and a horse with completed sessions), notifications: PASS after
+  5faf938 (long session codes wrap instead of overlapping the distance column).
+  Pending sign-in: Club Manager.
+- Known data-level display limits (not styling): incident "Reported by" shows a user id (API returns ids only);
+  owner list card says "No program shared" for a horse whose detail shows its program (list summary payload).
+- Existing behaviour kept: sidebar NavLinks use `end` (as on main), so detail routes do not highlight the parent
+  list item.
 
 Base: `55f85518b7422e3cc32f8953fa3877ad6fe37ef4` (FE main).
 Branch: `design/ui-v3`. Worktree: `_gate-monitor/fe-ui-v3`.
