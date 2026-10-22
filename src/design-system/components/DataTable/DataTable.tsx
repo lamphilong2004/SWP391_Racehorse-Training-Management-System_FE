@@ -10,6 +10,8 @@ export interface DataTableColumn<T> {
   width?: number | string;
   /** Numeric columns are right-aligned (Figma Table 73:117). */
   align?: 'left' | 'right';
+  /** Keep short values such as dates and times on one line. */
+  nowrap?: boolean;
 }
 
 export interface DataTableProps<T> {
@@ -80,7 +82,7 @@ export function DataTable<T>({
                 onKeyDown={onRowClick ? (event) => onRowKeyDown(event, row) : undefined}
               >
                 {columns.map((column) => (
-                  <td key={column.key} className={cx(styles.cell, column.align === 'right' && styles.right)}>
+                  <td key={column.key} className={cx(styles.cell, column.align === 'right' && styles.right, column.nowrap && styles.nowrap)}>
                     {column.render(row)}
                   </td>
                 ))}

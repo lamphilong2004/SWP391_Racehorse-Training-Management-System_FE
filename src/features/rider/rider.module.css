@@ -111,3 +111,5 @@
   .elapsed { flex-wrap: wrap; }
   .tableCard { overflow-x: auto; }
 }
+/* Inside table cells, stacked text keeps its natural minimum width (no overlap with the next column). */
+td .smallStack > * { min-width: auto; }

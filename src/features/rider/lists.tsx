@@ -81,7 +81,7 @@ function Dashboard({ api }: { api: RiderApi }) {
             <span className={preCheck(ride) === 'ALL_NORMAL' ? styles.toneSuccess : styles.toneWarning}>{preCheckText(ride)}</span></div></div>)}</div></Card>
       </div>
       <Card title="Today's schedule"><div className="table-scroll" role="region" aria-label="Today's schedule" tabIndex={0}><DataTable<RiderSession> caption="Today's schedule" rows={today} rowKey={(ride) => ride.id} empty={<EmptyState title="No rides today" description="Open View all assignments for other days." />} columns={[
-        { key: 'time', header: 'Time', render: (ride) => clock(ride.scheduledStart) },
+        { key: 'time', header: 'Time', nowrap: true, render: (ride) => clock(ride.scheduledStart) },
         { key: 'horse', header: 'Horse', render: (ride) => <div className={styles.cellStack}><span className={styles.strong}>{ride.horse.name}</span><span className={styles.caption}>{ride.horse.horseCode}</span></div> },
         { key: 'session', header: 'Session', render: (ride) => ride.focus || ride.sessionCode },
         { key: 'trainer', header: 'Trainer', render: (ride) => ride.trainer?.fullName ?? 'Not supplied' },

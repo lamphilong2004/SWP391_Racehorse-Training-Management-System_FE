@@ -70,3 +70,14 @@
   text-decoration-color: var(--color-border-strong);
   text-underline-offset: 3px;
 }
+
+/* Stacked cell content (grid/flex with min-width: 0) must not let a column shrink below its longest
+   word or badge; otherwise text overflows into the next column. */
+.table td > *,
+.table td > * > * {
+  min-width: min-content;
+}
+
+.nowrap {
+  white-space: nowrap;
+}

@@ -6,6 +6,8 @@
   padding: 0 var(--space-sm);
   border-radius: var(--radius-full);
   white-space: nowrap;
+  /* Never stretch to the width of a grid/flex-column parent. */
+  width: fit-content;
 }
 
 .label {

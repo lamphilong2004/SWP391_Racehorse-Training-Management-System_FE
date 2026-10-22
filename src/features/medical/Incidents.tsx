@@ -65,7 +65,7 @@ export function IncidentListPage({ service, role, actorId, horse }: { service: I
       { key: 'horse', header: 'HORSE', render: (item) => <IncidentHorse horseId={item.horseId} read={horse} /> },
       { key: 'observation', header: 'OBSERVATION', render: (item) => <span>{labelType(item.incidentType)}<br /><small>{item.observedSeverity}</small></span> },
       { key: 'reporter', header: 'REPORTED BY', render: (item) => item.reportedByUserId === actorId ? 'You' : `User ${item.reportedByUserId}` },
-      { key: 'reported', header: 'REPORTED AT', render: (item) => <time dateTime={item.reportedAt}>{displayDate(item.reportedAt)}</time> },
+      { key: 'reported', header: 'REPORTED AT', nowrap: true, render: (item) => <time dateTime={item.reportedAt}>{displayDate(item.reportedAt)}</time> },
       { key: 'status', header: 'STATUS', render: (item) => <StatusBadge family="incident" status={item.status} /> },
       { key: 'reviewer', header: 'REVIEWED BY', render: () => 'Unavailable' },
     ]} /><div className="medical-actions"><Button variant="secondary" disabled={!page} onClick={() => setPage(page - 1)}>Previous</Button><span>Page {page + 1} · {state.data.totalElements} reports</span><Button variant="secondary" disabled={(page + 1) * state.data.size >= state.data.totalElements} onClick={() => setPage(page + 1)}>Next</Button></div></div>}</Card>

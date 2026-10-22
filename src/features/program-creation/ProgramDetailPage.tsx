@@ -65,7 +65,7 @@ function ProgramReadTab({ tab, programId }: { tab: string; programId: number }) 
       { key: 'interrupted', header: 'Interrupted', render: (item) => item.interrupted }, { key: 'distance', header: 'Server distance', render: (item) => metric(item.totalDistanceM, 'm') },
       { key: 'evaluation', header: 'Last evaluation', render: (item) => item.lastEvaluationLabel ?? 'Not provided' },
     ]} /></div> : <div className={styles.table}><DataTable<ProgramHistoryEntry> caption="Server program history" rows={resource.data as ProgramHistoryEntry[]} rowKey={(item) => `${item.occurredAt}-${item.entryType}-${item.summary}`} empty={<EmptyState title="No program history returned" />} columns={[
-      { key: 'time', header: 'Time', render: (item) => dateTime(item.occurredAt) }, { key: 'type', header: 'Event', render: (item) => item.entryType },
+      { key: 'time', header: 'Time', nowrap: true, render: (item) => dateTime(item.occurredAt) }, { key: 'type', header: 'Event', render: (item) => item.entryType },
       { key: 'actor', header: 'Actor', render: (item) => item.actor?.fullName ?? 'Not provided' }, { key: 'summary', header: 'Summary', render: (item) => item.summary },
     ]} /></div>)}
   </Card>;
