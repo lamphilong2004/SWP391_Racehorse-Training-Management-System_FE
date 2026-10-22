@@ -15,4 +15,5 @@
 .row > * { overflow-wrap: anywhere; }
 .scroll { border-radius: var(--radius-md); }
 .scroll table { min-width: 720px; }
+.statusAction { align-self: flex-start; }
 @media (max-width: 767px) { .filters > * { flex-basis: 100%; } .actions { width: 100%; } }

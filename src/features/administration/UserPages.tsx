@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { AlertBanner, Button, ButtonLink, Card, DataTable, EmptyState, ErrorState, LoadingState, RadioGroup, SelectField, StatusBadge, TextField, UnsavedChangesGuard } from '../../design-system';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { ROLE_CODES, ROLE_LABELS, type RoleCode } from '../../shared/auth/roles';
@@ -28,7 +28,7 @@ export function UserListPage() {
       { key: 'name', header: 'Name', render: (u) => u.fullName }, { key: 'code', header: 'User ID', render: (u) => u.userCode },
       { key: 'email', header: 'Email', render: (u) => u.email }, { key: 'role', header: 'Role', render: (u) => u.roles.map((r) => ROLE_LABELS[r]).join(', ') },
       { key: 'status', header: 'Status', render: (u) => <StatusBadge family="account" status={u.accountStatus} /> },
-      { key: 'login', header: 'Last login', render: (u) => time(u.lastLoginAt) }, { key: 'edit', header: 'Action', render: (u) => <Link to={`/admin/users/${u.id}/edit`}>Edit {u.fullName}</Link> },
+      { key: 'login', header: 'Last login', render: (u) => time(u.lastLoginAt) }, { key: 'edit', header: 'Action', render: (u) => <ButtonLink size="sm" variant="secondary" to={`/admin/users/${u.id}/edit`} aria-label={`Edit ${u.fullName}`}>Edit</ButtonLink> },
     ]} /></div></Card><div className={styles.actions}><Button variant="secondary" disabled={page === 0} onClick={() => setPage(page - 1)}>Previous</Button><span>{resource.data.totalItems} accounts · page {page + 1}</span><Button variant="secondary" disabled={page + 1 >= resource.data.totalPages} onClick={() => setPage(page + 1)}>Next</Button></div></>}
     </div></FlowShell>;
 }
@@ -71,7 +71,7 @@ function UserEditor({ initial }: { initial: UserDetail | null }) {
       <TextField label="Full name" required maxLength={150} value={name} disabled={busy} onChange={(e) => setName(e.target.value)} /><TextField label="Email" type="email" required maxLength={254} value={email} disabled={busy} onChange={(e) => setEmail(e.target.value)} />
     </div><p className={styles.muted}>{initial ? `User ID ${initial.userCode} cannot be changed.` : 'User ID is assigned automatically. Initial status is ACTIVE under the approved API contract.'}</p></Card>
     <Card title="Role"><RadioGroup label="Application role" required value={role} disabled={busy} options={roleOptions} onChange={(value) => setRole(value as RoleCode)} helperText="Changing a role changes access; historical records are retained. There are no custom roles." /></Card>
-    {current && <Card title="Account status"><StatusBadge family="account" status={current.accountStatus} /><p>Inactive accounts cannot sign in. Their records are kept.</p><Button type="button" variant={current.accountStatus === 'ACTIVE' ? 'danger' : 'secondary'} disabled={busy || current.id === user?.id} onClick={() => { void changeStatus(); }}>{current.accountStatus === 'ACTIVE' ? 'Deactivate Account' : 'Activate Account'}</Button></Card>}
+    {current && <Card title="Account status"><StatusBadge family="account" status={current.accountStatus} /><p>Inactive accounts cannot sign in. Their records are kept.</p><Button type="button" className={styles.statusAction} variant={current.accountStatus === 'ACTIVE' ? 'danger' : 'secondary'} disabled={busy || current.id === user?.id} onClick={() => { void changeStatus(); }}>{current.accountStatus === 'ACTIVE' ? 'Deactivate Account' : 'Activate Account'}</Button></Card>}
     </div><Card title="What this role can access"><p>{ROLE_LABELS[role]}</p><p>Permissions are fixed by the approved role and Backend row scope.</p><ButtonLink variant="secondary" to="/admin/roles">View Roles & Permissions</ButtonLink><p>Horse Owners see only their linked horses. Managers do not assign passwords.</p></Card></div>
     {error && <AlertBanner type="danger" title="User was not saved">{error}</AlertBanner>}
     <div className={styles.actions}>{busy ? <Button type="button" variant="secondary" disabled>Cancel</Button> : <ButtonLink variant="secondary" to="/admin/users">Cancel</ButtonLink>}<Button type="submit" disabled={busy}>{busy ? 'Saving…' : initial ? 'Save Changes' : 'Create User'}</Button></div>
