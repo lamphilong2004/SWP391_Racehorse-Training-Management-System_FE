@@ -24,7 +24,9 @@
   TRAINER — dashboard, assigned programs, calendar, exercise library + New Exercise dialog, session wizard,
   session detail, live monitoring (session 7), session evaluation: PASS after 90fde2e (table columns keep
   content width, fit-content badges, nowrap date columns) and 628fe81 (unique chart axis keys).
-  Pending sign-in: Groom, Work Rider, Horse Owner, Club Manager.
+  GROOM — Today, Care Tasks, pre-session check (session 7), Incidents, Report Incident dialog (not submitted): PASS,
+  no new defects.
+  Pending sign-in: Work Rider, Horse Owner, Club Manager.
 - Known data-level display limits (not styling): incident "Reported by" shows a user id (API returns ids only).
 
 Base: `55f85518b7422e3cc32f8953fa3877ad6fe37ef4` (FE main).
