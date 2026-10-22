@@ -1,5 +1,24 @@
 # UI v3 — full migration in progress
 
+## CURRENT STATE (Claude takeover, 2026-10-22 evening) — read first
+
+- Batches 1–7 are COMMITTED (0904759 … a000c39); the "uncommitted" notes below are historical.
+- Batch 8 (integration) in progress on `design/ui-v3`, commits after a000c39:
+  - 47e84dc tests: greeting assertion accepts any local-time greeting, rider button is "Select Test Rider",
+    regex escapes removed, rider dashboard uses mounted `now` (no render-time Date.now). Full lint now CLEAN.
+  - 7c21037 bare action/back links → ButtonLink (same `to`), case status badge (`medicalCase` OPEN/CLOSED),
+    V3 base style for class-less inline links.
+  - db81871 incident handling strip (span rule hit StatusBadge internals), sentence-case incident types,
+    treatment plan start time formatted.
+  - 4d47c35 horse profile status badges compact (shared `.row > * { flex: 1 }` stretched them).
+- Stitch: no Stitch MCP server is configured in this session; the saved reference
+  `_gate-monitor/stitch-horse-dossier-reference.html` (tailwind tokens + shell) is the visual source.
+- Browser review with real JWT (original DB, read-only browsing, no business writes):
+  VETERINARIAN — dashboard, horses list, horse profile + Pedigree & History, baseline form, medical cases,
+  case detail, treatment plan, herd health, incidents list/detail, restrictions, notifications, account: PASS
+  after the fixes above. Other roles: pending manual sign-in (HT, Trainer, Groom, Rider, Owner, CM).
+- Known data-level display limits (not styling): incident "Reported by" shows a user id (API returns ids only).
+
 Base: `55f85518b7422e3cc32f8953fa3877ad6fe37ef4` (FE main).
 Branch: `design/ui-v3`. Worktree: `_gate-monitor/fe-ui-v3`.
 
