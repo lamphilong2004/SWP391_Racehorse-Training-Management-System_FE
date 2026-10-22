@@ -20,7 +20,11 @@
   HEAD_TRAINER — dashboard, templates, program list/detail/create wizard, adjustment requests, training
   calendar, performance, live monitoring, medical summary, restrictions: PASS after 39ec6d6 (sidebar ellipsis,
   quiet unavailable metrics), e84afc9 (header overflow at desktop), 7a54d08 (Live Monitoring role nav) and the
-  wrapping wizard stepper. Pending sign-in: Trainer, Groom, Work Rider, Horse Owner, Club Manager.
+  wrapping wizard stepper.
+  TRAINER — dashboard, assigned programs, calendar, exercise library + New Exercise dialog, session wizard,
+  session detail, live monitoring (session 7), session evaluation: PASS after 90fde2e (table columns keep
+  content width, fit-content badges, nowrap date columns) and 628fe81 (unique chart axis keys).
+  Pending sign-in: Groom, Work Rider, Horse Owner, Club Manager.
 - Known data-level display limits (not styling): incident "Reported by" shows a user id (API returns ids only).
 
 Base: `55f85518b7422e3cc32f8953fa3877ad6fe37ef4` (FE main).
