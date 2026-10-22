@@ -1,5 +1,7 @@
 # FE coverage matrix — 3 core flows × 7 roles
 
+20 October final handoff: Hoàng's `a46f80d` delivery and CORE-010 Landing are already in main `bfa8147` via PR #18. `fix/hoang-fe-final-readiness` adds Program List, Leader-approved read-only Program Detail/Progress/History, Alert Detail and Vet Threshold Override, plus restriction/Groom-check/monitoring fixes. CORE-041 expanded management remains after the minimum detail; CORE-050/054 are not expanded. This older matrix also contains historical teammate rows; use [final readiness](HOANG-FE-FINAL-READINESS.md) for current status/API inventory. No live API PASS is claimed.
+
 2026-10-19 delivery overlay: `feat/hoang-core015-025-fe-ready` from Integration `9fb747d`, BE contracts `9dc594d`. CORE-015/020/025/031 now mount feature pages; CORE-022 selection/profile/workload layout is updated. API-only runtime is preserved. See [Hoàng delivery and contract gaps](HOANG-FE-DELIVERY.md). No new live API, Independent Gate or CORE Done claim is made.
 
 Branch `integration/fe-product-main`. Recovered baseline `9b53941` (2026-10-17). This is a coverage report, not a replacement for Project Tracking.
@@ -34,9 +36,9 @@ Legend:
 
 | Screen | Figma | Route | CORE / owner | UI | Sample | API | Blocking dependency |
 |---|---|---|---|---|---|---|---|
-| Horse Training Programs (HT landing) | 77:317 | `/training/programs` | 022 Hoàng | **MISSING** (guarded unavailable state) | Programs exist in store | Flow 2 contract on dev; runtime unverified | Owner handoff |
+| Horse Training Programs (HT landing) | 77:317 | `/training/programs` | 022 Hoàng | List, status filter and paging implemented in local final-readiness branch | Test fixtures only | Canonical JWT client, CORE-021 list | Live API pending; summary/goal/progress unavailable |
 | Create program wizard | 84:286 … 91:299 | `/training/programs/new` | 022 Hoàng | Existing flow reused; horse table/profile/workload layout updated | Test fixtures only | CORE-021 contract | Analytics projections and breed/stable filters unavailable; live API pending |
-| Program detail / progress / history | 78:288 · 79:288 · 80:423 | `/training/programs/:id` | 041 Hoàng | **MISSING** (honest handoff page) | Programs in store | Contract | Owner approval |
+| Program detail / progress / history | 78:288 · 79:288 · 80:423 | `/training/programs/:id` | CORE-041 Hoàng, approved minimum read-only | Implemented; role-limited tabs and existing list/assigned navigation | Test fixtures only | CORE-021 detail/progress/history | Live Backend pending; unsupported analytics unavailable |
 | Template library | Page 03 C1 | `/training/templates` | 041 Hoàng | **MISSING** (guarded unavailable state) | 1 template | Contract | Owner handoff |
 | Trainer dashboard | 94:286 | `/dashboard` (TRAINER) | 025 Hoàng | UI Implemented | Test fixtures only | Assigned program/session reads; evaluation readiness from session detail | Live CORE-021/024 API pending |
 | Create session / session detail | 101:286 … 108:511 · 147:5976 | `/training/schedule/session/new`, `/training/session/:id` | 025 Hoàng | Four-step wizard and state-specific detail mounted | Test fixtures only | CORE-024 draft/suitability/rider/create/read adapter | Live API pending; server validates hard blocks |

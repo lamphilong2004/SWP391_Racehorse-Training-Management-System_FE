@@ -27,3 +27,22 @@ it('authenticates in CONNECT, subscribes after acceptance, validates session sco
   stop(); expect(socket.sent.filter((frame) => frame.startsWith('UNSUBSCRIBE'))).toHaveLength(3); expect(socket.sent.some((frame) => frame.startsWith('SEND'))).toBe(false);
   expect(socket.onmessage).toBeNull(); expect(socket.readyState).toBe(3);
 });
+it('surfaces refused subscriptions and never sends telemetry or the JWT in the URL', () => {
+  const socket = new FakeSocket(), status = vi.fn(), createSocket = vi.fn(() => socket as unknown as WebSocket);
+  const stop = connectSessionStream({ sessionId: 42, token: 'test-jwt', onEvent: vi.fn(), onStatus: status, createSocket, url: 'wss://api.example.test/ws' });
+  socket.onopen?.(); socket.receive('ERROR\nmessage:Forbidden\n\nSubscription refused\0');
+  expect(status).toHaveBeenLastCalledWith('Unavailable', expect.stringContaining('refused'));
+  expect(createSocket).toHaveBeenCalledWith('wss://api.example.test/ws', ['v12.stomp']);
+  expect(socket.sent.some((frame) => frame.startsWith('SEND'))).toBe(false); stop();
+});
+it('reports a lost negotiated server heartbeat and clears its timers on cleanup', () => {
+  vi.useFakeTimers();
+  try {
+    const socket = new FakeSocket(), status = vi.fn();
+    const stop = connectSessionStream({ sessionId: 42, token: 'test-jwt', onEvent: vi.fn(), onStatus: status, createSocket: () => socket as unknown as WebSocket, url: 'wss://api.example.test/ws' });
+    socket.onopen?.(); socket.receive('CONNECTED\nversion:1.2\nheart-beat:10000,0\n\n\0');
+    vi.advanceTimersByTime(30000);
+    expect(status).toHaveBeenLastCalledWith('Unavailable', expect.stringContaining('heartbeat lost'));
+    stop(); expect(vi.getTimerCount()).toBe(0);
+  } finally { vi.useRealTimers(); }
+});

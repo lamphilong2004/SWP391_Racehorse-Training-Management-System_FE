@@ -11,7 +11,6 @@ const auth = vi.hoisted(() => ({
 vi.mock('../shared/auth/AuthProvider', () => ({ useAuth: () => auth }));
 
 const pending = [
-  ['/training/programs', 'HEAD_TRAINER', 'Horse Training Programs'],
   ['/training/templates', 'HEAD_TRAINER', 'Program Templates'],
   ['/admin/users', 'CLUB_MANAGER', 'Staff & Users'],
   ['/admin/roles', 'CLUB_MANAGER', 'Roles & Permissions'],
