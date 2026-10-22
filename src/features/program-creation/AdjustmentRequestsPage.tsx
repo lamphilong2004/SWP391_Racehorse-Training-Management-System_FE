@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
+import { ApplyAdjustmentModal } from './ApplyAdjustmentModal';
 import { AlertBanner, Button, Card, DataTable, EmptyState, ErrorState, LoadingState, Modal, SelectField, StatusBadge, TextAreaField } from '../../design-system';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { dateTime } from '../evaluation/models';
@@ -17,10 +18,12 @@ export function AdjustmentRequestsPage() {
   const headTrainer = user?.roles.includes('HEAD_TRAINER') ?? false;
   const [status, setStatus] = useState<AdjustmentStatus | ''>('PENDING'), [page, setPage] = useState(0);
   const [decision, setDecision] = useState<{ item: AdjustmentRequest; approve: boolean } | null>(null);
+  const [applying, setApplying] = useState<AdjustmentRequest | null>(null), [applied, setApplied] = useState<{ item: AdjustmentRequest; programName: string } | null>(null);
   const load = useCallback((signal: AbortSignal) => api.adjustments({ status, page }, signal), [api, status, page]);
   const resource = useResource(load), data = resource.data;
   return <FlowShell title="Program Adjustment Requests" description={headTrainer ? 'Review strategic changes requested by Trainers. Approving records the decision; apply approved changes to the program deliberately.' : 'Your strategic change requests and the Head Trainer decisions.'}
     section="Horse Training Programs" role={headTrainer ? 'HEAD_TRAINER' : 'TRAINER'}>
+    {applied && <AlertBanner type="success" title="Adjustment applied">{applied.programName} now uses the adjusted phases. <Link to={`/training/programs/${applied.item.programId}`}>Open the program</Link></AlertBanner>}
     <Card><div className={styles.row}>
       <SelectField label="Status" value={status} onChange={(event) => { setStatus(event.target.value as AdjustmentStatus | ''); setPage(0); }}
         options={[{ value: '', label: 'All' }, { value: 'PENDING', label: 'PENDING' }, { value: 'APPROVED', label: 'APPROVED' }, { value: 'REJECTED', label: 'REJECTED' }]} />
@@ -38,10 +41,12 @@ export function AdjustmentRequestsPage() {
         { key: 'status', header: 'Status', render: (item) => <span><StatusBadge family="adjustment" status={item.status} />{item.decisionReason && <><br /><span className={styles.muted}>{item.decisionReason}</span></>}</span> },
         ...(headTrainer ? [{ key: 'actions', header: 'Decision', render: (item: AdjustmentRequest) => item.status === 'PENDING'
           ? <div className={styles.row}><Button size="sm" onClick={() => setDecision({ item, approve: true })}>Approve</Button><Button size="sm" variant="secondary" onClick={() => setDecision({ item, approve: false })}>Reject</Button></div>
-          : (item.reviewedBy ? `${item.reviewedBy.fullName}, ${dateTime(item.reviewedAt ?? undefined)}` : 'Decided') }] : []),
+          : <div className={styles.stack}><span>{item.reviewedBy ? `${item.reviewedBy.fullName}, ${dateTime(item.reviewedAt ?? undefined)}` : 'Decided'}</span>
+            {item.status === 'APPROVED' && <Button size="sm" variant="secondary" onClick={() => { setApplied(null); setApplying(item); }}>Apply to phases</Button>}</div> }] : []),
       ]} />
       <div className={styles.row}><Button variant="secondary" disabled={page === 0} onClick={() => setPage(page - 1)}>Previous</Button><span>Page {data.page + 1} of {Math.max(1, data.totalPages)}</span><Button variant="secondary" disabled={page + 1 >= data.totalPages} onClick={() => setPage(page + 1)}>Next</Button></div>
     </div>}
+    {applying && <ApplyAdjustmentModal item={applying} onClose={() => setApplying(null)} onApplied={(program) => { setApplied({ item: applying, programName: `${program.horse.name} · ${program.name}` }); setApplying(null); resource.reload(); }} />}
     {decision && <DecisionModal item={decision.item} approve={decision.approve} onClose={() => setDecision(null)} onDone={() => { setDecision(null); resource.reload(); }} />}
   </FlowShell>;
 }
@@ -62,7 +67,7 @@ function DecisionModal({ item, approve, onClose, onDone }: { item: AdjustmentReq
     <form id="adjustment-decision-form" onSubmit={submit} className={styles.stack}>
       <p><strong>{typeLabel(item.requestType)}</strong>: {item.requestedValue}</p>
       <p className={styles.muted}>Reason: {item.reason}</p>
-      {approve && <AlertBanner type="info" title="Approval records the decision">The Trainer is notified. Apply the approved change to the program phases or status deliberately.</AlertBanner>}
+      {approve && <AlertBanner type="info" title="Approval records the decision">The Trainer is notified. Then use “Apply to phases” on the approved request to change the program.</AlertBanner>}
       <TextAreaField label={approve ? 'Decision note (optional)' : 'Rejection reason'} required={!approve} maxLength={2000} value={reason} disabled={busy} onChange={(event) => setReason(event.target.value)} />
       {error && <AlertBanner type="danger" title="Decision not saved">{error}</AlertBanner>}
     </form>

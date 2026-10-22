@@ -1,5 +1,5 @@
 import { idOf, jsonBody, type FlowRequest } from '../main-flows/api';
-import type { CandidateList, ProgramDetail, TemplateDetail, UserRef } from './programTypes';
+import type { CandidateList, ProgramDetail, ProgramPhaseInput, TemplateDetail, UserRef } from './programTypes';
 
 /** DEC-005 request types; TARGET_RACE stays deferred. */
 export const ADJUSTMENT_TYPES = [
@@ -45,6 +45,9 @@ export function createProgramManagementApi(request: FlowRequest) {
     },
     approve: (id: number, decisionReason?: string) =>
       request<AdjustmentRequest>(`/api/adjustment-requests/${idOf(id)}/approve`, jsonBody('POST', { decisionReason: decisionReason || undefined })),
+    /** PUT /phases: replaces the program's phases; the server requires the request to be APPROVED for this program. */
+    applyPhases: (programId: number, adjustmentRequestId: number, phases: (ProgramPhaseInput & { id?: number })[]) =>
+      request<ProgramDetail>(`/api/training-programs/${idOf(programId)}/phases`, jsonBody('PUT', { adjustmentRequestId: idOf(adjustmentRequestId), phases })),
     reject: (id: number, decisionReason: string) =>
       request<AdjustmentRequest>(`/api/adjustment-requests/${idOf(id)}/reject`, jsonBody('POST', { decisionReason })),
   };

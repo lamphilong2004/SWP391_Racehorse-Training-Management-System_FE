@@ -1,4 +1,4 @@
-import type { CreateProgramRequest, TemplateDetail, TrainerCandidate } from './programTypes';
+import type { CreateProgramRequest, ProgramPhaseInput, TemplateDetail, TrainerCandidate } from './programTypes';
 
 export interface ProgramValidationIssue {
   field: string;
@@ -93,5 +93,28 @@ export function validateProgramCreation(input: CreateProgramRequest, candidate?:
     if (candidate.hardBlock) add('trainer.trainerUserId', candidate.hardBlock);
     if (candidate.warnings.length > 0 && !input.trainer.warningsAcknowledged) add('trainer.warningsAcknowledged', 'Acknowledge the Trainer warnings before submitting.');
   }
+  return issues;
+}
+
+export interface AdjustedPhase extends ProgramPhaseInput { id?: number }
+/** Mirrors the server rule for PUT /phases: ordered, non-overlapping, inside the program period, approved intensities. */
+export function validateAdjustedPhases(phases: AdjustedPhase[], periodStart: string, periodEnd: string): Record<string, string> {
+  const issues: Record<string, string> = {}, intensities = ['LOW', 'MEDIUM', 'MEDIUM_HIGH', 'HIGH'];
+  if (!phases.length) issues.phases = 'Keep at least one phase.';
+  phases.forEach((phase, index) => {
+    const key = (field: string) => `${index}.${field}`;
+    if (!phase.name.trim()) issues[key('name')] = 'Enter a phase name.';
+    else if (phase.name.trim().length > 150) issues[key('name')] = 'Use at most 150 characters.';
+    if ((phase.objective ?? '').length > 1000) issues[key('objective')] = 'Use at most 1000 characters.';
+    if ((phase.workload ?? '').length > 500) issues[key('workload')] = 'Use at most 500 characters.';
+    if (!validDate(phase.startDate)) issues[key('startDate')] = 'Enter a valid date.';
+    else if (phase.startDate < periodStart) issues[key('startDate')] = 'Start inside the program period.';
+    if (!validDate(phase.endDate)) issues[key('endDate')] = 'Enter a valid date.';
+    else if (phase.endDate > periodEnd) issues[key('endDate')] = 'End inside the program period.';
+    else if (validDate(phase.startDate) && phase.endDate < phase.startDate) issues[key('endDate')] = 'End on or after the start date.';
+    const previous = phases[index - 1];
+    if (previous && validDate(previous.endDate) && validDate(phase.startDate) && phase.startDate <= previous.endDate && !issues[key('startDate')]) issues[key('startDate')] = 'Start after the previous phase ends.';
+    if (phase.intensityMin && phase.intensityMax && intensities.indexOf(phase.intensityMin) > intensities.indexOf(phase.intensityMax)) issues[key('intensityMax')] = 'Maximum must be on or above minimum.';
+  });
   return issues;
 }

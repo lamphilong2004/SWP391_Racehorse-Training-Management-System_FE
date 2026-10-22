@@ -37,3 +37,44 @@ it('Trainer sees requests read-only without decision controls', async () => {
   expect(await screen.findByText('Extend Base by one week')).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
 });
+
+const approved = { ...pending, status: 'APPROVED', reviewedBy: { id: 2, fullName: 'Head fixture' }, reviewedAt: '2026-10-22T08:00:00Z' };
+const program = { id: 9, horse: { id: 11, horseCode: 'RH-1', name: 'Fixture Horse' }, name: 'Base block', status: 'ACTIVE', periodStart: '2026-10-01', periodEnd: '2026-10-31', sourceTemplateId: 1, sourceTemplateVersion: 1, activatedAt: '2026-10-01T00:00:00Z',
+  phases: [{ id: 41, templateVersionPhaseId: 5, phaseOrder: 1, name: 'Base', objective: 'Aerobic base', startDate: '2026-10-01', endDate: '2026-10-14', intensityMin: 'LOW', intensityMax: 'MEDIUM', workload: 'Walk/trot', isCustomized: false },
+    { id: 42, templateVersionPhaseId: 6, phaseOrder: 2, name: 'Build', objective: null, startDate: '2026-10-15', endDate: '2026-10-31', intensityMin: null, intensityMax: null, workload: null, isCustomized: false }] };
+function applyFixture(history: unknown[] = []) {
+  request.mockImplementation(async (path: string) => path.startsWith('/api/adjustment-requests?') ? page([approved])
+    : path === '/api/training-programs/9' ? program : path === '/api/training-programs/9/history' ? history : path === '/api/training-programs/9/phases' ? program : undefined);
+}
+
+it('Head Trainer applies an approved request to the phases with the request id', async () => {
+  applyFixture(); mount();
+  fireEvent.click(await screen.findByRole('button', { name: 'Apply to phases' }));
+  fireEvent.change(await screen.findByLabelText(/^Phase 1 end/), { target: { value: '2026-10-21' } });
+  fireEvent.change(screen.getByLabelText(/^Phase 2 start/), { target: { value: '2026-10-22' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Apply to program' }));
+  expect(await screen.findByText('Adjustment applied')).toBeInTheDocument();
+  const call = request.mock.calls.find(([path]) => path === '/api/training-programs/9/phases')!;
+  const body = JSON.parse(call[1].body);
+  expect(call[1].method).toBe('PUT'); expect(body.adjustmentRequestId).toBe(7);
+  expect(body.phases.map((phase: { id: number; phaseOrder: number; startDate: string; endDate: string }) => [phase.id, phase.phaseOrder, phase.startDate, phase.endDate]))
+    .toEqual([[41, 1, '2026-10-01', '2026-10-21'], [42, 2, '2026-10-22', '2026-10-31']]);
+});
+
+it('blocks overlapping or out-of-period phases before any write and warns when already applied', async () => {
+  applyFixture([{ occurredAt: '2026-10-22T09:00:00Z', entryType: 'PROGRAM_PHASES_ADJUSTED', summary: 'Program phase structure adjusted. Applied approved request 7.' }]); mount();
+  fireEvent.click(await screen.findByRole('button', { name: 'Apply to phases' }));
+  expect(await screen.findByText('Already applied')).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText(/^Phase 2 start/), { target: { value: '2026-10-10' } });
+  fireEvent.change(screen.getByLabelText(/^Phase 2 end/), { target: { value: '2026-11-05' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Apply to program' }));
+  expect(await screen.findByText('Start after the previous phase ends.')).toBeInTheDocument();
+  expect(screen.getByText('End inside the program period.')).toBeInTheDocument();
+  expect(request).not.toHaveBeenCalledWith('/api/training-programs/9/phases', expect.anything());
+});
+
+it('offers Apply only to the Head Trainer on approved requests', async () => {
+  roles.value = ['TRAINER']; request.mockResolvedValue(page([approved])); mount();
+  expect(await screen.findByText('Extend Base by one week')).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Apply to phases' })).not.toBeInTheDocument();
+});
