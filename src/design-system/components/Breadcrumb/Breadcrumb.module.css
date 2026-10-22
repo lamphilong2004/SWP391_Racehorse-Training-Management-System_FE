@@ -19,6 +19,9 @@ a.item:hover {
 
 .current {
   color: var(--color-text-primary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .separator {

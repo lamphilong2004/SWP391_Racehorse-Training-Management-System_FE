@@ -175,9 +175,9 @@
   .search { display: none; }
   .bell { width: 44px; height: 44px; }
   .left :global(nav) { min-width: 0; overflow: hidden; }
-}
-
-@media (max-width: 639px) {
+  .left { flex: 1 1 auto; gap: var(--space-sm); }
+  .right { flex-shrink: 0; gap: var(--space-sm); }
+  /* Long names overflowed the header between 640 and 767px; show the avatar-only account button instead. */
   .name, .chevron { display: none; }
   .user { min-width: 44px; min-height: 44px; justify-content: center; }
 }
