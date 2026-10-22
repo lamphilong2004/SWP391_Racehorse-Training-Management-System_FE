@@ -57,7 +57,7 @@
 .session { display: grid; grid-template-columns: 88px minmax(0,1fr) auto auto; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--color-border-default); font-size: 13px; }
 .session:last-child { border-bottom: 0; }
 .session > span { color: var(--color-text-secondary); }
-.session strong { font-weight: 500; }
+.session strong { font-weight: 500; min-width: 0; overflow-wrap: anywhere; }
 .quote { display: flex; align-items: start; gap: 10px; background: var(--color-bg-subtle); border-radius: var(--radius-md); padding: 12px 14px; font-size: 14px; }
 .searchResult { display: flex; align-items: center; gap: 12px; }
 @media(max-width:1300px) { .columns { grid-template-columns: minmax(0,1fr) 320px; } .fact { grid-template-columns: 120px minmax(0,1fr); } .session { grid-template-columns: 80px minmax(0,1fr) auto; } .session > span:last-child { grid-column: 2 / 4; justify-self: start; } }
