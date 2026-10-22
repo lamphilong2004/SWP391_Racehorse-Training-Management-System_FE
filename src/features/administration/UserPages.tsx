@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { AlertBanner, Button, ButtonLink, Card, DataTable, EmptyState, ErrorState, LoadingState, RadioGroup, SelectField, StatusBadge, TextField, UnsavedChangesGuard } from '../../design-system';
 import { useAuth } from '../../shared/auth/AuthProvider';
@@ -50,12 +50,14 @@ function UserEditor({ initial }: { initial: UserDetail | null }) {
   const request = useFlowRequest(), api = useMemo(() => accountApi(request), [request]), { user } = useAuth(), navigate = useNavigate();
   const [name, setName] = useState(initial?.fullName ?? ''), [email, setEmail] = useState(initial?.email ?? ''), [role, setRole] = useState<RoleCode>(initial?.roles[0] ?? 'GROOM');
   const [current, setCurrent] = useState(initial), [busy, setBusy] = useState(false), [error, setError] = useState(''); const inFlight = useRef(false);
+  const [saved, setSaved] = useState(false);
+  useEffect(() => { if (saved) void navigate('/admin/users'); }, [saved, navigate]);
   const dirty = name !== (initial?.fullName ?? '') || email !== (initial?.email ?? '') || role !== (initial?.roles[0] ?? 'GROOM');
   async function submit(event: FormEvent) {
     event.preventDefault(); if (inFlight.current) return; inFlight.current = true; setBusy(true); setError('');
     const input: UserInput = { fullName: name.trim(), email: email.trim(), roleCode: role, experienceYears: initial?.experienceYears ?? null, experienceLevel: initial?.experienceLevel ?? null,
       skillIds: role === initial?.roles[0] ? initial.skills.map((s) => s.id) : [] };
-    try { if (initial) await api.update(initial.id, input); else await api.create(input); navigate('/admin/users'); }
+    try { if (initial) await api.update(initial.id, input); else await api.create(input); setSaved(true); }
     catch (failure) { setError(errorMessage(failure)); } finally { inFlight.current = false; setBusy(false); }
   }
   async function changeStatus() {
@@ -64,7 +66,7 @@ function UserEditor({ initial }: { initial: UserDetail | null }) {
     try { setCurrent(await api.status(current.id, current.accountStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE')); }
     catch (failure) { setError(errorMessage(failure)); } finally { inFlight.current = false; setBusy(false); }
   }
-  return <><UnsavedChangesGuard dirty={dirty && !busy} /><form onSubmit={(e) => { void submit(e); }} className={styles.stack}>
+  return <><UnsavedChangesGuard dirty={!saved && (dirty || busy)} /><form onSubmit={(e) => { void submit(e); }} className={styles.stack}>
     <div className={styles.columns}><div className={styles.stack}><Card title="Profile"><div className={styles.filters}>
       <TextField label="Full name" required maxLength={150} value={name} disabled={busy} onChange={(e) => setName(e.target.value)} /><TextField label="Email" type="email" required maxLength={254} value={email} disabled={busy} onChange={(e) => setEmail(e.target.value)} />
     </div><p className={styles.muted}>{initial ? `User ID ${initial.userCode} cannot be changed.` : 'User ID is assigned automatically. Initial status is ACTIVE under the approved API contract.'}</p></Card>

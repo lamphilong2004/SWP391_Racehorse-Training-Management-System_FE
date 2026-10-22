@@ -30,13 +30,13 @@ function AccountContent() {
   </div></AppShell>;
 }
 function AccountForm({ profile }: { profile: UserDetail }) {
-  const request = useFlowRequest(), { restore } = useAuth();
+  const request = useFlowRequest();
   const [name, setName] = useState(profile.fullName), [savedName, setSavedName] = useState(profile.fullName);
   const [currentPassword, setCurrentPassword] = useState(''), [newPassword, setNewPassword] = useState(''), [confirmPassword, setConfirmPassword] = useState('');
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState(''); const inFlight = useRef(false);
   async function save(event: FormEvent, password: boolean) {
     event.preventDefault(); if (inFlight.current) return;
-    if (password && (newPassword !== confirmPassword || !/[A-Za-z]/.test(newPassword) || !/\d/.test(newPassword) || new TextEncoder().encode(newPassword).length > 72)) { setError('Passwords must match, contain a letter and a digit, and use at most 72 UTF-8 bytes.'); return; }
+    if (password && (newPassword !== confirmPassword || !/\p{L}/u.test(newPassword) || !/\p{Nd}/u.test(newPassword) || new TextEncoder().encode(newPassword).length > 72)) { setError('Passwords must match, contain a letter and a digit, and use at most 72 UTF-8 bytes.'); return; }
     inFlight.current = true; setBusy(true); setError(''); setMessage('');
     try {
       if (password) {
@@ -44,7 +44,8 @@ function AccountForm({ profile }: { profile: UserDetail }) {
         setCurrentPassword(''); setNewPassword(''); setConfirmPassword(''); setMessage('Password changed by the server.');
       } else {
         const updated = await request<UserDetail>('/api/account', { method: 'PUT', body: JSON.stringify({ fullName: name.trim() }) });
-        setName(updated.fullName); setSavedName(updated.fullName); await restore();
+        // Restoring auth here would unmount the page and erase an unsaved password form.
+        setName(updated.fullName); setSavedName(updated.fullName); setMessage('Profile saved by the server. Refresh to update the header name.');
       }
     } catch (failure) { setError(errorMessage(failure)); } finally { inFlight.current = false; setBusy(false); }
   }
