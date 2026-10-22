@@ -1,22 +1,22 @@
 {
   "pr": "https://github.com/lamphilong2004/SWP391_Racehorse-Training-Management-System_FE/pull/23",
-  "parent": "ce3cb1943f93cc08a2a9588af1962e1f8194c251",
+  "reviewPatchBase": "ce3cb1943f93cc08a2a9588af1962e1f8194c251",
   "sourceSha256LfNormalized": {
     "src/main.tsx": "d2828d2ef4d5b3f7923558a35822de84e65295c86bbf8dc94187986c8125e869",
     "src/staging/RoleTestRoot.tsx": "29dd5a8307e69feaf3de6006bb50521184d05e9d4a48395383509cb6ce169a78",
     "src/layout/AppShell.tsx": "a05ddb0d3dc3aebea5c2c8f057a158022cf25a41d978cef547ace4aa949eb988",
     "src/layout/Header.tsx": "6cc06bc006607a5fc2394fbc98bb6a494f185008b58651b5fccbfec4c4a4b2c7",
     "src/features/administration/NotificationsPage.tsx": "8ea83f131585273f05a203d8d562b6f01a696fea9dd148db7a863015bf528871",
-    "src/shared/notifications/NotificationsProvider.tsx": "b27ac478afab47dcc5c876fdda70ef7f26067f5a7f03681b972a9452f3a5a4f8",
-    "src/shared/notifications/NotificationsProvider.test.tsx": "767c00c03934d73af83bf1cac14c0665779973728e35316f7cbb5152ecabac96",
+    "src/shared/notifications/NotificationsProvider.tsx": "6f101436abaf1193f9c5bfdefbd2457f145033430332c5485ea47e8ec17636b8",
+    "src/shared/notifications/NotificationsProvider.test.tsx": "fbe6e83f5a8a275ec7c1a5e262aee57d0b067ad007522ed4186ed3d7983cd6e4",
     "src/app/pendingScreens.test.tsx": "d4d6a139efe150141d220e8d4992a5e70db58144aad4a0dc458afcce54d3301a",
     "src/shared/auth/AuthProvider.test.tsx": "1673e828438423463de83c6097e6fde680545a5c5f4f0c518939952cc3b54d1f"
   },
   "focusedTests": {
     "files": 5,
-    "passed": 83,
+    "passed": 84,
     "failed": 0,
-    "notificationSpecific": 24,
+    "notificationSpecific": 25,
     "workers": 1
   },
   "checks": {

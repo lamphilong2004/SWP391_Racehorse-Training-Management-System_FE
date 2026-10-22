@@ -75,7 +75,11 @@ function SessionNotifications({ session, handleApiError, children }: {
     countRequest.current?.abort();
     const controller = new AbortController();
     countRequest.current = controller;
-    if (!isCurrent()) return;
+    if (!isCurrent()) {
+      setState({ source: session, pending: false, error: 'Notification session changed. Sign in again.' });
+      setRevision((value) => value + 1);
+      return;
+    }
     setState({ source: session, pending: true });
     try {
       const result = await request<unknown>('/api/notifications/unread-count', { signal: controller.signal });
@@ -114,11 +118,13 @@ function SessionNotifications({ session, handleApiError, children }: {
     const onFocus = () => { void refresh(); };
     window.addEventListener('focus', onFocus);
     window.addEventListener('online', onFocus);
+    window.addEventListener('storage', onFocus);
     return () => {
       active = false; invalidateCount();
       pending.forEach((controller) => controller.abort());
       window.removeEventListener('focus', onFocus);
       window.removeEventListener('online', onFocus);
+      window.removeEventListener('storage', onFocus);
     };
   }, [refresh, invalidateCount]);
 

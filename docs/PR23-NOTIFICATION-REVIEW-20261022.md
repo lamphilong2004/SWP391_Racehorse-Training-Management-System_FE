@@ -1,6 +1,6 @@
 # PR23 notification unread badge — focused re-review
 
-Parent: `ce3cb1943f93cc08a2a9588af1962e1f8194c251`, existing
+Review patch base: `ce3cb1943f93cc08a2a9588af1962e1f8194c251`, existing
 `release/fe-main-local-20261022`. This patch stays on PR23; no main/dev merge,
 deployment, Backend change, new API or UI redesign.
 
@@ -11,7 +11,7 @@ kept its own unread query, so even successful read/read-all did not update the b
 
 `NotificationsProvider` now lives inside canonical AuthProvider and supplies the
 same count/request boundary to AppShell, center and drawer. It queries existing
-`GET /api/notifications/unread-count` after login and on focus/online recovery.
+`GET /api/notifications/unread-count` after login and on focus/online/storage recovery.
 Successful read/read-all invalidates notification lists and queries the count again.
 It never decrements locally, invents zero, accepts malformed counts or treats failed
 mutations as success. Unknown/error counts hide the numeric badge and provide an
@@ -22,7 +22,8 @@ The canonical JWT transport remains unchanged. Requests bind the current stored
 session's token, abort on disposal, reject stale results and apply auth errors only
 while that same session remains current. A late old-account401 must never sign out
 the new account. Account/login changes reset provider consumers; snapshots prevent
-old counts showing during same-user token replacement. No extra token/count storage
+old counts showing during same-user token replacement. Storage events also invalidate
+the old count/list without issuing requests with a missing or replacement token. No extra token/count storage
 or sample business store is added. Protected role-test identities retain their
 existing transport prohibition and cannot reach the server.
 
@@ -32,16 +33,16 @@ a separate known gap; no websocket acceptance claim is made here.
 
 ## Focused regression evidence
 
-83/83 tests passed across five files, one worker:
+84/84 tests passed across five files, one worker:
 
 ```powershell
 node node_modules/vitest/vitest.mjs run src/shared/notifications/NotificationsProvider.test.tsx src/app/pendingScreens.test.tsx src/layout/layout.test.tsx src/shared/auth/AuthProvider.test.tsx src/shared/auth/authApi.test.ts --maxWorkers=1
 ```
 
-24 notification tests cover seven roles, initial count, center/drawer read/read-all,
+25 notification tests cover seven roles, initial count, center/drawer read/read-all,
 duplicate submission, denied/malformed mutation, invalid/failed count and retry,
 stale response ordering, account switch including late401/mutation, logout/relogin,
-inactive/expired session handling and StrictMode replay. Existing v1/responsive
+inactive/expired session handling, cross-tab session clearing and StrictMode replay. Existing v1/responsive
 layout tests and canonical auth regressions are included.
 
 Two pre-existing logout test selectors still expected Sign out on the workspace.

@@ -185,6 +185,20 @@ it('mounts safely under StrictMode and ignores aborted development replay reques
   expect(await screen.findByRole('button', { name: 'Notifications, 3 unread' })).toBeInTheDocument();
 });
 
+it('invalidates the badge when another tab clears the canonical session without sending an anonymous request', async () => {
+  const fetcher = vi.fn<typeof fetch>(async (url) => pathOf(url).endsWith('/unread-count') ? ok({ unread: 3 }) : ok(page()));
+  vi.stubGlobal('fetch', fetcher); mount(); await signIn();
+  await screen.findByRole('button', { name: 'Notifications, 3 unread' });
+  await userEvent.click(screen.getByRole('link', { name: 'Open center fixture' }));
+  await screen.findByText('Fixture notice');
+  authSession.clear();
+  fireEvent(window, new StorageEvent('storage'));
+  expect(await screen.findByRole('button', { name: 'Notifications, unread count unavailable' })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Notifications, 3 unread' })).not.toBeInTheDocument();
+  await waitFor(() => expect(screen.queryByText('Fixture notice')).not.toBeInTheDocument());
+  expect(fetcher).toHaveBeenCalledTimes(2);
+});
+
 it('coalesces duplicate read actions and rejects a malformed success response without faking a count', async () => {
   const pending = deferred<Response>();
   const fetcher = vi.fn<typeof fetch>(async (url) => {
