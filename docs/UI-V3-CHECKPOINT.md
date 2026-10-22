@@ -16,7 +16,11 @@
 - Browser review with real JWT (original DB, read-only browsing, no business writes):
   VETERINARIAN — dashboard, horses list, horse profile + Pedigree & History, baseline form, medical cases,
   case detail, treatment plan, herd health, incidents list/detail, restrictions, notifications, account: PASS
-  after the fixes above. Other roles: pending manual sign-in (HT, Trainer, Groom, Rider, Owner, CM).
+  after the fixes above.
+  HEAD_TRAINER — dashboard, templates, program list/detail/create wizard, adjustment requests, training
+  calendar, performance, live monitoring, medical summary, restrictions: PASS after 39ec6d6 (sidebar ellipsis,
+  quiet unavailable metrics), e84afc9 (header overflow at desktop), 7a54d08 (Live Monitoring role nav) and the
+  wrapping wizard stepper. Pending sign-in: Trainer, Groom, Work Rider, Horse Owner, Club Manager.
 - Known data-level display limits (not styling): incident "Reported by" shows a user id (API returns ids only).
 
 Base: `55f85518b7422e3cc32f8953fa3877ad6fe37ef4` (FE main).
