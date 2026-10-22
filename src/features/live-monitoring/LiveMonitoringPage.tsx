@@ -18,7 +18,10 @@ type Alert = SessionResultView['alerts'][number] & { simulated?: boolean };
 export function LiveMonitoringPage() {
   const [params, setParams] = useSearchParams(), [selected, setSelected] = useState(params.get('sessionId') ?? '');
   const sessionId = params.get('sessionId');
-  return sessionId ? <LiveSession key={sessionId} rawId={sessionId} /> : <FlowShell title="Live Monitoring" section="Training" role="TRAINER"><form className={styles.row} onSubmit={(event) => { event.preventDefault(); if (Number.isSafeInteger(Number(selected)) && Number(selected) > 0) setParams({ sessionId: selected }); }}><TextField label="Session ID" required type="number" min="1" value={selected} onChange={(event) => setSelected(event.target.value)} /><Button type="submit">Open session</Button></form><EmptyState title="Choose a session to monitor" description="Open Live Monitoring from a session detail or enter a server session ID." /><ButtonLink to="/training/calendar">Open Training Calendar</ButtonLink></FlowShell>;
+  // Same role resolution as the session view, so Head Trainer / Vet / Club Manager keep their own navigation.
+  const { user } = useAuth();
+  const role = user?.roles.find((value) => ['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER'].includes(value)) ?? 'TRAINER';
+  return sessionId ? <LiveSession key={sessionId} rawId={sessionId} /> : <FlowShell title="Live Monitoring" section="Training" role={role}><form className={styles.row} onSubmit={(event) => { event.preventDefault(); if (Number.isSafeInteger(Number(selected)) && Number(selected) > 0) setParams({ sessionId: selected }); }}><TextField label="Session ID" required type="number" min="1" value={selected} onChange={(event) => setSelected(event.target.value)} /><Button type="submit">Open session</Button></form><EmptyState title="Choose a session to monitor" description="Open Live Monitoring from a session detail or enter a server session ID." /><ButtonLink to="/training/calendar">Open Training Calendar</ButtonLink></FlowShell>;
 }
 function LiveSession({ rawId }: { rawId: string }) {
   const request = useFlowRequest(), { user } = useAuth(), api = useMemo(() => createSessionApi(request), [request]);
