@@ -117,8 +117,9 @@ export function ChartContainer({
       </div>
 
       <div className={styles.xAxis}>
-        {xLabels.map((label) => (
-          <span key={label}>{label}</span>
+        {xLabels.map((label, index) => (
+          // Axis labels can repeat (two samples in the same minute); position keeps keys unique.
+          <span key={`${index}-${label}`}>{label}</span>
         ))}
       </div>
     </figure>
