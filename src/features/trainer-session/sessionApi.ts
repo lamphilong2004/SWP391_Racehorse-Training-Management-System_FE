@@ -32,9 +32,12 @@ export interface Suitability {
 export function draftPayload(input: SessionDraft): SessionDraft {
   return { horseProgramPhaseId: idOf(input.horseProgramPhaseId), scheduledStart: input.scheduledStart, scheduledEnd: input.scheduledEnd,
     intensity: input.intensity, workRiderUserId: input.workRiderUserId,
-    exercises: input.exercises.map((item, index) => ({ exerciseDefinitionId: idOf(item.exerciseDefinitionId), exerciseOrder: index + 1,
-      distanceM: item.distanceM, durationMin: item.durationMin, repetitions: item.repetitions, restIntervalMin: item.restIntervalMin,
-      intensity: item.intensity, surface: item.surface, acknowledgementNote: item.acknowledgementNote })) };
+    exercises: exercisePayload(input.exercises) };
+}
+export function exercisePayload(exercises: SessionExerciseInput[]): SessionExerciseInput[] {
+  return exercises.map((item, index) => ({ exerciseDefinitionId: idOf(item.exerciseDefinitionId), exerciseOrder: index + 1,
+    distanceM: item.distanceM, durationMin: item.durationMin, repetitions: item.repetitions, restIntervalMin: item.restIntervalMin,
+    intensity: item.intensity, surface: item.surface, acknowledgementNote: item.acknowledgementNote }));
 }
 export function createSessionPayload(input: CreateSessionInput): CreateSessionInput {
   return { ...draftPayload(input), workRiderUserId: idOf(input.workRiderUserId), riderWarningAcknowledged: input.riderWarningAcknowledged,
@@ -55,6 +58,11 @@ export function createSessionApi(request: FlowRequest) {
     suitability: (draft: SessionDraft) => request<Suitability>('/api/training-sessions/suitability-check', jsonBody('POST', draftPayload(draft))),
     riders: (draft: SessionDraft) => request<CandidateList>('/api/training-sessions/work-rider-recommendations', jsonBody('POST', draftPayload(draft))),
     create: (draft: CreateSessionInput) => request<TrainingSession>('/api/training-sessions', jsonBody('POST', createSessionPayload(draft))),
+    /** SCHEDULED only; omitted fields keep their stored value (server rule). */
+    update: (id: number, body: { scheduledStart?: string; scheduledEnd?: string; surface?: string; focus?: string; intensity?: Intensity; workRiderUserId?: number; riderWarningAcknowledged?: boolean }) =>
+      request<TrainingSession>(`/api/training-sessions/${idOf(id)}`, jsonBody('PATCH', body)),
+    replaceExercises: (id: number, exercises: SessionExerciseInput[]) =>
+      request<TrainingSession>(`/api/training-sessions/${idOf(id)}/exercises`, jsonBody('PUT', { exercises: exercisePayload(exercises) })),
   };
 }
 export function blocksSession(result: Suitability, exercises: SessionExerciseInput[]): string[] {
