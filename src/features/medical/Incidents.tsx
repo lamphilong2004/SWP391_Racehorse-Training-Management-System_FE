@@ -12,7 +12,7 @@ import { MEDICAL_ROUTES } from './paths';
 import { createIncidentService, type IncidentService } from './incidentService';
 import { readHorseIdentity } from './horseRead';
 import type { Incident } from './models';
-import { ApiError } from '../../shared/auth/authApi';
+import { ApiError, requestApi } from '../../shared/auth/authApi';
 import './medical.css';
 const allowed: RoleCode[] = ['VETERINARIAN', 'HEAD_TRAINER', 'CLUB_MANAGER', 'TRAINER', 'WORK_RIDER', 'GROOM'];
 const incidentPath = (id: number) => MEDICAL_ROUTES.incidents + '/' + id;
@@ -30,11 +30,24 @@ export function IncidentAccess({ detail = false }: { detail?: boolean }) {
   const role = actor?.roles.find((r) => allowed.includes(r));
   const service = useMemo(() => token && actor ? createIncidentService(token, actor, auth.handleApiError) : null, [token, actor, auth.handleApiError]);
   const horse = useMemo(() => token ? (id: number) => readHorseIdentity(token, id, auth.handleApiError) : undefined, [token, auth.handleApiError]);
+  // Only the Club Manager may read the staff directory (GET /api/admin/users/{id}); other roles see the reporter id.
+  const manager = actor?.roles.includes('CLUB_MANAGER') ?? false;
+  const reporter = useMemo<UserReader | undefined>(() => {
+    if (!token || !manager) return undefined;
+    const names = new Map<number, Promise<string>>();
+    return (id: number) => {
+      if (!names.has(id)) names.set(id, requestApi<{ fullName?: unknown }>(`/api/admin/users/${id}`, { method: 'GET' }, { token }).then((user) => {
+        if (typeof user?.fullName !== 'string' || !user.fullName.trim()) throw new Error('Name unavailable');
+        return user.fullName;
+      }));
+      return names.get(id)!;
+    };
+  }, [token, manager]);
   if (auth.status !== 'authenticated' || !actor || actor.accountStatus !== 'ACTIVE' || !role || !service) return <AlertBanner type="danger" title="Access denied" />;
   return <AppShell user={{ fullName: actor.fullName, role }} breadcrumb={[{ label: 'Incidents', to: MEDICAL_ROUTES.incidents }]}>
     <UiPreviewNotice />
     <div className="medical-stack" key={`${actor.id}:${auth.expiresAt}`}>
-      {detail ? <IncidentDetailPage service={service} role={role} horse={horse} /> : <IncidentListPage service={service} role={role} actorId={actor.id} horse={horse} />}
+      {detail ? <IncidentDetailPage service={service} role={role} actorId={actor.id} horse={horse} reporter={reporter} /> : <IncidentListPage service={service} role={role} actorId={actor.id} horse={horse} reporter={reporter} />}
     </div>
   </AppShell>;
 }
@@ -45,7 +58,8 @@ function useIncidentRead<T>(load: () => Promise<T>) {
 }
 function State({ error, reload }: { error?: string; reload: () => void }) { return error ? <ErrorState title="Incident unavailable" description={error} onRetry={reload} /> : <LoadingState label="Loading incidents…" />; }
 type HorseReader = (id: number) => ReturnType<typeof readHorseIdentity>;
-export function IncidentListPage({ service, role, actorId, horse }: { service: IncidentService; role: RoleCode; actorId: number; horse?: HorseReader }) {
+type UserReader = (id: number) => Promise<string>;
+export function IncidentListPage({ service, role, actorId, horse, reporter }: { service: IncidentService; role: RoleCode; actorId: number; horse?: HorseReader; reporter?: UserReader }) {
   const [page, setPage] = useState(0), [query, setQuery] = useState(''), [status, setStatus] = useState(''), [horseFilter, setHorseFilter] = useState('');
   const [report, setReport] = useState(false), [success, setSuccess] = useState('');
   const load = useCallback(() => service.list(page), [service, page]);
@@ -64,7 +78,7 @@ export function IncidentListPage({ service, role, actorId, horse }: { service: I
       { key: 'code', header: 'INCIDENT', render: (item) => <Link to={incidentPath(item.id)}>{item.incidentCode}</Link> },
       { key: 'horse', header: 'HORSE', render: (item) => <IncidentHorse horseId={item.horseId} read={horse} /> },
       { key: 'observation', header: 'OBSERVATION', render: (item) => <span>{labelType(item.incidentType)}<br /><small>{item.observedSeverity}</small></span> },
-      { key: 'reporter', header: 'REPORTED BY', render: (item) => item.reportedByUserId === actorId ? 'You' : `User ${item.reportedByUserId}` },
+      { key: 'reporter', header: 'REPORTED BY', render: (item) => <IncidentReporter userId={item.reportedByUserId} actorId={actorId} read={reporter} /> },
       { key: 'reported', header: 'REPORTED AT', nowrap: true, render: (item) => <time dateTime={item.reportedAt}>{displayDate(item.reportedAt)}</time> },
       { key: 'status', header: 'STATUS', render: (item) => <StatusBadge family="incident" status={item.status} /> },
       { key: 'reviewer', header: 'REVIEWED BY', render: () => 'Unavailable' },
@@ -78,17 +92,22 @@ function IncidentHorse({ horseId, read }: { horseId: number; read?: HorseReader 
   const state = useIncidentRead(load);
   return state.data ? <span>{state.data.name}<br /><small>{state.data.horseCode}</small></span> : <span>Horse {horseId}</span>;
 }
+function IncidentReporter({ userId, actorId, read }: { userId: number; actorId: number; read?: UserReader }) {
+  const load = useCallback(() => read ? read(userId) : Promise.reject(new Error('No user directory access')), [read, userId]);
+  const state = useIncidentRead(load);
+  return <>{userId === actorId ? 'You' : state.data ?? `User ${userId}`}</>;
+}
 function IncidentHorseStatus({ horseId, read }: { horseId: number; read?: HorseReader }) {
   const load = useCallback(() => read ? read(horseId) : Promise.reject(new Error('Identity unavailable')), [read, horseId]);
   const state = useIncidentRead(load);
   return <Card title="Horse status now">{state.data ? <div className="medical-stack"><KeyValue label="Health Status" value={state.data.healthStatus ? <StatusBadge family="health" status={state.data.healthStatus} /> : 'Not assessed'} /><KeyValue label="Training Availability" value={<StatusBadge family="availability" status={state.data.trainingAvailability} />} /><p className="text-caption">Reporting an incident does not change these statuses. Only the veterinary team updates them.</p></div> : <p>Horse status details are unavailable.</p>}</Card>;
 }
-export function IncidentDetailPage({ service, role, horse }: { service: IncidentService; role: RoleCode; horse?: HorseReader }) {
+export function IncidentDetailPage({ service, role, actorId, horse, reporter }: { service: IncidentService; role: RoleCode; actorId?: number; horse?: HorseReader; reporter?: UserReader }) {
   const { incidentId = '' } = useParams(); const id = Number(incidentId);
   if (!/^\d+$/.test(incidentId) || !Number.isSafeInteger(id) || id < 1) return <div className="medical-stack"><ButtonLink variant="tertiary" to={MEDICAL_ROUTES.incidents}>← Back to incidents</ButtonLink><EmptyState title="Incident not found" /></div>;
-  return <IncidentDetail key={id} id={id} service={service} role={role} horse={horse} />;
+  return <IncidentDetail key={id} id={id} service={service} role={role} actorId={actorId} horse={horse} reporter={reporter} />;
 }
-function IncidentDetail({ id, service, role, horse }: { id: number; service: IncidentService; role: RoleCode; horse?: HorseReader }) {
+function IncidentDetail({ id, service, role, actorId, horse, reporter }: { id: number; service: IncidentService; role: RoleCode; actorId?: number; horse?: HorseReader; reporter?: UserReader }) {
   const load = useCallback(() => service.get(id), [service, id]), state = useIncidentRead(load);
   const [busy, setBusy] = useState(false), [caseId, setCaseId] = useState(''), [error, setError] = useState('');
   const locked = useRef(false), mounted = useRef(true), navigate = useNavigate();
@@ -109,7 +128,7 @@ function IncidentDetail({ id, service, role, horse }: { id: number; service: Inc
       <PageHeader title={item.incidentCode} description={`${labelType(item.incidentType)} · ${displayDate(item.reportedAt)}`} actions={<StatusBadge family="incident" status={item.status} />} />
       <div className="medical-progress" aria-label="Handling status">{(['REPORTED', 'UNDER_REVIEW', 'RESOLVED'] as const).map((status) => <span key={status} className={status === item.status ? 'medical-progress-active' : ''}><StatusBadge family="incident" status={status} /></span>)}<p>Only the Veterinarian advances this status.</p></div>
       <div className="medical-grid medical-treatment-layout"><div className="medical-stack">
-        <Card title="Report"><div className="medical-incident-details"><KeyValue label="Horse" value={<IncidentHorse horseId={item.horseId} read={horse} />} /><KeyValue label="Observed at" value={<time dateTime={item.observedAt}>{displayDate(item.observedAt)}</time>} /><KeyValue label="Type" value={labelType(item.incidentType)} /><KeyValue label="Severity (reporter)" value={item.observedSeverity} /><KeyValue label="Description" value={item.description || 'No description supplied.'} /><KeyValue label="Reported by" value={`User ${item.reportedByUserId}`} /></div></Card>
+        <Card title="Report"><div className="medical-incident-details"><KeyValue label="Horse" value={<IncidentHorse horseId={item.horseId} read={horse} />} /><KeyValue label="Observed at" value={<time dateTime={item.observedAt}>{displayDate(item.observedAt)}</time>} /><KeyValue label="Type" value={labelType(item.incidentType)} /><KeyValue label="Severity (reporter)" value={item.observedSeverity} /><KeyValue label="Description" value={item.description || 'No description supplied.'} /><KeyValue label="Reported by" value={<IncidentReporter userId={item.reportedByUserId} actorId={actorId ?? 0} read={reporter} />} /></div></Card>
         <Card title="Source"><p>{item.preSessionCheckId ? `Pre-session check ${item.preSessionCheckId}` : item.trainingSessionId ? `Training session ${item.trainingSessionId}` : item.careTaskId ? `Care task ${item.careTaskId}` : 'Direct report'}</p></Card>
         <Card title="Timeline"><p><time dateTime={item.reportedAt}>{displayDate(item.reportedAt)}</time> · Reported</p><p>Current status: {item.status.replace('_', ' ')}</p></Card>
       </div><aside className="medical-stack"><IncidentHorseStatus horseId={item.horseId} read={horse} /><Card title="Handling">

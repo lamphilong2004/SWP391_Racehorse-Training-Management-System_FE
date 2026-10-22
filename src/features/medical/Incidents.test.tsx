@@ -120,3 +120,17 @@ it('preserves a failed incident report and masks sensitive server errors', async
   expect(screen.getByRole('dialog')).toBeInTheDocument(); expect(screen.getByLabelText('Description *')).toHaveValue('Limp after walking');
   expect(screen.queryByText('private diagnosis')).not.toBeInTheDocument(); expect(screen.queryByText(/Incident INC-001 submitted/)).not.toBeInTheDocument();
 });
+
+it('shows the reporter name when a directory reader is available and keeps the id otherwise', async () => {
+  const value = service(), reporter = vi.fn().mockResolvedValue('Demo GROOM');
+  const { unmount } = render(<MemoryRouter><IncidentListPage service={value} role="CLUB_MANAGER" actorId={1} reporter={reporter} /></MemoryRouter>);
+  expect(await screen.findByText('Demo GROOM')).toBeInTheDocument(); expect(reporter).toHaveBeenCalledWith(6);
+  unmount();
+  render(<MemoryRouter><IncidentListPage service={service()} role="VETERINARIAN" actorId={7} /></MemoryRouter>);
+  expect(await screen.findByText('User 6')).toBeInTheDocument();
+});
+it('names the signed-in reporter "You" on the detail page', async () => {
+  const value = service();
+  render(<RouterProvider router={createMemoryRouter([{ path: '/incidents/:incidentId', element: <IncidentDetailPage service={value} role="GROOM" actorId={6} /> }], { initialEntries: ['/incidents/1'] })} />);
+  await screen.findByText('Limp after exercise'); expect(screen.getByText('You')).toBeInTheDocument();
+});
