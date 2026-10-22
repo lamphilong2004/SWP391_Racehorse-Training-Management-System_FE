@@ -20,7 +20,7 @@ export function ProgramListPage() {
   const horses = [...new Map((data?.items ?? []).map((item) => [item.horse.id, item.horse])).values()];
   function changePage(next: number) { setPage(next); setTrainer(''); setHorse(''); }
   return <FlowShell title="Horse Training Programs" description="Horse-specific programs — each created from a reusable Program Template and customized for one horse." section="Training" role="HEAD_TRAINER" actions={<ButtonLink variant="primary" to={ROUTES.trainingProgramCreate}>+ New Horse Training Program</ButtonLink>}>
-    <div className={styles.metrics}>{['Active programs', 'Need attention', 'Upcoming completion', 'Available Trainers'].map((label) => <MetricCard key={label} label={label} value="Not provided" caption="Summary not supplied by the approved list API" />)}</div>
+    <div className={styles.metrics}>{['Active programs', 'Need attention', 'Upcoming completion', 'Available Trainers'].map((label) => <MetricCard key={label} label={label} value="Not provided" unavailable caption="Summary not supplied by the approved list API" />)}</div>
     <Card><div className={styles.stack}><div className={styles.row}>
       <TextField label="Search horse or program" placeholder="Search current page…" value={search} onChange={(event) => setSearch(event.target.value)} />
       <SelectField label="Status" value={status} options={[{ value: '', label: 'All' }, ...['ACTIVE', 'PAUSED', 'COMPLETED'].map((value) => ({ value, label: value }))]} onChange={(event) => { setStatus(event.target.value as ProgramStatus | ''); changePage(0); }} />

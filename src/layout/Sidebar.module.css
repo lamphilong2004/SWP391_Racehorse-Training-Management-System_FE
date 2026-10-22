@@ -9,6 +9,7 @@
   background: var(--color-brand-navy, var(--color-bg-surface));
   border-right: 1px solid var(--color-border-default);
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .brand {
@@ -69,6 +70,14 @@
   color: var(--color-sidebar-text, var(--color-text-primary));
   text-decoration: none;
   white-space: nowrap;
+  min-width: 0;
+}
+
+/* Long labels (e.g. 'Horse Training Programs') ellipsize instead of widening the sidebar. */
+.item > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .item:hover {
