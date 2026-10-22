@@ -8,6 +8,7 @@ import { TreatmentPlanEditor } from './TreatmentPlanEditor';
 import { InjuryMap } from './InjuryMap';
 import type { ClinicalSeverity, MedicalCase, MedicalService, RecoveryStatus, TrainingAvailability } from './models';
 import { useMedicalRuntime } from './runtimeContext';
+import { dateTime } from '../evaluation/models';
 import { medicalErrorMessage } from './errors';
 import './medical.css';
 
@@ -23,6 +24,13 @@ async function collectCases(service: MedicalService) {
   if (rows.length !== first.totalElements || new Set(rows.map((r) => r.id)).size !== rows.length) throw new Error('Medical case overview is incomplete. Reload to retry.');
   return rows;
 }
+/** Registered name and code for a horse id; falls back to the id when identity is unavailable. */
+function HorseName({ horseId }: { horseId: number }) {
+  const { service } = useMedicalRuntime();
+  const { data } = useResource(useCallback(() => service.getHorse(horseId), [service, horseId]));
+  return <>{data ? `${data.name} · ${data.horseCode}` : `Horse ${horseId}`}</>;
+}
+
 function HorseHeading({ horseId, title, description }: { horseId: number; title: string; description: string }) {
   const { service } = useMedicalRuntime();
   const { data, error } = useResource(useCallback(() => service.getHorse(horseId), [service, horseId]));
@@ -38,7 +46,7 @@ function TreatmentCaseSummary({ item }: { item: MedicalCase }) {
   return <Card className="medical-groom-panel" title="Case summary"><div className="medical-stack">
     <KeyValue label="Health status" value={horse.data?.healthStatus ? <StatusBadge family="health" status={horse.data.healthStatus} /> : 'Unavailable'} />
     {availability.data ? <AvailabilityDetails availability={availability.data} /> : <ResourceState error={availability.error} retry={availability.reload} />}
-    <KeyValue label="Last re-examination" value={review ? `${review.examinedAt} · ${review.recoveryStatus}` : 'None'} />
+    <KeyValue label="Last re-examination" value={review ? `${dateTime(review.examinedAt)} · ${review.recoveryStatus}` : 'None'} />
     <KeyValue label="Next review" value={item.treatmentPlan?.reexaminationDate ?? 'Not scheduled'} />
     <p className="text-caption">Training Availability is changed separately. Saving this plan does not change it.</p>
   </div></Card>;
@@ -94,7 +102,7 @@ export function CaseListPage() {
       {!data ? <ResourceState error={error} retry={reload} /> :
         <div className="medical-stack"><DataTable<MedicalCase> caption="Medical cases" rows={rows} rowKey={(item) => item.id} empty={<EmptyState title="No medical cases" />} columns={[
           { key: 'id', header: 'Case', render: (item) => <Link to={casePath(item.id)}>{item.id}</Link> },
-          { key: 'horse', header: 'Horse', render: (item) => item.horseId },
+          { key: 'horse', header: 'Horse', render: (item) => <HorseName horseId={item.horseId} /> },
           { key: 'reason', header: 'Reason', render: (item) => item.reason ?? '—' },
           { key: 'status', header: 'Status', render: (item) => item.status },
         ]} /><div className="medical-actions"><Button variant="secondary" disabled={page === 0} onClick={() => setPage(page - 1)}>Previous</Button><span>Page {page + 1} · {data.totalElements} total</span><Button variant="secondary" disabled={(page + 1) * data.size >= data.totalElements} onClick={() => setPage(page + 1)}>Next</Button></div></div>}
@@ -173,10 +181,10 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
   const [confirmClose, setConfirmClose] = useState(false);
   const closed = item.status === 'CLOSED';
   return <><Link to={ROUTES.medical}>Back to cases</Link>
-    <PageHeader title={'Medical Case · ' + item.id} description={'Horse ' + item.horseId} />
+    <HorseHeading title={'Medical Case ' + item.id} horseId={item.horseId} description={'Opened ' + dateTime(item.openedAt)} />
     <div className="medical-grid"><Card title="Case overview"><div className="medical-stack">
       <KeyValue label="Status" value={item.status} /><KeyValue label="Reason" value={item.reason ?? '—'} />
-      <KeyValue label="Opened" value={item.openedAt} /><KeyValue label="Linked incidents" value={item.incidentIds.join(', ') || 'None'} />
+      <KeyValue label="Opened" value={dateTime(item.openedAt)} /><KeyValue label="Linked incidents" value={item.incidentIds.join(', ') || 'None'} />
     </div></Card><AvailabilityCard horseId={item.horseId} /></div>
     <Tabs label="Medical case sections" idPrefix="case" value={panel} onChange={setPanel} items={[
       { value: 'record', label: 'Record' }, { value: 'examination', label: 'Examination' },
@@ -197,7 +205,7 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
     </div>
     <div role="tabpanel" id="case-panel-examination" aria-labelledby="case-tab-examination" hidden={panel !== 'examination'} className="medical-stack">
       <Card title="Examinations"><History count={item.examinations.length} empty="No examinations">{item.examinations.map((exam) =>
-        <li key={exam.id}><strong>{exam.examinedAt}</strong><p>{exam.symptoms}</p><p>{exam.diagnosis || 'No diagnosis'} · {exam.severity || 'Severity not set'}</p></li>)}</History>
+        <li key={exam.id}><strong>{dateTime(exam.examinedAt)}</strong><p>{exam.symptoms}</p><p>{exam.diagnosis || 'No diagnosis'} · {exam.severity || 'Severity not set'}</p></li>)}</History>
         {!closed && <MedicalForm submitLabel="Save examination" fields={[
           { name: 'symptoms', label: 'Symptoms and findings', type: 'textarea', required: true },
           { name: 'diagnosis', label: 'Diagnosis', type: 'textarea', maxLength: 1000 },
@@ -239,7 +247,7 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
     </div>
     <div role="tabpanel" id="case-panel-recovery" aria-labelledby="case-tab-recovery" hidden={panel !== 'recovery'} className="medical-stack">
       <Card title="Re-examinations"><History count={item.reexaminations.length} empty="No re-examinations">{item.reexaminations.map((exam) =>
-        <li key={exam.id}>{exam.recoveryStatus}<p>{exam.findings}</p><small>{exam.examinedAt}</small></li>)}</History>
+        <li key={exam.id}>{exam.recoveryStatus}<p>{exam.findings}</p><small>{dateTime(exam.examinedAt)}</small></li>)}</History>
         {!closed && <MedicalForm submitLabel="Save re-examination" fields={[
           { name: 'recoveryStatus', label: 'Recovery status', options: ['NOT_RECOVERED', 'IMPROVING', 'RECOVERED'], required: true },
           { name: 'findings', label: 'Findings', type: 'textarea', required: true },

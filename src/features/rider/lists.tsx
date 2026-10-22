@@ -8,6 +8,7 @@ import { useRiderApi } from './data';
 import type { RiderSession } from './types';
 import styles from './rider.module.css';
 import { AssignmentsTable, HistoryTable } from './tables';
+import { greeting } from '../../shared/greeting';
 
 export function RiderDashboardPage({ api: supplied }: { api?: RiderApi }) {
   const api = useRiderApi(supplied);
@@ -53,7 +54,7 @@ function Dashboard({ api }: { api: RiderApi }) {
   const next = sorted.find((ride) => ACTIVE.includes(ride.status));
   const later = today.filter((ride) => ride.id !== next?.id && ride.status === 'SCHEDULED' && Date.parse(ride.scheduledStart) > now);
   return <div className={styles.stack}>
-    <div className={styles.header}><div><h1 className={styles.heading}>Good morning, {user?.fullName}</h1><p className={styles.muted}>{items ? `${today.length} ${today.length === 1 ? 'ride' : 'rides'} assigned to you today · ${DAY.format(new Date(now))}` : 'Only rides returned for your signed-in account are shown.'}</p></div>
+    <div className={styles.header}><div><h1 className={styles.heading}>{greeting()}, {user?.fullName}</h1><p className={styles.muted}>{items ? `${today.length} ${today.length === 1 ? 'ride' : 'rides'} assigned to you today · ${DAY.format(new Date(now))}` : 'Only rides returned for your signed-in account are shown.'}</p></div>
       <div className={styles.actions}><Link className={styles.secondaryLink} to="/rider/history">Riding History</Link><Link className={styles.secondaryLink} to="/rider/assignments">View all assignments</Link></div></div>
     <div className={styles.metrics}>
       <MetricCard label="Today's rides" value={items ? String(today.length) : '—'} />
@@ -71,7 +72,8 @@ function Dashboard({ api }: { api: RiderApi }) {
               <div className={styles.facts}><KeyValue label="Surface · duration" value={`${next.surface ?? 'Surface not supplied'} · ${duration(next)}`} /><KeyValue label="Trainer" value={next.trainer?.fullName ?? 'Not supplied'} /></div></div></div>
           {!next.blocked && preCheck(next) === 'ALL_NORMAL'
             ? <AlertBanner type="success" title="Ready">Stable pre-session check cleared{next.preSessionCheck ? ` at ${clock(next.preSessionCheck.performedAt)}` : ''}.</AlertBanner>
-            : <AlertBanner type="warning" title="Start gate pending">{next.blockedMessage || (preCheck(next) === 'ABNORMAL' ? 'The pre-session check found something abnormal. The session must not start.' : 'Waiting for the stable pre-session check.')}</AlertBanner>}
+            : <AlertBanner type="warning" title="Start gate pending">{next.blockedMessage || (preCheck(next) === 'ABNORMAL' ? 'The pre-session check found something abnormal. The session must not start.'
+              : preCheck(next) === 'ALL_NORMAL' && Date.parse(next.scheduledStart) > Date.now() ? `Pre-session check cleared. The session can start at ${clock(next.scheduledStart)}.` : 'Waiting for the stable pre-session check.')}</AlertBanner>}
           <div className={styles.endActions}><Link className={styles.primaryLink} to={`/rider/assignments/${next.id}`}>View Assignment</Link></div></div></Card>
           : <Card><EmptyState title="No upcoming rides" description="You have no scheduled rides." /></Card>}
         <Card><div className={styles.smallStack}><p className={styles.eyebrowMuted}>Later today</p>

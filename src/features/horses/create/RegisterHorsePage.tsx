@@ -8,10 +8,10 @@ import { useBreadcrumb } from '../shared/HorseManagementLayout';
 import { BREED_OPTIONS, SEX_OPTIONS } from '../shared/options';
 import styles from '../shared/horses.module.css';
 
-type Field = 'name' | 'horseCode' | 'foaledDate' | 'sex' | 'breed' | 'registrationNo';
+type Field = 'name' | 'horseCode' | 'foaledDate' | 'sex' | 'breed' | 'countryOfOrigin' | 'registrationNo';
 type Values = Record<Field, string>;
 
-const EMPTY: Values = { name: '', horseCode: '', foaledDate: '', sex: '', breed: '', registrationNo: '' };
+const EMPTY: Values = { name: '', horseCode: '', foaledDate: '', sex: '', breed: '', countryOfOrigin: '', registrationNo: '' };
 const REQUIRED: Field[] = ['name', 'horseCode'];
 const REQUIRED_MESSAGE: Record<string, string> = {
   name: 'Enter the horse name.', horseCode: 'Enter the horse ID.', foaledDate: 'Enter the date of birth.',
@@ -38,7 +38,6 @@ function RegisterHorsePageContent() {
   const navigate = useNavigate();
   const editId = Number(useParams().id);
   const editing = Number.isSafeInteger(editId) && editId > 0;
-  const country = useRef<string | null>(null);
   const [loading, setLoading] = useState(editing);
   const [loadAttempt, setLoadAttempt] = useState(0);
   useBreadcrumb([{ label: 'Horses', to: '/horses' }, { label: editing ? 'Edit identity' : 'Register Horse' }]);
@@ -58,7 +57,7 @@ function RegisterHorsePageContent() {
   useEffect(() => {
     if (!editing) return;
     let active = true;
-    api.getHorse(editId).then((horse) => { if (active) { country.current = horse.countryOfOrigin; const loaded = { name: horse.name, horseCode: horse.horseCode, foaledDate: horse.foaledDate ?? '', sex: horse.sex ?? '', breed: horse.breed ?? '', registrationNo: horse.registrationNo ?? '' }; setValues(loaded); setBaseline(loaded); setCustomSex(Boolean(horse.sex && !SEX_OPTIONS.some((option) => option.value === horse.sex))); setCustomBreed(Boolean(horse.breed && !BREED_OPTIONS.some((option) => option.value === horse.breed))); setLoading(false); } }, (error: unknown) => { if (active) { setFormError(error instanceof Error ? error.message : 'Horse unavailable.'); } });
+    api.getHorse(editId).then((horse) => { if (active) { const loaded = { name: horse.name, horseCode: horse.horseCode, foaledDate: horse.foaledDate ?? '', sex: horse.sex ?? '', breed: horse.breed ?? '', countryOfOrigin: horse.countryOfOrigin ?? '', registrationNo: horse.registrationNo ?? '' }; setValues(loaded); setBaseline(loaded); setCustomSex(Boolean(horse.sex && !SEX_OPTIONS.some((option) => option.value === horse.sex))); setCustomBreed(Boolean(horse.breed && !BREED_OPTIONS.some((option) => option.value === horse.breed))); setLoading(false); } }, (error: unknown) => { if (active) { setFormError(error instanceof Error ? error.message : 'Horse unavailable.'); } });
     return () => { active = false; };
   }, [api, editId, editing, loadAttempt]);
 
@@ -103,7 +102,7 @@ function RegisterHorsePageContent() {
     try {
       const input = {
         horseCode: values.horseCode.trim(), name: values.name.trim(), breed: values.breed.trim() || null, sex: values.sex.trim() || null,
-        foaledDate: values.foaledDate || null, countryOfOrigin: country.current, registrationNo: values.registrationNo.trim() || null,
+        foaledDate: values.foaledDate || null, countryOfOrigin: values.countryOfOrigin.trim() || null, registrationNo: values.registrationNo.trim() || null,
       };
       const horse = editing ? await api.updateHorse(editId, input) : await api.createHorse(input);
       let photoFailed = false;
@@ -175,6 +174,8 @@ function RegisterHorsePageContent() {
               </div>
               {customSex && <TextField label="Sex value" value={values.sex} maxLength={20} onChange={(event) => set('sex')(event.target.value)} />}
               {customBreed && <TextField label="Breed value" value={values.breed} maxLength={100} onChange={(event) => set('breed')(event.target.value)} />}
+              <TextField label="Country of origin" placeholder="Country where the horse was foaled"
+                value={values.countryOfOrigin} onChange={(e) => set('countryOfOrigin')(e.target.value)} maxLength={100} error={errors.countryOfOrigin} />
               <TextField label="Microchip / registration number" placeholder="Enter microchip or registration number"
                 value={values.registrationNo} onChange={(e) => set('registrationNo')(e.target.value)} maxLength={50}
                 error={errors.registrationNo} helperText="Must be unique — checked against the register when you save." />
@@ -228,5 +229,5 @@ function RegisterHorsePageContent() {
 }
 
 function labelOf(field: Field): string {
-  return { name: 'Horse name', horseCode: 'Horse ID', foaledDate: 'Date of birth', sex: 'Sex', breed: 'Breed', registrationNo: 'Number' }[field];
+  return { name: 'Horse name', horseCode: 'Horse ID', foaledDate: 'Date of birth', sex: 'Sex', breed: 'Breed', countryOfOrigin: 'Country of origin', registrationNo: 'Number' }[field];
 }

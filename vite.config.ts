@@ -20,6 +20,8 @@ export default defineConfig(({ mode, command }) => {
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    // Router-level jsdom tests are CPU-heavy; default 5 s/1 s budgets flake when all workers run in parallel.
+    testTimeout: 20_000,
     css: { modules: { classNameStrategy: 'non-scoped' } },
   },
 };

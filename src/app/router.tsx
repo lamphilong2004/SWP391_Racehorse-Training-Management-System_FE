@@ -4,7 +4,7 @@ import { LoginPage } from '../pages/LoginPage';
 import { LandingPage } from '../pages/LandingPage';
 import { ManagementDashboardEntry, ManagementAuditEntry } from './ManagementEntry';
 import { AccountPage } from '../pages/AccountPage';
-import { ProgramCreationPage, ProgramListPage, ProgramDetailPage, BaselinePage, CreateSessionPage, SessionDetailPage, RestrictionsPage, LiveMonitoringPage, SessionEvaluationPage, PerformancePage, GroomTodayPage, PrecheckPage,
+import { ProgramCreationPage, ProgramListPage, ProgramDetailPage, AdjustmentRequestsPage, BaselinePage, CreateSessionPage, SessionDetailPage, RestrictionsPage, LiveMonitoringPage, SessionEvaluationPage, PerformancePage, GroomTodayPage, PrecheckPage,
   RiderDashboardPage, RiderAssignmentsPage, RiderAssignmentPage, RiderSessionPage, RiderFeedbackPage, RiderHistoryPage,
   CaseListPage, CreateCasePage, CaseDetailPage, TreatmentPlanPage, HerdHealthPage, UserListPage, UserEditorPage, RolesPage, NotificationsPage } from './DeferredPages';
 import { HorseManagementLayout } from '../features/horses/shared/HorseManagementLayout';
@@ -96,6 +96,7 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
     { path: '/training/exercise-library', element: <RequireAuth allowedRoles={['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER', 'WORK_RIDER']}><ExerciseLibraryPage /></RequireAuth> },
     { path: '/training/exercise-library/new', element: <RequireAuth allowedRoles={['TRAINER']}><ExerciseLibraryPage /></RequireAuth> },
     { path: ROUTES.exerciseLibrary, element: <RequireAuth allowedRoles={['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER', 'WORK_RIDER']}><ExerciseLibraryPage /></RequireAuth> },
+    { path: ROUTES.adjustmentRequests, element: <RequireAuth allowedRoles={['HEAD_TRAINER', 'TRAINER']}><AdjustmentRequestsPage /></RequireAuth> },
     { path: '/training/programs/:id', element: <RequireAuth allowedRoles={['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER', 'GROOM']}><ProgramDetailPage /></RequireAuth> },
     { path: '/training/session/:id', element: <RequireAuth allowedRoles={['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER']}><SessionDetailPage /></RequireAuth> },
     { path: '/training/schedule/session/new', element: <RequireAuth allowedRoles={['TRAINER']}><CreateSessionPage /></RequireAuth> },

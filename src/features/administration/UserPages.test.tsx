@@ -15,7 +15,7 @@ function mount(path = '/admin/users/new') {
   render(<RouterProvider router={router} />);
   return router;
 }
-beforeEach(() => request.mockReset());
+beforeEach(() => { request.mockReset(); });
 it('submits once, waits for server success and leaves without a false unsaved dialog', async () => {
   let complete!: (value: unknown) => void;
   request.mockImplementation(() => new Promise((resolve) => { complete = resolve; }));

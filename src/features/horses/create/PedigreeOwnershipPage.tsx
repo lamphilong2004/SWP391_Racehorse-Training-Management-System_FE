@@ -130,8 +130,8 @@ function PedigreeOwnershipPageContent() {
     const missing: Partial<Record<Field, string>> = {};
     if (!sire.trim()) missing.sire = 'Enter the sire.';
     if (!dam.trim()) missing.dam = 'Enter the dam.';
-    if (!ownerId) missing.owner = 'Select the owner.';
-    const alreadyOwned = horse.currentOwnerships.some((item) => item.owner.id === Number(ownerId));
+    // Ownership is an activation requirement, not a pedigree prerequisite: an unknown owner may be declared later.
+    const alreadyOwned = !ownerId || horse.currentOwnerships.some((item) => item.owner.id === Number(ownerId));
     if (!alreadyOwned && (!Number.isFinite(Number(share)) || Number(share) <= 0 || Number(share) > 100 || !effectiveFrom)) missing.owner = 'Enter an ownership share (greater than 0, at most 100) and effective date.';
     setErrors(missing);
     setFormError(undefined);
@@ -139,9 +139,16 @@ function PedigreeOwnershipPageContent() {
 
     pending.current = true; setSaving(true);
     try {
-      const parent = (name: string, existing: HorseDetail['pedigree']['sire']) => existing.horseId && name.trim() === (existing.name || existing.horseCode || '') ? { horseId: existing.horseId, name: null } : { horseId: null, name: name.trim() };
-      await api.setPedigree(horse.id, { sire: parent(sire, horse.pedigree.sire), dam: parent(dam, horse.pedigree.dam) });
-      if (!horse.currentOwnerships.some((o) => o.owner.id === Number(ownerId))) {
+      // A parent that exactly matches one registered horse (name or code) is linked by record; otherwise kept as a name.
+      const parent = async (name: string, existing: HorseDetail['pedigree']['sire']) => {
+        const value = name.trim();
+        if (existing.horseId && value === (existing.name || existing.horseCode || '')) return { horseId: existing.horseId, name: null };
+        const found = (await api.listHorses({ q: value, page: 0, size: 20 })).items
+          .filter((item) => item.id !== horse.id && [item.name, item.horseCode].some((text) => text?.toLowerCase() === value.toLowerCase()));
+        return found.length === 1 ? { horseId: found[0].id, name: null } : { horseId: null, name: value };
+      };
+      await api.setPedigree(horse.id, { sire: await parent(sire, horse.pedigree.sire), dam: await parent(dam, horse.pedigree.dam) });
+      if (ownerId && !horse.currentOwnerships.some((o) => o.owner.id === Number(ownerId))) {
         await api.addOwnership(horse.id, { ownerUserId: Number(ownerId), sharePercentage: Number(share), effectiveFrom, isManagingOwner: managing });
       }
       // Server confirmed both writes: release the unsaved-changes guard before leaving.
@@ -199,9 +206,9 @@ function PedigreeOwnershipPageContent() {
             <div className={styles.cardBody}>
               <h2 className={styles.cardTitle}>Ownership</h2>
               <p className={styles.cardHelp}>The owner sees this horse read-only in the Owner portal — owners cannot edit administrative data.</p>
-              <SelectField label="Owner *" placeholder="Select a Horse Owner account" value={ownerId} error={errors.owner}
+              <SelectField label="Owner" placeholder="Owner not declared yet" value={ownerId} error={errors.owner}
                 disabled={!owners || saving || refreshing}
-                helperText={owners ? (owners.length ? 'Ownership is saved when you continue.' : 'No active Horse Owner accounts were returned. Contact the Club Manager.') : 'Owner accounts unavailable. Retry setup data.'}
+                helperText={owners ? (owners.length ? 'Optional now; an owner is required before activation.' : 'No active Horse Owner accounts were returned. Contact the Club Manager.') : 'Owner accounts unavailable. Retry setup data.'}
                 options={(owners ?? []).map((o) => ({ value: String(o.id), label: `${o.fullName} · Horse Owner account` }))}
                 onChange={(e) => { setOwnerId(e.target.value); setErrors((x) => ({ ...x, owner: undefined })); }} />
               {!horse.currentOwnerships.some((item) => item.owner.id === Number(ownerId)) && <>

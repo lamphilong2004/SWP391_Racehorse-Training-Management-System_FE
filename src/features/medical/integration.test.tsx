@@ -74,6 +74,7 @@ it('restores a Vet and clears clinical data after sign-out', async () => {
   const router = mount('/medical');
   expect(await screen.findByText('Lameness')).toBeInTheDocument();
   await router.navigate('/dashboard');
+  fireEvent.click(await screen.findByRole('button', { name: 'Account menu' }));
   fireEvent.click(await screen.findByRole('button', { name: 'Sign out' }));
   expect(await screen.findByRole('heading', { name: 'Sign in to Racehorse Ops' })).toBeInTheDocument();
   expect(screen.queryByText('Lameness')).not.toBeInTheDocument();

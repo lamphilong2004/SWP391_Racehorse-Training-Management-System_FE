@@ -47,6 +47,7 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
         items: [
           { label: 'Horse Training Programs', icon: 'clipboard-list', to: ROUTES.trainingPrograms },
           { label: 'Program Templates', icon: 'file-text', to: ROUTES.programTemplates },
+          { label: 'Adjustment Requests', icon: 'history', to: ROUTES.adjustmentRequests },
           { label: 'Training Schedule', icon: 'calendar', to: ROUTES.trainingSchedule },
           { label: 'Performance', icon: 'trending-up', to: ROUTES.performance },
           { label: 'Realtime Monitoring', icon: 'activity', to: ROUTES.realtimeMonitoring },
@@ -70,6 +71,7 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
         items: [
           { label: 'Dashboard', icon: 'dashboard', to: ROUTES.dashboard },
           { label: 'Assigned Programs', icon: 'folder', to: ROUTES.assignedPrograms },
+          { label: 'Adjustment Requests', icon: 'history', to: ROUTES.adjustmentRequests },
           { label: 'Training Calendar', icon: 'calendar', to: ROUTES.trainingCalendar },
           { label: 'Exercise Library', icon: 'book-open', to: ROUTES.exerciseLibrary },
           { label: 'Live Monitoring', icon: 'activity', to: ROUTES.realtimeMonitoring },

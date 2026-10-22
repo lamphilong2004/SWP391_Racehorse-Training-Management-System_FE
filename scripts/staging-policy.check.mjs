@@ -77,7 +77,7 @@ test('historical integration metadata never claims to be a current main snapshot
 });
 const expectedProductionConfig = {
     $schema: 'https://openapi.vercel.sh/vercel.json', framework: 'vite', installCommand: 'npm ci', buildCommand: 'npm run build', outputDirectory: 'dist',
-    git: { deploymentEnabled: { main: true, '**': false } },
+    git: { deploymentEnabled: { main: false, '**': false } },
     rewrites: [{ source: '/((?!api(?:/|$)|assets(?:/|$)|.*\\.[^/]+$).*)', destination: '/index.html' }],
     headers: [
       { source: '/(.*)', headers: [

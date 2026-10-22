@@ -76,6 +76,12 @@ export const STATUS_REGISTRY = {
     ACTIVE: { tone: 'success', icon: 'check-circle', label: 'ACTIVE' },
     INACTIVE: { tone: 'neutral', icon: 'circle', label: 'INACTIVE' },
   },
+  /** Program Adjustment Request, DEC-005: PENDING → APPROVED / REJECTED (Head Trainer decides). */
+  adjustment: {
+    PENDING: { tone: 'warning', icon: 'clock', label: 'PENDING' },
+    APPROVED: { tone: 'success', icon: 'check-circle', label: 'APPROVED' },
+    REJECTED: { tone: 'danger', icon: 'octagon-x', label: 'REJECTED' },
+  },
 } as const satisfies Record<string, Record<string, BadgeSpec>>;
 
 export type StatusFamily = keyof typeof STATUS_REGISTRY;

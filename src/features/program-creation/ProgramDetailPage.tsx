@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useParams } from 'react-router';
+import { Link, useParams } from 'react-router';
 import { ButtonLink, AlertBanner, Card, DataTable, EmptyState, ErrorState, KeyValue, LoadingState, StatusBadge, Tabs } from '../../design-system';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { dateTime, metric } from '../evaluation/models';
@@ -7,6 +7,7 @@ import { FlowShell } from '../main-flows/FlowShell';
 import { idOf, useFlowRequest } from '../main-flows/api';
 import { useResource } from '../main-flows/useResource';
 import { createProgramDetailApi, type ProgramHistoryEntry, type ProgramProgress } from './programDetailApi';
+import { HeadTrainerProgramActions, TrainerAdjustmentAction } from './ProgramActions';
 import styles from '../main-flows/flow.module.css';
 
 /** SCR-TRAIN-002/022: read-only Overview, Progress and History. Row scope remains enforced by Backend. */
@@ -24,6 +25,8 @@ function ProgramDetailContent({ rawId }: { rawId?: string }) {
   return <FlowShell title={data ? `${data.horse.name} · ${data.horse.horseCode}` : 'Program Detail'} description={data?.name} section="Horse Training Programs" role={role} actions={<div className={styles.row}>
     {user?.roles.includes('HEAD_TRAINER') && <ButtonLink to="/training/programs">Back to Program List</ButtonLink>}
     {user?.roles.includes('TRAINER') && <ButtonLink to="/training/programs/assigned">Back to Assigned Programs</ButtonLink>}
+    {data && user?.roles.includes('HEAD_TRAINER') && <HeadTrainerProgramActions program={data} onChanged={program.reload} />}
+    {data && user?.roles.includes('TRAINER') && <TrainerAdjustmentAction program={data} onSubmitted={program.reload} />}
     <ButtonLink to="/dashboard">Back to workspace</ButtonLink>
   </div>}>
     {program.pending && <LoadingState label="Loading program…" />}
@@ -34,6 +37,7 @@ function ProgramDetailContent({ rawId }: { rawId?: string }) {
       <KeyValue label="Current phase" value={data.currentPhaseName ?? 'Not provided'} /><KeyValue label="Training Availability" value={data.trainingAvailability ? <StatusBadge family="availability" status={data.trainingAvailability} /> : 'Not provided'} />
       <KeyValue label="Source template" value={data.sourceTemplateName ?? data.sourceTemplateCode ?? `Template ${data.sourceTemplateId}`} />
       <KeyValue label="Template version" value={`v${data.sourceTemplateVersion}`} /><KeyValue label="Activated" value={dateTime(data.activatedAt)} />
+      {(user?.roles.includes('HEAD_TRAINER') || user?.roles.includes('TRAINER')) && <KeyValue label="Pending adjustment requests" value={<Link to="/training/adjustment-requests">{data.pendingAdjustmentRequests ?? 0}</Link>} />}
     </div></Card>
       <Tabs label="Program detail" idPrefix="program-detail" value={tab} onChange={setTab} items={[{ value: 'overview', label: 'Overview' }, { value: 'progress', label: 'Progress' }, { value: 'history', label: 'History' }]} />
       <section role="tabpanel" id={`program-detail-panel-${tab}`} aria-labelledby={`program-detail-tab-${tab}`}>
@@ -42,7 +46,7 @@ function ProgramDetailContent({ rawId }: { rawId?: string }) {
             <KeyValue label="Objective" value={phase.objective ?? 'Not provided'} /><KeyValue label="Phase period" value={`${phase.startDate} → ${phase.endDate}`} />
             <KeyValue label="Workload" value={phase.workload ?? 'Not provided'} /><KeyValue label="Intensity range" value={`${phase.intensityMin ?? 'Not provided'} → ${phase.intensityMax ?? 'Not provided'}`} />
           </div></Card>)}{data.phases.length === 0 && <EmptyState title="No training phases returned" />}</div></Card>
-        </div><div className={styles.stack}><Card title="Head Trainer Notes"><p>{data.notes ?? 'Not provided'}</p></Card><AlertBanner type="info" title="Read-only Program">Program strategy and the pinned source template stay unchanged. Progress and History display only values returned by the server.</AlertBanner></div></div>
+        </div><div className={styles.stack}><Card title="Head Trainer Notes"><p>{data.notes ?? 'Not provided'}</p></Card><AlertBanner type="info" title="Program strategy">The pinned source template never changes. Trainers request strategic changes; the Head Trainer decides and manages program status and Trainer assignment.</AlertBanner></div></div>
           : canReadHistory ? <ProgramReadTab key={tab} tab={tab} programId={data.id} /> : <EmptyState title={`${tab === 'progress' ? 'Progress' : 'History'} unavailable for this role`} description="The approved API permits Head Trainer, Trainer and Club Manager only." />}
       </section>
     </>}
