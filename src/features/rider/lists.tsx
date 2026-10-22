@@ -72,7 +72,8 @@ function Dashboard({ api }: { api: RiderApi }) {
               <div className={styles.facts}><KeyValue label="Surface · duration" value={`${next.surface ?? 'Surface not supplied'} · ${duration(next)}`} /><KeyValue label="Trainer" value={next.trainer?.fullName ?? 'Not supplied'} /></div></div></div>
           {!next.blocked && preCheck(next) === 'ALL_NORMAL'
             ? <AlertBanner type="success" title="Ready">Stable pre-session check cleared{next.preSessionCheck ? ` at ${clock(next.preSessionCheck.performedAt)}` : ''}.</AlertBanner>
-            : <AlertBanner type="warning" title="Start gate pending">{next.blockedMessage || (preCheck(next) === 'ABNORMAL' ? 'The pre-session check found something abnormal. The session must not start.' : 'Waiting for the stable pre-session check.')}</AlertBanner>}
+            : <AlertBanner type="warning" title="Start gate pending">{next.blockedMessage || (preCheck(next) === 'ABNORMAL' ? 'The pre-session check found something abnormal. The session must not start.'
+              : preCheck(next) === 'ALL_NORMAL' && Date.parse(next.scheduledStart) > Date.now() ? `Pre-session check cleared. The session can start at ${clock(next.scheduledStart)}.` : 'Waiting for the stable pre-session check.')}</AlertBanner>}
           <div className={styles.endActions}><Link className={styles.primaryLink} to={`/rider/assignments/${next.id}`}>View Assignment</Link></div></div></Card>
           : <Card><EmptyState title="No upcoming rides" description="You have no scheduled rides." /></Card>}
         <Card><div className={styles.smallStack}><p className={styles.eyebrowMuted}>Later today</p>
