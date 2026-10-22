@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router';
-import { AlertBanner, Button, Card, ErrorState, Icon, LoadingState, StatusBadge, TextAreaField, TextField } from '../../design-system';
+import { useParams } from 'react-router';
+import { ButtonLink, AlertBanner, Button, Card, ErrorState, Icon, LoadingState, StatusBadge, TextAreaField, TextField } from '../../design-system';
 import type { HealthStatus, HorseDetail } from '../horses/api/types';
 import { FlowShell } from '../main-flows/FlowShell';
 import { errorMessage, idOf, useFlowRequest } from '../main-flows/api';
@@ -42,7 +42,7 @@ function BaselineContent({ rawId }: { rawId?: string }) {
     {horse.pending && <LoadingState label="Loading horse…" />}
     {horse.error && <ErrorState title="Horse unavailable" description={horse.error} onRetry={horse.reload} />}
     {error && <AlertBanner type="danger" title="Baseline not saved">{error}</AlertBanner>}
-    {saved && <AlertBanner type="success" title="Baseline saved">{saved.weightKg} kg · {saved.healthStatus} · {new Date(saved.recordedAt).toLocaleString()}. <Link to={`/horses/${saved.horseId}`}>Reload horse profile</Link></AlertBanner>}
+    {saved && <AlertBanner type="success" title="Baseline saved">{saved.weightKg} kg · {saved.healthStatus} · {new Date(saved.recordedAt).toLocaleString()}. <ButtonLink to={`/horses/${saved.horseId}`}>Reload horse profile</ButtonLink></AlertBanner>}
     {data && data.lifecycle !== 'DRAFT' && !saved && <AlertBanner type="info" title="Initial baseline is for DRAFT horses">Open this horse’s medical record for ongoing examinations.</AlertBanner>}
     <form onSubmit={(event) => { event.preventDefault(); void save(); }}>
       <div className={styles.columns}><Card title="Baseline examination"><fieldset disabled={!data || data.lifecycle !== 'DRAFT' || saving || !!saved} className={`${styles.fieldset} ${styles.stack}`}>
@@ -57,7 +57,7 @@ function BaselineContent({ rawId }: { rawId?: string }) {
         {activation.data?.checklist.map((item) => <div className={styles.checklist} key={item.id}><Icon name={item.state === 'SATISFIED' || item.state === 'REVIEWED' || item.satisfied ? 'check-circle' : 'circle'} size={16} /><div><p>{item.label}</p><span className="text-caption">{item.requirement ?? 'Server readiness result'}</span></div></div>)}
         <div className={styles.row}><StatusBadge family="lifecycle" status="DRAFT" /><Icon name="chevron-right" size={16} /><StatusBadge family="lifecycle" status="ACTIVE" /></div>
       </div></Card></div>
-      <div className={styles.footer}><span className="text-caption">Complete the required fields to save.</span><Link to={rawId ? `/horses/${rawId}` : '/horses'}>Cancel</Link><Button type="submit" disabled={!valid || !data || data.lifecycle !== 'DRAFT' || saving || !!saved}>{saving ? 'Saving…' : 'Save Baseline'}</Button></div>
+      <div className={styles.footer}><span className="text-caption">Complete the required fields to save.</span><ButtonLink to={rawId ? `/horses/${rawId}` : '/horses'}>Cancel</ButtonLink><Button type="submit" disabled={!valid || !data || data.lifecycle !== 'DRAFT' || saving || !!saved}>{saving ? 'Saving…' : 'Save Baseline'}</Button></div>
     </form>
   </FlowShell>;
 }

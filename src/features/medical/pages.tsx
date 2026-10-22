@@ -284,14 +284,14 @@ export function TreatmentPlanPage() {
   const { medicalCase, tasks } = data;
   const initial = {
     ...medicalCase.treatmentPlan,
-    groomTasks: tasks.filter((task) => task.status === 'PENDING').map((task) => ({ assignedGroomUserId: task.assignedGroomUserId, instruction: task.instruction, taskDate: task.taskDate, scheduledSlot: task.scheduledSlot })),
+    groomTasks: tasks.map((task) => ({ assignedGroomUserId: task.assignedGroomUserId, instruction: task.instruction, taskDate: task.taskDate, scheduledSlot: task.scheduledSlot })),
   };
   return <><Link to={casePath(id)}>Back to medical case</Link>
     <HorseHeading title="Treatment Plan" horseId={medicalCase.horseId} description={'Medical case ' + id} />
     {saved && <AlertBanner type="success" title="Treatment plan saved" />}
     <div className="medical-grid medical-treatment-layout"><div className="medical-stack">
       {medicalCase.status === 'CLOSED' ? <AlertBanner type="danger" title="Closed cases cannot be edited" /> :
-        <TreatmentPlanEditor key={medicalCase.treatmentPlan?.id ?? 'new'} openedAt={medicalCase.openedAt} initial={initial} onCancel={() => navigate(casePath(id))} onSave={async (input) => { await service.saveTreatment(id, input); setSaved(true); reload(); }} />}
+        <TreatmentPlanEditor key={medicalCase.treatmentPlan?.id ?? 'new'} openedAt={medicalCase.openedAt} initial={initial} retainedTaskCount={tasks.length} onCancel={() => navigate(casePath(id))} onSave={async (input) => { await service.saveTreatment(id, input); setSaved(true); reload(); }} />}
       <CaseTasks caseId={id} />
     </div><div className="medical-stack">
       <TreatmentCaseSummary item={medicalCase} />

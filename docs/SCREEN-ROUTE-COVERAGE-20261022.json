@@ -1,0 +1,561 @@
+{
+  "phase": "2 preparation; Phase1 review remains blocked",
+  "baseline": "f3676d142d617087892531cbe74cc1f91d0408d4",
+  "sourceAncestry": "8a9ac0252ea75f42ff96a7f340c6b7604a7724f6 + preserved WIP + bounded shared screens",
+  "roles": [
+    "CLUB_MANAGER",
+    "HEAD_TRAINER",
+    "TRAINER",
+    "WORK_RIDER",
+    "VETERINARIAN",
+    "GROOM",
+    "HORSE_OWNER"
+  ],
+  "routes": [
+    {
+      "route": "/login",
+      "source": "src/app/router.tsx:58",
+      "roles": "Inherited authenticated feature guard; inspect owner/medical wrapper",
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/login",
+      "source": "src/app/router.tsx:62",
+      "roles": "Inherited authenticated feature guard; inspect owner/medical wrapper",
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/",
+      "source": "src/app/router.tsx:65",
+      "roles": "Inherited authenticated feature guard; inspect owner/medical wrapper",
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/",
+      "source": "src/app/router.tsx:66",
+      "roles": "Inherited authenticated feature guard; inspect owner/medical wrapper",
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/dashboard",
+      "source": "src/app/router.tsx:68",
+      "roles": "Inherited authenticated feature guard; inspect owner/medical wrapper",
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/admin/audit-log",
+      "source": "src/app/router.tsx:69",
+      "roles": [
+        "CLUB_MANAGER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/account",
+      "source": "src/app/router.tsx:70",
+      "roles": "Inherited authenticated feature guard; inspect owner/medical wrapper",
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/admin/users",
+      "source": "src/app/router.tsx:71",
+      "roles": [
+        "CLUB_MANAGER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/admin/users/new",
+      "source": "src/app/router.tsx:72",
+      "roles": [
+        "CLUB_MANAGER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/admin/users/:id/edit",
+      "source": "src/app/router.tsx:73",
+      "roles": [
+        "CLUB_MANAGER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/admin/roles",
+      "source": "src/app/router.tsx:74",
+      "roles": [
+        "CLUB_MANAGER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/notifications",
+      "source": "src/app/router.tsx:75",
+      "roles": "Inherited authenticated feature guard; inspect owner/medical wrapper",
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/horses",
+      "source": "src/app/router.tsx:81",
+      "roles": "Inherited authenticated feature guard; inspect owner/medical wrapper",
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/horses/:id",
+      "source": "src/app/router.tsx:82",
+      "roles": "Inherited authenticated feature guard; inspect owner/medical wrapper",
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/horses/new",
+      "source": "src/app/router.tsx:83",
+      "roles": [
+        "CLUB_MANAGER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/horses/:id/identity",
+      "source": "src/app/router.tsx:84",
+      "roles": [
+        "CLUB_MANAGER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/horses/:id/edit",
+      "source": "src/app/router.tsx:85",
+      "roles": [
+        "CLUB_MANAGER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/horses/pending-activation",
+      "source": "src/app/router.tsx:86",
+      "roles": [
+        "CLUB_MANAGER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/training/programs/new",
+      "source": "src/app/router.tsx:88",
+      "roles": [
+        "HEAD_TRAINER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/training/templates",
+      "source": "src/app/router.tsx:89",
+      "roles": [
+        "HEAD_TRAINER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/horses/:id/baseline",
+      "source": "src/app/router.tsx:90",
+      "roles": [
+        "VETERINARIAN"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/medical/restrictions",
+      "source": "src/app/router.tsx:91",
+      "roles": [
+        "VETERINARIAN",
+        "HEAD_TRAINER",
+        "TRAINER",
+        "CLUB_MANAGER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/training/monitoring",
+      "source": "src/app/router.tsx:92",
+      "roles": [
+        "TRAINER",
+        "HEAD_TRAINER",
+        "VETERINARIAN",
+        "CLUB_MANAGER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/training/programs/assigned",
+      "source": "src/app/router.tsx:93",
+      "roles": [
+        "TRAINER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/training/schedule",
+      "source": "src/app/router.tsx:94",
+      "roles": [
+        "TRAINER",
+        "HEAD_TRAINER",
+        "VETERINARIAN",
+        "CLUB_MANAGER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/training/calendar",
+      "source": "src/app/router.tsx:95",
+      "roles": [
+        "TRAINER",
+        "HEAD_TRAINER",
+        "VETERINARIAN",
+        "CLUB_MANAGER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/training/exercise-library",
+      "source": "src/app/router.tsx:96",
+      "roles": [
+        "TRAINER",
+        "HEAD_TRAINER",
+        "VETERINARIAN",
+        "CLUB_MANAGER",
+        "WORK_RIDER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/training/exercise-library/new",
+      "source": "src/app/router.tsx:97",
+      "roles": [
+        "TRAINER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/training/exercises",
+      "source": "src/app/router.tsx:98",
+      "roles": [
+        "TRAINER",
+        "HEAD_TRAINER",
+        "VETERINARIAN",
+        "CLUB_MANAGER",
+        "WORK_RIDER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/training/programs/:id",
+      "source": "src/app/router.tsx:99",
+      "roles": [
+        "TRAINER",
+        "HEAD_TRAINER",
+        "VETERINARIAN",
+        "CLUB_MANAGER",
+        "GROOM"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/training/session/:id",
+      "source": "src/app/router.tsx:100",
+      "roles": [
+        "TRAINER",
+        "HEAD_TRAINER",
+        "VETERINARIAN",
+        "CLUB_MANAGER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/training/schedule/session/new",
+      "source": "src/app/router.tsx:101",
+      "roles": [
+        "TRAINER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/training/sessions/:id/evaluation",
+      "source": "src/app/router.tsx:102",
+      "roles": "Inherited authenticated feature guard; inspect owner/medical wrapper",
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/training/performance",
+      "source": "src/app/router.tsx:103",
+      "roles": [
+        "HEAD_TRAINER",
+        "TRAINER",
+        "CLUB_MANAGER",
+        "VETERINARIAN"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/groom/today",
+      "source": "src/app/router.tsx:104",
+      "roles": [
+        "GROOM"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/training/my-sessions/:id/pre-check",
+      "source": "src/app/router.tsx:105",
+      "roles": [
+        "GROOM"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/rider",
+      "source": "src/app/router.tsx:106",
+      "roles": [
+        "WORK_RIDER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/rider/assignments",
+      "source": "src/app/router.tsx:107",
+      "roles": [
+        "WORK_RIDER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/rider/assignments/:id",
+      "source": "src/app/router.tsx:108",
+      "roles": [
+        "WORK_RIDER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/rider/assignments/:id/start",
+      "source": "src/app/router.tsx:109",
+      "roles": [
+        "WORK_RIDER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/rider/sessions/:id/active",
+      "source": "src/app/router.tsx:110",
+      "roles": [
+        "WORK_RIDER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/rider/sessions/:id/feedback",
+      "source": "src/app/router.tsx:111",
+      "roles": [
+        "WORK_RIDER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/rider/history",
+      "source": "src/app/router.tsx:112",
+      "roles": [
+        "WORK_RIDER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/training/my-sessions",
+      "source": "src/app/router.tsx:114",
+      "roles": [
+        "GROOM"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/training/my-rides",
+      "source": "src/app/router.tsx:115",
+      "roles": [
+        "WORK_RIDER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/training/rides/assigned",
+      "source": "src/app/router.tsx:116",
+      "roles": [
+        "WORK_RIDER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/training/rides/history",
+      "source": "src/app/router.tsx:117",
+      "roles": [
+        "WORK_RIDER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/training/rides/:id",
+      "source": "src/app/router.tsx:118",
+      "roles": [
+        "WORK_RIDER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/training/rides/:id/start",
+      "source": "src/app/router.tsx:119",
+      "roles": [
+        "WORK_RIDER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/training/rides/:id/execute",
+      "source": "src/app/router.tsx:120",
+      "roles": [
+        "WORK_RIDER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/training/rides/:id/feedback",
+      "source": "src/app/router.tsx:121",
+      "roles": [
+        "WORK_RIDER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/rides",
+      "source": "src/app/router.tsx:122",
+      "roles": "Inherited authenticated feature guard; inspect owner/medical wrapper",
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/rides/assignments",
+      "source": "src/app/router.tsx:123",
+      "roles": "Inherited authenticated feature guard; inspect owner/medical wrapper",
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/rides/history",
+      "source": "src/app/router.tsx:124",
+      "roles": "Inherited authenticated feature guard; inspect owner/medical wrapper",
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/rides/report-issue",
+      "source": "src/app/router.tsx:125",
+      "roles": "Inherited authenticated feature guard; inspect owner/medical wrapper",
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/medical",
+      "source": "src/app/router.tsx:126",
+      "roles": "Inherited authenticated feature guard; inspect owner/medical wrapper",
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/medical/cases/new",
+      "source": "src/app/router.tsx:127",
+      "roles": "Inherited authenticated feature guard; inspect owner/medical wrapper",
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/medical/cases/:caseId",
+      "source": "src/app/router.tsx:128",
+      "roles": "Inherited authenticated feature guard; inspect owner/medical wrapper",
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/medical/cases/:caseId/treatment-plan",
+      "source": "src/app/router.tsx:129",
+      "roles": "Inherited authenticated feature guard; inspect owner/medical wrapper",
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/medical/herd-health",
+      "source": "src/app/router.tsx:130",
+      "roles": "Inherited authenticated feature guard; inspect owner/medical wrapper",
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/medical/summary",
+      "source": "src/app/router.tsx:131",
+      "roles": "Inherited authenticated feature guard; inspect owner/medical wrapper",
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/care/tasks",
+      "source": "src/app/router.tsx:132",
+      "roles": "Inherited authenticated feature guard; inspect owner/medical wrapper",
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/medical/my-tasks",
+      "source": "src/app/router.tsx:133",
+      "roles": "Inherited authenticated feature guard; inspect owner/medical wrapper",
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/incidents",
+      "source": "src/app/router.tsx:134",
+      "roles": "Inherited authenticated feature guard; inspect owner/medical wrapper",
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/incidents/:incidentId",
+      "source": "src/app/router.tsx:135",
+      "roles": "Inherited authenticated feature guard; inspect owner/medical wrapper",
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "/training/programs",
+      "source": "src/app/router.tsx:137",
+      "roles": [
+        "HEAD_TRAINER"
+      ],
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "route": "*",
+      "source": "src/app/router.tsx:138",
+      "roles": "Inherited authenticated feature guard; inspect owner/medical wrapper",
+      "status": "SOURCE_INTEGRATED; Phase4 browser/RBAC verification pending"
+    },
+    {
+      "routeSource": "{ path: '/register', element: <PublicOnly><RegisterPage /></PublicOnly> },",
+      "source": "src/features/registration/routes.tsx:8",
+      "status": "SOURCE_INTEGRATED; feature boundary and Phase4 verification required"
+    },
+    {
+      "routeSource": "{ path: '/admin/registrations', element: <RegistrationReviewPage /> },",
+      "source": "src/features/registration/routes.tsx:9",
+      "status": "SOURCE_INTEGRATED; feature boundary and Phase4 verification required"
+    },
+    {
+      "routeSource": "{ path: ROUTES.myHorses, element: <OwnerPage /> },",
+      "source": "src/features/owner/ownerRoutes.tsx:7",
+      "status": "SOURCE_INTEGRATED; feature boundary and Phase4 verification required"
+    },
+    {
+      "routeSource": "{ path: `${ROUTES.myHorses}/:horseId`, element: <OwnerPage /> },",
+      "source": "src/features/owner/ownerRoutes.tsx:8",
+      "status": "SOURCE_INTEGRATED; feature boundary and Phase4 verification required"
+    }
+  ],
+  "newFixtureTests": "Added/updated; NOT RUN in Phase2",
+  "browserAndSql": "NOT RUN on release revision",
+  "knownLimits": [
+    "Public password reset delivery not production-ready",
+    "Notification unread header subscription/reconnect pending Phase3",
+    "Exact latest-SHA Figma/browser acceptance pending",
+    "Inherited FE PR22 and release approval required"
+  ],
+  "productionDeployment": "NONE; no hosted settings changed"
+}

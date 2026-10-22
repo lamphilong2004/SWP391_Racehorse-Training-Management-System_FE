@@ -14,6 +14,17 @@ it('preserves loaded Groom assignments when saving an existing treatment plan', 
   })));
 });
 
+it('retains immutable completed task instructions while allowing plan text changes', async () => {
+  const onSave = vi.fn().mockResolvedValue(undefined);
+  const task = { assignedGroomUserId: 6, instruction: 'Existing completed care', taskDate: '2026-10-16' };
+  render(<TreatmentPlanEditor initial={{ treatmentMedicationInstructions: 'Protocol', groomTasks: [task] }} retainedTaskCount={1} onSave={onSave} />);
+  expect(screen.getByLabelText('Groom-safe instruction 1')).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Remove task' })).toBeDisabled();
+  fireEvent.change(screen.getByRole('textbox', { name: /Treatment and medication instructions/ }), { target: { value: 'Updated protocol' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save treatment plan' }));
+  await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ treatmentMedicationInstructions: 'Updated protocol', groomTasks: [task] })));
+});
+
 it('keeps invalid treatment input and blocks a request exceeding the approved contract', async () => {
   const onSave = vi.fn();
   render(<TreatmentPlanEditor initial={{ treatmentMedicationInstructions: 'Vet instructions', restInstructions: 'x'.repeat(101) }} onSave={onSave} />);

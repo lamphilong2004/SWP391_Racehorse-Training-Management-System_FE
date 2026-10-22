@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { flushSync } from 'react-dom';
-import { Link, useLocation, useNavigate, useParams } from 'react-router';
-import {
+import { useLocation, useNavigate, useParams } from 'react-router';
+import { ButtonLink,
   AlertBanner, Button, Card, Checkbox, ErrorState, StatusBadge, Icon, LoadingState, SelectField, TextField,
  DesignSystemScope, UnsavedChangesGuard, focusFirstInvalid } from '../../../design-system';
 import { ApiRequestError } from '../api/horsesApi';
@@ -178,7 +178,7 @@ function PedigreeOwnershipPageContent() {
       {unavailable.length > 0 && <AlertBanner type="warning" title="Horse setup unavailable">
         <p>{`${unavailable.join(', ')} could not be loaded. The saved horse remains available. Saving is disabled until the required setup data can be verified.`}</p>
         <Button variant="secondary" disabled={refreshing || saving} onClick={() => void load()}>{refreshing ? 'Retrying…' : 'Try again'}</Button>
-        <p><Link to={`/horses/${id}`}>View saved horse profile</Link>{' · '}<Link to="/horses">Back to Horses</Link></p>
+        <p><ButtonLink to={`/horses/${id}`}>View saved horse profile</ButtonLink>{' · '}<ButtonLink to="/horses">Back to Horses</ButtonLink></p>
       </AlertBanner>}
 
       <div className={styles.twoCol}>

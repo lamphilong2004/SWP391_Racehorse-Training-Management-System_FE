@@ -36,7 +36,7 @@ function DashboardContent() {
   const [revision, setRevision] = useState(0);
   const resource = useManagementResource(service.dashboard, revision);
   const data = resource.status === 'ready' ? resource.data : null;
-  return <AppShell user={{ fullName: auth.user!.fullName, role: 'CLUB_MANAGER' }} breadcrumb={[{ label: 'Dashboard' }, { label: 'Club overview' }]} searchPlaceholder="Search horses, users…">
+  return <AppShell designSystem="v2" user={{ fullName: auth.user!.fullName, role: 'CLUB_MANAGER' }} breadcrumb={[{ label: 'Dashboard' }, { label: 'Club overview' }]} searchPlaceholder="Search horses, users…">
     <div className={styles.page}>
       <header className={styles.heading}>
         <div className={styles.title}><h1 className="text-h1">Club Manager Dashboard</h1><p className={styles.subtitle}>Management overview · <time dateTime={localTime.toISOString()} title="Current local time, not a data refresh timestamp">{new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).format(localTime)}</time> · summaries from each module — open a module to make changes</p></div>

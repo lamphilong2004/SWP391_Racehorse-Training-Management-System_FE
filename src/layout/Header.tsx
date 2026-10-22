@@ -63,7 +63,8 @@ export function Header({
           }}
         >
           <Icon name="search" size={16} className={styles.searchIcon} />
-          <input name="q" type="search" placeholder={searchPlaceholder} aria-label={searchPlaceholder} />
+          <input name="q" type="search" placeholder={searchPlaceholder} aria-label={searchPlaceholder}
+            disabled={!onSearch} title={onSearch ? undefined : 'Global search is unavailable on this screen. Use its module filters.'} />
         </form>
       </div>
       <div className={styles.right}>

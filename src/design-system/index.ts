@@ -5,6 +5,7 @@
 export { Icon, type IconName, type IconProps } from './icons/Icon';
 export { ICON_NAMES } from './icons/iconNames';
 export { Button, type ButtonProps, type ButtonVariant, type ButtonSize } from './components/Button/Button';
+export { ButtonLink, type ButtonLinkProps } from './components/Button/ButtonLink';
 export { TextField, type TextFieldProps } from './components/TextField/TextField';
 export { TextAreaField, type TextAreaFieldProps } from './components/TextAreaField/TextAreaField';
 export { SelectField, type SelectFieldProps, type SelectOption } from './components/SelectField/SelectField';

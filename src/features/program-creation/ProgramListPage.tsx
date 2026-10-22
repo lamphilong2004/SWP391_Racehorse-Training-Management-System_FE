@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Link } from 'react-router';
-import { AlertBanner, Button, Card, DataTable, EmptyState, ErrorState, LoadingState, MetricCard, SelectField, StatusBadge, TextField } from '../../design-system';
+import { ButtonLink, AlertBanner, Button, Card, DataTable, EmptyState, ErrorState, LoadingState, MetricCard, SelectField, StatusBadge, TextField } from '../../design-system';
 import { ROUTES } from '../../app/routePaths';
 import { FlowShell } from '../main-flows/FlowShell';
 import { useResource } from '../main-flows/useResource';
@@ -20,7 +19,7 @@ export function ProgramListPage() {
   const trainers = [...new Map((data?.items ?? []).flatMap((item) => item.currentTrainer ? [[item.currentTrainer.id, item.currentTrainer] as const] : [])).values()];
   const horses = [...new Map((data?.items ?? []).map((item) => [item.horse.id, item.horse])).values()];
   function changePage(next: number) { setPage(next); setTrainer(''); setHorse(''); }
-  return <FlowShell title="Horse Training Programs" description="Horse-specific programs — each created from a reusable Program Template and customized for one horse." section="Training" role="HEAD_TRAINER" actions={<Link to={ROUTES.trainingProgramCreate}>+ New Horse Training Program</Link>}>
+  return <FlowShell title="Horse Training Programs" description="Horse-specific programs — each created from a reusable Program Template and customized for one horse." section="Training" role="HEAD_TRAINER" actions={<ButtonLink variant="primary" to={ROUTES.trainingProgramCreate}>+ New Horse Training Program</ButtonLink>}>
     <div className={styles.metrics}>{['Active programs', 'Need attention', 'Upcoming completion', 'Available Trainers'].map((label) => <MetricCard key={label} label={label} value="Not provided" caption="Summary not supplied by the approved list API" />)}</div>
     <Card><div className={styles.stack}><div className={styles.row}>
       <TextField label="Search horse or program" placeholder="Search current page…" value={search} onChange={(event) => setSearch(event.target.value)} />
@@ -40,7 +39,7 @@ export function ProgramListPage() {
         { key: 'progress', header: 'Progress', render: () => 'Not provided' },
         { key: 'period', header: 'Period', render: (item) => `${item.periodStart} → ${item.periodEnd}` },
         { key: 'status', header: 'Status', render: (item) => <StatusBadge family="program" status={item.status} /> },
-        { key: 'detail', header: 'Details', render: (item) => <Link to={`/training/programs/${item.id}`} aria-label={`View ${item.name}`}>View</Link> },
+        { key: 'detail', header: 'Details', render: (item) => <ButtonLink to={`/training/programs/${item.id}`} aria-label={`View ${item.name}`}>View</ButtonLink> },
       ]} /></div><div className={styles.row}><span>{rows.length} shown on this page · {data.totalItems} programs match server filters</span><Button variant="secondary" disabled={page === 0} onClick={() => changePage(page - 1)}>Previous programs</Button><span>Page {page + 1} of {Math.max(1, data.totalPages)}</span><Button variant="secondary" disabled={page + 1 >= data.totalPages} onClick={() => changePage(page + 1)}>Next programs</Button></div></>}
     </div></Card>
     <AlertBanner type="info" title="Program summaries">Goals, progress and summary metrics are not supplied by the list contract. Open a program for its approved read-only details.</AlertBanner>

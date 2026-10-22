@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router';
-import { AlertBanner, Card, DataTable, EmptyState, ErrorState, KeyValue, LoadingState, StatusBadge, Tabs } from '../../design-system';
+import { useParams } from 'react-router';
+import { ButtonLink, AlertBanner, Card, DataTable, EmptyState, ErrorState, KeyValue, LoadingState, StatusBadge, Tabs } from '../../design-system';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { dateTime, metric } from '../evaluation/models';
 import { FlowShell } from '../main-flows/FlowShell';
@@ -22,9 +22,9 @@ function ProgramDetailContent({ rawId }: { rawId?: string }) {
   const canReadHistory = user?.roles.some((role) => ['HEAD_TRAINER', 'TRAINER', 'CLUB_MANAGER'].includes(role)) ?? false;
   const role = user?.roles.find((value) => ['HEAD_TRAINER', 'TRAINER', 'CLUB_MANAGER', 'VETERINARIAN', 'GROOM'].includes(value)) ?? 'HEAD_TRAINER';
   return <FlowShell title={data ? `${data.horse.name} · ${data.horse.horseCode}` : 'Program Detail'} description={data?.name} section="Horse Training Programs" role={role} actions={<div className={styles.row}>
-    {user?.roles.includes('HEAD_TRAINER') && <Link to="/training/programs">Back to Program List</Link>}
-    {user?.roles.includes('TRAINER') && <Link to="/training/programs/assigned">Back to Assigned Programs</Link>}
-    <Link to="/dashboard">Back to workspace</Link>
+    {user?.roles.includes('HEAD_TRAINER') && <ButtonLink to="/training/programs">Back to Program List</ButtonLink>}
+    {user?.roles.includes('TRAINER') && <ButtonLink to="/training/programs/assigned">Back to Assigned Programs</ButtonLink>}
+    <ButtonLink to="/dashboard">Back to workspace</ButtonLink>
   </div>}>
     {program.pending && <LoadingState label="Loading program…" />}
     {program.error && <ErrorState title="Program unavailable" description={program.error} onRetry={program.reload} />}

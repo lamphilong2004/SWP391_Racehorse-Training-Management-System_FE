@@ -35,6 +35,10 @@ describe('CORE-056 pinned CORE-004 HTTP contract', () => {
     const { service } = setup({ profile: { ...profile, diagnosis: 'SECRET', otherOwners: ['SECRET'], stable: 'SECRET' }, health: { ...health, findings: 'SECRET', prescription: 'SECRET', restrictionReason: 'SECRET' }, training: { ...training, trainer: 'SECRET', nextSession: 'SECRET', recentSessions: [{ ...training.recentSessions[0], feedback: 'SECRET', evaluationLabel: 'SECRET', distance: 1200 }] } });
     expect(JSON.stringify(await service.detail(7, { actorId: 17 }))).not.toMatch(/SECRET|diagnosis|prescription|feedback|otherOwners|restrictionReason/);
   });
+  it('shows only the owned profile current box projection, including its persisted date', async () => {
+    const { service } = setup({ profile: { ...profile, currentBoxCode: 'PRESENT-04', stableEffectiveFrom: '2026-10-21' } });
+    expect(await service.detail(7, { actorId: 17 })).toMatchObject({ stable: 'PRESENT-04', stableSince: '2026-10-21' });
+  });
   it.each([401, 403, 404, 500])('propagates profile %s without summary calls or sample fallback', async (status) => {
     const { service, fetcher } = setup({ fail: '/profile', status });
     await expect(service.detail(7, { actorId: 17 })).rejects.toMatchObject({ status }); expect(fetcher).toHaveBeenCalledOnce();

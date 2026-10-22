@@ -39,6 +39,8 @@ function detail(profileValue: unknown, healthValue: unknown, trainingValue: unkn
   if (horse.id !== id) throw invalid();
   const pedigree = row(profile.pedigree), ownership = row(profile.myOwnership);
   horse.country = optionalString(profile.countryOfOrigin);
+  horse.stable = optionalString(profile.currentBoxCode);
+  horse.stableSince = optionalDate(profile.stableEffectiveFrom);
   horse.sire = optionalString(row(pedigree.sire).name); horse.dam = optionalString(row(pedigree.dam).name);
   horse.ownership = { sharePercentage: number(ownership.sharePercentage), effectiveFrom: date(ownership.effectiveFrom), isManagingOwner: boolean(ownership.isManagingOwner) };
   if (!Object.hasOwn(health, 'healthStatus')) throw invalid();

@@ -154,13 +154,17 @@ it('keeps a blocked treatment edit and shows completed task history', async () =
   mount('/medical/cases/9/treatment-plan');
   expect(await screen.findByText('Walk completed')).toBeInTheDocument();
   expect(screen.getByLabelText('Groom-safe instruction 1')).toHaveValue('Cold compress');
-  expect(screen.queryByLabelText('Groom-safe instruction 2')).not.toBeInTheDocument();
+  expect(screen.getByLabelText('Groom-safe instruction 2')).toHaveValue('Walk completed');
+  expect(screen.getByLabelText('Groom-safe instruction 2')).toBeDisabled();
   fireEvent.change(screen.getByRole('textbox', { name: /Treatment and medication instructions/ }), { target: { value: 'Rest and inspect' } });
   fireEvent.click(screen.getByRole('button', { name: 'Save treatment plan' }));
   expect(await screen.findByText('Assignment source unavailable')).toBeInTheDocument();
   expect(screen.getByRole('textbox', { name: /Treatment and medication instructions/ })).toHaveValue('Rest and inspect');
   const request = fetcher.mock.calls.find(([url, init]) => url.endsWith('/treatment-plan') && init?.method === 'PUT')?.[1];
-  expect(JSON.parse(String(request?.body)).groomTasks).toEqual([{ assignedGroomUserId: 6, instruction: 'Cold compress', taskDate: '2026-10-17' }]);
+  expect(JSON.parse(String(request?.body)).groomTasks).toEqual([
+    { assignedGroomUserId: 6, instruction: 'Cold compress', taskDate: '2026-10-17' },
+    { assignedGroomUserId: 6, instruction: 'Walk completed', taskDate: '2026-10-16' },
+  ]);
 });
 
 it('does not show case closure success when the backend returns 409', async () => {

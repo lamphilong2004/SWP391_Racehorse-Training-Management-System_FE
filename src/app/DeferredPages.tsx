@@ -33,3 +33,7 @@ export const CreateCasePage = deferred(() => import('../features/medical/pages')
 export const CaseDetailPage = deferred(() => import('../features/medical/pages').then((m) => ({ default: m.CaseDetailPage })));
 export const TreatmentPlanPage = deferred(() => import('../features/medical/pages').then((m) => ({ default: m.TreatmentPlanPage })));
 export const HerdHealthPage = deferred(() => import('../features/medical/pages').then((m) => ({ default: m.HerdHealthPage })));
+export const UserListPage = deferred(() => import('../features/administration/UserPages').then((m) => ({ default: m.UserListPage })));
+export const UserEditorPage = deferred(() => import('../features/administration/UserPages').then((m) => ({ default: m.UserEditorPage })));
+export const RolesPage = deferred(() => import('../features/administration/UserPages').then((m) => ({ default: m.RolesPage })));
+export const NotificationsPage = deferred(() => import('../features/administration/NotificationsPage').then((m) => ({ default: m.NotificationsPage })));

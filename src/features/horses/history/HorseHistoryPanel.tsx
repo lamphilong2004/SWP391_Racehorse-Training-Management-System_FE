@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router';
-import { AlertBanner, Button, Card, EmptyState, ErrorState, KeyValue, LoadingState } from '../../../design-system';
+import { ButtonLink, AlertBanner, Button, Card, EmptyState, ErrorState, KeyValue, LoadingState } from '../../../design-system';
 import { useAuth } from '../../../shared/auth/AuthProvider';
 import { ApiError } from '../../../shared/auth/authApi';
 import type { HorseDetail, Ownership, Page, StableAssignment } from '../api/types';
@@ -34,7 +33,7 @@ function History({ horse }: { horse: HorseDetail }) {
   if (current?.error !== undefined) return <Message code={current.error} retry={() => setRevision((v) => v + 1)} />;
   if (!current?.timeline) return <LoadingState label="Loading horse history…" />;
   return <div className={styles.page}>
-    <Link to={`/horses/${horse.id}?tab=overview`} className={styles.back}>← Back to Horse Profile</Link>
+    <ButtonLink to={`/horses/${horse.id}?tab=overview`} className={styles.back}>← Back to Horse Profile</ButtonLink>
     <div><h1 className={styles.title}>Pedigree &amp; History</h1><p className={styles.subtitle}>{horse.horseCode} · {horse.name} · {horse.breed ?? missing} · {horse.sex ?? missing} · foaled {formatDate(horse.foaledDate)} · Owner {ownerNames}</p></div>
     {service.source === 'sample' && <AlertBanner title="Sample history">Only shared sample records are shown. Additional history is not available in this preview.</AlertBanner>}
     <h2 className={styles.sectionTitle}>Origin &amp; Pedigree</h2>
