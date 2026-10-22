@@ -23,6 +23,7 @@ export const ROUTES = {
   stable: '/stable',
   trainingPrograms: '/training/programs',
   assignedPrograms: '/training/programs/assigned',
+  adjustmentRequests: '/training/adjustment-requests',
   trainingProgramCreate: '/training/programs/new',
   programTemplates: '/training/templates',
   trainingSchedule: '/training/schedule',

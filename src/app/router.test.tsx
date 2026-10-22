@@ -40,7 +40,7 @@ describe('router', () => {
     const paths = buildRoutes(false).map((route) => route.path);
     expect(paths).toEqual(['/', '/login', '/dashboard', '/admin/audit-log', '/account', '/admin/users', '/admin/users/new', '/admin/users/:id/edit', '/admin/roles', '/notifications', '/register', '/admin/registrations', '/owner/horses', '/owner/horses/:horseId', '/my-horses', '/my-horses/:id', undefined, '/training/programs/new', '/training/templates',
       '/horses/:id/baseline', '/medical/restrictions', '/training/monitoring', '/training/programs/assigned', '/training/schedule', '/training/calendar', '/training/exercise-library', '/training/exercise-library/new', '/training/exercises',
-      '/training/programs/:id', '/training/session/:id', '/training/schedule/session/new',
+      '/training/adjustment-requests', '/training/programs/:id', '/training/session/:id', '/training/schedule/session/new',
       '/training/sessions/:id/evaluation', '/training/performance', '/groom/today', '/training/my-sessions/:id/pre-check',
       '/rider', '/rider/assignments', '/rider/assignments/:id', '/rider/assignments/:id/start', '/rider/sessions/:id/active', '/rider/sessions/:id/feedback', '/rider/history',
       '/training/my-sessions', '/training/my-rides', '/training/rides/assigned', '/training/rides/history', '/training/rides/:id', '/training/rides/:id/start', '/training/rides/:id/execute', '/training/rides/:id/feedback',
