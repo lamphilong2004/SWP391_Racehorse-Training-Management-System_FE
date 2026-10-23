@@ -1,6 +1,7 @@
 import { useId, useRef, useState, type FormEvent } from 'react';
 import { AlertBanner, Button, Icon, Modal, SelectField, StatusBadge, TextField } from '../../design-system';
 import styles from './IncidentReportModal.module.css';
+import { viLabel } from '../viLabels';
 
 export type IncidentType = 'OFF_FEED' | 'COLIC_SIGNS' | 'FEVER' | 'HOOF_OR_LEG_PROBLEM' | 'OTHER';
 export type ObservedSeverity = 'LOW' | 'MEDIUM' | 'HIGH';
@@ -169,7 +170,7 @@ function IncidentReportModalForm({ open, onClose, source, horses = [], onSubmit 
           </div>
         </div>
         <div className={styles.field}><span className={styles.label}>Mức độ (theo quan sát của bạn) *</span><div className={styles.severity} role="group" aria-label="Mức độ quan sát">
-          {(['LOW', 'MEDIUM', 'HIGH'] as const).map((value) => <button key={value} type="button" disabled={busy} className={severity === value ? styles.selectedSeverity : ''} aria-pressed={severity === value} onClick={() => setSeverity(value)}>{value[0] + value.slice(1).toLowerCase()}</button>)}
+          {(['LOW', 'MEDIUM', 'HIGH'] as const).map((value) => <button key={value} type="button" disabled={busy} className={severity === value ? styles.selectedSeverity : ''} aria-pressed={severity === value} onClick={() => setSeverity(value)}>{viLabel(value)}</button>)}
         </div></div>
         <div className={styles.field}><label className={styles.label} htmlFor={descriptionId}>Mô tả *</label><textarea id={descriptionId} className={styles.textarea} value={description} onChange={(event) => setDescription(event.target.value)} required disabled={busy} /></div>
         <div className={styles.field}><span className={styles.label}>Ảnh</span><div className={styles.photoNotice}><Icon name="image" size={20} /><span>Chưa hỗ trợ ảnh cho đến khi chức năng ảnh sự cố được duyệt.</span></div><p className={styles.hint}>Khi có chức năng tải ảnh, hãy chụp nơi đủ sáng và gần vùng có vấn đề.</p></div>

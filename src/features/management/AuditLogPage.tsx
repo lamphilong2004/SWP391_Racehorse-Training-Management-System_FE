@@ -76,7 +76,7 @@ function AuditContent({ query }: { query: AuditQuery }) {
   return <AppShell user={{ fullName: user!.fullName, role: 'CLUB_MANAGER' }} breadcrumb={[{ label: 'Quản trị' }, { label: 'Nhật ký hệ thống' }]} searchPlaceholder="Tìm trong nhật ký…">
     <div className={styles.page}>
       <Link to={ROUTES.dashboard} className={styles.back}>← Tổng quan</Link>
-      <header className={styles.heading}><div><h1 className="text-h1">Nhật ký hệ thống <span className={styles.readOnly}>Read-only</span></h1><p className={styles.subtitle}>Ai đã làm gì và khi nào · hệ thống tự ghi · mới nhất trước</p></div></header>
+      <header className={styles.heading}><div><h1 className="text-h1">Nhật ký hệ thống <span className={styles.readOnly}>Chỉ xem</span></h1><p className={styles.subtitle}>Ai đã làm gì và khi nào · hệ thống tự ghi · mới nhất trước</p></div></header>
       {businessDataMode() === 'sample' && <p className={styles.note}>Các dòng SAMPLE_SNAPSHOT mô tả dữ liệu mẫu hiện tại, không phải nhật ký thật của hệ thống.</p>}
       <AlertBanner type="info" title="Nhật ký là dữ liệu lịch sử — không thể tạo, sửa hay xóa">
         Bản ghi vẫn còn với tài khoản đã vô hiệu hóa. Hệ thống tự ghi khi người dùng thao tác. Nhật ký không bao giờ chứa mật khẩu, mã băm, token hay thông tin bí mật.

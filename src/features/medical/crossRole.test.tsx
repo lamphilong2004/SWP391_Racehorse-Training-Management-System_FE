@@ -95,7 +95,7 @@ it('Vet assigns treatment -> normal Groom login completes -> Vet rereads progres
   await act(() => router.navigate('/medical/cases/9'));
   await section('Điều trị');
   expect(await screen.findByText(/Groom 6 · Hoàn thành/)).toBeInTheDocument();
-  await section('Re-examination');
+  await section('Tái khám');
   fireEvent.change(screen.getByRole('combobox', { name: 'Tình trạng hồi phục' }), { target: { value: 'RECOVERED' } });
   fireEvent.change(screen.getByLabelText('Kết quả khám'), { target: { value: 'Normal gait at follow-up' } });
   fireEvent.click(screen.getByRole('button', { name: 'Lưu lần tái khám' }));

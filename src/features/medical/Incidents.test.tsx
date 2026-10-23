@@ -113,7 +113,7 @@ it('preserves a failed incident report and masks sensitive server errors', async
   await screen.findByRole('link', { name: 'INC-001' }); fireEvent.click(screen.getByRole('button', { name: 'Báo cáo sự cố' }));
   fireEvent.change(screen.getByLabelText('Ngựa *'), { target: { value: '14' } });
   fireEvent.click(screen.getByRole('button', { name: 'Vấn đề móng hoặc chân' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Medium' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Trung bình' }));
   fireEvent.change(screen.getByLabelText('Mô tả *'), { target: { value: 'Limp after walking' } });
   fireEvent.click(screen.getByRole('button', { name: 'Gửi sự cố' }));
   expect(await screen.findByText(/Sự cố đã thay đổi hoặc xung đột với thao tác này\. Hãy làm mới và thử lại\./)).toBeInTheDocument();

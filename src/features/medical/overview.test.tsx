@@ -18,7 +18,7 @@ it('uses approved case IDs, reason and plan review date on the matching horse ov
   });
   render(<MemoryRouter><MedicalProvider value={{ actor: { id: 7, fullName: 'Vet', userCode: 'V7', email: 'vet@example.test', roles: ['VETERINARIAN'], accountStatus: 'ACTIVE' }, service: createMedicalService('session', undefined, { baseUrl: '', fetcher }) }}><HerdHealthPage /></MedicalProvider></MemoryRouter>);
   expect(await screen.findByText('Ca đang mở · Lameness')).toBeInTheDocument();
-  expect(screen.getByText('Tái khám 2026-10-27')).toBeInTheDocument();
+  expect(screen.getByText('Tái khám 27/10/2026')).toBeInTheDocument();
   expect(screen.getByRole('link', { name: 'Mở ca →' })).toHaveAttribute('href', '/medical/cases/9');
 });
 it('enriches Groom groups using only horse IDs returned by the authorized task endpoint', async () => {

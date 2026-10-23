@@ -19,6 +19,14 @@ const LABELS: Record<string, string> = {
   NOT_RECOVERED: 'Chưa hồi phục', IMPROVING: 'Đang cải thiện', RECOVERED: 'Đã hồi phục',
   REPORTED: 'Mới báo', UNDER_REVIEW: 'Đang xem xét', RESOLVED: 'Đã xử lý',
   PENDING: 'Chờ duyệt', APPROVED: 'Đã duyệt', REJECTED: 'Từ chối', PENDING_APPROVAL: 'Chờ duyệt',
+  // activation checklist requirement, recommendation labels, session start blockers
+  MANDATORY: 'Bắt buộc', RECOMMENDED: 'Khuyến nghị', SUITABLE: 'Phù hợp', SUITABLE_WITH_CAUTION: 'Phù hợp · cần thận trọng',
+  NOT_RECOMMENDED: 'Không khuyến nghị', PRE_CHECK_MISSING: 'Chưa kiểm tra trước buổi tập',
+  PRE_CHECK_ABNORMAL: 'Kiểm tra trước buổi tập bất thường', AVAILABILITY_LOCKED: 'Ngựa đang bị khóa tập luyện',
+  EXERCISE_MEDICAL_BLOCK: 'Bài tập bị hạn chế y tế', PROGRAM_NOT_ACTIVE: 'Chương trình không hoạt động',
+  // incident types, sample sources
+  OFF_FEED: 'Bỏ ăn', COLIC_SIGNS: 'Dấu hiệu đau bụng', FEVER: 'Sốt', HOOF_OR_LEG_PROBLEM: 'Vấn đề móng hoặc chân', OTHER: 'Khác',
+  MANUAL: 'Thủ công', SIMULATOR: 'Mô phỏng',
   ALLOWED: 'Được phép', PROHIBITED: 'Bị cấm', ALL_NORMAL: 'Tất cả bình thường', ABNORMAL: 'Bất thường',
   // stored English option values (horse sex, rider feedback)
   Colt: 'Ngựa đực non', Filly: 'Ngựa cái non', Stallion: 'Ngựa đực giống', Mare: 'Ngựa cái', Gelding: 'Ngựa thiến',

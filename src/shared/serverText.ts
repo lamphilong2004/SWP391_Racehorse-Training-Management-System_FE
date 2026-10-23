@@ -39,6 +39,10 @@ const TEXT: Record<string, string> = {
   'Program adjustment request decided': 'Đề xuất điều chỉnh đã được quyết định',
   'Training program assigned': 'Được giao chương trình huấn luyện',
   'Training session assigned': 'Được giao buổi tập',
+  // candidate suitability reasons and session start messages
+  'Available for the requested schedule': 'Rảnh vào lịch đã chọn',
+  'Active club template': 'Mẫu đang dùng của câu lạc bộ',
+  'Pre-session check found an abnormality — the session must not start.': 'Kiểm tra trước buổi tập phát hiện bất thường — không được bắt đầu buổi tập.',
 };
 /** Notification messages are built by the Backend from fixed templates with ids/codes inside. */
 const PATTERNS: [RegExp, (...groups: string[]) => string][] = [
@@ -49,6 +53,13 @@ const PATTERNS: [RegExp, (...groups: string[]) => string][] = [
   [/^Your adjustment request for program (\S+) was (APPROVED|REJECTED)\.$/, (id, status) => `Đề xuất điều chỉnh chương trình ${id} của bạn đã ${status === 'APPROVED' ? 'được duyệt' : 'bị từ chối'}.`],
   [/^Session (\S+) has been assigned to you\.$/, (code) => `Bạn được giao buổi tập ${code}.`],
   [/^You have been assigned to (.+)\.$/, (name) => `Bạn được giao phụ trách ${name}.`],
+  [/^Trainer specialization matches a required template skill: (.+)$/, (skills) => `Chuyên môn của Trainer khớp kỹ năng mẫu yêu cầu: ${skills}`],
+  [/^No Trainer specialization matches the template's required skills: (.+)$/, (skills) => `Chưa có chuyên môn nào của Trainer khớp kỹ năng mẫu yêu cầu: ${skills}`],
+  [/^Specialization matches the template: (.+)$/, (skills) => `Chuyên môn khớp mẫu: ${skills}`],
+  [/^Specializations: (.+)$/, (skills) => `Chuyên môn: ${skills}`],
+  [/^Current active programs: (\d+)$/, (count) => `Chương trình đang phụ trách: ${count}`],
+  [/^Training is LOCKED by the Veterinarian: (.*)$/, (reason) => `Veterinarian đã khóa tập luyện: ${reason}`],
+  [/^Prohibited by the Veterinarian restriction: (.+)$/, (names) => `Bị cấm theo hạn chế của Veterinarian: ${names}`],
 ];
 
 export function serverText(text: string | null | undefined): string {

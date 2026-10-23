@@ -6,6 +6,15 @@ export function formatDate(value: string | null | undefined): string {
   return `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`;
 }
 
+/** ISO instant → local "14/03/2023 · 08:05". */
+export function formatDateTime(value: string | null | undefined): string {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return value;
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} · ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 /** Whole years between a foaled date and today. */
 export function ageInYears(foaledDate: string | null | undefined, now = new Date()): number | null {
   if (!foaledDate) return null;
