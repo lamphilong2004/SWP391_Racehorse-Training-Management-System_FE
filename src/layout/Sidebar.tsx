@@ -30,14 +30,14 @@ export function Sidebar({ role, id, open = false }: SidebarProps) {
   const nav = NAVIGATION[role];
   const active = activeItem(role, useLocation().pathname);
   return (
-    <aside id={id} className={cx(styles.sidebar, open && styles.open)} data-design-system="v2" aria-label="Workspace navigation">
+    <aside id={id} className={cx(styles.sidebar, open && styles.open)} data-design-system="v2" aria-label="Điều hướng không gian làm việc">
       <div className={styles.brand}>
         <Icon name="horseshoe" size={24} className={styles.brandIcon} />
         <span className={styles.brandName}>Racehorse Ops</span>
       </div>
       <p className={styles.workspace}>{nav.workspaceLabel}</p>
       <div className={styles.spacer} />
-      <nav aria-label="Main" className={styles.nav}>
+      <nav aria-label="Chính" className={styles.nav}>
         {visibleSections(role).map((section, sectionIndex) => (
           <div key={section.heading ?? sectionIndex} className={styles.section}>
             {section.heading && <p className={styles.heading}>{section.heading}</p>}

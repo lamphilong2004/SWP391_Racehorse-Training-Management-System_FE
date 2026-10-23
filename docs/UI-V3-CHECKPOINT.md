@@ -1,5 +1,14 @@
 # UI v3 — full migration in progress
 
+## Vietnamese UI (DEC-011, 2026-10-23)
+
+- All screens use Vietnamese display text; role names, product name, codes, units and breeds stay English.
+- API values are unchanged: enum codes and stored English values are mapped for display only
+  (`src/shared/viLabels.ts`, StatusBadge labels, `regionLabel`, sex/feedback option labels). Backend messages
+  are still shown as sent (English). Dates/numbers use `vi-VN`.
+- Tests assert the Vietnamese text (985/985). Signed-in browser review per role is pending: SQL Server
+  (`MSSQLSERVER`) was stopped after the machine restart and needs an administrator to start it.
+
 ## CURRENT STATE (Claude takeover, 2026-10-22 evening) — read first
 
 - FINAL VERIFICATION (2026-10-22 21:20): full suite 964/964 PASS (81 files), full lint CLEAN, `tsc -b` CLEAN.

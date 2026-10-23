@@ -20,15 +20,15 @@ export function MedicalAccess({ children }: { children?: ReactNode }) {
   const runtime = useMemo(() => actor && token ? { actor, service: createMedicalService(token, auth.handleApiError) } : null,
     [actor, token, auth.handleApiError]);
   if (auth.status !== 'authenticated' || !actor || actor.accountStatus !== 'ACTIVE' || !actor.roles.includes('VETERINARIAN'))
-    return <AlertBanner type="danger" title="Access denied" />;
-  if (!runtime) return <AlertBanner type="danger" title="Sign in again to access medical care" />;
+    return <AlertBanner type="danger" title="Không có quyền truy cập" />;
+  if (!runtime) return <AlertBanner type="danger" title="Đăng nhập lại để truy cập phần y tế" />;
   return <MedicalProvider key={`${actor.id}:${auth.expiresAt}`} value={runtime}>
     <MedicalShell actor={actor}>{children}</MedicalShell>
   </MedicalProvider>;
 }
 
 function MedicalShell({ actor, children }: { actor: MedicalRuntime['actor']; children?: ReactNode }) {
-  return <AppShell user={{ fullName: actor.fullName, role: 'VETERINARIAN' }} breadcrumb={[{ label: 'Medical' }]}>
+  return <AppShell user={{ fullName: actor.fullName, role: 'VETERINARIAN' }} breadcrumb={[{ label: 'Y tế' }]}>
     <div className="medical-stack">
       <UiPreviewNotice />
       {children ?? <Outlet />}

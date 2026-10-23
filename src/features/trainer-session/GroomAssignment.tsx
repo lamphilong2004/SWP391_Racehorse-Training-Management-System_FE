@@ -18,11 +18,11 @@ export function GroomAssignment({ api, session, onSaved }: { api: ReturnType<typ
     finally { pending.current = false; setBusy(false); }
   }
   return <>
-    {candidates.error && <ErrorState title="Groom list unavailable" description={candidates.error} onRetry={candidates.reload} />}
-    {error && <AlertBanner type="danger" title="Assignment not confirmed">{error}</AlertBanner>}
-    <SelectField label="Assign Groom" placeholder="Choose an active Groom" value={selected} disabled={busy || candidates.pending}
+    {candidates.error && <ErrorState title="Không tải được danh sách Groom" description={candidates.error} onRetry={candidates.reload} />}
+    {error && <AlertBanner type="danger" title="Chưa xác nhận được phân công">{error}</AlertBanner>}
+    <SelectField label="Phân công Groom" placeholder="Chọn một Groom đang hoạt động" value={selected} disabled={busy || candidates.pending}
       options={(Array.isArray(candidates.data) ? candidates.data : []).map((groom) => ({ value: String(groom.id), label: groom.fullName }))}
       onChange={(event) => setSelected(event.target.value)} />
-    <Button disabled={busy || !selected} onClick={() => void save()}>Assign & notify Groom</Button>
+    <Button disabled={busy || !selected} onClick={() => void save()}>Phân công & thông báo Groom</Button>
   </>;
 }

@@ -7,8 +7,8 @@ import authStyles from '../../pages/LoginPage.module.css';
 import styles from './registration.module.css';
 import { passwordAllowed } from './validation';
 
-const NEUTRAL = 'If an account exists for this email, a reset link has been sent.';
-const busyMessage = (cause: unknown, fallback: string) => cause instanceof ApiError && cause.status === 429 ? 'Too many requests. Please try again later.' : fallback;
+const NEUTRAL = 'Nếu email này có tài khoản, liên kết đặt lại mật khẩu đã được gửi.';
+const busyMessage = (cause: unknown, fallback: string) => cause instanceof ApiError && cause.status === 429 ? 'Quá nhiều yêu cầu. Hãy thử lại sau.' : fallback;
 
 /** DEC-008 R9: same public layout as Request access; responses never reveal whether an account exists. */
 function AuthCard({ title, intro, children }: { title: string; intro: string; children: ReactNode }) {
@@ -20,7 +20,7 @@ function AuthCard({ title, intro, children }: { title: string; intro: string; ch
     </section>
     <section className={`${authStyles.formPanel} ${styles.registerPanel}`} aria-labelledby="password-reset-title">
       <div className={styles.registerContent}>
-        <Link className={styles.back} to={ROUTES.login}>← Back to sign in</Link>
+        <Link className={styles.back} to={ROUTES.login}>← Quay lại đăng nhập</Link>
         <header className={authStyles.heading}><h1 id="password-reset-title" className="text-landing-display-m">{title}</h1><p className="text-body-l">{intro}</p></header>
         {children}
       </div>
@@ -36,20 +36,20 @@ export function ForgotPasswordPage() {
     event.preventDefault();
     if (busy.current) return;
     const value = email.trim();
-    if (!/^[^\s@]+@[^\s@]+$/u.test(value) || value.length > 254) { setFieldError('Enter a valid email, up to 254 characters.'); document.getElementById(id)?.focus(); return; }
+    if (!/^[^\s@]+@[^\s@]+$/u.test(value) || value.length > 254) { setFieldError('Nhập email hợp lệ, tối đa 254 ký tự.'); document.getElementById(id)?.focus(); return; }
     busy.current = true; setPending(true); setFieldError(''); setError('');
     try { await requestApi('/api/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email: value }) }); setEmail(''); setDone(true); }
-    catch (cause) { setError(busyMessage(cause, 'Your request could not be sent. Try again.')); }
+    catch (cause) { setError(busyMessage(cause, 'Không gửi được yêu cầu. Hãy thử lại.')); }
     finally { busy.current = false; setPending(false); }
   }
-  return <AuthCard title="Reset password" intro="Enter the email of your account. Newly created staff accounts use this to set their first password.">
-    {done ? <div className={styles.stack}><AlertBanner type="success" title="Request received">{NEUTRAL}</AlertBanner>
-      <p className={styles.note}>The link expires after 30 minutes and works once. No email service is connected yet: in development the link is written to the server's development outbox.</p>
-      <ButtonLink variant="primary" to={ROUTES.login}>Return to sign in</ButtonLink></div> : <>
-      {error && <AlertBanner type="danger" title="Request not sent">{error}</AlertBanner>}
+  return <AuthCard title="Đặt lại mật khẩu" intro="Nhập email tài khoản của bạn. Tài khoản nhân sự mới tạo dùng chức năng này để đặt mật khẩu lần đầu.">
+    {done ? <div className={styles.stack}><AlertBanner type="success" title="Đã nhận yêu cầu">{NEUTRAL}</AlertBanner>
+      <p className={styles.note}>Liên kết hết hạn sau 30 phút và chỉ dùng được một lần. Hệ thống chưa kết nối dịch vụ email: trong môi trường phát triển, liên kết được ghi vào hộp thư thử nghiệm của máy chủ.</p>
+      <ButtonLink variant="primary" to={ROUTES.login}>Quay lại đăng nhập</ButtonLink></div> : <>
+      {error && <AlertBanner type="danger" title="Chưa gửi được yêu cầu">{error}</AlertBanner>}
       <form className={styles.stack} onSubmit={submit} noValidate aria-busy={pending}>
         <TextField id={id} label="Email" type="email" autoComplete="email" maxLength={254} required disabled={pending} value={email} error={fieldError} onChange={(event) => setEmail(event.target.value)} className={authStyles.loginField} />
-        <Button className={authStyles.submitButton} size="lg" type="submit" disabled={pending}>{pending ? 'Sending…' : 'Send reset link'}</Button>
+        <Button className={authStyles.submitButton} size="lg" type="submit" disabled={pending}>{pending ? 'Đang gửi…' : 'Gửi liên kết đặt lại'}</Button>
       </form>
     </>}
   </AuthCard>;
@@ -68,26 +68,26 @@ export function ResetPasswordPage() {
     event.preventDefault();
     if (busy.current) return;
     const issues: typeof errors = {};
-    if (!passwordAllowed(values.newPassword)) issues.newPassword = 'Use 8–64 characters with a letter and a digit, at most 72 UTF-8 bytes.';
-    if (!values.confirmPassword || values.confirmPassword !== values.newPassword) issues.confirmPassword = 'Passwords must match.';
+    if (!passwordAllowed(values.newPassword)) issues.newPassword = 'Dùng 8–64 ký tự, có chữ cái và chữ số, tối đa 72 byte UTF-8.';
+    if (!values.confirmPassword || values.confirmPassword !== values.newPassword) issues.confirmPassword = 'Mật khẩu nhập lại không khớp.';
     setErrors(issues); setError('');
     if (Object.keys(issues).length) { document.getElementById(`${prefix}-${Object.keys(issues)[0]}`)?.focus(); return; }
     busy.current = true; setPending(true);
     try { await requestApi<void>('/api/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, ...values }) }); setValues({ newPassword: '', confirmPassword: '' }); setDone(true); }
-    catch (cause) { setError(busyMessage(cause, 'This reset link is invalid, already used or expired. Request a new link.')); }
+    catch (cause) { setError(busyMessage(cause, 'Liên kết đặt lại không hợp lệ, đã dùng hoặc đã hết hạn. Hãy yêu cầu liên kết mới.')); }
     finally { busy.current = false; setPending(false); }
   }
   const field = (key: 'newPassword' | 'confirmPassword', label: string) => <TextField id={`${prefix}-${key}`} label={label} type={visible ? 'text' : 'password'} autoComplete="new-password" required disabled={pending} value={values[key]} error={errors[key]} onChange={(event) => setValues((current) => ({ ...current, [key]: event.target.value }))} className={authStyles.loginField} />;
-  return <AuthCard title="Set a new password" intro="Choose a new password for your account. Your role and account status do not change.">
-    {done ? <div className={styles.stack}><AlertBanner type="success" title="Password updated">Sign in with your new password.</AlertBanner><ButtonLink variant="primary" to={ROUTES.login}>Return to sign in</ButtonLink></div>
-      : !token ? <div className={styles.stack}><AlertBanner type="danger" title="Reset link missing">Open the full link from your reset message, or request a new one.</AlertBanner><ButtonLink variant="primary" to={ROUTES.forgotPassword}>Request a new link</ButtonLink></div> : <>
-        {error && <AlertBanner type="danger" title="Password not updated">{error} <Link to={ROUTES.forgotPassword}>Request a new link</Link></AlertBanner>}
+  return <AuthCard title="Đặt mật khẩu mới" intro="Chọn mật khẩu mới cho tài khoản. Vai trò và trạng thái tài khoản không thay đổi.">
+    {done ? <div className={styles.stack}><AlertBanner type="success" title="Đã cập nhật mật khẩu">Hãy đăng nhập bằng mật khẩu mới.</AlertBanner><ButtonLink variant="primary" to={ROUTES.login}>Quay lại đăng nhập</ButtonLink></div>
+      : !token ? <div className={styles.stack}><AlertBanner type="danger" title="Thiếu liên kết đặt lại">Mở đầy đủ liên kết trong thư đặt lại, hoặc yêu cầu liên kết mới.</AlertBanner><ButtonLink variant="primary" to={ROUTES.forgotPassword}>Yêu cầu liên kết mới</ButtonLink></div> : <>
+        {error && <AlertBanner type="danger" title="Chưa cập nhật được mật khẩu">{error} <Link to={ROUTES.forgotPassword}>Yêu cầu liên kết mới</Link></AlertBanner>}
         <form className={styles.stack} onSubmit={submit} noValidate aria-busy={pending}>
-          {field('newPassword', 'New password')}
-          {field('confirmPassword', 'Confirm new password')}
-          <p className={styles.note}>Password: 8–64 characters, including a letter and a digit, at most 72 UTF-8 bytes.</p>
-          <Button variant="tertiary" disabled={pending} aria-pressed={visible} onClick={() => setVisible((value) => !value)}>{visible ? 'Hide passwords' : 'Show passwords'}</Button>
-          <Button className={authStyles.submitButton} size="lg" type="submit" disabled={pending}>{pending ? 'Saving…' : 'Set new password'}</Button>
+          {field('newPassword', 'Mật khẩu mới')}
+          {field('confirmPassword', 'Nhập lại mật khẩu mới')}
+          <p className={styles.note}>Mật khẩu: 8–64 ký tự, có chữ cái và chữ số, tối đa 72 byte UTF-8.</p>
+          <Button variant="tertiary" disabled={pending} aria-pressed={visible} onClick={() => setVisible((value) => !value)}>{visible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}</Button>
+          <Button className={authStyles.submitButton} size="lg" type="submit" disabled={pending}>{pending ? 'Đang lưu…' : 'Đặt mật khẩu mới'}</Button>
         </form>
       </>}
   </AuthCard>;

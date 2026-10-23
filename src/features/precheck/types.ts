@@ -1,9 +1,9 @@
 export const CHECK_ITEMS = [
-  { key: 'GENERAL_CONDITION', label: 'General condition', hint: 'Alert, normal posture, no signs of distress' },
-  { key: 'APPETITE_BEHAVIOUR', label: 'Appetite & behaviour', hint: 'Ate the morning feed; behaving as usual' },
-  { key: 'LEGS_HOOVES', label: 'Legs & hooves', hint: 'No heat, no visible swelling, shoes secure' },
-  { key: 'MOVEMENT', label: 'Movement when led out', hint: 'Sound when walked out — no visible lameness' },
-  { key: 'TEMPERATURE', label: 'Temperature (if needed)', hint: 'Take only if something seems off; record if not needed' },
+  { key: 'GENERAL_CONDITION', label: 'Thể trạng chung', hint: 'Tỉnh táo, tư thế bình thường, không có dấu hiệu khó chịu' },
+  { key: 'APPETITE_BEHAVIOUR', label: 'Ăn uống & hành vi', hint: 'Đã ăn bữa sáng; hành vi như thường ngày' },
+  { key: 'LEGS_HOOVES', label: 'Chân & móng', hint: 'Không nóng, không sưng, móng sắt chắc chắn' },
+  { key: 'MOVEMENT', label: 'Dáng đi khi dắt ra', hint: 'Đi bình thường — không có dấu hiệu khập khiễng' },
+  { key: 'TEMPERATURE', label: 'Nhiệt độ (nếu cần)', hint: 'Chỉ đo khi thấy bất thường; ghi chú nếu không cần đo' },
 ] as const;
 export type CheckKey = typeof CHECK_ITEMS[number]['key'];
 export type CheckItem = { result: 'NORMAL' | 'ABNORMAL'; observation?: string };

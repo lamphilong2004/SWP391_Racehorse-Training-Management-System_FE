@@ -12,7 +12,7 @@ export interface WizardStepperProps {
   className?: string;
 }
 
-export function WizardStepper({ steps, currentStep, onStepClick, label = 'Progress', className }: WizardStepperProps) {
+export function WizardStepper({ steps, currentStep, onStepClick, label = 'Tiến độ', className }: WizardStepperProps) {
   return (
     <ol aria-label={label} className={cx(styles.stepper, className)}>
       {steps.map((step, index) => {

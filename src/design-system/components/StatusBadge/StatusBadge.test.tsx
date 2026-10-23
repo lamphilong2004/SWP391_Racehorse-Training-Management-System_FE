@@ -38,6 +38,6 @@ describe('StatusBadge', () => {
 
   it('shows the human label, not the enum key', () => {
     render(<StatusBadge family="incident" status="UNDER_REVIEW" />);
-    expect(screen.getByText('UNDER REVIEW')).toBeInTheDocument();
+    expect(screen.getByText('Đang xem xét')).toBeInTheDocument();
   });
 });

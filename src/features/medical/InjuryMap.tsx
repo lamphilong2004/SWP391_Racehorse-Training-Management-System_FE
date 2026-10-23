@@ -6,7 +6,8 @@ import head from './assets/head.svg';
 import halo from './assets/halo.svg';
 import marker from './assets/marker.svg';
 
-import { BODY_REGIONS } from './bodyRegions';
+import { BODY_REGIONS, regionLabel } from './bodyRegions';
+import { viLabel } from '../../shared/viLabels';
 // Schematic side-view positions; never converted to backend 3D coordinates.
 const points: Record<string, [number, number]> = {
   Head: [494, 146], Neck: [463, 175], Shoulder: [440, 207], 'Left Forelimb': [436, 326],
@@ -18,8 +19,8 @@ export function InjuryMap({ injuries }: { injuries: Injury[] }) {
   const point = points[selected];
   return <div className="medical-grid">
     <div className="medical-stack">
-      <p className="text-caption">2D schematic fallback. The interactive 3D model is unavailable.</p>
-      <div className="medical-map" role="img" aria-label={'Side-view horse injury schematic: ' + selected}>
+      <p className="text-caption">Sơ đồ 2D thay thế. Mô hình 3D tương tác hiện không khả dụng.</p>
+      <div className="medical-map" role="img" aria-label={'Sơ đồ chấn thương ngựa nhìn từ bên: ' + regionLabel(selected)}>
         <div className="medical-map-canvas">
           <img src={body} className="medical-map-body" alt="" width={300} height={90} />
           <img src={head} className="medical-map-head" alt="" width={70} height={55} />
@@ -28,8 +29,8 @@ export function InjuryMap({ injuries }: { injuries: Injury[] }) {
         </div>
       </div>
     </div>
-    <div className="medical-stack"><Card title="Body Region"><div className="medical-region-list">{BODY_REGIONS.map((region) => <Button key={region} variant={selected === region ? 'secondary' : 'tertiary'} aria-pressed={selected === region} onClick={() => setSelected(region)}>{region}</Button>)}</div></Card>
-      <Card title="Injury Details">{injury ? <div className="medical-stack"><KeyValue label="Region" value={injury.bodyRegion} /><KeyValue label="Severity" value={injury.severity} /><KeyValue label="Recovery" value={injury.recoveryStatus} />{injury.position3d && <p>Position marker: {injury.position3d}</p>}</div> : <EmptyState title="No injury in this region" />}</Card>
+    <div className="medical-stack"><Card title="Vùng cơ thể"><div className="medical-region-list">{BODY_REGIONS.map((region) => <Button key={region} variant={selected === region ? 'secondary' : 'tertiary'} aria-pressed={selected === region} onClick={() => setSelected(region)}>{regionLabel(region)}</Button>)}</div></Card>
+      <Card title="Chi tiết chấn thương">{injury ? <div className="medical-stack"><KeyValue label="Vùng" value={regionLabel(injury.bodyRegion)} /><KeyValue label="Mức độ" value={viLabel(injury.severity)} /><KeyValue label="Hồi phục" value={viLabel(injury.recoveryStatus)} />{injury.position3d && <p>Điểm đánh dấu vị trí: {injury.position3d}</p>}</div> : <EmptyState title="Không có chấn thương ở vùng này" />}</Card>
     </div>
   </div>;
 }

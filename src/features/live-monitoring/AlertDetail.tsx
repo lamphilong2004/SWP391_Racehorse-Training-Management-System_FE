@@ -13,25 +13,25 @@ export function AlertDetail({ alert, horse, canAcknowledge, busy, error, onClose
   alert?: MonitoringAlertView; horse?: string; canAcknowledge: boolean; busy: boolean; error?: string;
   onClose: () => void; onAcknowledge: (id: number) => void;
 }) {
-  return <Modal open={!!alert} onClose={onClose} title="Alert Detail" footer={<>
-    <Button variant="secondary" onClick={onClose}>Close alert</Button>
-    {alert?.severity === 'CRITICAL' && alert.id && !alert.acknowledgedAt && canAcknowledge && <Button disabled={busy} onClick={() => onAcknowledge(alert.id!)}>Acknowledge alert</Button>}
+  return <Modal open={!!alert} onClose={onClose} title="Chi tiết cảnh báo" footer={<>
+    <Button variant="secondary" onClick={onClose}>Đóng cảnh báo</Button>
+    {alert?.severity === 'CRITICAL' && alert.id && !alert.acknowledgedAt && canAcknowledge && <Button disabled={busy} onClick={() => onAcknowledge(alert.id!)}>Xác nhận cảnh báo</Button>}
   </>}>
     {alert && <div className={styles.stack}>
       <StatusBadge family="realtime" status={alert.severity} />
-      {alert.simulated && <AlertBanner type="simulated" title="SIMULATED DEMO DATA">This alert was marked simulated by the server.</AlertBanner>}
-      {error && <AlertBanner type="danger" title="Action not confirmed">{error}</AlertBanner>}
+      {alert.simulated && <AlertBanner type="simulated" title="DỮ LIỆU MÔ PHỎNG">Máy chủ đánh dấu cảnh báo này là dữ liệu mô phỏng.</AlertBanner>}
+      {error && <AlertBanner type="danger" title="Chưa xác nhận thao tác">{error}</AlertBanner>}
       <div className={styles.fields}>
-        <KeyValue label="Horse" value={horse ?? 'Not provided'} /><KeyValue label="Session" value={String(alert.sessionId)} />
-        <KeyValue label="Alert ID" value={alert.id ?? 'Unavailable · transient WARNING event'} /><KeyValue label="Metric" value={alert.metric ?? 'Not provided'} />
-        <KeyValue label="Metric value" value={metric(alert.metricValue, 'bpm')} /><KeyValue label="Applied threshold" value={metric(alert.thresholdApplied, 'bpm')} />
-        <KeyValue label="Raised at" value={dateTime(alert.raisedAt)} /><KeyValue label="Acknowledged at" value={dateTime(alert.acknowledgedAt)} />
-        <KeyValue label="Acknowledged by" value={alert.acknowledgedBy?.fullName ?? 'Not provided'} /><KeyValue label="Action taken" value={alert.actionTaken ?? 'Not provided'} />
-        <KeyValue label="Escalated to Veterinarian" value={dateTime(alert.escalatedToVetAt)} /><KeyValue label="Current exercise / repetition" value="Not provided" />
+        <KeyValue label="Ngựa" value={horse ?? 'Chưa cung cấp'} /><KeyValue label="Buổi tập" value={String(alert.sessionId)} />
+        <KeyValue label="Mã cảnh báo" value={alert.id ?? 'Không có · cảnh báo tạm thời'} /><KeyValue label="Chỉ số" value={alert.metric ?? 'Chưa cung cấp'} />
+        <KeyValue label="Giá trị đo" value={metric(alert.metricValue, 'bpm')} /><KeyValue label="Ngưỡng áp dụng" value={metric(alert.thresholdApplied, 'bpm')} />
+        <KeyValue label="Phát lúc" value={dateTime(alert.raisedAt)} /><KeyValue label="Xác nhận lúc" value={dateTime(alert.acknowledgedAt)} />
+        <KeyValue label="Người xác nhận" value={alert.acknowledgedBy?.fullName ?? 'Chưa cung cấp'} /><KeyValue label="Biện pháp đã thực hiện" value={alert.actionTaken ?? 'Chưa cung cấp'} />
+        <KeyValue label="Đã chuyển Veterinarian" value={dateTime(alert.escalatedToVetAt)} /><KeyValue label="Bài tập / lượt hiện tại" value="Chưa cung cấp" />
       </div>
-      <p>The server supplies severity and the applied threshold. No clinical classification or threshold is calculated here.</p>
-      {alert.severity === 'WARNING' && <p>WARNING is transient and cannot be acknowledged through the persisted critical-alert API.</p>}
-      {!canAcknowledge && <p>Read-only. Only the assigned Trainer or Veterinarian may acknowledge a critical alert.</p>}
+      <p>Máy chủ cung cấp mức độ và ngưỡng áp dụng. Ở đây không tự phân loại y tế hay tính ngưỡng.</p>
+      {alert.severity === 'WARNING' && <p>Cảnh báo thường chỉ là tạm thời và không xác nhận được như cảnh báo nghiêm trọng.</p>}
+      {!canAcknowledge && <p>Chỉ xem. Chỉ Trainer được phân công hoặc Veterinarian mới được xác nhận cảnh báo nghiêm trọng.</p>}
     </div>}
   </Modal>;
 }

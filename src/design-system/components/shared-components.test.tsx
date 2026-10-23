@@ -36,10 +36,10 @@ describe('design-system barrel', () => {
 
 describe('Checkbox', () => {
   it('toggles and stays labelled', async () => {
-    render(<Checkbox label="Remember me" />);
-    const box = screen.getByRole('checkbox', { name: 'Remember me' });
+    render(<Checkbox label="Ghi nhớ đăng nhập" />);
+    const box = screen.getByRole('checkbox', { name: 'Ghi nhớ đăng nhập' });
     expect(box).not.toBeChecked();
-    await userEvent.click(screen.getByText('Remember me'));
+    await userEvent.click(screen.getByText('Ghi nhớ đăng nhập'));
     expect(box).toBeChecked();
   });
 
@@ -58,8 +58,8 @@ describe('ValidationNotice', () => {
       </ValidationNotice>,
     );
     const notice = screen.getByRole('alert');
-    expect(notice).toHaveTextContent('Category A · Medical hard block');
-    expect(notice).toHaveTextContent('Cannot override');
+    expect(notice).toHaveTextContent('Loại A · Chặn bắt buộc do y tế');
+    expect(notice).toHaveTextContent('Không thể bỏ qua');
     expect(notice).toHaveTextContent('Only the Veterinarian can change this.');
     expect(container.querySelector('[data-icon="shield-alert"]')).not.toBeNull();
   });
@@ -68,8 +68,8 @@ describe('ValidationNotice', () => {
     render(
       <ValidationNotice category="c" title="Previous workload was HIGH" actions={<Checkbox label="I acknowledge this warning" />} />,
     );
-    expect(screen.getByRole('status')).toHaveTextContent('Category C · Warning / caution');
-    expect(screen.queryByText('Cannot override')).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Loại C · Cảnh báo / thận trọng');
+    expect(screen.queryByText('Không thể bỏ qua')).not.toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: 'I acknowledge this warning' })).toBeInTheDocument();
   });
 });
@@ -77,7 +77,7 @@ describe('ValidationNotice', () => {
 describe('ChartContainer', () => {
   const base = {
     title: 'Heart rate over time',
-    seriesLabel: 'Heart rate',
+    seriesLabel: 'Nhịp tim',
     yTicks: [190, 170, 150, 130, 110],
     xLabels: ['0 min', '16 min'],
     threshold: { value: 180, label: 'Threshold 180 bpm' },
@@ -85,13 +85,13 @@ describe('ChartContainer', () => {
 
   it('plots the series with a threshold label', () => {
     render(<ChartContainer {...base} values={[125, 150, 179]} />);
-    expect(screen.getByRole('img', { name: 'Heart rate: 125, 150, 179' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Nhịp tim: 125, 150, 179' })).toBeInTheDocument();
     expect(screen.getByText('Threshold 180 bpm')).toBeInTheDocument();
   });
 
   it('shows the empty state instead of zeroes', () => {
     render(<ChartContainer {...base} values={[]} />);
-    expect(screen.getByText('No data for this period')).toBeInTheDocument();
+    expect(screen.getByText('Không có dữ liệu trong khoảng thời gian này')).toBeInTheDocument();
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
   });
 });
@@ -101,14 +101,14 @@ describe('HorseCard and CandidateCard', () => {
     const { container } = render(
       <HorseCard
         name="Night Runner"
-        meta="NR-007 · Arabian · 6 yrs · Box C-11"
+        meta="NR-007 · Arabian · 6 yrs · Ô C-11"
         availability="LOCKED"
-        facts={[{ label: 'Next session', value: 'None — blocked' }]}
-        action={<Button variant="tertiary">View profile</Button>}
+        facts={[{ label: 'Buổi tập tiếp theo', value: 'None — blocked' }]}
+        action={<Button variant="tertiary">Xem hồ sơ</Button>}
       />,
     );
     expect(screen.getByRole('heading', { name: 'Night Runner' })).toBeInTheDocument();
-    expect(screen.getByText('LOCKED')).toBeInTheDocument();
+    expect(screen.getByText('Khóa')).toBeInTheDocument();
     expect(container.querySelector('[data-icon="lock"]')).not.toBeNull();
     expect(screen.getByText('None — blocked')).toBeInTheDocument();
   });
@@ -119,15 +119,15 @@ describe('HorseCard and CandidateCard', () => {
         name="Tran Minh Khoa"
         subtitle="Trainer · 6 yrs experience"
         tags={['Sprint']}
-        facts={[{ label: 'Active programs', value: '2' }]}
-        actions={<Button>Select</Button>}
+        facts={[{ label: 'Chương trình đang hoạt động', value: '2' }]}
+        actions={<Button>Chọn</Button>}
       />,
     );
     expect(screen.getByText('TK')).toBeInTheDocument();
-    expect(screen.getByRole('list', { name: 'Skills' })).toHaveTextContent('Sprint');
-    expect(screen.getByRole('term')).toHaveTextContent('Active programs');
+    expect(screen.getByRole('list', { name: 'Kỹ năng' })).toHaveTextContent('Sprint');
+    expect(screen.getByRole('term')).toHaveTextContent('Chương trình đang hoạt động');
     expect(screen.getByRole('definition')).toHaveTextContent('2');
-    expect(screen.getByRole('button', { name: 'Select' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Chọn' })).toBeInTheDocument();
   });
 });
 
@@ -136,10 +136,10 @@ describe('PhotoAttachmentTile', () => {
     const onAdd = vi.fn();
     const onRemove = vi.fn();
     const { rerender } = render(<PhotoAttachmentTile state="empty" onAdd={onAdd} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Add photo' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Thêm ảnh' }));
     expect(onAdd).toHaveBeenCalled();
     rerender(<PhotoAttachmentTile state="attached" fileName="photo_01.jpg" onRemove={onRemove} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Remove photo_01.jpg' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Xóa photo_01.jpg' }));
     expect(onRemove).toHaveBeenCalled();
   });
 });
@@ -148,9 +148,9 @@ describe('NotificationItem', () => {
   it('marks unread items and hides the dot once read', () => {
     const props = { title: 'Preventive task due', body: 'Vaccination is due today.', time: '08:00' };
     const { rerender } = render(<NotificationItem {...props} read={false} />);
-    expect(screen.getByRole('img', { name: 'Unread' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Chưa đọc' })).toBeInTheDocument();
     rerender(<NotificationItem {...props} read />);
-    expect(screen.queryByRole('img', { name: 'Unread' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'Chưa đọc' })).not.toBeInTheDocument();
   });
 });
 
@@ -174,17 +174,17 @@ describe('StableBoxTile', () => {
 
 describe('LoadingState and ErrorState', () => {
   it('announces loading politely', () => {
-    render(<LoadingState label="Loading horses…" />);
+    render(<LoadingState label="Đang tải danh sách ngựa…" />);
     const status = screen.getByRole('status');
     expect(status).toHaveAttribute('aria-busy', 'true');
-    expect(status).toHaveTextContent('Loading horses…');
+    expect(status).toHaveTextContent('Đang tải danh sách ngựa…');
   });
 
   it('shows the error with a retry action', async () => {
     const onRetry = vi.fn();
     render(<ErrorState title="Horses could not be loaded" description="Try again." onRetry={onRetry} />);
     expect(screen.getByRole('alert')).toHaveTextContent('Horses could not be loaded');
-    await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Thử lại' }));
     expect(onRetry).toHaveBeenCalled();
   });
 });

@@ -25,10 +25,10 @@ function mount(path = '/admin/registrations', options: { signedIn?: boolean; rol
   return { selected, router, api };
 }
 async function fillPublic() {
-  fireEvent.change(await screen.findByLabelText('Full name'), { target: { value: 'Applicant fixture' } });
+  fireEvent.change(await screen.findByLabelText('Họ và tên'), { target: { value: 'Applicant fixture' } });
   fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'applicant@example.test' } });
-  fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'FixturePassword123' } });
-  fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'FixturePassword123' } });
+  fireEvent.change(screen.getByLabelText('Mật khẩu'), { target: { value: 'FixturePassword123' } });
+  fireEvent.change(screen.getByLabelText('Nhập lại mật khẩu'), { target: { value: 'FixturePassword123' } });
 }
 afterEach(() => { localStorage.clear(); sessionStorage.clear(); vi.restoreAllMocks(); });
 
@@ -37,42 +37,42 @@ describe('CORE-048 public registration', () => {
     const { selected, api } = mount('/register', { signedIn: false });
     await fillPublic();
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Submit access request' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Gửi yêu cầu truy cập' }));
     expect(await screen.findByText(NEUTRAL_CONFIRMATION)).toBeInTheDocument();
     expect(selected.register).toHaveBeenCalledWith({ fullName: 'Applicant fixture', email: 'applicant@example.test', password: 'FixturePassword123', confirmPassword: 'FixturePassword123' });
     expect(api.login).not.toHaveBeenCalled();
     expect(authSession.read()).toBeNull();
     expect(localStorage.length).toBe(0); expect(sessionStorage.length).toBe(0);
     expect(document.querySelector('input[type=password]')).toBeNull();
-    await userEvent.click(screen.getByRole('link', { name: 'Return to sign in' }));
-    expect(await screen.findByRole('button', { name: 'Sign In' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('link', { name: 'Quay lại đăng nhập' }));
+    expect(await screen.findByRole('button', { name: 'Đăng nhập' })).toBeInTheDocument();
   });
   it('validates password length without browser UTF-16 truncation', async () => {
     const { selected } = mount('/register', { signedIn: false }); await fillPublic();
     const password = 'A1' + 'a'.repeat(58) + '🐎'.repeat(3);
     expect(Array.from(password)).toHaveLength(63);
     expect(new TextEncoder().encode(password)).toHaveLength(72);
-    expect(screen.getByLabelText('Password')).not.toHaveAttribute('maxlength');
-    fireEvent.change(screen.getByLabelText('Password'), { target: { value: password } });
-    fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: password } });
-    await userEvent.click(screen.getByRole('button', { name: 'Submit access request' }));
+    expect(screen.getByLabelText('Mật khẩu')).not.toHaveAttribute('maxlength');
+    fireEvent.change(screen.getByLabelText('Mật khẩu'), { target: { value: password } });
+    fireEvent.change(screen.getByLabelText('Nhập lại mật khẩu'), { target: { value: password } });
+    await userEvent.click(screen.getByRole('button', { name: 'Gửi yêu cầu truy cập' }));
     await screen.findByText(NEUTRAL_CONFIRMATION);
     expect(selected.register).toHaveBeenCalledWith(expect.objectContaining({ password, confirmPassword: password }));
   });
   it('blocks mismatched credentials and allows correction', async () => {
     const { selected } = mount('/register', { signedIn: false });
     await fillPublic();
-    fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'mismatch' } });
-    await userEvent.click(screen.getByRole('button', { name: 'Submit access request' }));
-    expect(await screen.findByText('Passwords must match.')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Nhập lại mật khẩu'), { target: { value: 'mismatch' } });
+    await userEvent.click(screen.getByRole('button', { name: 'Gửi yêu cầu truy cập' }));
+    expect(await screen.findByText('Mật khẩu nhập lại không khớp.')).toBeInTheDocument();
     expect(selected.register).not.toHaveBeenCalled();
-    expect(screen.getByLabelText('Password')).toHaveValue('FixturePassword123');
+    expect(screen.getByLabelText('Mật khẩu')).toHaveValue('FixturePassword123');
   });
   it.each([400, 429, 500])('keeps public HTTP %s neutral without exposing server details', async (status) => {
     const selected = service(); vi.mocked(selected.register).mockRejectedValue(new ApiError(status, 'VALIDATION_ERROR', 'Email exists / secret-password-value'));
     mount('/register', { signedIn: false, selected }); await fillPublic();
-    await userEvent.click(screen.getByRole('button', { name: 'Submit access request' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent(status === 429 ? 'Too many requests' : 'Your request could not be confirmed');
+    await userEvent.click(screen.getByRole('button', { name: 'Gửi yêu cầu truy cập' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(status === 429 ? 'Quá nhiều yêu cầu' : 'Chưa xác nhận được yêu cầu');
     expect(screen.queryByText(/Email exists|secret-password-value/)).not.toBeInTheDocument();
     expect(screen.getByLabelText('Email')).toHaveValue('applicant@example.test');
   });
@@ -80,19 +80,19 @@ describe('CORE-048 public registration', () => {
     let resolve!: () => void;
     const selected = service(); vi.mocked(selected.register).mockImplementation(() => new Promise<void>((done) => { resolve = done; }));
     mount('/register', { signedIn: false, selected }); await fillPublic();
-    const form = screen.getByRole('button', { name: 'Submit access request' }).closest('form')!;
+    const form = screen.getByRole('button', { name: 'Gửi yêu cầu truy cập' }).closest('form')!;
     fireEvent.submit(form); fireEvent.submit(form);
-    expect(selected.register).toHaveBeenCalledOnce(); expect(screen.getByLabelText('Password')).toBeDisabled();
+    expect(selected.register).toHaveBeenCalledOnce(); expect(screen.getByLabelText('Mật khẩu')).toBeDisabled();
     await act(async () => resolve()); await screen.findByText(NEUTRAL_CONFIRMATION);
   });
   it('shows/hides passwords and cancels to the existing login without submitting', async () => {
     const { selected } = mount('/register', { signedIn: false }); await fillPublic();
-    await userEvent.click(screen.getByRole('button', { name: 'Show passwords' }));
-    expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'text');
-    await userEvent.click(screen.getByRole('button', { name: 'Hide passwords' }));
-    expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'password');
-    await userEvent.click(screen.getByRole('link', { name: /Back to sign in/ }));
-    await screen.findByRole('button', { name: 'Sign In' }); expect(selected.register).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', { name: 'Hiện mật khẩu' }));
+    expect(screen.getByLabelText('Mật khẩu')).toHaveAttribute('type', 'text');
+    await userEvent.click(screen.getByRole('button', { name: 'Ẩn mật khẩu' }));
+    expect(screen.getByLabelText('Mật khẩu')).toHaveAttribute('type', 'password');
+    await userEvent.click(screen.getByRole('link', { name: /← Quay lại đăng nhập/ }));
+    await screen.findByRole('button', { name: 'Đăng nhập' }); expect(selected.register).not.toHaveBeenCalled();
   });
   it('keeps signed-in actors on their existing workspace rather than registering another account', async () => {
     const { selected } = mount('/register');
@@ -104,12 +104,12 @@ describe('CORE-048 public registration', () => {
 describe('CORE-048 review access and lifecycle', () => {
   it.each(ROLE_CODES.filter((role) => role !== 'CLUB_MANAGER'))('denies %s before requesting registrations', async (role) => {
     const { selected } = mount(undefined, { roles: [role] });
-    await screen.findByText('Registration review is available to Club Managers only.');
+    await screen.findByText('Chỉ Club Manager được duyệt đăng ký.');
     expect(selected.list).not.toHaveBeenCalled();
   });
   it('redirects anonymous review to shared sign-in without an admin request', async () => {
     const { selected } = mount(undefined, { signedIn: false });
-    await screen.findByRole('button', { name: 'Sign In' }); expect(selected.list).not.toHaveBeenCalled();
+    await screen.findByRole('button', { name: 'Đăng nhập' }); expect(selected.list).not.toHaveBeenCalled();
   });
   it('accepts a multi-role Club Manager and loads through the shared session', async () => {
     const { selected } = mount(undefined, { roles: ['GROOM', 'CLUB_MANAGER'] });
@@ -121,95 +121,95 @@ describe('CORE-048 review access and lifecycle', () => {
     vi.mocked(selected.list).mockImplementation(async () => page([{ ...pending, ...(approved ? { status: 'APPROVED' as const, approvedRoleCode: 'GROOM' as const, createdUserId: 9 } : {}) }]));
     vi.mocked(selected.approve).mockImplementation(async () => { approved = true; return { ...pending, status: 'APPROVED', approvedRoleCode: 'GROOM' }; });
     mount(undefined, { selected });
-    await userEvent.click(await screen.findByRole('button', { name: 'Approve request 5' }));
-    expect(screen.getByLabelText('Assigned role')).toHaveValue('');
-    await userEvent.click(screen.getByRole('button', { name: 'Confirm approval' }));
-    expect(await screen.findByText('Choose exactly one role before approving.')).toBeInTheDocument(); expect(selected.approve).not.toHaveBeenCalled();
-    await userEvent.selectOptions(screen.getByLabelText('Assigned role'), 'GROOM');
-    await userEvent.click(screen.getByRole('button', { name: 'Confirm approval' }));
-    await screen.findByText('Request 5 approved.'); await screen.findByText('Reviewed');
+    await userEvent.click(await screen.findByRole('button', { name: 'Duyệt yêu cầu 5' }));
+    expect(screen.getByLabelText('Vai trò được cấp')).toHaveValue('');
+    await userEvent.click(screen.getByRole('button', { name: 'Xác nhận duyệt' }));
+    expect(await screen.findByText('Hãy chọn đúng một vai trò trước khi duyệt.')).toBeInTheDocument(); expect(selected.approve).not.toHaveBeenCalled();
+    await userEvent.selectOptions(screen.getByLabelText('Vai trò được cấp'), 'GROOM');
+    await userEvent.click(screen.getByRole('button', { name: 'Xác nhận duyệt' }));
+    await screen.findByText('Đã duyệt yêu cầu 5.'); await screen.findByText('Đã đánh giá');
     expect(selected.approve).toHaveBeenCalledWith(5, 'GROOM', { token: 'test-only-session' });
-    expect(screen.queryByRole('button', { name: 'Approve request 5' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Duyệt yêu cầu 5' })).not.toBeInTheDocument();
   });
   it('rejects with a reason and keeps the reason on the decided request', async () => {
     const selected = service(); let rejected = false;
     vi.mocked(selected.list).mockImplementation(async () => page([{ ...pending, ...(rejected ? { status: 'REJECTED' as const, decisionReason: 'Not eligible' } : {}) }]));
     vi.mocked(selected.reject).mockImplementation(async () => { rejected = true; return { ...pending, status: 'REJECTED', decisionReason: 'Not eligible' }; });
-    mount(undefined, { selected }); await userEvent.click(await screen.findByRole('button', { name: 'Reject request 5' }));
-    fireEvent.change(screen.getByLabelText('Rejection reason (optional)'), { target: { value: 'Not eligible' } });
-    await userEvent.click(screen.getByRole('button', { name: 'Confirm rejection' }));
-    await screen.findByText('Request 5 rejected.'); await screen.findByText('Not eligible');
+    mount(undefined, { selected }); await userEvent.click(await screen.findByRole('button', { name: 'Từ chối yêu cầu 5' }));
+    fireEvent.change(screen.getByLabelText('Lý do từ chối (không bắt buộc)'), { target: { value: 'Not eligible' } });
+    await userEvent.click(screen.getByRole('button', { name: 'Xác nhận từ chối' }));
+    await screen.findByText('Đã từ chối yêu cầu 5.'); await screen.findByText('Not eligible');
     expect(selected.reject).toHaveBeenCalledWith(5, 'Not eligible', { token: 'test-only-session' });
   });
   it('cancels a review without writing or selecting a default role', async () => {
-    const { selected } = mount(); await userEvent.click(await screen.findByRole('button', { name: 'Approve request 5' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    const { selected } = mount(); await userEvent.click(await screen.findByRole('button', { name: 'Duyệt yêu cầu 5' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Hủy' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument(); expect(selected.approve).not.toHaveBeenCalled(); expect(selected.reject).not.toHaveBeenCalled();
   });
   it('blocks duplicate decisions until the pending mutation completes', async () => {
     let finish!: (value: RegistrationRequest) => void; const selected = service();
     vi.mocked(selected.approve).mockImplementation(() => new Promise((resolve) => { finish = resolve; }));
-    mount(undefined, { selected }); await userEvent.click(await screen.findByRole('button', { name: 'Approve request 5' }));
-    await userEvent.selectOptions(screen.getByLabelText('Assigned role'), 'GROOM');
+    mount(undefined, { selected }); await userEvent.click(await screen.findByRole('button', { name: 'Duyệt yêu cầu 5' }));
+    await userEvent.selectOptions(screen.getByLabelText('Vai trò được cấp'), 'GROOM');
     const dialog = screen.getByRole('dialog'); const form = dialog.querySelector('form')!;
     fireEvent.submit(form); fireEvent.submit(form); expect(selected.approve).toHaveBeenCalledOnce();
-    expect(screen.getByLabelText('Assigned role')).toBeDisabled();
+    expect(screen.getByLabelText('Vai trò được cấp')).toBeDisabled();
     await act(async () => finish({ ...pending, status: 'APPROVED', approvedRoleCode: 'GROOM' }));
   });
   it('keeps a 409 decision unconfirmed and refreshes before another decision', async () => {
     const selected = service(); vi.mocked(selected.approve).mockRejectedValue(new ApiError(409, 'CONFLICT', 'Changed'));
-    mount(undefined, { selected }); await userEvent.click(await screen.findByRole('button', { name: 'Approve request 5' }));
-    await userEvent.selectOptions(screen.getByLabelText('Assigned role'), 'GROOM'); await userEvent.click(screen.getByRole('button', { name: 'Confirm approval' }));
-    await screen.findByText('This request could not be decided. Refresh the list before deciding again.');
-    expect(screen.getByLabelText('Assigned role')).toHaveValue('GROOM'); expect(screen.getByRole('button', { name: 'Confirm approval' })).toBeDisabled();
-    expect(screen.queryByText('Request 5 approved.')).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Close and refresh' })); await screen.findByText('Applicant fixture');
+    mount(undefined, { selected }); await userEvent.click(await screen.findByRole('button', { name: 'Duyệt yêu cầu 5' }));
+    await userEvent.selectOptions(screen.getByLabelText('Vai trò được cấp'), 'GROOM'); await userEvent.click(screen.getByRole('button', { name: 'Xác nhận duyệt' }));
+    await screen.findByText('Không xử lý được yêu cầu này. Hãy làm mới danh sách rồi quyết định lại.');
+    expect(screen.getByLabelText('Vai trò được cấp')).toHaveValue('GROOM'); expect(screen.getByRole('button', { name: 'Xác nhận duyệt' })).toBeDisabled();
+    expect(screen.queryByText('Đã duyệt yêu cầu 5.')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Đóng và làm mới' })); await screen.findByText('Applicant fixture');
     expect(selected.list).toHaveBeenCalledTimes(2);
   });
   it('keeps a confirmed approval successful if list readback fails', async () => {
     const selected = service(); vi.mocked(selected.list).mockResolvedValueOnce(page()).mockRejectedValue(new Error('Readback failed'));
-    mount(undefined, { selected }); await userEvent.click(await screen.findByRole('button', { name: 'Approve request 5' }));
-    await userEvent.selectOptions(screen.getByLabelText('Assigned role'), 'GROOM'); await userEvent.click(screen.getByRole('button', { name: 'Confirm approval' }));
-    await screen.findByText('Request 5 approved.'); await screen.findByText('Readback failed');
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument(); expect(screen.queryByRole('button', { name: 'Approve request 5' })).not.toBeInTheDocument();
+    mount(undefined, { selected }); await userEvent.click(await screen.findByRole('button', { name: 'Duyệt yêu cầu 5' }));
+    await userEvent.selectOptions(screen.getByLabelText('Vai trò được cấp'), 'GROOM'); await userEvent.click(screen.getByRole('button', { name: 'Xác nhận duyệt' }));
+    await screen.findByText('Đã duyệt yêu cầu 5.'); await screen.findByText('Readback failed');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument(); expect(screen.queryByRole('button', { name: 'Duyệt yêu cầu 5' })).not.toBeInTheDocument();
   });
   it('keeps a rejected API decision editable without claiming success', async () => {
     const selected = service(); vi.mocked(selected.reject).mockRejectedValue(new ApiError(400, 'VALIDATION_ERROR', 'Reason invalid'));
-    mount(undefined, { selected }); await userEvent.click(await screen.findByRole('button', { name: 'Reject request 5' }));
-    fireEvent.change(screen.getByLabelText('Rejection reason (optional)'), { target: { value: 'Original reason' } });
-    await userEvent.click(screen.getByRole('button', { name: 'Confirm rejection' })); await screen.findByText('Reason invalid');
-    expect(screen.getByLabelText('Rejection reason (optional)')).toHaveValue('Original reason'); expect(screen.queryByText('Request 5 rejected.')).not.toBeInTheDocument();
+    mount(undefined, { selected }); await userEvent.click(await screen.findByRole('button', { name: 'Từ chối yêu cầu 5' }));
+    fireEvent.change(screen.getByLabelText('Lý do từ chối (không bắt buộc)'), { target: { value: 'Original reason' } });
+    await userEvent.click(screen.getByRole('button', { name: 'Xác nhận từ chối' })); await screen.findByText('Reason invalid');
+    expect(screen.getByLabelText('Lý do từ chối (không bắt buộc)')).toHaveValue('Original reason'); expect(screen.queryByText('Đã từ chối yêu cầu 5.')).not.toBeInTheDocument();
   });
   it.each([401, 403])('delegates HTTP %s correctly to shared authentication', async (status) => {
     const selected = service(); vi.mocked(selected.list).mockRejectedValue(new ApiError(status, status === 401 ? 'UNAUTHORIZED' : 'FORBIDDEN', 'Not allowed'));
     mount(undefined, { selected });
-    if (status === 401) { await screen.findByRole('button', { name: 'Sign In' }); expect(authSession.read()).toBeNull(); }
-    else { await screen.findByText('Access denied'); expect(authSession.read()).not.toBeNull(); expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument(); }
+    if (status === 401) { await screen.findByRole('button', { name: 'Đăng nhập' }); expect(authSession.read()).toBeNull(); }
+    else { await screen.findByText('Không có quyền truy cập'); expect(authSession.read()).not.toBeNull(); expect(screen.queryByRole('button', { name: 'Thử lại' })).not.toBeInTheDocument(); }
   });
   it('supports empty/loading/error and retry without fabricated rows', async () => {
     const selected = service(); vi.mocked(selected.list).mockRejectedValueOnce(new Error('Offline')).mockResolvedValue(page([]));
     mount(undefined, { selected }); await screen.findByText('Offline');
-    await userEvent.click(screen.getByRole('button', { name: 'Try again' })); await screen.findByText('No registration requests');
+    await userEvent.click(screen.getByRole('button', { name: 'Thử lại' })); await screen.findByText('Không có yêu cầu đăng ký');
     expect(selected.list).toHaveBeenCalledTimes(2);
   });
   it('validates deep links before requesting data and recovers via Reset filters', async () => {
     const { selected } = mount('/admin/registrations?status=ACTIVE&page=-1');
-    await screen.findByText('Invalid registration filters'); expect(selected.list).not.toHaveBeenCalled();
-    await userEvent.click(screen.getByRole('button', { name: 'Reset filters' })); await screen.findByText('Applicant fixture'); expect(selected.list).toHaveBeenCalledOnce();
+    await screen.findByText('Bộ lọc đăng ký không hợp lệ'); expect(selected.list).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', { name: 'Xóa bộ lọc' })); await screen.findByText('Applicant fixture'); expect(selected.list).toHaveBeenCalledOnce();
   });
   it('retains server filters across pagination and resets page when size changes', async () => {
     const selected = service(); vi.mocked(selected.list).mockImplementation(async (query) => ({ ...page(), page: query.page, size: query.size, totalItems: 21, totalPages: Math.ceil(21 / query.size) }));
     const { router } = mount('/admin/registrations?status=PENDING_APPROVAL', { selected }); await screen.findByText('Applicant fixture');
-    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Sau' }));
     await waitFor(() => expect(selected.list).toHaveBeenLastCalledWith({ page: 1, size: 20, status: 'PENDING_APPROVAL' }, expect.anything()));
-    await screen.findByText('Applicant fixture'); await userEvent.selectOptions(screen.getByLabelText('Requests per page'), '10');
+    await screen.findByText('Applicant fixture'); await userEvent.selectOptions(screen.getByLabelText('Số yêu cầu mỗi trang'), '10');
     await waitFor(() => expect(selected.list).toHaveBeenLastCalledWith({ page: 0, size: 10, status: 'PENDING_APPROVAL' }, expect.anything()));
     expect(router.state.location.search).toContain('status=PENDING_APPROVAL');
   });
   it('ignores old filter responses and aborts a previous read', async () => {
     const selected = service(); let finish!: (value: RegistrationPage) => void;
     vi.mocked(selected.list).mockImplementationOnce(() => new Promise((resolve) => { finish = resolve; })).mockResolvedValue(page([{ ...pending, fullName: 'Fresh result' }]));
-    const { router } = mount(undefined, { selected }); await screen.findByText('Loading registration requests…');
+    const { router } = mount(undefined, { selected }); await screen.findByText('Đang tải yêu cầu đăng ký…');
     await act(() => router.navigate('/admin/registrations?status=PENDING_APPROVAL'));
     await screen.findByText('Fresh result'); expect(vi.mocked(selected.list).mock.calls[0][1].signal?.aborted).toBe(true);
     await act(async () => finish(page([{ ...pending, fullName: 'Stale result' }])));

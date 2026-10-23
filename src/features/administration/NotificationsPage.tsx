@@ -33,7 +33,7 @@ export function NotificationsPage() {
 }
 export function NotificationDrawer({ onClose }: { onClose: () => void }) {
   const { user } = useAuth();
-  return user ? <Drawer open title="Notifications" onClose={onClose} footer={<ButtonLink to="/notifications" onClick={onClose}>View all notifications</ButtonLink>}>
+  return user ? <Drawer open title="Thông báo" onClose={onClose} footer={<ButtonLink to="/notifications" onClick={onClose}>Xem tất cả thông báo</ButtonLink>}>
     <NotificationContent key={user.id} role={user.roles[0]} roles={user.roles} compact />
   </Drawer> : null;
 }
@@ -45,28 +45,28 @@ function NotificationContent({ role, roles, compact = false }: { role: RoleCode;
   const [busy, setBusy] = useState(false), [error, setError] = useState(''); const inFlight = useRef(false);
   const load = useMemo(() => async (signal: AbortSignal) => {
     const query = new URLSearchParams({ ...(category ? { category } : {}), ...(read ? { read } : {}), page: String(page), size: '20' });
-    if (!request || revision === undefined) throw new Error('Sign in again to access notifications.');
+    if (!request || revision === undefined) throw new Error('Đăng nhập lại để xem thông báo.');
     return request<Page<Notice>>(`/api/notifications?${query}`, { signal });
   }, [request, category, read, page, revision]);
   const resource = useResource(load);
   async function mark(id?: number) {
     if (inFlight.current) return; inFlight.current = true; setBusy(true); setError('');
-    try { if (!notifications) throw new Error('Sign in again to access notifications.'); await notifications.markRead(id); }
+    try { if (!notifications) throw new Error('Đăng nhập lại để xem thông báo.'); await notifications.markRead(id); }
     catch (failure) { setError(errorMessage(failure)); } finally { inFlight.current = false; setBusy(false); }
   }
-  const content = <div className={styles.stack}><Button variant="secondary" disabled={busy || !notifications?.unreadCount} onClick={() => { void mark(); }}>Mark all as read</Button><div className={styles.filters}>
-      <SelectField label="Read state" value={read} options={[{ value: '', label: 'All' }, { value: 'false', label: 'Unread' }, { value: 'true', label: 'Read' }]} onChange={(e) => { setRead(e.target.value); setPage(0); }} />
-      <SelectField label="Type" value={category} options={[{ value: '', label: 'All types' }, { value: 'ALERTS', label: 'Alerts' }, { value: 'MEDICAL', label: 'Medical' }, { value: 'SCHEDULE', label: 'Schedule' }]} onChange={(e) => { setCategory(e.target.value); setPage(0); }} />
-      {notifications?.unreadCount !== undefined && <span>{notifications.unreadCount} unread</span>}
+  const content = <div className={styles.stack}><Button variant="secondary" disabled={busy || !notifications?.unreadCount} onClick={() => { void mark(); }}>Đánh dấu tất cả đã đọc</Button><div className={styles.filters}>
+      <SelectField label="Trạng thái đọc" value={read} options={[{ value: '', label: 'Tất cả' }, { value: 'false', label: 'Chưa đọc' }, { value: 'true', label: 'Đã đọc' }]} onChange={(e) => { setRead(e.target.value); setPage(0); }} />
+      <SelectField label="Loại" value={category} options={[{ value: '', label: 'Tất cả loại' }, { value: 'ALERTS', label: 'Cảnh báo' }, { value: 'MEDICAL', label: 'Y tế' }, { value: 'SCHEDULE', label: 'Lịch' }]} onChange={(e) => { setCategory(e.target.value); setPage(0); }} />
+      {notifications?.unreadCount !== undefined && <span>{notifications.unreadCount} chưa đọc</span>}
     </div>
-    {notifications?.error && <ErrorState title="Unread count unavailable" description={notifications.error} onRetry={() => { void notifications.refresh(); }} />}
-    {error && <AlertBanner type="danger" title="Notification update failed">{error}</AlertBanner>}
-    {resource.pending && <LoadingState label="Loading notifications…" />}{resource.error && <ErrorState title="Notifications unavailable" description={resource.error} onRetry={resource.reload} />}
-    {resource.data && <><Card>{resource.data.items.length === 0 && <EmptyState title="No matching notifications" />}
+    {notifications?.error && <ErrorState title="Không lấy được số thông báo chưa đọc" description={notifications.error} onRetry={() => { void notifications.refresh(); }} />}
+    {error && <AlertBanner type="danger" title="Cập nhật thông báo thất bại">{error}</AlertBanner>}
+    {resource.pending && <LoadingState label="Đang tải thông báo…" />}{resource.error && <ErrorState title="Không tải được thông báo" description={resource.error} onRetry={resource.reload} />}
+    {resource.data && <><Card>{resource.data.items.length === 0 && <EmptyState title="Không có thông báo phù hợp" />}
       {resource.data.items.map((notice) => { const target = destination(notice, roles); return <div key={notice.id} className={styles.row}>
         <NotificationItem title={notice.title} body={notice.message} context={`${notice.category}${notice.isSimulated ? ' · SIMULATED DATA' : ''}`} time={new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(notice.createdAt))} read={notice.readAt !== null} />
-        <div className={styles.actions}>{!notice.readAt && <Button variant="secondary" size="sm" disabled={busy} onClick={() => { void mark(notice.id); }}>Mark as read</Button>}{target && <Link to={target}>Open</Link>}</div>
-      </div>; })}</Card><div className={styles.actions}><Button variant="secondary" disabled={page === 0} onClick={() => setPage(page - 1)}>Previous</Button><span>Page {page + 1} · {resource.data.totalItems} notifications</span><Button variant="secondary" disabled={page + 1 >= resource.data.totalPages} onClick={() => setPage(page + 1)}>Next</Button></div></>}
+        <div className={styles.actions}>{!notice.readAt && <Button variant="secondary" size="sm" disabled={busy} onClick={() => { void mark(notice.id); }}>Đánh dấu đã đọc</Button>}{target && <Link to={target}>Mở</Link>}</div>
+      </div>; })}</Card><div className={styles.actions}><Button variant="secondary" disabled={page === 0} onClick={() => setPage(page - 1)}>Trước</Button><span>Trang {page + 1} · {resource.data.totalItems} thông báo</span><Button variant="secondary" disabled={page + 1 >= resource.data.totalPages} onClick={() => setPage(page + 1)}>Sau</Button></div></>}
     </div>;
-  return compact ? content : <FlowShell title="Notifications" section="Workspace" role={role} description="In-app notifications for your account. Opening one never changes business records or permissions.">{content}</FlowShell>;
+  return compact ? content : <FlowShell title="Thông báo" section="Workspace" role={role} description="Thông báo trong ứng dụng của tài khoản bạn. Mở thông báo không làm thay đổi dữ liệu nghiệp vụ hay quyền hạn.">{content}</FlowShell>;
 }

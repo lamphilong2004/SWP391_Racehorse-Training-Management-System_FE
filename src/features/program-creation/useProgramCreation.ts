@@ -41,7 +41,7 @@ export function useProgramCreation(api: ProgramCreationApi) {
     selectionRequest.current?.abort();
     created.current = null;
     if (horse.lifecycle !== 'ACTIVE' || horse.trainingAvailability === 'LOCKED') {
-      setState({ ...initialState, issues: [{ field: 'horseId', message: 'Select an ACTIVE horse whose Training Availability is not LOCKED.' }] });
+      setState({ ...initialState, issues: [{ field: 'horseId', message: 'Hãy chọn ngựa đang hoạt động và không bị khóa tập luyện.' }] });
       return;
     }
     const controller = new AbortController();
@@ -68,7 +68,7 @@ export function useProgramCreation(api: ProgramCreationApi) {
       const template = await api.template(templateId, versionNo, controller.signal);
       if (revision !== selectionRevision.current) return;
       if (template.template.status !== 'ACTIVE') {
-        setState((previous) => ({ ...previous, pending: null, issues: [{ field: 'templateVersionId', message: 'Select a version from an ACTIVE template.' }] }));
+        setState((previous) => ({ ...previous, pending: null, issues: [{ field: 'templateVersionId', message: 'Hãy chọn phiên bản của một mẫu đang hoạt động.' }] }));
         return;
       }
       const trainers = await api.trainerRecommendations(horse.id, template.version.id, controller.signal);
@@ -93,7 +93,7 @@ export function useProgramCreation(api: ProgramCreationApi) {
     if (submitting.current || created.current || !state.draft || state.pending) return;
     const selectedTrainer = state.trainers?.candidates.find((candidate) => candidate.user.id === state.draft!.trainer.trainerUserId);
     const issues = validateProgramCreation(state.draft, selectedTrainer);
-    if (!selectedTrainer) issues.push({ field: 'trainer.trainerUserId', message: 'Select a Trainer from the current candidates.' });
+    if (!selectedTrainer) issues.push({ field: 'trainer.trainerUserId', message: 'Hãy chọn Trainer trong danh sách ứng viên hiện tại.' });
     if (issues.length > 0) {
       setState((previous) => ({ ...previous, issues, error: null }));
       return { kind: 'invalid' as const, issues };

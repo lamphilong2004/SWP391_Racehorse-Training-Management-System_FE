@@ -16,8 +16,8 @@ it('reads completed Groom checks from the approved nested preSessionCheck respon
   state.user.roles = ['TRAINER'];
   state.request.mockResolvedValue({ id: 42, sessionCode: 'SES-42', horse, status: 'SCHEDULED', scheduledStart: '2026-11-05T06:00:00Z', phaseName: 'Base', trainingAvailability: 'AVAILABLE', blocked: false, blockedReasons: [], exercises: [], preSessionCheck: { overallResult: 'ALL_NORMAL' } });
   render(<MemoryRouter initialEntries={['/training/session/42']}><Routes><Route path="/training/session/:id" element={<SessionDetailPage />} /></Routes></MemoryRouter>);
-  expect(await screen.findByText('ALL_NORMAL')).toBeInTheDocument();
-  expect(screen.queryByText('Pending', { exact: true })).not.toBeInTheDocument();
+  expect(await screen.findByText('Tất cả bình thường')).toBeInTheDocument();
+  expect(screen.queryByText('Đang chờ', { exact: true })).not.toBeInTheDocument();
 });
 
 it('keeps a failed baseline draft for retry and confirms only a real save response', async () => {
@@ -28,15 +28,15 @@ it('keeps a failed baseline draft for retry and confirms only a real save respon
     return horse;
   });
   render(<MemoryRouter initialEntries={['/horses/7/baseline']}><Routes><Route path="/horses/:id/baseline" element={<BaselinePage />} /></Routes></MemoryRouter>);
-  await screen.findByRole('heading', { name: 'Initial Health Baseline · Test Horse' });
-  change('Weight (kg)', '512'); change('Current condition', 'Normal gait'); fireEvent.click(screen.getByRole('radio', { name: 'FIT' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Save Baseline' }));
+  await screen.findByRole('heading', { name: 'Khám sức khỏe ban đầu · Test Horse' });
+  change('Cân nặng (kg)', '512'); change('Thể trạng hiện tại', 'Normal gait'); fireEvent.click(screen.getByRole('radio', { name: 'Khỏe' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Lưu kết quả khám' }));
   expect(await screen.findByText('Baseline endpoint unavailable')).toBeInTheDocument();
-  expect(screen.getByLabelText('Weight (kg)', { exact: false })).toHaveValue(512);
-  expect(screen.queryByText('Baseline saved')).not.toBeInTheDocument();
-  fail = false; fireEvent.click(screen.getByRole('button', { name: 'Save Baseline' }));
-  expect(await screen.findByText('Baseline saved')).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Save Baseline' })).toBeDisabled();
+  expect(screen.getByLabelText('Cân nặng (kg)', { exact: false })).toHaveValue(512);
+  expect(screen.queryByText('Đã lưu kết quả khám ban đầu')).not.toBeInTheDocument();
+  fail = false; fireEvent.click(screen.getByRole('button', { name: 'Lưu kết quả khám' }));
+  expect(await screen.findByText('Đã lưu kết quả khám ban đầu')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Lưu kết quả khám' })).toBeDisabled();
 });
 it('schedules one session through all four steps using the approved draft/recommendation/create operations', async () => {
   state.user.roles = ['TRAINER']; let posts = 0;
@@ -52,14 +52,14 @@ it('schedules one session through all four steps using the approved draft/recomm
     throw new Error(`Unexpected test request: ${path}`);
   });
   render(<MemoryRouter initialEntries={['/training/schedule/session/new']}><Routes><Route path="/training/schedule/session/new" element={<CreateSessionPage />} /><Route path="/training/session/:id" element={<h1>Saved session detail</h1>} /></Routes></MemoryRouter>);
-  await screen.findByRole('option', { name: 'Test Horse · Test program' }); change('Program', '10');
-  await screen.findByRole('option', { name: 'Foundation' }); change('Phase', '31'); change('Date', '2026-11-05'); change('Start time', '06:00'); change('Expected duration', '60');
-  fireEvent.click(screen.getByRole('button', { name: 'Next: Exercises' }));
-  await screen.findByRole('option', { name: 'Walk' }); change('Add exercise', '8');
-  fireEvent.click(screen.getByRole('button', { name: 'Next: Work Rider' }));
-  fireEvent.click(await screen.findByRole('button', { name: 'Select Test Rider' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Next: Review' }));
-  fireEvent.click(await screen.findByRole('button', { name: 'Save & Notify' }));
+  await screen.findByRole('option', { name: 'Test Horse · Test program' }); change('Chương trình', '10');
+  await screen.findByRole('option', { name: 'Foundation' }); change('Giai đoạn', '31'); change('Ngày', '2026-11-05'); change('Giờ bắt đầu', '06:00'); change('Thời lượng dự kiến', '60');
+  fireEvent.click(screen.getByRole('button', { name: 'Tiếp: Bài tập' }));
+  await screen.findByRole('option', { name: 'Walk' }); change('Thêm bài tập', '8');
+  fireEvent.click(screen.getByRole('button', { name: 'Tiếp: Work Rider' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Chọn Test Rider' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Tiếp: Xem lại' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Lưu & thông báo' }));
   expect(await screen.findByRole('heading', { name: 'Saved session detail' })).toBeInTheDocument(); expect(posts).toBe(1);
 });
 it('shows restriction reason without exposing an editor to Trainers', async () => {
@@ -67,7 +67,7 @@ it('shows restriction reason without exposing an editor to Trainers', async () =
   state.request.mockImplementation(async (path: string) => path.startsWith('/api/horses?') ? { items: [horse] } : { horseId: 7, availability: 'LIMITED', reason: 'Walk only', exerciseRules: [{ ruleType: 'ALLOWED', exerciseTypeNote: 'Walk' }] });
   render(<MemoryRouter initialEntries={['/medical/restrictions?horseId=7']}><RestrictionsPage /></MemoryRouter>);
   await waitFor(() => expect(screen.getByText('Walk only')).toBeInTheDocument());
-  expect(screen.getByText('Read-only')).toBeInTheDocument(); expect(screen.queryByRole('button', { name: 'Save Training Availability' })).not.toBeInTheDocument();
+  expect(screen.getByText('Read-only')).toBeInTheDocument(); expect(screen.queryByRole('button', { name: 'Lưu khả năng tập luyện' })).not.toBeInTheDocument();
 });
 it('preserves existing restriction rules when neither read response includes them', async () => {
   state.request.mockImplementation(async (path: string) => {
@@ -76,7 +76,7 @@ it('preserves existing restriction rules when neither read response includes the
     return { horseId: 7, availability: 'LIMITED', reason: 'Walk only', activeRestrictionId: 12 };
   });
   render(<MemoryRouter initialEntries={['/medical/restrictions?horseId=7']}><RestrictionsPage /></MemoryRouter>);
-  expect(await screen.findByRole('button', { name: 'Save Training Availability' })).toBeDisabled();
-  expect(screen.getByText('Exercise rules unavailable')).toBeInTheDocument();
+  expect(await screen.findByRole('button', { name: 'Lưu khả năng tập luyện' })).toBeDisabled();
+  expect(screen.getByText('Không tải được quy tắc bài tập')).toBeInTheDocument();
   expect(state.request.mock.calls.some(([, init]) => init?.method === 'PUT')).toBe(false);
 });

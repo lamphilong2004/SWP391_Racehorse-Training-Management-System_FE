@@ -2,7 +2,7 @@ import { ApiError } from '../../shared/auth/authApi';
 import { STATUS_REGISTRY } from '../../design-system';
 import type { CanonicalOwnerSnapshot, CanonicalOwnerSource, OwnerContext, OwnerHorse, OwnerService } from './ownerModel';
 
-const unavailable = () => new ApiError(503, 'BUSINESS_RULE_VIOLATION', 'Owner information is not available yet. Please contact the club.');
+const unavailable = () => new ApiError(503, 'BUSINESS_RULE_VIOLATION', 'Chưa có thông tin chủ ngựa. Hãy liên hệ câu lạc bộ.');
 const text = (value: string | null | undefined) => value?.trim() || null;
 const date = (value: string | null | undefined) => value && Number.isFinite(Date.parse(value)) ? value : null;
 const day = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(`${value}T00:00:00Z`)) && new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) === value;
@@ -20,9 +20,9 @@ export function createOwnerSampleTransport(source: CanonicalOwnerSource, now: ()
   const actor = (context: OwnerContext) => {
     if (context.signal?.aborted) throw new DOMException('Aborted', 'AbortError');
     const user = source.getBusinessActor();
-    if (!user || user.id !== context.actorId) throw new ApiError(401, 'UNAUTHORIZED', 'Sign in again to view your horses.');
-    if (user.accountStatus !== 'ACTIVE') throw new ApiError(403, 'FORBIDDEN', 'Your account is deactivated.');
-    if (!user.roles.includes('HORSE_OWNER')) throw new ApiError(403, 'FORBIDDEN', 'This portal is available to Horse Owners only.');
+    if (!user || user.id !== context.actorId) throw new ApiError(401, 'UNAUTHORIZED', 'Đăng nhập lại để xem ngựa của bạn.');
+    if (user.accountStatus !== 'ACTIVE') throw new ApiError(403, 'FORBIDDEN', 'Tài khoản của bạn đã bị vô hiệu hóa.');
+    if (!user.roles.includes('HORSE_OWNER')) throw new ApiError(403, 'FORBIDDEN', 'Cổng này chỉ dành cho Horse Owner.');
     return user;
   };
   const read = (context: OwnerContext) => {
@@ -66,10 +66,10 @@ export function createOwnerSampleTransport(source: CanonicalOwnerSource, now: ()
     async list(context) { const { snapshot, owned, today } = read(context); return owned.map((horse) => project(horse, snapshot, today)); },
     async detail(id, context) {
       actor(context);
-      if (!Number.isSafeInteger(id) || id <= 0) throw new ApiError(400, 'VALIDATION_ERROR', 'Choose a valid horse.');
+      if (!Number.isSafeInteger(id) || id <= 0) throw new ApiError(400, 'VALIDATION_ERROR', 'Hãy chọn ngựa hợp lệ.');
       const { snapshot, owned, today } = read(context);
       const horse = owned.find((item) => item.id === id);
-      if (!horse) throw new ApiError(snapshot.horseRegistry!.records.some((item) => item.id === id) ? 403 : 404, snapshot.horseRegistry!.records.some((item) => item.id === id) ? 'FORBIDDEN' : 'NOT_FOUND', 'This horse is not available in your portal.');
+      if (!horse) throw new ApiError(snapshot.horseRegistry!.records.some((item) => item.id === id) ? 403 : 404, snapshot.horseRegistry!.records.some((item) => item.id === id) ? 'FORBIDDEN' : 'NOT_FOUND', 'Ngựa này không có trong cổng của bạn.');
       const result = project(horse, snapshot, today);
       const ownership = horse.currentOwnerships.find((item) => item.owner.id === context.actorId && item.effectiveTo === null && item.effectiveFrom <= today);
       if (ownership && typeof ownership.sharePercentage === 'number' && Number.isFinite(ownership.sharePercentage) && typeof ownership.isManagingOwner === 'boolean') {

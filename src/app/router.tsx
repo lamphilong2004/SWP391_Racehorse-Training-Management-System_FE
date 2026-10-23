@@ -55,7 +55,7 @@ const devRoutes: RouteObject[] = import.meta.env.DEV
 export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
   // Inline build flags let the bundler remove the role test entry chunk from API/normal/production artifacts.
   const signInRoute: RouteObject = import.meta.env.MODE === 'staging-preview' && import.meta.env.VITE_ROLE_TEST_LOGIN === 'true'
-    ? { path: ROUTES.login, hydrateFallbackElement: <p role="status">Loading role test sign-in…</p>, lazy: async () => {
+    ? { path: ROUTES.login, hydrateFallbackElement: <p role="status">Đang tải đăng nhập thử theo vai trò…</p>, lazy: async () => {
       const { RoleTestEntry } = await import('../staging/RoleTestEntry');
       return { Component: () => <PublicOnly><RoleTestEntry /></PublicOnly> };
     } }

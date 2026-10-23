@@ -4,14 +4,14 @@ import { readAvailability, readCase, readCaseTask, readHerd, readPage } from './
 import { readActiveHerd, readHorseIdentity } from './horseRead';
 
 export function createMedicalService(accessToken: string, onApiError?: (error: unknown) => boolean, options: { baseUrl?: string; fetcher?: typeof fetch } = {}): MedicalService {
-  if (!accessToken.trim()) throw new Error('A signed-in session is required for medical requests.');
+  if (!accessToken.trim()) throw new Error('Cần đăng nhập để dùng phần y tế.');
   async function request<T>(path: string, method = 'GET', payload?: unknown): Promise<T> {
     try {
       const data = await requestApi<T>(path, {
         method, headers: { Accept: 'application/json' },
         ...(payload !== undefined ? { body: JSON.stringify(payload) } : {}),
       }, { token: accessToken, ...options });
-      if (data == null) throw new ApiError(200, 'INVALID_RESPONSE', 'The server returned no medical data.');
+      if (data == null) throw new ApiError(200, 'INVALID_RESPONSE', 'Máy chủ không trả về dữ liệu y tế.');
       return data;
     } catch (error) {
       onApiError?.(error);
@@ -19,11 +19,11 @@ export function createMedicalService(accessToken: string, onApiError?: (error: u
     }
   }
   const positiveId = (id: number) => {
-    if (!Number.isSafeInteger(id) || id < 1) throw new Error('A valid numeric ID is required.');
+    if (!Number.isSafeInteger(id) || id < 1) throw new Error('Cần một mã số hợp lệ.');
     return id;
   };
   const pageQuery = (page: number) => {
-    if (!Number.isSafeInteger(page) || page < 0) throw new Error('A valid page is required.');
+    if (!Number.isSafeInteger(page) || page < 0) throw new Error('Cần số trang hợp lệ.');
     return `?page=${page}&size=20`;
   };
   const cases = '/api/medical/cases';
@@ -33,7 +33,7 @@ export function createMedicalService(accessToken: string, onApiError?: (error: u
     listCases: async (page = 0) => readPage(await request(cases + pageQuery(page)), readCase, page),
     getCase: async (id) => {
       const item = readCase(await request(`${cases}/${positiveId(id)}`));
-      if (item.id !== id) throw new ApiError(200, 'INVALID_RESPONSE', 'Medical case identity does not match the request.');
+      if (item.id !== id) throw new ApiError(200, 'INVALID_RESPONSE', 'Ca y tế trả về không khớp với yêu cầu.');
       return item;
     },
     createCase: (input) => request(cases, 'POST', input),

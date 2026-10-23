@@ -5,7 +5,7 @@ import type { OwnerContext, OwnerHorse, OwnerService } from './ownerModel';
 
 // CORE-004 docs/api/flow1-horse.openapi.yaml @ f8e7895ba4ad4816f951c56d6480fd01178f1bc5.
 // Only whitelisted Owner fields cross this boundary; no all-horses request or sample fallback.
-const invalid = () => new ApiError(502, 'INVALID_RESPONSE', 'The Owner response does not match the contract.');
+const invalid = () => new ApiError(502, 'INVALID_RESPONSE', 'Dữ liệu chủ ngựa trả về không hợp lệ.');
 type Row = Record<string, unknown>;
 const row = (value: unknown): Row => { if (!value || typeof value !== 'object' || Array.isArray(value)) throw invalid(); return value as Row; };
 const string = (value: unknown) => { if (typeof value !== 'string') throw invalid(); return value; };
@@ -75,7 +75,7 @@ export function createOwnerApi(options: { fetcher?: typeof fetch; baseUrl?: stri
   const read = async (path: string, context: OwnerContext) => {
     context.signal?.throwIfAborted();
     const token = options.getToken ? options.getToken() : authSession.read()?.accessToken;
-    if (!token) throw new ApiError(401, 'UNAUTHORIZED', 'Sign in again to view your horses.');
+    if (!token) throw new ApiError(401, 'UNAUTHORIZED', 'Đăng nhập lại để xem ngựa của bạn.');
     const result = await requestApi<unknown>(path, { method: 'GET', signal: context.signal }, { ...options, token });
     context.signal?.throwIfAborted();
     return result;
@@ -93,7 +93,7 @@ export function createOwnerApi(options: { fetcher?: typeof fetch; baseUrl?: stri
       return horses;
     },
     async detail(id, context) {
-      if (!Number.isSafeInteger(id) || id <= 0) throw new ApiError(400, 'VALIDATION_ERROR', 'Choose a valid horse.');
+      if (!Number.isSafeInteger(id) || id <= 0) throw new ApiError(400, 'VALIDATION_ERROR', 'Hãy chọn ngựa hợp lệ.');
       // Authorize/profile first: a denied direct link never triggers summary requests.
       const profile = await read(`/api/owner/horses/${id}/profile`, context);
       const [health, training] = await Promise.all([

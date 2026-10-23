@@ -4,7 +4,7 @@ describe('hosted Auth API unavailable errors', () => {
   it.each([404, 405, 502, 503, 504])('explains a non-JSON login response %s without a fake sign-in', async status => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response('Static host or gateway error', { status }));
     await expect(createAuthApi({ fetcher }).login({ email: 'invalid@example.invalid', password: 'unused-fixture' }))
-      .rejects.toMatchObject({ status, code: 'SERVER_UNAVAILABLE', message: 'Sign-in service is unavailable. Please try again later.' });
+      .rejects.toMatchObject({ status, code: 'SERVER_UNAVAILABLE', message: 'Dịch vụ đăng nhập không khả dụng. Hãy thử lại sau.' });
     expect(fetcher).toHaveBeenCalledOnce();
   });
   it('preserves an actual Backend JSON error rather than reclassifying it', async () => {

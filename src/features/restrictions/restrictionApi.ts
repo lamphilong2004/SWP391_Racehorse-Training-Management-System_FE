@@ -7,10 +7,10 @@ export interface RestrictionInput { level: 'LIMITED' | 'LOCKED'; reason: string;
 interface RestrictionPage { items: Restriction[]; page: number; size: number; totalElements: number }
 export function rulePayload(rules: ExerciseRule[]): { rules: ExerciseRule[] } {
   return { rules: rules.map((item) => {
-    if (!['ALLOWED', 'PROHIBITED'].includes(item.ruleType)) throw new Error('Use ALLOWED or PROHIBITED.');
+    if (!['ALLOWED', 'PROHIBITED'].includes(item.ruleType)) throw new Error('Chỉ dùng Được phép hoặc Bị cấm.');
     const hasExercise = item.exerciseId !== undefined;
-    if (hasExercise === !!item.exerciseTypeNote?.trim()) throw new Error('Each rule needs exactly one exercise or exercise type note.');
-    if (item.exerciseTypeNote && item.exerciseTypeNote.trim().length > 200) throw new Error('Exercise type notes must be at most 200 characters.');
+    if (hasExercise === !!item.exerciseTypeNote?.trim()) throw new Error('Mỗi quy tắc cần đúng một bài tập hoặc một ghi chú loại bài tập.');
+    if (item.exerciseTypeNote && item.exerciseTypeNote.trim().length > 200) throw new Error('Ghi chú loại bài tập tối đa 200 ký tự.');
     return { ruleType: item.ruleType, ...(hasExercise ? { exerciseId: idOf(item.exerciseId) } : { exerciseTypeNote: item.exerciseTypeNote!.trim() }) };
   }) };
 }
@@ -29,7 +29,7 @@ export function createRestrictionApi(request: FlowRequest) {
         const result = await request<RestrictionPage>(`/api/medical/restrictions?page=${page}&size=100`, { signal });
         const match = result.items.find((item) => item.id === restrictionId); if (match) return match;
         if (result.page !== page || !Number.isSafeInteger(result.size) || result.size < 1 || !Number.isSafeInteger(result.totalElements) || result.totalElements < 0)
-          throw new Error('Restriction pagination is unavailable. Reload before editing rules.');
+          throw new Error('Không phân trang được danh sách hạn chế. Hãy tải lại trước khi sửa quy tắc.');
         if ((page + 1) * result.size >= result.totalElements) return null;
       }
     },

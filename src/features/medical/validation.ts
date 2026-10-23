@@ -8,7 +8,7 @@ const oneOf = (v: unknown, values: string[]) => typeof v === 'string' && values.
 const optional = (v: Record<string, unknown>, keys: string[]) => keys.every((key) => v[key] === undefined || typeof v[key] === 'string');
 const recovery = ['NOT_RECOVERED', 'IMPROVING', 'RECOVERED'];
 const severity = ['MILD', 'MODERATE', 'SEVERE'];
-const invalid = () => new ApiError(200, 'INVALID_RESPONSE', 'Medical data does not match the approved contract. Reload to retry.');
+const invalid = () => new ApiError(200, 'INVALID_RESPONSE', 'Dữ liệu y tế không hợp lệ. Hãy tải lại để thử lại.');
 
 export function readCase(v: unknown): MedicalCase {
   if (!object(v) || !positive(v.id) || !positive(v.horseId) || !oneOf(v.status, ['OPEN', 'CLOSED']) || !timestamp(v.openedAt) ||

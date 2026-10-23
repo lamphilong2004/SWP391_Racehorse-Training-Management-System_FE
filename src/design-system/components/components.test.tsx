@@ -51,7 +51,7 @@ describe('TextField and SelectField', () => {
     const onChange = vi.fn();
     render(
       <SelectField
-        label="Role"
+        label="Vai trò"
         placeholder="Select role"
         defaultValue=""
         onChange={onChange}
@@ -61,7 +61,7 @@ describe('TextField and SelectField', () => {
         ]}
       />,
     );
-    const select = screen.getByLabelText('Role');
+    const select = screen.getByLabelText('Vai trò');
     expect(screen.getByRole('option', { name: 'Select role' })).toBeInTheDocument();
     await userEvent.selectOptions(select, 'GROOM');
     expect(onChange).toHaveBeenCalled();
@@ -77,7 +77,7 @@ describe('AlertBanner and MetricCard', () => {
 
   it('shows the realtime state with an icon and text, not colour alone', () => {
     const { container } = render(
-      <MetricCard label="Heart rate" value="186 bpm" caption="Critical — above 180 bpm threshold" realtimeState="critical" />,
+      <MetricCard label="Nhịp tim" value="186 bpm" caption="Critical — above 180 bpm threshold" realtimeState="critical" />,
     );
     expect(screen.getByText('Critical — above 180 bpm threshold')).toBeInTheDocument();
     expect(container.querySelector('[data-icon="alert-octagon"]')).not.toBeNull();
@@ -93,9 +93,9 @@ describe('Tabs', () => {
         value={value}
         onChange={setValue}
         items={[
-          { value: 'overview', label: 'Overview' },
-          { value: 'progress', label: 'Progress' },
-          { value: 'history', label: 'History' },
+          { value: 'overview', label: 'Tổng quan' },
+          { value: 'progress', label: 'Tiến độ' },
+          { value: 'history', label: 'Lịch sử' },
         ]}
       />
     );
@@ -103,24 +103,24 @@ describe('Tabs', () => {
 
   it('selects tabs by click and arrow keys', async () => {
     render(<ControlledTabs />);
-    const overview = screen.getByRole('tab', { name: 'Overview' });
+    const overview = screen.getByRole('tab', { name: 'Tổng quan' });
     expect(overview).toHaveAttribute('aria-selected', 'true');
-    await userEvent.click(screen.getByRole('tab', { name: 'Progress' }));
-    expect(screen.getByRole('tab', { name: 'Progress' })).toHaveAttribute('aria-selected', 'true');
+    await userEvent.click(screen.getByRole('tab', { name: 'Tiến độ' }));
+    expect(screen.getByRole('tab', { name: 'Tiến độ' })).toHaveAttribute('aria-selected', 'true');
     await userEvent.keyboard('{ArrowRight}');
-    expect(screen.getByRole('tab', { name: 'History' })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByRole('tab', { name: 'History' })).toHaveFocus();
+    expect(screen.getByRole('tab', { name: 'Lịch sử' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Lịch sử' })).toHaveFocus();
   });
 });
 
-describe('Breadcrumb', () => {
+describe('Đường dẫn trang', () => {
   it('links parents and marks the last item as the current page', () => {
     render(
       <MemoryRouter>
-        <Breadcrumb items={[{ label: 'Training', to: '/training' }, { label: 'Thunder Bolt' }]} />
+        <Breadcrumb items={[{ label: 'Huấn luyện', to: '/training' }, { label: 'Thunder Bolt' }]} />
       </MemoryRouter>,
     );
-    expect(screen.getByRole('link', { name: 'Training' })).toHaveAttribute('href', '/training');
+    expect(screen.getByRole('link', { name: 'Huấn luyện' })).toHaveAttribute('href', '/training');
     expect(screen.getByText('Thunder Bolt')).toHaveAttribute('aria-current', 'page');
   });
 });
@@ -128,16 +128,16 @@ describe('Breadcrumb', () => {
 describe('WizardStepper', () => {
   it('lets only completed steps be clicked', async () => {
     const onStepClick = vi.fn();
-    render(<WizardStepper steps={['Horse', 'Profile', 'Goal', 'Phases']} currentStep={2} onStepClick={onStepClick} />);
+    render(<WizardStepper steps={['Ngựa', 'Hồ sơ', 'Mục tiêu', 'Giai đoạn']} currentStep={2} onStepClick={onStepClick} />);
     expect(screen.getAllByRole('button')).toHaveLength(2);
-    await userEvent.click(screen.getByRole('button', { name: /Profile/ }));
+    await userEvent.click(screen.getByRole('button', { name: /Hồ sơ/ }));
     expect(onStepClick).toHaveBeenCalledWith(1);
-    expect(screen.getByText('Goal').closest('li')).toHaveAttribute('aria-current', 'step');
+    expect(screen.getByText('Mục tiêu').closest('li')).toHaveAttribute('aria-current', 'step');
   });
 });
 
 describe('DataTable', () => {
-  const columns = [{ key: 'name', header: 'Horse', render: (row: { id: number; name: string }) => row.name }];
+  const columns = [{ key: 'name', header: 'Ngựa', render: (row: { id: number; name: string }) => row.name }];
 
   it('renders rows and reports row clicks', async () => {
     const onRowClick = vi.fn();
@@ -149,7 +149,7 @@ describe('DataTable', () => {
         onRowClick={onRowClick}
       />,
     );
-    expect(screen.getByRole('columnheader', { name: 'Horse' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Ngựa' })).toBeInTheDocument();
     await userEvent.click(screen.getByRole('row', { name: 'Thunder Bolt' }));
     expect(onRowClick).toHaveBeenCalledWith({ id: 1, name: 'Thunder Bolt' });
   });
@@ -168,7 +168,7 @@ describe('Modal', () => {
       const [open, setOpen] = useState(false);
       return (
         <>
-          <Button onClick={() => setOpen(true)}>Open</Button>
+          <Button onClick={() => setOpen(true)}>Mở</Button>
           <Modal open={open} onClose={() => setOpen(false)} title="Assign stable box">
             Body
           </Modal>
@@ -177,9 +177,9 @@ describe('Modal', () => {
     }
     render(<Harness />);
     expect(screen.queryByText('Body')).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Open' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Mở' }));
     expect(screen.getByRole('dialog', { name: 'Assign stable box' })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Đóng' }));
     expect(screen.queryByText('Body')).not.toBeInTheDocument();
   });
 });

@@ -18,28 +18,28 @@ beforeEach(() => { state.user.roles = ['VETERINARIAN']; state.request.mockReset(
 
 it('opens the medical workspace and exposes a baseline action for the actual returned horse', async () => {
   mount();
-  expect(await screen.findByRole('link', { name: 'Record baseline' })).toHaveAttribute('href', '/horses/17/baseline');
+  expect(await screen.findByRole('link', { name: 'Ghi khám ban đầu' })).toHaveAttribute('href', '/horses/17/baseline');
   expect(screen.getByRole('main')).toHaveAttribute('data-design-system', 'v2');
-  expect(screen.queryByRole('link', { name: 'Create program' })).not.toBeInTheDocument();
-  await userEvent.click(screen.getByRole('link', { name: 'Open medical cases' }));
+  expect(screen.queryByRole('link', { name: 'Tạo chương trình' })).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole('link', { name: 'Mở ca y tế' }));
   expect(await screen.findByRole('heading', { name: 'Medical destination' })).toBeInTheDocument();
 });
 
 it('keeps the Owner hub read-only and does not request the staff horse register', async () => {
   state.user.roles = ['HORSE_OWNER']; mount();
   expect(state.request).not.toHaveBeenCalled();
-  expect(screen.queryByRole('link', { name: 'Record baseline' })).not.toBeInTheDocument();
-  expect(screen.queryByRole('link', { name: 'View horses' })).not.toBeInTheDocument();
-  await userEvent.click(screen.getByRole('link', { name: 'Open My Horses' }));
+  expect(screen.queryByRole('link', { name: 'Ghi khám ban đầu' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('link', { name: 'Xem danh sách ngựa' })).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole('link', { name: 'Mở ngựa của tôi' }));
   expect(await screen.findByRole('heading', { name: 'Owner destination' })).toBeInTheDocument();
 });
 
 it('shows an error without invented arrivals and retries the live resource', async () => {
   state.request.mockRejectedValueOnce(new Error('Temporarily unavailable')).mockResolvedValueOnce(page);
   mount();
-  expect(await screen.findByText('New arrivals unavailable')).toBeInTheDocument();
+  expect(await screen.findByText('Không tải được ngựa mới đến')).toBeInTheDocument();
   expect(screen.queryByText('Test arrival')).not.toBeInTheDocument();
-  await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Thử lại' }));
   expect(await screen.findByText('Test arrival')).toBeInTheDocument();
   expect(state.request).toHaveBeenCalledTimes(2);
 });

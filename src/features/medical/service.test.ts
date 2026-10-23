@@ -19,14 +19,14 @@ describe('CORE-006 HTTP adapter', () => {
   });
   it('rejects invalid resource IDs before a request is made', async () => {
     const fetcher = vi.fn();
-    await expect(createMedicalService('jwt', undefined, { baseUrl: '', fetcher }).getCase(Number.NaN)).rejects.toThrow('valid numeric ID');
+    await expect(createMedicalService('jwt', undefined, { baseUrl: '', fetcher }).getCase(Number.NaN)).rejects.toThrow('Cần một mã số hợp lệ.');
     expect(fetcher).not.toHaveBeenCalled();
   });
   it('fails closed on a success envelope without data and on forbidden clinical access', async () => {
     const missingData = vi.fn().mockResolvedValue(new Response('{"success":true}', { status: 200 }));
     await expect(createMedicalService('jwt', undefined, { baseUrl: '', fetcher: missingData }).getCase(9)).rejects.toMatchObject({ code: 'INVALID_RESPONSE' });
-    const forbidden = vi.fn().mockResolvedValue(new Response(JSON.stringify({ success: false, error: { code: 'FORBIDDEN', message: 'Details' } }), { status: 403 }));
-    await expect(createMedicalService('jwt', undefined, { baseUrl: '', fetcher: forbidden }).getCase(9)).rejects.toMatchObject({ status: 403, code: 'FORBIDDEN', message: 'Details' });
+    const forbidden = vi.fn().mockResolvedValue(new Response(JSON.stringify({ success: false, error: { code: 'FORBIDDEN', message: 'Chi tiết' } }), { status: 403 }));
+    await expect(createMedicalService('jwt', undefined, { baseUrl: '', fetcher: forbidden }).getCase(9)).rejects.toMatchObject({ status: 403, code: 'FORBIDDEN', message: 'Chi tiết' });
   });
   it('uses CORE-006 clinical paths and bodies, retaining typed 409 errors', async () => {
     const fetcher = vi.fn().mockImplementation(async () => ok({ id: 1 }));
@@ -44,8 +44,8 @@ describe('CORE-006 HTTP adapter', () => {
     const methods = [
       () => service.addExamination(9, { symptoms: 'Lame', examinedAt: '2026-10-17T01:00:00Z' }),
       () => service.addInjury(9, { bodyRegion: 'LEFT_FORELEG', severity: 'MODERATE', recoveryStatus: 'NOT_RECOVERED' }),
-      () => service.saveTreatment(9, { treatmentMedicationInstructions: 'Rest' }),
-      () => service.addReexamination(9, { recoveryStatus: 'RECOVERED', findings: 'Normal', examinedAt: '2026-10-18T01:00:00Z' }),
+      () => service.saveTreatment(9, { treatmentMedicationInstructions: 'Nghỉ ngơi' }),
+      () => service.addReexamination(9, { recoveryStatus: 'RECOVERED', findings: 'Bình thường', examinedAt: '2026-10-18T01:00:00Z' }),
       () => service.closeCase(9),
     ];
     fetcher.mockImplementation(async () => failConflict());

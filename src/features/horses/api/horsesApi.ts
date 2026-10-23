@@ -33,7 +33,7 @@ export interface HttpClient {
 
 const checklistIds = ['IDENTITY', 'PEDIGREE', 'OWNER', 'FREE_STABLE_BOX', 'VETERINARIAN_BASELINE', 'HEAD_TRAINER_READINESS_REVIEW'];
 function activation(value: ActivationStatus): ActivationStatus {
-  const invalid = () => new ApiRequestError(502, 'INVALID_RESPONSE', 'The activation checklist does not match the approved contract.');
+  const invalid = () => new ApiRequestError(502, 'INVALID_RESPONSE', 'Dữ liệu danh mục kích hoạt không hợp lệ.');
   if (!value || !Number.isSafeInteger(value.horseId) || value.horseId <= 0 || !Array.isArray(value.checklist) || value.checklist.length !== 6) throw invalid();
   value.checklist.forEach((item, index) => {
     if (!item || item.id !== checklistIds[index] || typeof item.label !== 'string' || typeof item.description !== 'string' ||

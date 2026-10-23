@@ -36,15 +36,15 @@ function mount(element: React.ReactNode, path: string) {
 it('groups own assignments into Today and Upcoming tables (Figma WR-D4) and opens a row', async () => {
   const api = client();
   const router = mount(<RiderAssignmentsPage api={api} />, '/rider/assignments');
-  expect(await screen.findByRole('tab', { name: 'Today · 2' })).toHaveAttribute('aria-selected', 'true');
-  expect(screen.getByRole('tab', { name: 'Upcoming · 1' })).toBeInTheDocument();
-  const today = screen.getByRole('table', { name: 'Today’s rides' });
+  expect(await screen.findByRole('tab', { name: 'Hôm nay · 2' })).toHaveAttribute('aria-selected', 'true');
+  expect(screen.getByRole('tab', { name: 'Sắp tới · 1' })).toBeInTheDocument();
+  const today = screen.getByRole('table', { name: 'Lượt cưỡi hôm nay' });
   expect(within(today).getAllByRole('row')).toHaveLength(3);
-  expect(within(today).getByText('Ready')).toBeInTheDocument();
-  expect(within(today).getByText('Check pending')).toBeInTheDocument();
-  expect(within(today).getAllByText('Turf Track · 60 min')).toHaveLength(2);
-  const upcoming = screen.getByRole('table', { name: 'Upcoming rides' });
-  expect(within(upcoming).getByText('Scheduled')).toBeInTheDocument();
+  expect(within(today).getByText('Sẵn sàng')).toBeInTheDocument();
+  expect(within(today).getByText('Chưa kiểm tra')).toBeInTheDocument();
+  expect(within(today).getAllByText('Turf Track · 60 phút')).toHaveLength(2);
+  const upcoming = screen.getByRole('table', { name: 'Lượt cưỡi sắp tới' });
+  expect(within(upcoming).getAllByText('Đã lên lịch').length).toBeGreaterThan(0);
   fireEvent.click(within(upcoming).getAllByRole('row')[1]);
   expect(router.state.location.pathname).toBe('/rider/assignments/43');
 });
@@ -52,21 +52,21 @@ it('groups own assignments into Today and Upcoming tables (Figma WR-D4) and open
 it('requests COMPLETED rides only for the Completed tab', async () => {
   const api = client();
   mount(<RiderAssignmentsPage api={api} />, '/rider/assignments');
-  fireEvent.click(await screen.findByRole('tab', { name: 'Completed' }));
-  expect(await screen.findByRole('table', { name: 'Completed rides' })).toBeInTheDocument();
+  fireEvent.click(await screen.findByRole('tab', { name: 'Đã hoàn thành' }));
+  expect(await screen.findByRole('table', { name: 'Lượt cưỡi đã hoàn thành' })).toBeInTheDocument();
   expect(api.assignments).toHaveBeenCalledWith('COMPLETED');
-  expect(screen.queryByRole('table', { name: 'Today’s rides' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('table', { name: 'Lượt cưỡi hôm nay' })).not.toBeInTheDocument();
 });
 
 it('shows history metrics, filter tabs and server-derived duration and feedback (Figma WR-D5)', async () => {
   mount(<RiderHistoryPage api={client()} />, '/rider/history');
-  const table = await screen.findByRole('table', { name: 'Riding history' });
+  const table = await screen.findByRole('table', { name: 'Lịch sử cưỡi' });
   expect(within(table).getAllByRole('row')).toHaveLength(3);
-  expect(within(table).getByText('21 min')).toBeInTheDocument();
-  expect(within(table).getByText('Sent')).toBeInTheDocument();
-  expect(within(table).getByText('Not sent')).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('tab', { name: 'Interrupted' }));
-  expect(within(screen.getByRole('table', { name: 'Riding history' })).getAllByRole('row')).toHaveLength(2);
+  expect(within(table).getByText('21 phút')).toBeInTheDocument();
+  expect(within(table).getByText('Đã gửi')).toBeInTheDocument();
+  expect(within(table).getByText('Chưa gửi')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('tab', { name: 'Bị gián đoạn' }));
+  expect(within(screen.getByRole('table', { name: 'Lịch sử cưỡi' })).getAllByRole('row')).toHaveLength(2);
 });
 
 it('includes older rides beyond page ten rather than silently truncating history', async () => {
@@ -78,5 +78,5 @@ it('includes older rides beyond page ten rather than silently truncating history
   mount(<RiderHistoryPage api={api} />, '/rider/history');
   expect(await screen.findByText('History horse 10')).toBeInTheDocument();
   expect(api.history).toHaveBeenCalledWith(10);
-  expect(within(screen.getByRole('table', { name: 'Riding history' })).getAllByRole('row')).toHaveLength(12);
+  expect(within(screen.getByRole('table', { name: 'Lịch sử cưỡi' })).getAllByRole('row')).toHaveLength(12);
 });

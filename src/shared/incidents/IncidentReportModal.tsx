@@ -37,11 +37,11 @@ export interface IncidentReportModalProps {
 }
 
 const groomTypes: { value: IncidentType; label: string }[] = [
-  { value: 'OFF_FEED', label: 'Off feed' },
-  { value: 'COLIC_SIGNS', label: 'Colic signs' },
-  { value: 'FEVER', label: 'Fever' },
-  { value: 'HOOF_OR_LEG_PROBLEM', label: 'Hoof or leg problem' },
-  { value: 'OTHER', label: 'Other' },
+  { value: 'OFF_FEED', label: 'Bỏ ăn' },
+  { value: 'COLIC_SIGNS', label: 'Dấu hiệu đau bụng' },
+  { value: 'FEVER', label: 'Sốt' },
+  { value: 'HOOF_OR_LEG_PROBLEM', label: 'Vấn đề móng hoặc chân' },
+  { value: 'OTHER', label: 'Khác' },
 ];
 
 function localDateTime(value?: string): string {
@@ -71,12 +71,12 @@ function sourceContextError(source: IncidentSource): string | null {
   const values = source as unknown as Record<string, unknown>;
   const contexts = ['preSessionCheckId', 'trainingSessionId', 'careTaskId']
     .filter((field) => values[field] !== undefined);
-  if (contexts.length > 1) return 'Choose one incident source context.';
+  if (contexts.length > 1) return 'Hãy chọn một nguồn phát sinh sự cố.';
   if (contexts.some((field) => !Number.isSafeInteger(values[field]) || Number(values[field]) < 1)) {
-    return 'Source context ID must be a positive integer.';
+    return 'Mã nguồn phải là số nguyên dương.';
   }
   if (contexts[0] === 'trainingSessionId') {
-    return 'Groom reports cannot use a training session context.';
+    return 'Báo cáo của Groom không gắn với buổi tập.';
   }
   return null;
 }
@@ -109,19 +109,19 @@ function IncidentReportModalForm({ open, onClose, source, horses = [], onSubmit 
     const time = parseLocalDateTime(observedAt);
     const body = description.trim();
     if (!Number.isSafeInteger(id) || id < 1) {
-      setError('Complete all required fields before submitting.');
+      setError('Hãy điền đủ các trường bắt buộc trước khi gửi.');
       return;
     }
     if (!time || time.getTime() > Date.now()) {
-      setError('Observed at must be a valid time that is not in the future.');
+      setError('Thời điểm phát hiện phải hợp lệ và không ở tương lai.');
       return;
     }
     if (!severity || !body || !incidentType) {
-      setError('Complete all required fields before submitting.');
+      setError('Hãy điền đủ các trường bắt buộc trước khi gửi.');
       return;
     }
     if (body.length > 2000) {
-      setError('Description must be at most 2,000 characters.');
+      setError('Mô tả tối đa 2.000 ký tự.');
       return;
     }
     const request: IncidentCreateRequest = {
@@ -140,7 +140,7 @@ function IncidentReportModalForm({ open, onClose, source, horses = [], onSubmit 
       await onSubmit(request);
       onClose();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not submit incident.');
+      setError(cause instanceof Error ? cause.message : 'Không gửi được sự cố.');
     } finally {
       submitting.current = false;
       setBusy(false);
@@ -148,33 +148,33 @@ function IncidentReportModalForm({ open, onClose, source, horses = [], onSubmit 
   }
 
   const options = source.horseId
-    ? [{ value: String(source.horseId), label: source.horseLabel || `Horse #${source.horseId}` }]
-    : [...horses.map((horse) => ({ value: String(horse.id), label: horse.label })), { value: 'manual', label: 'Other horse ID…' }];
+    ? [{ value: String(source.horseId), label: source.horseLabel || `Ngựa #${source.horseId}` }]
+    : [...horses.map((horse) => ({ value: String(horse.id), label: horse.label })), { value: 'manual', label: 'Mã ngựa khác…' }];
 
   return (
-    <Modal open={open} onClose={busy ? () => undefined : onClose} title="Report Incident" size="md" className={styles.groomModal}
-      footer={<><Button variant="secondary" onClick={onClose} disabled={busy}>Cancel</Button><Button type="submit" form={formId} disabled={busy}>{busy ? 'Submitting…' : 'Submit Incident'}</Button></>}>
+    <Modal open={open} onClose={busy ? () => undefined : onClose} title="Báo cáo sự cố" size="md" className={styles.groomModal}
+      footer={<><Button variant="secondary" onClick={onClose} disabled={busy}>Hủy</Button><Button type="submit" form={formId} disabled={busy}>{busy ? 'Đang gửi…' : 'Gửi sự cố'}</Button></>}>
       <form id={formId} className={styles.form} onSubmit={submit} aria-busy={busy}>
-        <p className={styles.subtitle}>Stable / care observation · the Veterinarian is notified</p>
+        <p className={styles.subtitle}>Quan sát chuồng trại / chăm sóc · Veterinarian sẽ được thông báo</p>
         {source.contextLabel && <div className={styles.context}><Icon name="clipboard-list" size={16} /><span>{source.contextLabel}</span></div>}
         <div className={styles.twoColumns}>
-          <div><SelectField label="Horse *" value={horseId} onChange={(event) => setHorseId(event.target.value)} disabled={busy || source.horseId !== undefined} required={source.horseId === undefined} placeholder="Select horse" options={options} />
-            {horseId === 'manual' && <TextField label="Horse ID *" type="number" min={1} step={1} required disabled={busy} value={manualHorseId} onChange={(event) => setManualHorseId(event.target.value)} helperText="Access is checked by the server." />}</div>
-          <TextField label="Observed at *" type="datetime-local" value={observedAt} max={localDateTime()} required disabled={busy} onChange={(event) => setObservedAt(event.target.value)} />
+          <div><SelectField label="Ngựa *" value={horseId} onChange={(event) => setHorseId(event.target.value)} disabled={busy || source.horseId !== undefined} required={source.horseId === undefined} placeholder="Chọn ngựa" options={options} />
+            {horseId === 'manual' && <TextField label="Mã ngựa *" type="number" min={1} step={1} required disabled={busy} value={manualHorseId} onChange={(event) => setManualHorseId(event.target.value)} helperText="Quyền truy cập được hệ thống kiểm tra." />}</div>
+          <TextField label="Thời điểm phát hiện *" type="datetime-local" value={observedAt} max={localDateTime()} required disabled={busy} onChange={(event) => setObservedAt(event.target.value)} />
         </div>
         <div className={styles.field}>
-          <span className={styles.label}>Type *</span>
-          <div className={styles.chips} role="group" aria-label="Incident type">
+          <span className={styles.label}>Loại *</span>
+          <div className={styles.chips} role="group" aria-label="Loại sự cố">
             {groomTypes.map((type) => <button key={type.value} type="button" disabled={busy} className={`${styles.chip} ${incidentType === type.value ? styles.selectedChip : ''}`} aria-pressed={incidentType === type.value} onClick={() => setIncidentType(type.value)}>{incidentType === type.value && <Icon name="check" size={14} />}{type.label}</button>)}
           </div>
         </div>
-        <div className={styles.field}><span className={styles.label}>Severity (as you observe it) *</span><div className={styles.severity} role="group" aria-label="Observed severity">
+        <div className={styles.field}><span className={styles.label}>Mức độ (theo quan sát của bạn) *</span><div className={styles.severity} role="group" aria-label="Mức độ quan sát">
           {(['LOW', 'MEDIUM', 'HIGH'] as const).map((value) => <button key={value} type="button" disabled={busy} className={severity === value ? styles.selectedSeverity : ''} aria-pressed={severity === value} onClick={() => setSeverity(value)}>{value[0] + value.slice(1).toLowerCase()}</button>)}
         </div></div>
-        <div className={styles.field}><label className={styles.label} htmlFor={descriptionId}>Description *</label><textarea id={descriptionId} className={styles.textarea} value={description} onChange={(event) => setDescription(event.target.value)} required disabled={busy} /></div>
-        <div className={styles.field}><span className={styles.label}>Photos</span><div className={styles.photoNotice}><Icon name="image" size={20} /><span>Photos are unavailable until the incident photo API is approved.</span></div><p className={styles.hint}>Take photos in good light, close to the problem area when photo upload is available.</p></div>
-        <div className={styles.lifecycle}><Icon name="info" size={16} /><div><div className={styles.statusLine}>Submitted incidents start as <StatusBadge family="incident" status="REPORTED" /></div><p>The Veterinarian is notified and reviews it. Diagnosis, treatment and training restrictions are decided by the Veterinarian — not in this form.</p></div></div>
-        {error && <AlertBanner type="danger" title="Could not submit">{error}</AlertBanner>}
+        <div className={styles.field}><label className={styles.label} htmlFor={descriptionId}>Mô tả *</label><textarea id={descriptionId} className={styles.textarea} value={description} onChange={(event) => setDescription(event.target.value)} required disabled={busy} /></div>
+        <div className={styles.field}><span className={styles.label}>Ảnh</span><div className={styles.photoNotice}><Icon name="image" size={20} /><span>Chưa hỗ trợ ảnh cho đến khi chức năng ảnh sự cố được duyệt.</span></div><p className={styles.hint}>Khi có chức năng tải ảnh, hãy chụp nơi đủ sáng và gần vùng có vấn đề.</p></div>
+        <div className={styles.lifecycle}><Icon name="info" size={16} /><div><div className={styles.statusLine}>Sự cố mới gửi có trạng thái <StatusBadge family="incident" status="REPORTED" /></div><p>Veterinarian sẽ được thông báo và xem xét. Chẩn đoán, điều trị và hạn chế tập luyện do Veterinarian quyết định — không phải trong biểu mẫu này.</p></div></div>
+        {error && <AlertBanner type="danger" title="Không gửi được">{error}</AlertBanner>}
       </form>
     </Modal>
   );

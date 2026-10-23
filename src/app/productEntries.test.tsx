@@ -20,14 +20,14 @@ beforeEach(() => { auth.status = 'anonymous'; auth.user.roles = ['WORK_RIDER']; 
 
 it.each(canonicalEntries)('requires normal authentication at canonical entry %s', async (path) => {
   const router = mount(path);
-  expect(await screen.findByRole('heading', { name: 'Sign in to Racehorse Ops' })).toBeInTheDocument();
+  expect(await screen.findByRole('heading', { name: 'Đăng nhập Racehorse Ops' })).toBeInTheDocument();
   expect(router.state.location.pathname).toBe('/login');
 });
 
 it.each(canonicalEntries)('denies an unrelated authenticated role at %s', async (path) => {
   auth.status = 'authenticated'; auth.user.roles = ['HORSE_OWNER'];
   const router = mount(path);
-  expect(await screen.findByText('Your account does not have permission to access this page.')).toBeInTheDocument();
+  expect(await screen.findByText('Tài khoản của bạn không có quyền truy cập trang này.')).toBeInTheDocument();
   expect(router.state.location.pathname).toBe(path);
 });
 
@@ -35,6 +35,6 @@ it.each(['/training/rides/invalid', '/training/rides/invalid/execute', '/trainin
   'routes an authenticated Rider to safe invalid-ID state at %s', async (path) => {
     auth.status = 'authenticated';
     mount(path);
-    expect(await screen.findByText('Ride not found', { exact: true })).toBeInTheDocument();
+    expect(await screen.findByText('Không tìm thấy lượt cưỡi', { exact: true })).toBeInTheDocument();
   },
 );

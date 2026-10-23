@@ -28,17 +28,17 @@ export function TreatmentPlanEditor({ initial, onSave, onCancel, openedAt, retai
     event.preventDefault();
     if (submitting.current) return;
     setError('');
-    if (!plan.treatmentMedicationInstructions.trim()) return setError('Medication and treatment instructions are required.');
+    if (!plan.treatmentMedicationInstructions.trim()) return setError('Cần nhập hướng dẫn điều trị và thuốc.');
     if ((plan.restInstructions?.trim().length ?? 0) > 100 || (plan.careInstructions?.trim().length ?? 0) > 2000) {
-      return setError('Rest instructions must be 100 characters or fewer and care instructions 2000 characters or fewer.');
+      return setError('Hướng dẫn nghỉ ngơi tối đa 100 ký tự và hướng dẫn chăm sóc tối đa 2000 ký tự.');
     }
     if (tasks.some((task) => !Number.isSafeInteger(task.assignedGroomUserId) || task.assignedGroomUserId < 1 || !task.instruction.trim() || !task.taskDate)) {
-      return setError('Each Groom task needs an active Groom ID, instruction and task date.');
+      return setError('Mỗi công việc cho Groom cần mã Groom đang hoạt động, hướng dẫn và ngày thực hiện.');
     }
     if (tasks.some((task) => task.instruction.trim().length > 2000 || (task.scheduledSlot?.trim().length ?? 0) > 50)) {
-      return setError('Groom instructions must be 2000 characters or fewer and scheduled slots 50 characters or fewer.');
+      return setError('Hướng dẫn cho Groom tối đa 2000 ký tự và khung giờ tối đa 50 ký tự.');
     }
-    if (tasks.some((task) => !validDate(task.taskDate)) || (plan.reexaminationDate && !validDate(plan.reexaminationDate))) return setError('Enter valid task and re-examination dates.');
+    if (tasks.some((task) => !validDate(task.taskDate)) || (plan.reexaminationDate && !validDate(plan.reexaminationDate))) return setError('Nhập ngày thực hiện và ngày tái khám hợp lệ.');
     submitting.current = true; setSaving(true);
     try { await onSave({
       ...plan,
@@ -47,32 +47,32 @@ export function TreatmentPlanEditor({ initial, onSave, onCancel, openedAt, retai
       careInstructions: plan.careInstructions?.trim(),
       groomTasks: tasks.map((task, index) => index < retainedTaskCount ? task : ({ ...task, instruction: task.instruction.trim(), scheduledSlot: task.scheduledSlot?.trim() })),
     }); }
-    catch (failure) { setError(medicalErrorMessage(failure, 'Unable to save treatment plan.')); }
+    catch (failure) { setError(medicalErrorMessage(failure, 'Không lưu được phác đồ điều trị.')); }
     finally { submitting.current = false; setSaving(false); }
   }}>
-    <Card title="Plan period"><div className="medical-grid">
-      <TextField label="Start (case opened)" value={openedAt ? dateTime(openedAt) : 'Not available'} readOnly />
-      <TextField label="Re-examination date" type="date" value={plan.reexaminationDate ?? ''} disabled={saving} onChange={(event) => setPlan({ ...plan, reexaminationDate: event.target.value || undefined })} />
+    <Card title="Thời gian phác đồ"><div className="medical-grid">
+      <TextField label="Bắt đầu (ngày mở ca)" value={openedAt ? dateTime(openedAt) : 'Không có'} readOnly />
+      <TextField label="Ngày tái khám" type="date" value={plan.reexaminationDate ?? ''} disabled={saving} onChange={(event) => setPlan({ ...plan, reexaminationDate: event.target.value || undefined })} />
     </div></Card>
-    <Card title="Treatment & care instructions"><TextAreaField label="Care instructions" value={plan.careInstructions ?? ''} disabled={saving} onChange={(event) => setPlan({ ...plan, careInstructions: event.target.value })} /></Card>
-    <Card title="Rest"><TextField label="Rest instructions" value={plan.restInstructions ?? ''} disabled={saving} onChange={(event) => setPlan({ ...plan, restInstructions: event.target.value })} /></Card>
-    <Card title="Medication"><TextAreaField label="Treatment and medication instructions" required value={plan.treatmentMedicationInstructions} disabled={saving} onChange={(event) => setPlan({ ...plan, treatmentMedicationInstructions: event.target.value })} /></Card>
-    <Card title="Care tasks for the Groom"><fieldset disabled={saving} className="medical-form">
-      <legend className="text-h3">Assigned Groom tasks</legend>
+    <Card title="Hướng dẫn điều trị & chăm sóc"><TextAreaField label="Hướng dẫn chăm sóc" value={plan.careInstructions ?? ''} disabled={saving} onChange={(event) => setPlan({ ...plan, careInstructions: event.target.value })} /></Card>
+    <Card title="Nghỉ ngơi"><TextField label="Hướng dẫn nghỉ ngơi" value={plan.restInstructions ?? ''} disabled={saving} onChange={(event) => setPlan({ ...plan, restInstructions: event.target.value })} /></Card>
+    <Card title="Thuốc"><TextAreaField label="Hướng dẫn điều trị và dùng thuốc" required value={plan.treatmentMedicationInstructions} disabled={saving} onChange={(event) => setPlan({ ...plan, treatmentMedicationInstructions: event.target.value })} /></Card>
+    <Card title="Công việc chăm sóc cho Groom"><fieldset disabled={saving} className="medical-form">
+      <legend className="text-h3">Công việc đã giao cho Groom</legend>
       {tasks.map((task, index) => <fieldset disabled={index < retainedTaskCount} className="medical-form" key={index}>
-        <legend>{index < retainedTaskCount ? 'Saved task — history retained' : 'New task'}</legend>
-        <TextField label={`Groom user ID ${index + 1}`} type="number" min={1} step={1} value={task.assignedGroomUserId || ''} onChange={(event) => changeTask(index, { assignedGroomUserId: Number(event.target.value) })} />
-        <TextAreaField label={`Groom-safe instruction ${index + 1}`} value={task.instruction} onChange={(event) => changeTask(index, { instruction: event.target.value })} />
-        <TextField label={`Task date ${index + 1}`} type="date" value={task.taskDate} onChange={(event) => changeTask(index, { taskDate: event.target.value })} />
-        <TextField label={`Scheduled slot ${index + 1}`} value={task.scheduledSlot ?? ''} onChange={(event) => changeTask(index, { scheduledSlot: event.target.value || undefined })} />
-        <Button type="button" variant="secondary" onClick={() => setPlan({ ...plan, groomTasks: tasks.filter((_, i) => i !== index) })}>Remove task</Button>
+        <legend>{index < retainedTaskCount ? 'Công việc đã lưu — giữ lịch sử' : 'Công việc mới'}</legend>
+        <TextField label={`Mã Groom ${index + 1}`} type="number" min={1} step={1} value={task.assignedGroomUserId || ''} onChange={(event) => changeTask(index, { assignedGroomUserId: Number(event.target.value) })} />
+        <TextAreaField label={`Hướng dẫn cho Groom ${index + 1}`} value={task.instruction} onChange={(event) => changeTask(index, { instruction: event.target.value })} />
+        <TextField label={`Ngày thực hiện ${index + 1}`} type="date" value={task.taskDate} onChange={(event) => changeTask(index, { taskDate: event.target.value })} />
+        <TextField label={`Khung giờ ${index + 1}`} value={task.scheduledSlot ?? ''} onChange={(event) => changeTask(index, { scheduledSlot: event.target.value || undefined })} />
+        <Button type="button" variant="secondary" onClick={() => setPlan({ ...plan, groomTasks: tasks.filter((_, i) => i !== index) })}>Xóa công việc</Button>
       </fieldset>)}
-      <Button type="button" variant="secondary" onClick={() => setPlan({ ...plan, groomTasks: [...tasks, { assignedGroomUserId: 0, instruction: '', taskDate: '' }] })}>Add Groom task</Button>
+      <Button type="button" variant="secondary" onClick={() => setPlan({ ...plan, groomTasks: [...tasks, { assignedGroomUserId: 0, instruction: '', taskDate: '' }] })}>Thêm công việc cho Groom</Button>
     </fieldset></Card>
     {error && <AlertBanner type="danger" title={error} />}
     <div className="medical-actions">
-      {onCancel && <Button type="button" variant="secondary" disabled={saving} onClick={onCancel}>Cancel</Button>}
-      <Button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save treatment plan'}</Button>
+      {onCancel && <Button type="button" variant="secondary" disabled={saving} onClick={onCancel}>Hủy</Button>}
+      <Button type="submit" disabled={saving}>{saving ? 'Đang lưu…' : 'Lưu phác đồ điều trị'}</Button>
     </div>
   </form>;
 }

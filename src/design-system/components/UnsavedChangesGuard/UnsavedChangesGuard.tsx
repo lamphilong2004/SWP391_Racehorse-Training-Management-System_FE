@@ -18,9 +18,9 @@ export function UnsavedChangesGuard({ dirty, allowSameRoute = false }: UnsavedCh
   useBeforeUnload(useCallback((event: BeforeUnloadEvent) => {
     if (dirty) { event.preventDefault(); event.returnValue = ''; }
   }, [dirty]));
-  return <Modal open={dirty && blocker.state === 'blocked'} title="Unsaved changes" onClose={() => blocker.reset?.()}
-    footer={<><Button variant="secondary" autoFocus onClick={() => blocker.reset?.()}>Continue editing</Button>
-      <Button variant="danger" onClick={() => blocker.proceed?.()}>Discard changes</Button></>}>
-    <p>Your changes have not been saved. Continue editing or discard them to leave this page.</p>
+  return <Modal open={dirty && blocker.state === 'blocked'} title="Thay đổi chưa lưu" onClose={() => blocker.reset?.()}
+    footer={<><Button variant="secondary" autoFocus onClick={() => blocker.reset?.()}>Tiếp tục chỉnh sửa</Button>
+      <Button variant="danger" onClick={() => blocker.proceed?.()}>Hủy thay đổi</Button></>}>
+    <p>Thay đổi của bạn chưa được lưu. Hãy tiếp tục chỉnh sửa hoặc hủy thay đổi để rời trang.</p>
   </Modal>;
 }

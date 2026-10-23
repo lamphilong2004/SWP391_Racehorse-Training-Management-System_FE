@@ -85,13 +85,13 @@ export async function requestApi<T>(path: string, init: RequestInit = {}, option
   // Test-only fixtures; the MODE guard lets every runtime build drop the sample transport entirely.
   if (import.meta.env.MODE === 'test' && usesSampleData(path)) {
     const actor = getBusinessActor();
-    if (!actor || actor.accountStatus !== 'ACTIVE') throw new ApiError(401, 'UNAUTHORIZED', 'Sign in to continue.');
+    if (!actor || actor.accountStatus !== 'ACTIVE') throw new ApiError(401, 'UNAUTHORIZED', 'Đăng nhập để tiếp tục.');
     const { sampleRequest } = await import('../data/sampleTransport');
     return sampleRequest<T>(path, init, actor);
   }
   // A protected-Preview test identity carries no server authority and is never sent to the backend.
   if (isTestIdentityToken(options.token))
-    throw new ApiError(503, 'SERVER_UNAVAILABLE', 'This operation cannot be completed: test sign-in has no server access. Sign in with a server account when the backend is available.');
+    throw new ApiError(503, 'SERVER_UNAVAILABLE', 'Không thực hiện được thao tác: đăng nhập thử không có quyền truy cập máy chủ. Hãy đăng nhập bằng tài khoản thật khi hệ thống sẵn sàng.');
   const headers = new Headers(init.headers);
   if (init.body && !(init.body instanceof FormData) && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
   if (options.token) headers.set('Authorization', `Bearer ${options.token}`);
@@ -101,7 +101,7 @@ export async function requestApi<T>(path: string, init: RequestInit = {}, option
     const baseUrl = (options.baseUrl ?? API_BASE_URL).replace(/\/$/, '');
     response = await (options.fetcher ?? fetch)(`${baseUrl}${path}`, { ...init, headers });
   } catch {
-    throw new ApiError(0, 'NETWORK_ERROR', 'Cannot reach the server. Check your connection and try again.');
+    throw new ApiError(0, 'NETWORK_ERROR', 'Không kết nối được máy chủ. Hãy kiểm tra kết nối và thử lại.');
   }
 
   if (response.status === 204) return undefined as T;
@@ -113,8 +113,8 @@ export async function requestApi<T>(path: string, init: RequestInit = {}, option
     if (response.status === 401) options.onUnauthorized?.();
     // Static hosting may return HTML/plain text when no Auth API is connected. Never treat that as sign-in.
     if (path === '/api/auth/login' && [404, 405, 502, 503, 504].includes(response.status))
-      throw new ApiError(response.status, 'SERVER_UNAVAILABLE', 'Sign-in service is unavailable. Please try again later.');
-    throw new ApiError(response.status, 'INVALID_RESPONSE', 'The server returned an unreadable response.');
+      throw new ApiError(response.status, 'SERVER_UNAVAILABLE', 'Dịch vụ đăng nhập không khả dụng. Hãy thử lại sau.');
+    throw new ApiError(response.status, 'INVALID_RESPONSE', 'Máy chủ trả về dữ liệu không đọc được.');
   }
 
   if (response.status === 401) options.onUnauthorized?.();
@@ -123,7 +123,7 @@ export async function requestApi<T>(path: string, init: RequestInit = {}, option
     throw new ApiError(
       response.status,
       error?.code ?? (response.status === 401 ? 'UNAUTHORIZED' : 'INTERNAL_ERROR'),
-      error?.message ?? 'The request could not be completed. Try again.',
+      error?.message ?? 'Không thực hiện được yêu cầu. Hãy thử lại.',
       error?.details ?? [],
     );
   }

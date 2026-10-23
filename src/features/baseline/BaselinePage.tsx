@@ -7,6 +7,7 @@ import { errorMessage, idOf, useFlowRequest } from '../main-flows/api';
 import { useResource } from '../main-flows/useResource';
 import { createBaselineApi, validateWeight, type BaselineRecord } from './baselineApi';
 import styles from '../main-flows/flow.module.css';
+import { viLabel } from '../../shared/viLabels';
 
 const HEALTH: HealthStatus[] = ['FIT', 'MONITORING', 'INJURED', 'QUARANTINED'];
 interface Activation { checklist: { id: string; label: string; requirement?: string; state?: string; satisfied?: boolean }[] }
@@ -32,32 +33,32 @@ function BaselineContent({ rawId }: { rawId?: string }) {
     pending.current = true; setSaving(true); setError('');
     try {
       const result = await api.save(data.id, { weightKg: Number(weight), healthStatus: health as HealthStatus,
-        clinicalNotes: `${condition.trim()}${notes.trim() ? `\n\nVeterinarian notes: ${notes.trim()}` : ''}` });
-      if (!result?.id || result.horseId !== data.id || !result.recordedAt) throw new Error('The server did not confirm the saved baseline. Reload the horse before retrying.');
+        clinicalNotes: `${condition.trim()}${notes.trim() ? `\n\nGhi chú của Veterinarian: ${notes.trim()}` : ''}` });
+      if (!result?.id || result.horseId !== data.id || !result.recordedAt) throw new Error('Máy chủ chưa xác nhận đã lưu kết quả khám ban đầu. Hãy tải lại hồ sơ ngựa trước khi thử lại.');
       setSaved(result); activation.reload();
     } catch (cause) { setError(errorMessage(cause)); }
     finally { pending.current = false; setSaving(false); }
   }
-  return <FlowShell title={`Initial Health Baseline${data ? ` · ${data.name}` : ''}`} description={data ? `${data.horseCode} · ${data.breed ?? 'Breed not recorded'} · ${data.currentBoxCode ?? 'Box not assigned'} · onboarding (horse registration)` : 'Veterinarian baseline examination'} section="Horses" role="VETERINARIAN" actions={data && <StatusBadge family="lifecycle" status={data.lifecycle} />}>
-    {horse.pending && <LoadingState label="Loading horse…" />}
-    {horse.error && <ErrorState title="Horse unavailable" description={horse.error} onRetry={horse.reload} />}
-    {error && <AlertBanner type="danger" title="Baseline not saved">{error}</AlertBanner>}
-    {saved && <AlertBanner type="success" title="Baseline saved">{saved.weightKg} kg · {saved.healthStatus} · {new Date(saved.recordedAt).toLocaleString()}. <ButtonLink to={`/horses/${saved.horseId}`}>Reload horse profile</ButtonLink></AlertBanner>}
-    {data && data.lifecycle !== 'DRAFT' && !saved && <AlertBanner type="info" title="Initial baseline is for DRAFT horses">Open this horse’s medical record for ongoing examinations.</AlertBanner>}
+  return <FlowShell title={`Khám sức khỏe ban đầu${data ? ` · ${data.name}` : ''}`} description={data ? `${data.horseCode} · ${data.breed ?? 'Chưa ghi giống'} · ${data.currentBoxCode ?? 'Chưa xếp ô chuồng'} · tiếp nhận (đăng ký ngựa)` : 'Khám ban đầu của Veterinarian'} section="Horses" role="VETERINARIAN" actions={data && <StatusBadge family="lifecycle" status={data.lifecycle} />}>
+    {horse.pending && <LoadingState label="Đang tải thông tin ngựa…" />}
+    {horse.error && <ErrorState title="Không tải được thông tin ngựa" description={horse.error} onRetry={horse.reload} />}
+    {error && <AlertBanner type="danger" title="Chưa lưu được kết quả khám ban đầu">{error}</AlertBanner>}
+    {saved && <AlertBanner type="success" title="Đã lưu kết quả khám ban đầu">{saved.weightKg} kg · {viLabel(saved.healthStatus)} · {new Date(saved.recordedAt).toLocaleString('vi-VN')}. <ButtonLink to={`/horses/${saved.horseId}`}>Tải lại hồ sơ ngựa</ButtonLink></AlertBanner>}
+    {data && data.lifecycle !== 'DRAFT' && !saved && <AlertBanner type="info" title="Khám ban đầu chỉ dành cho ngựa ở trạng thái Nháp">Mở hồ sơ y tế của ngựa này cho các lần khám tiếp theo.</AlertBanner>}
     <form onSubmit={(event) => { event.preventDefault(); void save(); }}>
-      <div className={styles.columns}><Card title="Baseline examination"><fieldset disabled={!data || data.lifecycle !== 'DRAFT' || saving || !!saved} className={`${styles.fieldset} ${styles.stack}`}>
-        <p className={styles.muted}>The first examination of a new horse. It records weight and condition and sets the first Health Status.</p>
-        <div className={styles.fields}><TextField label="Examination date & time" value={saved ? new Date(saved.recordedAt).toLocaleString() : ''} readOnly placeholder="Recorded by server on save" helperText="The approved API sets the examination time when the baseline is saved." /><TextField label="Weight (kg)" required type="number" min="0.01" max="9999.99" step="0.01" value={weight} placeholder="Enter weight" onChange={(event) => setWeight(event.target.value)} error={weight && !validateWeight(weight) ? 'Enter a positive weight up to 9999.99 kg with at most two decimals.' : undefined} /></div>
-        <TextAreaField label="Current condition" required value={condition} onChange={(event) => setCondition(event.target.value)} placeholder="General and body condition, legs and hooves, anything unusual…" rows={4} />
-        <fieldset className={styles.fieldset}><legend className="text-body-strong">Initial Health Status *</legend><div className={styles.choices}>{HEALTH.map((value) => <label className={styles.choice} key={value}><input required type="radio" name="healthStatus" value={value} checked={health === value} onChange={() => setHealth(value)} /><StatusBadge family="health" status={value} /></label>)}</div><p className="text-caption">{health || 'Not selected yet.'}</p></fieldset>
-        <TextAreaField label="Veterinarian notes" value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Optional notes…" rows={2} />
-        <AlertBanner type="info" title="">This form sets the first Health Status only. Training Availability is managed separately by the Veterinarian from the medical record.</AlertBanner>
-      </fieldset></Card><Card title="Activation readiness"><div className={styles.stack}><p className={styles.muted}>The horse becomes ACTIVE automatically once all mandatory requirements are valid. Head Trainer readiness review is recommended and does not block activation.</p>
-        {activation.pending && <LoadingState label="Loading readiness…" />}{activation.error && <ErrorState title="Readiness unavailable" description={activation.error} onRetry={activation.reload} />}
-        {activation.data?.checklist.map((item) => <div className={styles.checklist} key={item.id}><Icon name={item.state === 'SATISFIED' || item.state === 'REVIEWED' || item.satisfied ? 'check-circle' : 'circle'} size={16} /><div><p>{item.label}</p><span className="text-caption">{item.requirement ?? 'Server readiness result'}</span></div></div>)}
+      <div className={styles.columns}><Card title="Khám ban đầu"><fieldset disabled={!data || data.lifecycle !== 'DRAFT' || saving || !!saved} className={`${styles.fieldset} ${styles.stack}`}>
+        <p className={styles.muted}>Lần khám đầu tiên của ngựa mới: ghi nhận cân nặng, thể trạng và đặt tình trạng sức khỏe ban đầu.</p>
+        <div className={styles.fields}><TextField label="Ngày giờ khám" value={saved ? new Date(saved.recordedAt).toLocaleString('vi-VN') : ''} readOnly placeholder="Máy chủ ghi nhận khi lưu" helperText="Thời điểm khám được hệ thống ghi khi lưu kết quả." /><TextField label="Cân nặng (kg)" required type="number" min="0.01" max="9999.99" step="0.01" value={weight} placeholder="Nhập cân nặng" onChange={(event) => setWeight(event.target.value)} error={weight && !validateWeight(weight) ? 'Nhập cân nặng dương, tối đa 9999.99 kg, nhiều nhất hai chữ số thập phân.' : undefined} /></div>
+        <TextAreaField label="Thể trạng hiện tại" required value={condition} onChange={(event) => setCondition(event.target.value)} placeholder="Thể trạng chung, chân và móng, mọi dấu hiệu bất thường…" rows={4} />
+        <fieldset className={styles.fieldset}><legend className="text-body-strong">Tình trạng sức khỏe ban đầu *</legend><div className={styles.choices}>{HEALTH.map((value) => <label className={styles.choice} key={value}><input required type="radio" name="healthStatus" value={value} checked={health === value} onChange={() => setHealth(value)} /><StatusBadge family="health" status={value} /></label>)}</div><p className="text-caption">{health || 'Chưa chọn.'}</p></fieldset>
+        <TextAreaField label="Ghi chú của Veterinarian" value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Ghi chú (không bắt buộc)…" rows={2} />
+        <AlertBanner type="info" title="">Biểu mẫu này chỉ đặt tình trạng sức khỏe ban đầu. Khả năng tập luyện do Veterinarian quản lý riêng trong hồ sơ y tế.</AlertBanner>
+      </fieldset></Card><Card title="Mức sẵn sàng kích hoạt"><div className={styles.stack}><p className={styles.muted}>Ngựa tự chuyển sang Hoạt động khi đủ mọi yêu cầu bắt buộc. Nên có đánh giá sẵn sàng của Head Trainer nhưng không bắt buộc để kích hoạt.</p>
+        {activation.pending && <LoadingState label="Đang tải mức sẵn sàng…" />}{activation.error && <ErrorState title="Không tải được mức sẵn sàng" description={activation.error} onRetry={activation.reload} />}
+        {activation.data?.checklist.map((item) => <div className={styles.checklist} key={item.id}><Icon name={item.state === 'SATISFIED' || item.state === 'REVIEWED' || item.satisfied ? 'check-circle' : 'circle'} size={16} /><div><p>{item.label}</p><span className="text-caption">{item.requirement ?? 'Kết quả sẵn sàng từ hệ thống'}</span></div></div>)}
         <div className={styles.row}><StatusBadge family="lifecycle" status="DRAFT" /><Icon name="chevron-right" size={16} /><StatusBadge family="lifecycle" status="ACTIVE" /></div>
       </div></Card></div>
-      <div className={styles.footer}><span className="text-caption">Complete the required fields to save.</span><ButtonLink to={rawId ? `/horses/${rawId}` : '/horses'}>Cancel</ButtonLink><Button type="submit" disabled={!valid || !data || data.lifecycle !== 'DRAFT' || saving || !!saved}>{saving ? 'Saving…' : 'Save Baseline'}</Button></div>
+      <div className={styles.footer}><span className="text-caption">Điền đủ các trường bắt buộc để lưu.</span><ButtonLink to={rawId ? `/horses/${rawId}` : '/horses'}>Hủy</ButtonLink><Button type="submit" disabled={!valid || !data || data.lifecycle !== 'DRAFT' || saving || !!saved}>{saving ? 'Đang lưu…' : 'Lưu kết quả khám'}</Button></div>
     </form>
   </FlowShell>;
 }

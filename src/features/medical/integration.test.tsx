@@ -28,7 +28,7 @@ it.each(['/medical/cases/no-such-id', '/medical/cases/0', '/medical/cases/no-suc
   });
   vi.stubGlobal('fetch', fetcher);
   mount(path);
-  expect(await screen.findByText('Medical case not found')).toBeInTheDocument();
+  expect(await screen.findByText('Không tìm thấy ca y tế')).toBeInTheDocument();
   expect(fetcher).toHaveBeenCalledOnce();
 });
 
@@ -41,10 +41,10 @@ it('logs in and opens the clinical case list from the canonical router', async (
   });
   vi.stubGlobal('fetch', fetcher);
   const router = mount('/medical');
-  expect(await screen.findByRole('heading', { name: 'Sign in to Racehorse Ops' })).toBeInTheDocument();
+  expect(await screen.findByRole('heading', { name: 'Đăng nhập Racehorse Ops' })).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Email'), { target: { value: vet.email } });
-  fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'secret' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Sign In' }));
+  fireEvent.change(screen.getByLabelText('Mật khẩu'), { target: { value: 'secret' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }));
   expect(await screen.findByText('Lameness')).toBeInTheDocument();
   expect(router.state.location.pathname).toBe('/medical');
   expect(new Headers(fetcher.mock.calls.at(-1)?.[1]?.headers).get('Authorization')).toBe('Bearer jwt');
@@ -58,7 +58,7 @@ it.each([groom, trainer])('denies clinical routes to $fullName without a medical
   });
   vi.stubGlobal('fetch', fetcher);
   mount('/medical/cases/9');
-  expect(await screen.findByText('Access denied')).toBeInTheDocument();
+  expect(await screen.findByText('Không có quyền truy cập')).toBeInTheDocument();
   expect(fetcher).toHaveBeenCalledTimes(1);
 });
 
@@ -74,9 +74,9 @@ it('restores a Vet and clears clinical data after sign-out', async () => {
   const router = mount('/medical');
   expect(await screen.findByText('Lameness')).toBeInTheDocument();
   await router.navigate('/dashboard');
-  fireEvent.click(await screen.findByRole('button', { name: 'Account menu' }));
-  fireEvent.click(await screen.findByRole('button', { name: 'Sign out' }));
-  expect(await screen.findByRole('heading', { name: 'Sign in to Racehorse Ops' })).toBeInTheDocument();
+  fireEvent.click(await screen.findByRole('button', { name: 'Menu tài khoản' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Đăng xuất' }));
+  expect(await screen.findByRole('heading', { name: 'Đăng nhập Racehorse Ops' })).toBeInTheDocument();
   expect(screen.queryByText('Lameness')).not.toBeInTheDocument();
   expect(authSession.read()).toBeNull();
 });
@@ -90,7 +90,7 @@ it('clears a Vet session on medical 401 and keeps it on ordinary 403', async () 
   });
   vi.stubGlobal('fetch', fetcher);
   const router = mount('/medical');
-  expect(await screen.findByText('Access Denied: No case-list permission')).toBeInTheDocument();
+  expect(await screen.findByText('Không có quyền truy cập: No case-list permission')).toBeInTheDocument();
   expect(authSession.read()?.accessToken).toBe('jwt');
   fetcher.mockImplementation(async (url: string) => {
     if (url.includes('/api/medical/')) return fail(401, 'UNAUTHORIZED', 'Token expired');
@@ -99,7 +99,7 @@ it('clears a Vet session on medical 401 and keeps it on ordinary 403', async () 
   });
   await router.navigate('/medical/herd-health');
   await waitFor(() => expect(authSession.read()).toBeNull());
-  expect(await screen.findByRole('heading', { name: 'Sign in to Racehorse Ops' })).toBeInTheDocument();
+  expect(await screen.findByRole('heading', { name: 'Đăng nhập Racehorse Ops' })).toBeInTheDocument();
 });
 
 it('drops an inactive restored account before mounting clinical pages', async () => {
@@ -110,7 +110,7 @@ it('drops an inactive restored account before mounting clinical pages', async ()
   });
   vi.stubGlobal('fetch', fetcher);
   mount('/medical');
-  expect(await screen.findByRole('heading', { name: 'Sign in to Racehorse Ops' })).toBeInTheDocument();
+  expect(await screen.findByRole('heading', { name: 'Đăng nhập Racehorse Ops' })).toBeInTheDocument();
   expect(authSession.read()).toBeNull();
   expect(fetcher).toHaveBeenCalledTimes(1);
 });
@@ -127,12 +127,12 @@ it('keeps examination input and shows the backend 409 reason through the case ro
   });
   vi.stubGlobal('fetch', fetcher);
   mount('/medical/cases/9');
-  fireEvent.click(await screen.findByRole('tab', { name: 'Examination' }));
-  fireEvent.change(screen.getByLabelText('Symptoms and findings'), { target: { value: 'Left foreleg lame' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Save examination' }));
+  fireEvent.click(await screen.findByRole('tab', { name: 'Khám' }));
+  fireEvent.change(screen.getByLabelText('Triệu chứng và phát hiện'), { target: { value: 'Left foreleg lame' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Lưu lần khám' }));
   expect(await screen.findByText('Case was closed by another Vet')).toBeInTheDocument();
-  expect(screen.getByLabelText('Symptoms and findings')).toHaveValue('Left foreleg lame');
-  expect(screen.queryByText('Saved successfully')).not.toBeInTheDocument();
+  expect(screen.getByLabelText('Triệu chứng và phát hiện')).toHaveValue('Left foreleg lame');
+  expect(screen.queryByText('Đã lưu thành công')).not.toBeInTheDocument();
   expect(JSON.parse(String(fetcher.mock.calls.find(([url]) => url.endsWith('/examinations'))?.[1]?.body))).toMatchObject({ symptoms: 'Left foreleg lame' });
 });
 
@@ -154,13 +154,13 @@ it('keeps a blocked treatment edit and shows completed task history', async () =
   vi.stubGlobal('fetch', fetcher);
   mount('/medical/cases/9/treatment-plan');
   expect(await screen.findByText('Walk completed')).toBeInTheDocument();
-  expect(screen.getByLabelText('Groom-safe instruction 1')).toHaveValue('Cold compress');
-  expect(screen.getByLabelText('Groom-safe instruction 2')).toHaveValue('Walk completed');
-  expect(screen.getByLabelText('Groom-safe instruction 2')).toBeDisabled();
-  fireEvent.change(screen.getByRole('textbox', { name: /Treatment and medication instructions/ }), { target: { value: 'Rest and inspect' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Save treatment plan' }));
+  expect(screen.getByLabelText('Hướng dẫn cho Groom 1')).toHaveValue('Cold compress');
+  expect(screen.getByLabelText('Hướng dẫn cho Groom 2')).toHaveValue('Walk completed');
+  expect(screen.getByLabelText('Hướng dẫn cho Groom 2')).toBeDisabled();
+  fireEvent.change(screen.getByRole('textbox', { name: /Hướng dẫn điều trị và dùng thuốc/ }), { target: { value: 'Rest and inspect' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Lưu phác đồ điều trị' }));
   expect(await screen.findByText('Assignment source unavailable')).toBeInTheDocument();
-  expect(screen.getByRole('textbox', { name: /Treatment and medication instructions/ })).toHaveValue('Rest and inspect');
+  expect(screen.getByRole('textbox', { name: /Hướng dẫn điều trị và dùng thuốc/ })).toHaveValue('Rest and inspect');
   const request = fetcher.mock.calls.find(([url, init]) => url.endsWith('/treatment-plan') && init?.method === 'PUT')?.[1];
   expect(JSON.parse(String(request?.body)).groomTasks).toEqual([
     { assignedGroomUserId: 6, instruction: 'Cold compress', taskDate: '2026-10-17' },
@@ -180,8 +180,8 @@ it('does not show case closure success when the backend returns 409', async () =
   });
   vi.stubGlobal('fetch', fetcher);
   mount('/medical/cases/9');
-  fireEvent.click(await screen.findByRole('button', { name: 'Close case' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Confirm close' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Đóng ca' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Xác nhận đóng' }));
   expect(await screen.findByText('Linked incident remains unresolved')).toBeInTheDocument();
-  expect(screen.getByText('Close case 9?')).toBeInTheDocument();
+  expect(screen.getByText('Đóng ca 9?')).toBeInTheDocument();
 });

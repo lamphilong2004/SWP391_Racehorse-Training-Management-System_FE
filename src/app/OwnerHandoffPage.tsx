@@ -8,13 +8,13 @@ import styles from './OwnerHandoffPage.module.css';
  * Route handoff only: an explicit "not available in this build" state for sidebar/workbook routes whose owning CORE
  * screen is not integrated yet. It never replaces that screen, implies completion or performs mutations.
  */
-export function OwnerHandoffPage({ title, section = 'Training' }: { title: string; section?: string }) {
+export function OwnerHandoffPage({ title, section = 'Huấn luyện' }: { title: string; section?: string }) {
   const { user } = useAuth();
   if (!user) return null;
   return <AppShell designSystem="v2" user={{ fullName: user.fullName, role: user.roles[0] }} breadcrumb={[{ label: section }, { label: title }]}>
     <div className={styles.stack}>
-      <EmptyState title={`${title} unavailable`} description="This screen is not available in this build." />
-      <Link className={styles.link} to="/dashboard">Back to workspace</Link>
+      <EmptyState title={`${title} unavailable`} description="Màn hình này chưa có trong phiên bản hiện tại." />
+      <Link className={styles.link} to="/dashboard">Quay lại không gian làm việc</Link>
     </div>
   </AppShell>;
 }

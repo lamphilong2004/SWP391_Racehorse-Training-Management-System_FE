@@ -31,7 +31,7 @@ export function createSupportingApi(options: { fetcher?: typeof fetch; baseUrl?:
   async function request<T>(path: string, init?: RequestInit): Promise<T> {
     try {
       const session = authSession.read();
-      if (!session || session.expiresAt <= Date.now()) throw new ApiError(401, 'UNAUTHORIZED', 'Your session expired. Sign in again to continue.');
+      if (!session || session.expiresAt <= Date.now()) throw new ApiError(401, 'UNAUTHORIZED', 'Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại để tiếp tục.');
       return await requestApi<T>(path, init, { ...options, token: session.accessToken });
     } catch (error) { options.handleApiError?.(error); throw error; }
   }

@@ -16,17 +16,17 @@ export function RoleTestEntry() {
       await auth.login(role, '', false);
       const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
       navigate(from?.startsWith('/') && !from.startsWith('//') ? from : '/dashboard', { replace: true });
-    } catch { setMessage('The role workspace could not open. Try again.'); }
+    } catch { setMessage('Không mở được không gian làm việc. Hãy thử lại.'); }
     finally { setBusy(false); }
   }
   return <main className={styles.entry}>
     <Card>
-      <p className="text-caption">Racehorse Ops · PROTECTED TEST ENVIRONMENT</p>
-      <h1 className="text-h1">Role test sign-in</h1>
-      <AlertBanner type="warning" title="UI inspection only — no server access">A test role is not a server account. Screens that need the server show an error, and no record is created, changed or saved. Do not enter personal or production data.</AlertBanner>
-      <p className="text-body">Choose a role to inspect its workspace. Use Account menu → Sign out to choose another role.</p>
+      <p className="text-caption">Racehorse Ops · MÔI TRƯỜNG THỬ ĐƯỢC BẢO VỆ</p>
+      <h1 className="text-h1">Đăng nhập thử theo vai trò</h1>
+      <AlertBanner type="warning" title="Chỉ xem giao diện — không truy cập máy chủ">Vai trò thử không phải tài khoản thật. Màn hình cần máy chủ sẽ báo lỗi, và không có dữ liệu nào được tạo, sửa hay lưu. Không nhập dữ liệu cá nhân hay dữ liệu thật.</AlertBanner>
+      <p className="text-body">Chọn vai trò để xem không gian làm việc. Dùng Menu tài khoản → Đăng xuất để chọn vai trò khác.</p>
       {message && <AlertBanner type="danger" title={message} />}
-      <div className={styles.roles} role="group" aria-label="Test roles">{ROLE_CODES.map((role) => <Button key={role} variant="secondary" size="lg" disabled={busy} onClick={() => void enter(role)}>{ROLE_LABELS[role]}</Button>)}</div>
+      <div className={styles.roles} role="group" aria-label="Vai trò thử">{ROLE_CODES.map((role) => <Button key={role} variant="secondary" size="lg" disabled={busy} onClick={() => void enter(role)}>{ROLE_LABELS[role]}</Button>)}</div>
     </Card>
   </main>;
 }

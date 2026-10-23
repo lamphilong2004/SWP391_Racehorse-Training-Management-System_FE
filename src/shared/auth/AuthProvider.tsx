@@ -32,11 +32,11 @@ function isCurrentUser(value: CurrentUser): boolean {
 }
 
 function sessionExpiredMessage() {
-  return 'Your session expired. Sign in again to continue.';
+  return 'Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại để tiếp tục.';
 }
 
 function inactiveAccountMessage() {
-  return 'Your account is deactivated. Sign in again to continue.';
+  return 'Tài khoản của bạn đã bị vô hiệu hóa. Hãy đăng nhập lại để tiếp tục.';
 }
 
 export function AuthProvider({ children, api = authApi }: { children: ReactNode; api?: AuthApi }) {
@@ -85,7 +85,7 @@ export function AuthProvider({ children, api = authApi }: { children: ReactNode;
         clearLocalSession(inactiveAccountMessage());
         return;
       }
-      if (!isCurrentUser(user)) throw new Error('The current-user response does not match the approved auth contract.');
+      if (!isCurrentUser(user)) throw new Error('Dữ liệu người dùng hiện tại không hợp lệ.');
       setBusinessActor(user);
       setState({ status: 'authenticated', user, expiresAt: stored.expiresAt, message: null });
     } catch (error) {
@@ -94,7 +94,7 @@ export function AuthProvider({ children, api = authApi }: { children: ReactNode;
         status: 'error',
         user: null,
         expiresAt: stored.expiresAt,
-        message: error instanceof Error ? error.message : 'Could not restore your session.',
+        message: error instanceof Error ? error.message : 'Không khôi phục được phiên đăng nhập.',
       });
     }
   }, [api, clearLocalSession, handleApiError]);
@@ -125,7 +125,7 @@ export function AuthProvider({ children, api = authApi }: { children: ReactNode;
         response.expiresIn <= 0 ||
         !isCurrentUser(response.user)
       ) {
-        throw new ApiError(200, 'INVALID_RESPONSE', 'The sign-in response does not match the approved auth contract.');
+        throw new ApiError(200, 'INVALID_RESPONSE', 'Dữ liệu đăng nhập trả về không hợp lệ.');
       }
       const stored = authSession.save(response.accessToken, response.expiresIn, remember);
       setBusinessActor(response.user);
@@ -140,7 +140,7 @@ export function AuthProvider({ children, api = authApi }: { children: ReactNode;
     try {
       if (stored) await api.logout(stored.accessToken);
     } catch {
-      message = 'Signed out on this device. Server sign-out and audit were not confirmed.';
+      message = 'Đã đăng xuất trên thiết bị này. Chưa xác nhận được việc đăng xuất trên máy chủ.';
     } finally {
       clearLocalSession(message);
     }

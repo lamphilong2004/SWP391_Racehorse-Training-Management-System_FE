@@ -22,13 +22,13 @@ it('keeps a failed creation draft and sends only the approved template DTO', asy
     if (init?.method === 'POST') throw new Error('Template name already exists');
     return isCatalog(path) ? catalog : path.includes('?') ? { page: 0, size: 20, totalItems: 0, totalPages: 0, items: [] } : detail;
   });
-  mount(); fireEvent.click(await screen.findByRole('button', { name: 'Create Template' }));
-  fireEvent.change(screen.getByRole('textbox', { name: /Template name/ }), { target: { value: 'Recovery plan' } });
-  fireEvent.change(screen.getByRole('textbox', { name: /Phase 1 name/ }), { target: { value: 'Walk' } });
+  mount(); fireEvent.click(await screen.findByRole('button', { name: 'Tạo mẫu' }));
+  fireEvent.change(screen.getByRole('textbox', { name: /Tên mẫu/ }), { target: { value: 'Recovery plan' } });
+  fireEvent.change(screen.getByRole('textbox', { name: /Giai đoạn 1 — tên/ }), { target: { value: 'Walk' } });
   fireEvent.click(await screen.findByRole('checkbox', { name: 'Rehabilitation' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Save Template' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Lưu mẫu' }));
   expect(await screen.findByText(/Template name already exists/)).toBeInTheDocument();
-  expect(screen.getByRole('textbox', { name: /Template name/ })).toHaveValue('Recovery plan');
+  expect(screen.getByRole('textbox', { name: /Tên mẫu/ })).toHaveValue('Recovery plan');
   const write = fixture.request.mock.calls.find(([, init]) => init?.method === 'POST');
   expect(write?.[0]).toBe('/api/program-templates');
   expect(JSON.parse(write?.[1].body)).toMatchObject({ name: 'Recovery plan', requiredSkillIds: [13], phases: [{ phaseOrder: 1, name: 'Walk' }] });
@@ -37,12 +37,12 @@ it('keeps a failed creation draft and sends only the approved template DTO', asy
 });
 
 it('saves a new version preserving required skills without mutating the old template version or a horse program', async () => {
-  mount(); fireEvent.click(await screen.findByRole('button', { name: 'View Base conditioning' }));
-  fireEvent.click(await screen.findByRole('button', { name: 'Save New Version' }));
+  mount(); fireEvent.click(await screen.findByRole('button', { name: 'Xem Base conditioning' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Lưu phiên bản mới' }));
   expect(await screen.findByRole('checkbox', { name: 'Conditioning' })).toBeChecked();
-  fireEvent.change(screen.getByRole('textbox', { name: /Template name/ }), { target: { value: 'Base conditioning revised' } });
+  fireEvent.change(screen.getByRole('textbox', { name: /Tên mẫu/ }), { target: { value: 'Base conditioning revised' } });
   fixture.request.mockImplementation(async (path: string, init?: RequestInit) => init?.method === 'POST' ? { ...detail, version: { ...detail.version, versionNo: 2 } } : isCatalog(path) ? catalog : path.includes('?') ? { page: 0, size: 20, totalItems: 1, totalPages: 1, items: [detail.template] } : detail);
-  fireEvent.click(screen.getByRole('button', { name: 'Save New Version' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Lưu phiên bản mới' }));
   await waitFor(() => expect(fixture.request).toHaveBeenCalledWith('/api/program-templates/10/versions', expect.objectContaining({ method: 'POST' })));
   const write = fixture.request.mock.calls.find(([path]) => path.endsWith('/versions'));
   expect(JSON.parse(write?.[1].body)).toMatchObject({ name: 'Base conditioning revised', requiredSkillIds: [12], phases: [{ phaseOrder: 1, name: 'Foundation', intensityGuidance: 'LOW' }] });
@@ -51,23 +51,23 @@ it('saves a new version preserving required skills without mutating the old temp
 });
 
 it('archives only after confirmation and preserves the library on a refused server operation', async () => {
-  mount(); fireEvent.click(await screen.findByRole('button', { name: 'View Base conditioning' }));
-  fireEvent.click(await screen.findByRole('button', { name: /^Archive$/ }));
+  mount(); fireEvent.click(await screen.findByRole('button', { name: 'Xem Base conditioning' }));
+  fireEvent.click(await screen.findByRole('button', { name: /^Lưu trữ$/ }));
   expect(fixture.request.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(false);
   fixture.request.mockRejectedValueOnce(new Error('Template changed; reload'));
-  fireEvent.click(screen.getByRole('button', { name: 'Confirm archive' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Xác nhận lưu trữ' }));
   expect(await screen.findByText('Template changed; reload')).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Confirm archive' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Xác nhận lưu trữ' })).toBeInTheDocument();
 });
 
 it('creates a template with only the selected catalog skills', async () => {
-  mount(); fireEvent.click(await screen.findByRole('button', { name: 'Create Template' }));
-  fireEvent.change(screen.getByRole('textbox', { name: /Template name/ }), { target: { value: 'Recovery template' } });
-  fireEvent.change(screen.getByRole('textbox', { name: /Phase 1 name/ }), { target: { value: 'Recovery walk' } });
+  mount(); fireEvent.click(await screen.findByRole('button', { name: 'Tạo mẫu' }));
+  fireEvent.change(screen.getByRole('textbox', { name: /Tên mẫu/ }), { target: { value: 'Recovery template' } });
+  fireEvent.change(screen.getByRole('textbox', { name: /Giai đoạn 1 — tên/ }), { target: { value: 'Recovery walk' } });
   fireEvent.click(await screen.findByRole('checkbox', { name: 'Conditioning' }));
   fireEvent.click(screen.getByRole('checkbox', { name: 'Rehabilitation' }));
   fireEvent.click(screen.getByRole('checkbox', { name: 'Conditioning' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Save Template' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Lưu mẫu' }));
   await waitFor(() => expect(fixture.request).toHaveBeenCalledWith('/api/program-templates', expect.objectContaining({ method: 'POST' })));
   const write = fixture.request.mock.calls.find(([, init]) => init?.method === 'POST');
   expect(JSON.parse(write?.[1].body).requiredSkillIds).toEqual([13]);
@@ -78,11 +78,11 @@ it('keeps existing required skills when the catalog is unavailable', async () =>
     if (isCatalog(path)) throw new Error('Catalog is temporarily unavailable');
     return path.includes('?') ? { page: 0, size: 20, totalItems: 1, totalPages: 1, items: [detail.template] } : detail;
   });
-  mount(); fireEvent.click(await screen.findByRole('button', { name: 'View Base conditioning' }));
-  fireEvent.click(await screen.findByRole('button', { name: 'Save New Version' }));
-  expect(await screen.findByText('Trainer specializations unavailable')).toBeInTheDocument();
+  mount(); fireEvent.click(await screen.findByRole('button', { name: 'Xem Base conditioning' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Lưu phiên bản mới' }));
+  expect(await screen.findByText('Không tải được chuyên môn của Trainer')).toBeInTheDocument();
   expect(screen.getByRole('checkbox', { name: 'Conditioning' })).toBeChecked();
-  fireEvent.click(screen.getByRole('button', { name: 'Save New Version' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Lưu phiên bản mới' }));
   await waitFor(() => expect(fixture.request).toHaveBeenCalledWith('/api/program-templates/10/versions', expect.objectContaining({ method: 'POST' })));
   const write = fixture.request.mock.calls.find(([path]) => path.endsWith('/versions'));
   expect(JSON.parse(write?.[1].body).requiredSkillIds).toEqual([12]);

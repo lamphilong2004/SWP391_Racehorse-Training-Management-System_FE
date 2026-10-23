@@ -25,12 +25,12 @@ export function StableBoxTile({ boxId, state, horseName, onSelect, className }: 
       {state === 'occupied' ? (
         <>
           <span className={styles.horse}>{horseName}</span>
-          <span className={styles.occupiedLabel}>Occupied</span>
+          <span className={styles.occupiedLabel}>Đang có ngựa</span>
         </>
       ) : (
         <span className={styles.status}>
           <Icon name="check-circle" size={12} />
-          <span>{state === 'selected' ? 'Selected' : 'Free'}</span>
+          <span>{state === 'selected' ? 'Đã chọn' : 'Còn trống'}</span>
         </span>
       )}
     </>

@@ -13,7 +13,7 @@ export class Core046Client {
   private async request<T>(path: string, init?: RequestInit): Promise<T> {
     try {
       const data = await requestApi<T>(path, init, { token: this.token, baseUrl: this.base });
-      if (data == null) throw new ApiError('Unexpected API response.', 200);
+      if (data == null) throw new ApiError('Phản hồi từ máy chủ không như mong đợi.', 200);
       return data;
     }
     catch (error) {
@@ -33,28 +33,28 @@ export class Core046Client {
   async reportIncident(request: IncidentCreateRequest): Promise<Incident> {
     const incident = await this.request<Incident>('/api/incidents', { method: 'POST', body: JSON.stringify(request) });
     if (!incident || !Number.isSafeInteger(incident.id) || incident.id < 1 || typeof incident.incidentCode !== 'string' || !incident.incidentCode.trim()) {
-      throw new ApiError('Unexpected incident response.', 201);
+      throw new ApiError('Dữ liệu sự cố trả về không hợp lệ.', 201);
     }
     return incident;
   }
 }
 
 function positiveId(id: number): number {
-  if (!Number.isSafeInteger(id) || id < 1) throw new Error('A positive numeric ID is required.');
+  if (!Number.isSafeInteger(id) || id < 1) throw new Error('Cần một mã số dương.');
   return id;
 }
 
 /** API has pagination only, so collect server-scoped pages before local Figma filters. */
 export async function collectPages<T>(load: (page: number) => Promise<Page<T>>): Promise<T[]> {
   const first = await load(0);
-  if (!Array.isArray(first.items) || first.page !== 0 || first.size < 1 || first.totalElements < 0) throw new Error('Invalid paged response.');
+  if (!Array.isArray(first.items) || first.page !== 0 || first.size < 1 || first.totalElements < 0) throw new Error('Dữ liệu phân trang không hợp lệ.');
   const items = [...first.items];
   const pages = Math.ceil(first.totalElements / first.size);
   for (let page = 1; page < pages; page++) {
     const next = await load(page);
-    if (!Array.isArray(next.items) || next.page !== page || next.size !== first.size || next.totalElements !== first.totalElements) throw new Error('Paged data changed; reload to retry.');
+    if (!Array.isArray(next.items) || next.page !== page || next.size !== first.size || next.totalElements !== first.totalElements) throw new Error('Dữ liệu đã thay đổi; hãy tải lại để thử lại.');
     items.push(...next.items);
   }
-  if (items.length !== first.totalElements) throw new Error('Incomplete paged response; reload to retry.');
+  if (items.length !== first.totalElements) throw new Error('Dữ liệu phân trang chưa đầy đủ; hãy tải lại để thử lại.');
   return items;
 }

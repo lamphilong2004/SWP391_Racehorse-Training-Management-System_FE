@@ -3,7 +3,7 @@ import type { IconName } from '../design-system/icons/Icon';
 import type { RoleCode } from '../shared/auth/roles';
 
 /** Why a Figma module is not shown in the current delivery scope (traceable to the decision records). */
-export const DEFERRED_REASON = 'Deferred from the current scope (DEC-007, DEC-008 §3.5)';
+export const DEFERRED_REASON = 'Tạm hoãn khỏi phạm vi hiện tại (DEC-007, DEC-008 §3.5)';
 
 export interface NavItem {
   label: string;
@@ -34,152 +34,152 @@ export interface RoleNavigation {
  */
 export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
   HEAD_TRAINER: {
-    workspaceLabel: 'Head Trainer Workspace',
+    workspaceLabel: 'Không gian Head Trainer',
     sections: [
       {
         items: [
-          { label: 'Dashboard', icon: 'dashboard', to: ROUTES.dashboard },
-          { label: 'Horses', icon: 'horseshoe', to: ROUTES.horses },
+          { label: 'Tổng quan', icon: 'dashboard', to: ROUTES.dashboard },
+          { label: 'Ngựa', icon: 'horseshoe', to: ROUTES.horses },
         ],
       },
       {
-        heading: 'Training',
+        heading: 'Huấn luyện',
         items: [
-          { label: 'Horse Training Programs', icon: 'clipboard-list', to: ROUTES.trainingPrograms },
-          { label: 'Program Templates', icon: 'file-text', to: ROUTES.programTemplates },
-          { label: 'Adjustment Requests', icon: 'history', to: ROUTES.adjustmentRequests },
-          { label: 'Training Schedule', icon: 'calendar', to: ROUTES.trainingSchedule },
-          { label: 'Performance', icon: 'trending-up', to: ROUTES.performance },
-          { label: 'Realtime Monitoring', icon: 'activity', to: ROUTES.realtimeMonitoring },
-          { label: 'Races', icon: 'target', to: ROUTES.races, deferred: DEFERRED_REASON },
+          { label: 'Chương trình huấn luyện ngựa', icon: 'clipboard-list', to: ROUTES.trainingPrograms },
+          { label: 'Mẫu chương trình', icon: 'file-text', to: ROUTES.programTemplates },
+          { label: 'Yêu cầu điều chỉnh', icon: 'history', to: ROUTES.adjustmentRequests },
+          { label: 'Lịch tập', icon: 'calendar', to: ROUTES.trainingSchedule },
+          { label: 'Thành tích', icon: 'trending-up', to: ROUTES.performance },
+          { label: 'Giám sát trực tiếp', icon: 'activity', to: ROUTES.realtimeMonitoring },
+          { label: 'Cuộc đua', icon: 'target', to: ROUTES.races, deferred: DEFERRED_REASON },
         ],
       },
       {
-        heading: 'Medical',
+        heading: 'Y tế',
         items: [
-          { label: 'Medical Summary', icon: 'stethoscope', to: ROUTES.medicalSummary },
-          { label: 'Restrictions', icon: 'shield-alert', to: ROUTES.restrictions },
-          { label: 'Incidents', icon: 'alert-triangle', to: ROUTES.incidents },
+          { label: 'Tóm tắt y tế', icon: 'stethoscope', to: ROUTES.medicalSummary },
+          { label: 'Hạn chế tập luyện', icon: 'shield-alert', to: ROUTES.restrictions },
+          { label: 'Sự cố', icon: 'alert-triangle', to: ROUTES.incidents },
         ],
       },
     ],
   },
   TRAINER: {
-    workspaceLabel: 'Trainer Workspace',
+    workspaceLabel: 'Không gian Trainer',
     sections: [
       {
         items: [
-          { label: 'Dashboard', icon: 'dashboard', to: ROUTES.dashboard },
-          { label: 'Assigned Programs', icon: 'folder', to: ROUTES.assignedPrograms },
-          { label: 'Adjustment Requests', icon: 'history', to: ROUTES.adjustmentRequests },
-          { label: 'Training Calendar', icon: 'calendar', to: ROUTES.trainingCalendar },
-          { label: 'Exercise Library', icon: 'book-open', to: ROUTES.exerciseLibrary },
-          { label: 'Live Monitoring', icon: 'activity', to: ROUTES.realtimeMonitoring },
-          { label: 'Performance', icon: 'trending-up', to: ROUTES.performance },
-          { label: 'Restrictions', icon: 'shield-alert', to: ROUTES.restrictions },
-          { label: 'Incidents', icon: 'alert-triangle', to: ROUTES.incidents },
-          { label: 'Horses', icon: 'horseshoe', to: ROUTES.horses },
+          { label: 'Tổng quan', icon: 'dashboard', to: ROUTES.dashboard },
+          { label: 'Chương trình được giao', icon: 'folder', to: ROUTES.assignedPrograms },
+          { label: 'Yêu cầu điều chỉnh', icon: 'history', to: ROUTES.adjustmentRequests },
+          { label: 'Lịch tập', icon: 'calendar', to: ROUTES.trainingCalendar },
+          { label: 'Thư viện bài tập', icon: 'book-open', to: ROUTES.exerciseLibrary },
+          { label: 'Giám sát trực tiếp', icon: 'activity', to: ROUTES.realtimeMonitoring },
+          { label: 'Thành tích', icon: 'trending-up', to: ROUTES.performance },
+          { label: 'Hạn chế tập luyện', icon: 'shield-alert', to: ROUTES.restrictions },
+          { label: 'Sự cố', icon: 'alert-triangle', to: ROUTES.incidents },
+          { label: 'Ngựa', icon: 'horseshoe', to: ROUTES.horses },
         ],
       },
     ],
   },
   WORK_RIDER: {
-    workspaceLabel: 'Work Rider Workspace',
+    workspaceLabel: 'Không gian Work Rider',
     sections: [
       {
         items: [
-          { label: 'My Rides', icon: 'dashboard', to: ROUTES.myRides },
-          { label: 'Assignments', icon: 'clipboard-list', to: ROUTES.assignments },
-          { label: 'Riding History', icon: 'history', to: ROUTES.ridingHistory },
-          { label: 'Report Issue', icon: 'alert-triangle', to: ROUTES.reportIssue },
+          { label: 'Lượt cưỡi của tôi', icon: 'dashboard', to: ROUTES.myRides },
+          { label: 'Lịch phân công', icon: 'clipboard-list', to: ROUTES.assignments },
+          { label: 'Lịch sử cưỡi', icon: 'history', to: ROUTES.ridingHistory },
+          { label: 'Báo cáo vấn đề', icon: 'alert-triangle', to: ROUTES.reportIssue },
         ],
       },
     ],
   },
   VETERINARIAN: {
-    workspaceLabel: 'Veterinary Workspace',
+    workspaceLabel: 'Không gian Veterinarian',
     sections: [
       {
         items: [
-          { label: 'Dashboard', icon: 'dashboard', to: ROUTES.dashboard },
-          { label: 'Horses', icon: 'horseshoe', to: ROUTES.horses },
+          { label: 'Tổng quan', icon: 'dashboard', to: ROUTES.dashboard },
+          { label: 'Ngựa', icon: 'horseshoe', to: ROUTES.horses },
         ],
       },
       {
-        heading: 'Medical',
+        heading: 'Y tế',
         items: [
-          { label: 'Medical / Health', icon: 'stethoscope', to: ROUTES.medical },
-          { label: 'Herd Health', icon: 'activity', to: ROUTES.herdHealth },
+          { label: 'Y tế / sức khỏe', icon: 'stethoscope', to: ROUTES.medical },
+          { label: 'Sức khỏe đàn ngựa', icon: 'activity', to: ROUTES.herdHealth },
           {
-            label: 'Preventive Healthcare',
+            label: 'Chăm sóc phòng ngừa',
             icon: 'calendar',
             to: ROUTES.preventiveHealthcare,
             deferred: DEFERRED_REASON,
           },
-          { label: 'Incidents', icon: 'alert-triangle', to: ROUTES.incidents },
+          { label: 'Sự cố', icon: 'alert-triangle', to: ROUTES.incidents },
         ],
       },
     ],
   },
   CLUB_MANAGER: {
-    workspaceLabel: 'Club Manager Workspace',
+    workspaceLabel: 'Không gian Club Manager',
     sections: [
       {
         items: [
-          { label: 'Dashboard', icon: 'dashboard', to: ROUTES.dashboard },
-          { label: 'Horses', icon: 'horseshoe', to: ROUTES.horses },
-          { label: 'Pending Activation', icon: 'clipboard-list', to: ROUTES.pendingActivation },
-          { label: 'Stable', icon: 'warehouse', to: ROUTES.stable, deferred: DEFERRED_REASON },
+          { label: 'Tổng quan', icon: 'dashboard', to: ROUTES.dashboard },
+          { label: 'Ngựa', icon: 'horseshoe', to: ROUTES.horses },
+          { label: 'Chờ kích hoạt', icon: 'clipboard-list', to: ROUTES.pendingActivation },
+          { label: 'Chuồng', icon: 'warehouse', to: ROUTES.stable, deferred: DEFERRED_REASON },
         ],
       },
       {
-        heading: 'Administration',
+        heading: 'Quản trị',
         items: [
-          { label: 'Staff & Users', icon: 'users', to: ROUTES.staffUsers },
-          { label: 'Registration Requests', icon: 'user', to: ROUTES.registrations },
-          { label: 'Roles & Permissions', icon: 'shield-check', to: ROUTES.rolesPermissions },
+          { label: 'Nhân sự & người dùng', icon: 'users', to: ROUTES.staffUsers },
+          { label: 'Yêu cầu đăng ký', icon: 'user', to: ROUTES.registrations },
+          { label: 'Vai trò & quyền hạn', icon: 'shield-check', to: ROUTES.rolesPermissions },
         ],
       },
       {
-        heading: 'Operations',
+        heading: 'Vận hành',
         items: [
-          { label: 'Races', icon: 'target', to: ROUTES.races, deferred: DEFERRED_REASON },
-          { label: 'Inventory', icon: 'package', to: ROUTES.inventory, deferred: DEFERRED_REASON },
-          { label: 'Reports', icon: 'bar-chart', to: ROUTES.reports, deferred: DEFERRED_REASON },
-          { label: 'Audit Log', icon: 'history', to: ROUTES.auditLog },
+          { label: 'Cuộc đua', icon: 'target', to: ROUTES.races, deferred: DEFERRED_REASON },
+          { label: 'Kho', icon: 'package', to: ROUTES.inventory, deferred: DEFERRED_REASON },
+          { label: 'Báo cáo', icon: 'bar-chart', to: ROUTES.reports, deferred: DEFERRED_REASON },
+          { label: 'Nhật ký hệ thống', icon: 'history', to: ROUTES.auditLog },
         ],
       },
     ],
   },
   GROOM: {
-    workspaceLabel: 'Stable Care Workspace',
+    workspaceLabel: 'Không gian Groom',
     sections: [
       {
-        items: [{ label: 'Today', icon: 'dashboard', to: ROUTES.groomToday }],
+        items: [{ label: 'Hôm nay', icon: 'dashboard', to: ROUTES.groomToday }],
       },
       {
-        heading: 'My Work',
+        heading: 'Công việc của tôi',
         items: [
-          { label: 'Care Tasks', icon: 'clipboard-list', to: ROUTES.careTasks },
-          { label: 'Daily Care', icon: 'check-circle', to: ROUTES.dailyCare, deferred: DEFERRED_REASON },
+          { label: 'Công việc chăm sóc', icon: 'clipboard-list', to: ROUTES.careTasks },
+          { label: 'Chăm sóc hằng ngày', icon: 'check-circle', to: ROUTES.dailyCare, deferred: DEFERRED_REASON },
           {
-            label: 'Preventive Healthcare',
+            label: 'Chăm sóc phòng ngừa',
             icon: 'calendar',
             to: ROUTES.preventiveHealthcare,
             deferred: DEFERRED_REASON,
           },
-          { label: 'Incidents', icon: 'alert-triangle', to: ROUTES.incidents },
+          { label: 'Sự cố', icon: 'alert-triangle', to: ROUTES.incidents },
         ],
       },
     ],
   },
   HORSE_OWNER: {
-    workspaceLabel: 'Horse Owner Portal',
+    workspaceLabel: 'Cổng thông tin Horse Owner',
     sections: [
       {
         items: [
-          { label: 'My Horses', icon: 'horseshoe', to: ROUTES.myHorses },
-          { label: 'Notifications', icon: 'bell', to: ROUTES.notifications },
+          { label: 'Ngựa của tôi', icon: 'horseshoe', to: ROUTES.myHorses },
+          { label: 'Thông báo', icon: 'bell', to: ROUTES.notifications },
         ],
       },
     ],

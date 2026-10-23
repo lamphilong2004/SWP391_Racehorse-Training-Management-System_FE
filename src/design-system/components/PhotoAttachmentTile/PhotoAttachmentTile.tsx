@@ -15,7 +15,7 @@ export function PhotoAttachmentTile(props: PhotoAttachmentTileProps) {
     return (
       <button type="button" className={cx(styles.tile, styles.empty, props.className)} onClick={props.onAdd}>
         <Icon name="plus" size={20} className={styles.addIcon} />
-        <span className={styles.addLabel}>Add photo</span>
+        <span className={styles.addLabel}>Thêm ảnh</span>
       </button>
     );
   }
@@ -27,7 +27,7 @@ export function PhotoAttachmentTile(props: PhotoAttachmentTileProps) {
         type="button"
         className={styles.remove}
         onClick={props.onRemove}
-        aria-label={`Remove ${props.fileName}`}
+        aria-label={`Xóa ${props.fileName}`}
       >
         <Icon name="x" size={12} />
       </button>

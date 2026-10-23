@@ -24,7 +24,7 @@ function Breakdown({ rows, empty, family }: { rows: CountByKey[]; empty: string;
   if (!sum) return <EmptyState title={empty} />;
   return <div className={styles.breakdown}>
     <div className={styles.bar} aria-hidden="true">{rows.filter((row) => row.count > 0).map((row) => <span key={row.key} data-tone={family ? row.key : undefined} style={{ flex: row.count }} />)}</div>
-    <dl className={family ? styles.legend : styles.stats}>{rows.map((row) => <div key={row.key}><dt>{family === 'lifecycle' && ['DRAFT', 'ACTIVE', 'INACTIVE'].includes(row.key) ? <StatusBadge family="lifecycle" status={row.key as StatusOf<'lifecycle'>} /> : family === 'availability' && ['AVAILABLE', 'LIMITED', 'LOCKED'].includes(row.key) ? <StatusBadge family="availability" status={row.key as StatusOf<'availability'>} /> : label(row.key)}</dt><dd>{row.count.toLocaleString()}</dd></div>)}</dl>
+    <dl className={family ? styles.legend : styles.stats}>{rows.map((row) => <div key={row.key}><dt>{family === 'lifecycle' && ['DRAFT', 'ACTIVE', 'INACTIVE'].includes(row.key) ? <StatusBadge family="lifecycle" status={row.key as StatusOf<'lifecycle'>} /> : family === 'availability' && ['AVAILABLE', 'LIMITED', 'LOCKED'].includes(row.key) ? <StatusBadge family="availability" status={row.key as StatusOf<'availability'>} /> : label(row.key)}</dt><dd>{row.count.toLocaleString('vi-VN')}</dd></div>)}</dl>
   </div>;
 }
 
@@ -36,47 +36,47 @@ function DashboardContent() {
   const [revision, setRevision] = useState(0);
   const resource = useManagementResource(service.dashboard, revision);
   const data = resource.status === 'ready' ? resource.data : null;
-  return <AppShell designSystem="v2" user={{ fullName: auth.user!.fullName, role: 'CLUB_MANAGER' }} breadcrumb={[{ label: 'Dashboard' }, { label: 'Club overview' }]} searchPlaceholder="Search horses, users…">
+  return <AppShell designSystem="v2" user={{ fullName: auth.user!.fullName, role: 'CLUB_MANAGER' }} breadcrumb={[{ label: 'Tổng quan' }, { label: 'Tổng quan câu lạc bộ' }]} searchPlaceholder="Tìm ngựa, người dùng…">
     <div className={styles.page}>
       <header className={styles.heading}>
-        <div className={styles.title}><h1 className="text-h1">Club Manager Dashboard</h1><p className={styles.subtitle}>Management overview · <time dateTime={localTime.toISOString()} title="Current local time, not a data refresh timestamp">{new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).format(localTime)}</time> · summaries from each module — open a module to make changes</p></div>
-        <div className={styles.actions}><Link className={styles.linkButton} to={ROUTES.auditLog}>View Audit Log</Link>{destinations.registerHorse === '/horses/new' && <Link className={`${styles.linkButton} ${styles.primaryLink}`} to={destinations.registerHorse}>+ Register Horse</Link>}</div>
+        <div className={styles.title}><h1 className="text-h1">Tổng quan Club Manager</h1><p className={styles.subtitle}>Tổng quan quản lý · <time dateTime={localTime.toISOString()} title="Giờ hiện tại của máy, không phải thời điểm cập nhật dữ liệu">{new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).format(localTime)}</time> · tóm tắt từ từng phân hệ — mở phân hệ để thay đổi</p></div>
+        <div className={styles.actions}><Link className={styles.linkButton} to={ROUTES.auditLog}>Xem nhật ký hệ thống</Link>{destinations.registerHorse === '/horses/new' && <Link className={`${styles.linkButton} ${styles.primaryLink}`} to={destinations.registerHorse}>+ Thêm ngựa</Link>}</div>
       </header>
-      {businessDataMode() === 'sample' && <p className={styles.note}>Sample overview uses the shared horse, session and incident data. Accounts represent seven sample roles; registrations are not modeled. Recent entries are sample snapshots, not backend audit events.</p>}
-      {resource.status === 'loading' && <LoadingState label="Loading management overview…" />}
-      {resource.status === 'error' && <ErrorState title={resource.forbidden ? 'Access denied' : 'Dashboard unavailable'} description={resource.message} onRetry={resource.forbidden ? undefined : () => setRevision((value) => value + 1)} />}
+      {businessDataMode() === 'sample' && <p className={styles.note}>Tổng quan mẫu dùng dữ liệu ngựa, buổi tập và sự cố dùng chung. Tài khoản đại diện cho bảy vai trò mẫu; chưa mô phỏng đăng ký. Các mục gần đây là dữ liệu mẫu, không phải nhật ký thật.</p>}
+      {resource.status === 'loading' && <LoadingState label="Đang tải tổng quan quản lý…" />}
+      {resource.status === 'error' && <ErrorState title={resource.forbidden ? 'Không có quyền truy cập' : 'Không tải được trang tổng quan'} description={resource.message} onRetry={resource.forbidden ? undefined : () => setRevision((value) => value + 1)} />}
       {data && <>
         <div className={styles.metrics}>
-          <Link className={styles.metricLink} to={ROUTES.horses} aria-label="View horses"><MetricCard label="Horses" value={total(data.horsesByLifecycle).toLocaleString()} caption={`${count(data.horsesByLifecycle, 'ACTIVE')} ACTIVE · ${count(data.horsesByLifecycle, 'DRAFT')} DRAFT · ${count(data.horsesByLifecycle, 'INACTIVE')} INACTIVE`} /></Link>
-          <Link className={styles.metricLink} to={pendingActivationPath} aria-label="View pending activations"><MetricCard label="Pending activation" value={String(data.needsAttention.pendingActivations)} caption="Draft horses awaiting activation" /></Link>
-          <MetricCard label="Stable occupancy" value={`${data.boxOccupancy.occupied} / ${data.boxOccupancy.total}`} caption={`${data.boxOccupancy.free} free boxes`} />
-          <MetricCard label="Staff & user accounts" value={total(data.accountsByStatus).toLocaleString()} caption={`${count(data.accountsByStatus, 'ACTIVE')} active · ${count(data.accountsByStatus, 'INACTIVE')} inactive`} />
+          <Link className={styles.metricLink} to={ROUTES.horses} aria-label="Xem danh sách ngựa"><MetricCard label="Ngựa" value={total(data.horsesByLifecycle).toLocaleString('vi-VN')} caption={`${count(data.horsesByLifecycle, 'ACTIVE')} ACTIVE · ${count(data.horsesByLifecycle, 'DRAFT')} DRAFT · ${count(data.horsesByLifecycle, 'INACTIVE')} INACTIVE`} /></Link>
+          <Link className={styles.metricLink} to={pendingActivationPath} aria-label="Xem ngựa chờ kích hoạt"><MetricCard label="Chờ kích hoạt" value={String(data.needsAttention.pendingActivations)} caption="Ngựa nháp đang chờ kích hoạt" /></Link>
+          <MetricCard label="Tình trạng ô chuồng" value={`${data.boxOccupancy.occupied} / ${data.boxOccupancy.total}`} caption={`${data.boxOccupancy.free} ô trống`} />
+          <MetricCard label="Tài khoản nhân sự & người dùng" value={total(data.accountsByStatus).toLocaleString('vi-VN')} caption={`${count(data.accountsByStatus, 'ACTIVE')} đang hoạt động · ${count(data.accountsByStatus, 'INACTIVE')} ngừng hoạt động`} />
         </div>
         <div className={styles.twoColumns}>
-          <Card title="Horses by status" className={styles.figmaCard}>
-            <div className={styles.statusGroup}><h4 className={styles.overline}>Lifecycle</h4><Breakdown rows={data.horsesByLifecycle} family="lifecycle" empty="No horses registered" /></div>
-            <div className={styles.statusGroup}><h4 className={styles.overline}>Training availability (set by the Veterinarian — read-only here)</h4><Breakdown rows={data.horsesByAvailability} family="availability" empty="No active horse availability" /></div>
-            <p className={styles.note}>Counts cover the {total(data.horsesByLifecycle)} horses in the club register. Health Status and Training Availability are always shown separately from lifecycle. Availability counts cover ACTIVE horses only.</p>
+          <Card title="Ngựa theo trạng thái" className={styles.figmaCard}>
+            <div className={styles.statusGroup}><h4 className={styles.overline}>Vòng đời</h4><Breakdown rows={data.horsesByLifecycle} family="lifecycle" empty="Chưa có ngựa nào được đăng ký" /></div>
+            <div className={styles.statusGroup}><h4 className={styles.overline}>Khả năng tập luyện (do Veterinarian đặt — chỉ xem ở đây)</h4><Breakdown rows={data.horsesByAvailability} family="availability" empty="Chưa có ngựa đang hoạt động" /></div>
+            <p className={styles.note}>Số liệu tính trên {total(data.horsesByLifecycle)} con ngựa của câu lạc bộ. Tình trạng sức khỏe và khả năng tập luyện luôn hiển thị tách biệt với vòng đời. Khả năng tập luyện chỉ tính ngựa đang hoạt động.</p>
           </Card>
-          <Card title="Needs attention" className={styles.figmaCard}>
+          <Card title="Cần chú ý" className={styles.figmaCard}>
             <dl className={styles.stats}>
-              <div><dt><Link to={pendingActivationPath}>Pending horse activations</Link></dt><dd>{data.needsAttention.pendingActivations}</dd></div>
-              <div><dt>Pending registrations</dt><dd>{data.needsAttention.pendingRegistrations}</dd></div>
-              <div><dt><Link to={ROUTES.incidents}>Open incidents</Link></dt><dd>{data.openIncidents}</dd></div>
+              <div><dt><Link to={pendingActivationPath}>Ngựa chờ kích hoạt</Link></dt><dd>{data.needsAttention.pendingActivations}</dd></div>
+              <div><dt>Yêu cầu đăng ký chờ duyệt</dt><dd>{data.needsAttention.pendingRegistrations}</dd></div>
+              <div><dt><Link to={ROUTES.incidents}>Sự cố chưa xử lý xong</Link></dt><dd>{data.openIncidents}</dd></div>
             </dl>
-            {data.needsAttention.pendingActivations + data.needsAttention.pendingRegistrations + data.openIncidents === 0 && <EmptyState title="Nothing needs attention" />}
-            <p className={styles.note}>Open incidents include reported and under-review records.</p>
+            {data.needsAttention.pendingActivations + data.needsAttention.pendingRegistrations + data.openIncidents === 0 && <EmptyState title="Không có mục nào cần chú ý" />}
+            <p className={styles.note}>Sự cố chưa xong gồm sự cố mới báo và đang xem xét.</p>
           </Card>
         </div>
         <div className={styles.threeColumns}>
-          <Card title="Training today" className={styles.figmaCard}><p className={styles.number}>{total(data.trainingToday.byStatus)} <span className={styles.note}>{total(data.trainingToday.byStatus) === 1 ? 'scheduled session' : 'scheduled sessions'}</span></p><Breakdown rows={data.trainingToday.byStatus} empty="No sessions scheduled today" /></Card>
-          <Card title="Incidents" className={styles.figmaCard} action={<Link to={ROUTES.incidents}>View Incidents →</Link>}><p className={styles.number}>{data.openIncidents}</p><p className={styles.subtitle}>Reported or under review</p><p className={styles.note}>Management summary only.</p></Card>
-          <Card title="Stable boxes" className={styles.figmaCard}><dl className={styles.stats}><div><dt>Total boxes</dt><dd>{data.boxOccupancy.total}</dd></div><div><dt>Occupied</dt><dd>{data.boxOccupancy.occupied}</dd></div><div><dt>Free</dt><dd>{data.boxOccupancy.free}</dd></div></dl></Card>
+          <Card title="Lịch tập hôm nay" className={styles.figmaCard}><p className={styles.number}>{total(data.trainingToday.byStatus)} <span className={styles.note}>{total(data.trainingToday.byStatus) === 1 ? 'buổi tập đã lên lịch' : 'buổi tập đã lên lịch'}</span></p><Breakdown rows={data.trainingToday.byStatus} empty="Hôm nay không có buổi tập nào" /></Card>
+          <Card title="Sự cố" className={styles.figmaCard} action={<Link to={ROUTES.incidents}>Xem sự cố →</Link>}><p className={styles.number}>{data.openIncidents}</p><p className={styles.subtitle}>Mới báo hoặc đang xem xét</p><p className={styles.note}>Chỉ là tóm tắt quản lý.</p></Card>
+          <Card title="Ô chuồng" className={styles.figmaCard}><dl className={styles.stats}><div><dt>Tổng số ô</dt><dd>{data.boxOccupancy.total}</dd></div><div><dt>Đang có ngựa</dt><dd>{data.boxOccupancy.occupied}</dd></div><div><dt>Còn trống</dt><dd>{data.boxOccupancy.free}</dd></div></dl></Card>
         </div>
         <div className={styles.auditAndShortcuts}>
-          <Card title="Recent audit activity" className={styles.figmaCard} action={<Link to={ROUTES.auditLog}>View Audit Log →</Link>}>
+          <Card title="Hoạt động gần đây" className={styles.figmaCard} action={<Link to={ROUTES.auditLog}>Xem nhật ký hệ thống →</Link>}>
             <RecentAudit entries={data.recentAudit} />
-            <p className={styles.note}>Written automatically by the system · read-only</p>
+            <p className={styles.note}>Hệ thống tự ghi · chỉ xem</p>
           </Card>
           <ManagementShortcuts />
         </div>

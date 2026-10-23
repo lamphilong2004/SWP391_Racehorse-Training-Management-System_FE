@@ -1,7 +1,7 @@
 import { createOwnerApi } from './ownerApi';
 
 const card = { id: 7, horseCode: 'RH-7', name: 'Owned horse', lifecycle: 'ACTIVE', trainingAvailability: 'AVAILABLE', healthStatus: null };
-const profile = { horse: card, pedigree: { sire: { name: 'Sire' }, dam: {} }, myOwnership: { sharePercentage: 60, effectiveFrom: '2026-01-01', isManagingOwner: true } };
+const profile = { horse: card, pedigree: { sire: { name: 'Ngựa cha' }, dam: {} }, myOwnership: { sharePercentage: 60, effectiveFrom: '2026-01-01', isManagingOwner: true } };
 const health = { healthStatus: 'MONITORING', trainingAvailability: 'LIMITED', weights: [{ weightKg: 501.25, recordedAt: '2026-10-18T06:00:00Z' }], restrictionReviewDate: '2026-10-25', recoveryStatus: 'IMPROVING', lastExaminedAt: '2026-10-17T06:00:00Z' };
 const training = { currentProgram: { name: 'Foundation', status: 'ACTIVE', periodStart: '2026-10-01', periodEnd: '2026-10-31', currentPhaseName: null, sessionsCompleted: 3, sessionsPlanned: 8 }, recentSessions: [{ sessionCode: 'SES-42', scheduledStart: '2026-10-17T06:00:00Z', status: 'COMPLETED' }] };
 function setup(data: { list?: unknown; profile?: unknown; health?: unknown; training?: unknown; fail?: string; status?: number } = {}) {

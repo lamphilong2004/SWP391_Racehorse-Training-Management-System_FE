@@ -42,9 +42,9 @@ export interface Page<T> {
 }
 
 export const INCIDENT_TYPES: { value: IncidentType; label: string }[] = [
-  { value: 'OFF_FEED', label: 'Off feed' },
-  { value: 'COLIC_SIGNS', label: 'Colic signs' },
-  { value: 'FEVER', label: 'Fever' },
-  { value: 'HOOF_OR_LEG_PROBLEM', label: 'Hoof or leg problem' },
-  { value: 'OTHER', label: 'Other' },
+  { value: 'OFF_FEED', label: 'Bỏ ăn' },
+  { value: 'COLIC_SIGNS', label: 'Dấu hiệu đau bụng' },
+  { value: 'FEVER', label: 'Sốt' },
+  { value: 'HOOF_OR_LEG_PROBLEM', label: 'Vấn đề móng hoặc chân' },
+  { value: 'OTHER', label: 'Khác' },
 ];

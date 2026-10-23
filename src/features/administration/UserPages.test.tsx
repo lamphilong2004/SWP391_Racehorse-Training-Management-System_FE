@@ -20,34 +20,34 @@ it('submits once, waits for server success and leaves without a false unsaved di
   let complete!: (value: unknown) => void;
   request.mockImplementation(() => new Promise((resolve) => { complete = resolve; }));
   mount(); const user = userEvent.setup();
-  await user.type(await screen.findByLabelText(/Full name/), 'New Account');
+  await user.type(await screen.findByLabelText(/Họ và tên/), 'New Account');
   await user.type(screen.getByLabelText(/^Email/), 'account@example.test');
-  const form = screen.getByRole('button', { name: 'Create User' }).closest('form')!;
+  const form = screen.getByRole('button', { name: 'Tạo người dùng' }).closest('form')!;
   fireEvent.submit(form); fireEvent.submit(form);
   expect(request).toHaveBeenCalledTimes(1);
   expect(request).toHaveBeenCalledWith('/api/admin/users', expect.objectContaining({ method: 'POST', body: expect.not.stringContaining('password') }));
   expect(screen.queryByText('Accounts listing')).not.toBeInTheDocument();
   complete({ id: 42 });
   expect(await screen.findByRole('heading', { name: 'Accounts listing' })).toBeInTheDocument();
-  expect(screen.queryByRole('dialog', { name: 'Unsaved changes' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('dialog', { name: 'Thay đổi chưa lưu' })).not.toBeInTheDocument();
 });
 it('preserves fields and permits a real retry after a failed write', async () => {
   request.mockRejectedValueOnce(new Error('Backend unavailable')).mockResolvedValueOnce({ id: 42 });
   mount(); const user = userEvent.setup();
-  await user.type(await screen.findByLabelText(/Full name/), 'Retry Account');
+  await user.type(await screen.findByLabelText(/Họ và tên/), 'Retry Account');
   await user.type(screen.getByLabelText(/^Email/), 'retry@example.test');
-  await user.click(screen.getByRole('button', { name: 'Create User' }));
+  await user.click(screen.getByRole('button', { name: 'Tạo người dùng' }));
   expect(await screen.findByText('Backend unavailable')).toBeInTheDocument();
-  expect(screen.getByLabelText(/Full name/)).toHaveValue('Retry Account');
+  expect(screen.getByLabelText(/Họ và tên/)).toHaveValue('Retry Account');
   expect(screen.getByLabelText(/^Email/)).toHaveValue('retry@example.test');
   expect(screen.queryByText('Accounts listing')).not.toBeInTheDocument();
-  await user.click(screen.getByRole('button', { name: 'Create User' }));
+  await user.click(screen.getByRole('button', { name: 'Tạo người dùng' }));
   expect(await screen.findByRole('heading', { name: 'Accounts listing' })).toBeInTheDocument();
   expect(request).toHaveBeenCalledTimes(2);
 });
 it('does not issue business requests for an invalid user ID', async () => {
   mount('/admin/users/not-an-id/edit');
-  await waitFor(() => expect(screen.getByText('Invalid user ID')).toBeInTheDocument());
+  await waitFor(() => expect(screen.getByText('Mã người dùng không hợp lệ')).toBeInTheDocument());
   expect(request).not.toHaveBeenCalled();
 });
 it('edits Trainer experience and specializations with the role-matched skill list', async () => {
@@ -58,8 +58,8 @@ it('edits Trainer experience and specializations with the role-matched skill lis
   mount('/admin/users/5/edit'); const user = userEvent.setup();
   expect(await screen.findByRole('checkbox', { name: 'Endurance' })).toBeChecked();
   await user.click(screen.getByRole('checkbox', { name: 'Sprint' }));
-  await user.clear(screen.getByLabelText('Experience (years)')); await user.type(screen.getByLabelText('Experience (years)'), '5');
-  await user.click(screen.getByRole('button', { name: 'Save Changes' }));
+  await user.clear(screen.getByLabelText('Kinh nghiệm (năm)')); await user.type(screen.getByLabelText('Kinh nghiệm (năm)'), '5');
+  await user.click(screen.getByRole('button', { name: 'Lưu thay đổi' }));
   await waitFor(() => expect(request).toHaveBeenCalledWith('/api/admin/users/5', expect.objectContaining({ method: 'PUT' })));
   const body = JSON.parse(request.mock.calls.find(([path, init]) => path === '/api/admin/users/5' && init?.method === 'PUT')![1].body);
   expect(body).toMatchObject({ roleCode: 'TRAINER', experienceYears: 5, experienceLevel: 'Mid', skillIds: [2, 1] });
@@ -68,9 +68,9 @@ it('sends no skills or experience for a Horse Owner and clears skills on a role 
   request.mockResolvedValue([]);
   mount(); const user = userEvent.setup();
   await user.click(await screen.findByRole('radio', { name: 'Horse Owner' }));
-  expect(screen.queryByText('Experience & skills')).not.toBeInTheDocument();
-  await user.type(screen.getByLabelText(/Full name/), 'Owner Account'); await user.type(screen.getByLabelText(/^Email/), 'owner@example.test');
-  await user.click(screen.getByRole('button', { name: 'Create User' }));
+  expect(screen.queryByText('Kinh nghiệm & kỹ năng')).not.toBeInTheDocument();
+  await user.type(screen.getByLabelText(/Họ và tên/), 'Owner Account'); await user.type(screen.getByLabelText(/^Email/), 'owner@example.test');
+  await user.click(screen.getByRole('button', { name: 'Tạo người dùng' }));
   await waitFor(() => expect(request).toHaveBeenCalledWith('/api/admin/users', expect.anything()));
   expect(JSON.parse(request.mock.calls.find(([path]) => path === '/api/admin/users')![1].body)).toMatchObject({ roleCode: 'HORSE_OWNER', experienceYears: null, experienceLevel: null, skillIds: [] });
 });

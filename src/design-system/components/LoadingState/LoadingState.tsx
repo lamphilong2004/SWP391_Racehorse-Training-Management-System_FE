@@ -11,7 +11,7 @@ export interface LoadingStateProps {
  * Loading state for data regions. There is no dedicated Figma frame for loading; this reuses the approved
  * EmptyState container (329:6273) with a token-coloured progress ring so all three data states share one shape.
  */
-export function LoadingState({ label = 'Loading…', className }: LoadingStateProps) {
+export function LoadingState({ label = 'Đang tải…', className }: LoadingStateProps) {
   return (
     <div className={cx(styles.loading, className)} role="status" aria-live="polite" aria-busy="true">
       <span className={styles.ring} aria-hidden="true" />

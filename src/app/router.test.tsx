@@ -18,22 +18,22 @@ describe('router', () => {
 
   it('opens the public Landing page at / in production and links both ways with Login', async () => {
     const router = renderAt('/', false);
-    expect(await screen.findByRole('heading', { name: /Precision in/ })).toBeInTheDocument();
-    expect(screen.getAllByRole('link', { name: /Access the Platform/ })[0]).toHaveAttribute('href', '/login');
-    expect(screen.getByText('No public sign-up', { exact: false })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /Chính xác trong/ })).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /Truy cập hệ thống →/ })[0]).toHaveAttribute('href', '/login');
+    expect(screen.getByText('không cho đăng ký công khai', { exact: false })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/');
     router.navigate('/login');
-    expect(await screen.findByRole('link', { name: /Back to overview/ })).toHaveAttribute('href', '/');
+    expect(await screen.findByRole('link', { name: /Quay lại trang giới thiệu/ })).toHaveAttribute('href', '/');
   });
 
   it('renders the dev shell preview for a valid role', async () => {
     renderAt('/dev/shell/VETERINARIAN');
-    expect(await screen.findByText('Veterinary Workspace')).toBeInTheDocument();
+    expect(await screen.findByText('Không gian Veterinarian')).toBeInTheDocument();
   });
 
   it('falls back to not found for unknown roles', async () => {
     renderAt('/dev/shell/SYSTEM');
-    expect(await screen.findByText('Page not found.')).toBeInTheDocument();
+    expect(await screen.findByText('Không tìm thấy trang.')).toBeInTheDocument();
   });
 
   it('does not register the dev-only routes in production', async () => {
@@ -47,7 +47,7 @@ describe('router', () => {
       '/rides', '/rides/assignments', '/rides/history', '/rides/report-issue', '/medical', '/medical/cases/new', '/medical/cases/:caseId', '/medical/cases/:caseId/treatment-plan', '/medical/herd-health', '/medical/summary', '/care/tasks', '/medical/my-tasks', '/incidents', '/incidents/:incidentId',
       '/training/programs', '*']);
     const router = renderAt('/dev/components', false);
-    expect(await screen.findByRole('heading', { name: 'Sign in to Racehorse Ops' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Đăng nhập Racehorse Ops' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/login');
   });
 });

@@ -32,7 +32,7 @@ export function HorseCard({ name, meta, availability, facts = [], action, classN
     <article className={cx(styles.card, className)}>
       <div className={styles.photo}>
         <Icon name="horseshoe" size={40} />
-        <span className={styles.noPhoto}>No photo</span>
+        <span className={styles.noPhoto}>Chưa có ảnh</span>
       </div>
       <div className={styles.body}>
         <h3 className={styles.name}>{name}</h3>

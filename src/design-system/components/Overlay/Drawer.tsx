@@ -31,7 +31,7 @@ export function Drawer({ open, onClose, title, subtitle, footer, children, class
               </h2>
               {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
             </div>
-            <button type="button" className={styles.close} onClick={onClose} aria-label="Close" disabled={!dismissible} title={!dismissible ? 'Finish or discard changes before closing.' : undefined}>
+            <button type="button" className={styles.close} onClick={onClose} aria-label="Đóng" disabled={!dismissible} title={!dismissible ? 'Hãy lưu hoặc hủy thay đổi trước khi đóng.' : undefined}>
               <Icon name="x" size={20} />
             </button>
           </header>

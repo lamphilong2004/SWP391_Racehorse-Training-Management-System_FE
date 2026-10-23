@@ -15,16 +15,16 @@ function wholeNumber(value: string): number { return /^\d+$/.test(value) ? Numbe
 
 export function validateAuditQuery(query: AuditQuery): AuditFilterErrors {
   const errors: AuditFilterErrors = {};
-  if (query.actor !== undefined && (!Number.isSafeInteger(query.actor) || query.actor <= 0)) errors.actor = 'Enter a positive, whole actor ID.';
-  if ((query.action?.length ?? 0) > 100) errors.action = 'Use at most 100 characters.';
-  if ((query.targetType?.length ?? 0) > 50) errors.targetType = 'Use at most 50 characters.';
+  if (query.actor !== undefined && (!Number.isSafeInteger(query.actor) || query.actor <= 0)) errors.actor = 'Nhập mã người thực hiện là số nguyên dương.';
+  if ((query.action?.length ?? 0) > 100) errors.action = 'Tối đa 100 ký tự.';
+  if ((query.targetType?.length ?? 0) > 50) errors.targetType = 'Tối đa 50 ký tự.';
   for (const key of ['from', 'to'] as const) {
     const date = query[key];
-    if (date && !isAuditDate(date)) errors[key] = 'Choose a valid date and time.';
+    if (date && !isAuditDate(date)) errors[key] = 'Chọn ngày giờ hợp lệ.';
   }
-  if (query.from && query.to && Date.parse(query.from) > Date.parse(query.to)) errors.to = 'End time must be on or after start time.';
-  if (!Number.isSafeInteger(query.page) || query.page < 0) errors.page = 'Page must be zero or greater.';
-  if (!Number.isSafeInteger(query.size) || query.size < 1 || query.size > 100) errors.size = 'Page size must be between 1 and 100.';
+  if (query.from && query.to && Date.parse(query.from) > Date.parse(query.to)) errors.to = 'Thời điểm kết thúc phải sau hoặc bằng thời điểm bắt đầu.';
+  if (!Number.isSafeInteger(query.page) || query.page < 0) errors.page = 'Số trang phải từ 0 trở lên.';
+  if (!Number.isSafeInteger(query.size) || query.size < 1 || query.size > 100) errors.size = 'Số bản ghi mỗi trang phải từ 1 đến 100.';
   return errors;
 }
 

@@ -49,7 +49,7 @@ describe('CORE-022 horse-specific program draft', () => {
     input.phases.reverse();
     expect(validateProgramCreation(input)).toEqual([]);
     input.phases[0].startDate = '2026-11-07';
-    expect(validateProgramCreation(input)).toContainEqual({ field: 'phases[0].startDate', message: 'Phase date ranges must not overlap.' });
+    expect(validateProgramCreation(input)).toContainEqual({ field: 'phases[0].startDate', message: 'Thời gian các giai đoạn không được chồng lấn.' });
   });
 
   it('validates the ordered intensity range and Trainer warning acknowledgement', () => {

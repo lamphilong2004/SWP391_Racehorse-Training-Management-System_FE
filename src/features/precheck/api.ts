@@ -17,7 +17,7 @@ export interface PrecheckApi {
 export function createPrecheckApi(options: { fetcher?: typeof fetch; baseUrl?: string; handleApiError?: (error: unknown) => boolean } = {}): PrecheckApi {
   function token() {
     const session = authSession.read();
-    if (!session || session.expiresAt <= Date.now()) throw new ApiError(401, 'UNAUTHORIZED', 'Your session expired. Sign in again to continue.');
+    if (!session || session.expiresAt <= Date.now()) throw new ApiError(401, 'UNAUTHORIZED', 'Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại để tiếp tục.');
     return session.accessToken;
   }
   async function request<T>(path: string, init?: RequestInit): Promise<T> {

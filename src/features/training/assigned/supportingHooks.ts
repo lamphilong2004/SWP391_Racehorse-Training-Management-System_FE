@@ -17,7 +17,7 @@ export function useSupportingLoad<T>(load: () => Promise<T>, keys: readonly unkn
   }, [...keys, attempt, handleApiError]);
   return { data, error, retry: () => { setData(undefined); setError(undefined); setAttempt((old) => old + 1); } };
 }
-export const supportingError = (cause: unknown) => cause instanceof Error ? cause.message : 'Unable to load this data.';
+export const supportingError = (cause: unknown) => cause instanceof Error ? cause.message : 'Không tải được dữ liệu này.';
 export function dateRange(date: Date, days = 30) {
   const from = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   const to = new Date(from); to.setDate(to.getDate() + days); to.setMilliseconds(-1);

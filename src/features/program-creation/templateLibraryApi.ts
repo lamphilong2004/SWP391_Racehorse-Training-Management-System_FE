@@ -23,12 +23,12 @@ export function createTemplateLibraryApi(request: FlowRequest) {
     trainerSpecializations: async (signal?: AbortSignal) => {
       const result = await request<{ id: number; name: string }[]>('/api/program-templates/trainer-specializations', { signal });
       if (!Array.isArray(result) || result.some((skill) => !skill || !Number.isSafeInteger(skill.id) || skill.id < 1 || typeof skill.name !== 'string' || !skill.name.trim()) || new Set(result.map((skill) => skill.id)).size !== result.length)
-        throw new ApiError(200, 'INVALID_RESPONSE', 'Trainer specializations could not be confirmed.');
+        throw new ApiError(200, 'INVALID_RESPONSE', 'Không xác nhận được chuyên môn của Trainer.');
       return result;
     },
     list: async (status: string, q: string, page: number, signal?: AbortSignal) => {
       const result = await request<Page<TemplateSummary>>(`/api/program-templates?${new URLSearchParams({ status, q, page: String(page), size: '20' })}`, { signal });
-      if (!result || !Array.isArray(result.items) || result.page !== page || !Number.isSafeInteger(result.totalPages)) throw new ApiError(200, 'INVALID_RESPONSE', 'Template list could not be confirmed.');
+      if (!result || !Array.isArray(result.items) || result.page !== page || !Number.isSafeInteger(result.totalPages)) throw new ApiError(200, 'INVALID_RESPONSE', 'Không xác nhận được danh sách mẫu chương trình.');
       return result;
     },
     read: (id: number, versionNo?: number, signal?: AbortSignal) => request<TemplateDetail>(`/api/program-templates/${idOf(id)}${versionNo ? `?versionNo=${versionNo}` : ''}`, { signal }),

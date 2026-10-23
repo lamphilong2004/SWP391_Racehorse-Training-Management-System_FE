@@ -19,14 +19,14 @@ export function RouteErrorPage() {
   return <DesignSystemScope className={styles.page}>
     <main className={styles.panel}>
       <ErrorState
-        title={chunk ? 'This screen could not load' : 'Something went wrong'}
+        title={chunk ? 'Không tải được màn hình này' : 'Đã xảy ra lỗi'}
         description={chunk
-          ? 'A newer version of Racehorse Ops may be available, or the connection dropped. Reload to continue.'
-          : 'The screen stopped unexpectedly. Nothing was saved by this error. Reload, or return to your dashboard.'}
+          ? 'Có thể đã có phiên bản Racehorse Ops mới hơn, hoặc kết nối bị gián đoạn. Tải lại trang để tiếp tục.'
+          : 'Màn hình dừng đột ngột. Lỗi này không lưu bất kỳ dữ liệu nào. Hãy tải lại hoặc quay về trang tổng quan.'}
       />
       <div className={styles.actions}>
-        <Button onClick={() => window.location.reload()}>Reload</Button>
-        <Link className={styles.link} to={ROUTES.dashboard} reloadDocument>Go to dashboard</Link>
+        <Button onClick={() => window.location.reload()}>Tải lại</Button>
+        <Link className={styles.link} to={ROUTES.dashboard} reloadDocument>Về trang tổng quan</Link>
       </div>
     </main>
   </DesignSystemScope>;

@@ -4,7 +4,7 @@ import type { AssignedProgram, Exercise } from '../training/assigned/supportingA
 import { ApiError } from '../../shared/auth/authApi';
 import { idOf, jsonBody, type FlowRequest } from '../main-flows/api';
 
-const invalid = () => new ApiError(200, 'INVALID_RESPONSE', 'Training data does not match the approved contract. Reload to retry.');
+const invalid = () => new ApiError(200, 'INVALID_RESPONSE', 'Dữ liệu huấn luyện không hợp lệ. Hãy tải lại để thử lại.');
 /** Envelope shape checks so a malformed response surfaces as an error state instead of crashing the page. */
 function list<T>(value: T[]): T[] { if (!Array.isArray(value)) throw invalid(); return value; }
 function page<T>(value: Page<T>): Page<T> { if (!value || !Array.isArray(value.items)) throw invalid(); return value; }
@@ -67,9 +67,9 @@ export function createSessionApi(request: FlowRequest) {
 }
 export function blocksSession(result: Suitability, exercises: SessionExerciseInput[]): string[] {
   return [
-    ...(result.sessionBlocked ? [result.blockedMessage || 'Training is blocked by the Veterinarian.'] : []),
+    ...(result.sessionBlocked ? [result.blockedMessage || 'Veterinarian đã chặn tập luyện.'] : []),
     ...result.sessionIssues.filter((issue) => issue.category === 'A' || issue.category === 'B').map((issue) => issue.message),
-    ...result.exercises.flatMap((item) => item.category === 'A' || item.category === 'B' ? item.messages.length ? item.messages : ['Remove or replace the blocked exercise.'] :
-      (item.category === 'C' || item.category === 'D') && !exercises[item.exerciseOrder - 1]?.acknowledgementNote?.trim() ? ['Acknowledge each caution and give a reason for retained exercises.'] : []),
+    ...result.exercises.flatMap((item) => item.category === 'A' || item.category === 'B' ? item.messages.length ? item.messages : ['Hãy xóa hoặc thay bài tập bị chặn.'] :
+      (item.category === 'C' || item.category === 'D') && !exercises[item.exerciseOrder - 1]?.acknowledgementNote?.trim() ? ['Hãy xác nhận từng cảnh báo và nêu lý do cho các bài tập giữ lại.'] : []),
   ];
 }

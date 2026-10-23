@@ -92,7 +92,7 @@ describe('CORE-017 pinned API operations', () => {
     await expect(api(fetcher).timeline(7, 0)).rejects.toMatchObject({ code: 'INVALID_RESPONSE' });
   });
   it.each([401, 403, 404, 500])('propagates timeline HTTP %s without deriving events from other stores', async (status) => {
-    const before = JSON.stringify(readSamples()); const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ success: false, error: { code: 'FORBIDDEN', message: 'Unavailable', details: [] } }), { status }));
+    const before = JSON.stringify(readSamples()); const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ success: false, error: { code: 'FORBIDDEN', message: 'Không có', details: [] } }), { status }));
     await expect(api(fetcher).timeline(7, 0)).rejects.toMatchObject({ status }); expect(fetcher).toHaveBeenCalledOnce(); expect(JSON.stringify(readSamples())).toBe(before);
   });
   it('uses exact paged timeline path, preserves unknown event types as neutral titles, and whitelists fields', async () => {
@@ -104,7 +104,7 @@ describe('CORE-017 pinned API operations', () => {
     expect(fetcher.mock.calls[0][0]).toBe('https://api.example.test/api/horses/7/readiness-review'); expect(fetcher.mock.calls[0][1]).toMatchObject({ method: 'POST' }); expect(fetcher.mock.calls[0][1].body).toBeUndefined(); expect(new Headers(fetcher.mock.calls[0][1].headers).get('Authorization')).toBe('Bearer fixture-token');
   });
   it.each([401, 403, 404, 500])('preserves readiness error %s with no sample mutation/fallback', async (status) => {
-    const before = localStorage.getItem('racehorse.business-samples.v1'); const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Unavailable', details: [] } }), { status }));
+    const before = localStorage.getItem('racehorse.business-samples.v1'); const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Không có', details: [] } }), { status }));
     await expect(api(fetcher).acknowledge(7)).rejects.toMatchObject({ status }); expect(fetcher).toHaveBeenCalledOnce(); expect(localStorage.getItem('racehorse.business-samples.v1')).toBe(before);
   });
   it('rejects an unexpected 200 acknowledgement rather than treating an empty envelope as the required 204', async () => {
@@ -112,7 +112,7 @@ describe('CORE-017 pinned API operations', () => {
     await expect(api(fetcher).acknowledge(7)).rejects.toMatchObject({ code: 'INVALID_RESPONSE' });
   });
   it('does not accept the legacy four-item activation DTO', async () => {
-    const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ success: true, data: { horseId: 7, horseCode: 'RH-7', name: 'Horse', lifecycle: 'DRAFT', checklist: [{ item: 'IDENTITY', complete: true }] } })));
+    const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ success: true, data: { horseId: 7, horseCode: 'RH-7', name: 'Ngựa', lifecycle: 'DRAFT', checklist: [{ item: 'IDENTITY', complete: true }] } })));
     await expect(api(fetcher).checklist(7)).rejects.toMatchObject({ code: 'INVALID_RESPONSE' });
   });
   it('rejects invalid ids/pages or absent credentials before network access', async () => {

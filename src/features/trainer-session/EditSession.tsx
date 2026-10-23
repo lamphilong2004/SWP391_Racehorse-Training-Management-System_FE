@@ -5,6 +5,7 @@ import { useResource } from '../main-flows/useResource';
 import type { Intensity } from '../program-creation/programTypes';
 import { blocksSession, type createSessionApi, type SessionExerciseInput, type TrainingSession } from './sessionApi';
 import styles from '../main-flows/flow.module.css';
+import { viLabel } from '../../shared/viLabels';
 
 const INTENSITIES: Intensity[] = ['LOW', 'MEDIUM', 'MEDIUM_HIGH', 'HIGH'];
 const pad = (value: number) => String(value).padStart(2, '0');
@@ -22,9 +23,9 @@ export function EditSession({ api, session, onClose, onSaved }: { api: Api; sess
     if (pending.current) return; pending.current = true; setBusy(true);
     try { await action(); onSaved(); } catch (cause) { fail(errorMessage(cause)); } finally { pending.current = false; setBusy(false); }
   };
-  return <Modal open size="lg" title={`Edit session ${session.sessionCode}`} dismissible={!busy} onClose={onClose} footer={<Button variant="secondary" disabled={busy} onClick={onClose}>Close</Button>}>
+  return <Modal open size="lg" title={`Sửa buổi tập ${session.sessionCode}`} dismissible={!busy} onClose={onClose} footer={<Button variant="secondary" disabled={busy} onClick={onClose}>Đóng</Button>}>
     <div className={styles.stack}>
-      <p className={styles.muted}>Only a SCHEDULED session can change. The program strategy and source template stay unchanged.</p>
+      <p className={styles.muted}>Chỉ sửa được buổi tập đã lên lịch. Chiến lược chương trình và mẫu gốc không bị thay đổi.</p>
       <DetailsForm session={session} busy={busy} save={(body, fail) => run(() => api.update(session.id, body), fail)} />
       <ExercisesForm api={api} session={session} busy={busy} save={(exercises, fail) => run(async () => {
         const check = await api.suitability({ horseProgramPhaseId: session.horseProgramPhaseId, scheduledStart: session.scheduledStart, scheduledEnd: session.scheduledEnd,
@@ -46,22 +47,22 @@ function DetailsForm({ session, busy, save }: { session: TrainingSession; busy: 
   async function submit(event: FormEvent) {
     event.preventDefault(); setError('');
     const start = new Date(when);
-    if (!Number.isFinite(start.getTime())) { setError('Choose the session date and start time.'); return; }
-    if (duration && (!Number.isFinite(Number(duration)) || Number(duration) <= 0)) { setError('Expected duration must be positive.'); return; }
+    if (!Number.isFinite(start.getTime())) { setError('Chọn ngày và giờ bắt đầu buổi tập.'); return; }
+    if (duration && (!Number.isFinite(Number(duration)) || Number(duration) <= 0)) { setError('Thời lượng dự kiến phải lớn hơn 0.'); return; }
     await save({ scheduledStart: start.toISOString(), scheduledEnd: duration ? new Date(start.getTime() + Number(duration) * 60000).toISOString() : undefined,
       surface: surface.trim() || undefined, focus: focus.trim() || undefined, intensity: (intensity || undefined) as Intensity | undefined }, setError);
   }
-  return <Card title="Schedule & details"><form className={styles.stack} onSubmit={(event) => void submit(event)} noValidate aria-busy={busy}><fieldset disabled={busy} className={styles.fieldset}><div className={styles.stack}>
+  return <Card title="Lịch & thông tin"><form className={styles.stack} onSubmit={(event) => void submit(event)} noValidate aria-busy={busy}><fieldset disabled={busy} className={styles.fieldset}><div className={styles.stack}>
     <div className={styles.fields}>
-      <TextField label="Date" type="date" required value={date} onChange={(event) => setWhen(`${event.target.value}T${time}`)} />
-      <TextField label="Start time" type="time" required value={time} onChange={(event) => setWhen(`${date}T${event.target.value}`)} />
-      <TextField label="Expected duration (min)" type="number" min="1" value={duration} onChange={(event) => setDuration(event.target.value)} />
-      <SelectField label="Session intensity" value={intensity} options={[{ value: '', label: 'Keep current' }, ...INTENSITIES.map((value) => ({ value, label: value.replaceAll('_', ' ') }))]} onChange={(event) => setIntensity(event.target.value)} />
-      <TextField label="Training surface" maxLength={50} value={surface} onChange={(event) => setSurface(event.target.value)} />
-      <TextField label="Session focus" maxLength={200} value={focus} onChange={(event) => setFocus(event.target.value)} />
+      <TextField label="Ngày" type="date" required value={date} onChange={(event) => setWhen(`${event.target.value}T${time}`)} />
+      <TextField label="Giờ bắt đầu" type="time" required value={time} onChange={(event) => setWhen(`${date}T${event.target.value}`)} />
+      <TextField label="Thời lượng dự kiến (phút)" type="number" min="1" value={duration} onChange={(event) => setDuration(event.target.value)} />
+      <SelectField label="Cường độ buổi tập" value={intensity} options={[{ value: '', label: 'Giữ nguyên' }, ...INTENSITIES.map((value) => ({ value, label: viLabel(value) }))]} onChange={(event) => setIntensity(event.target.value)} />
+      <TextField label="Mặt sân tập" maxLength={50} value={surface} onChange={(event) => setSurface(event.target.value)} />
+      <TextField label="Trọng tâm buổi tập" maxLength={200} value={focus} onChange={(event) => setFocus(event.target.value)} />
     </div>
-    {error && <AlertBanner type="danger" title="Details not saved">{error}</AlertBanner>}
-    <div className={styles.row}><Button type="submit">{busy ? 'Saving…' : 'Save details'}</Button><span className="text-caption">The Work Rider stays assigned; the server rejects schedule conflicts.</span></div>
+    {error && <AlertBanner type="danger" title="Chưa lưu được thông tin">{error}</AlertBanner>}
+    <div className={styles.row}><Button type="submit">{busy ? 'Đang lưu…' : 'Lưu thông tin'}</Button><span className="text-caption">Giữ nguyên Work Rider; hệ thống sẽ từ chối nếu trùng lịch.</span></div>
   </div></fieldset></form></Card>;
 }
 
@@ -74,22 +75,22 @@ function ExercisesForm({ api, session, busy, save }: { api: Api; session: Traini
   const patch = (index: number, value: Partial<SessionExerciseInput>) => { setError(''); setItems(items.map((item, at) => at === index ? { ...item, ...value } : item)); };
   async function submit(event: FormEvent) {
     event.preventDefault(); setError('');
-    if (!items.length) { setError('Keep at least one exercise.'); return; }
-    if (items.some((item) => [item.distanceM, item.durationMin, item.repetitions, item.restIntervalMin].some((n) => n != null && (!Number.isFinite(n) || n < 0)) || (item.repetitions != null && !Number.isInteger(item.repetitions)))) { setError('Exercise values must be non-negative; repetitions must be whole numbers.'); return; }
+    if (!items.length) { setError('Cần giữ ít nhất một bài tập.'); return; }
+    if (items.some((item) => [item.distanceM, item.durationMin, item.repetitions, item.restIntervalMin].some((n) => n != null && (!Number.isFinite(n) || n < 0)) || (item.repetitions != null && !Number.isInteger(item.repetitions)))) { setError('Giá trị bài tập không được âm; số lần lặp phải là số nguyên.'); return; }
     await save(items.map((item, index) => ({ ...item, exerciseOrder: index + 1 })), setError);
   }
-  const name = (id: number) => catalog.data?.find((exercise) => exercise.id === id)?.name ?? session.exercises?.find((item) => item.exerciseDefinitionId === id)?.exerciseName ?? `Exercise ${id}`;
-  return <Card title="Exercise plan"><form className={styles.stack} onSubmit={(event) => void submit(event)} noValidate aria-busy={busy}><fieldset disabled={busy} className={styles.fieldset}><div className={styles.stack}>
-    {catalog.pending && <LoadingState label="Loading exercises…" />}{catalog.error && <ErrorState title="Exercise library unavailable" description={catalog.error} onRetry={catalog.reload} />}
-    <SelectField label="Add exercise" value="" options={[{ value: '', label: 'Choose exercise from library' }, ...(catalog.data?.map((item) => ({ value: String(item.id), label: item.name })) ?? [])]}
+  const name = (id: number) => catalog.data?.find((exercise) => exercise.id === id)?.name ?? session.exercises?.find((item) => item.exerciseDefinitionId === id)?.exerciseName ?? `Bài tập ${id}`;
+  return <Card title="Kế hoạch bài tập"><form className={styles.stack} onSubmit={(event) => void submit(event)} noValidate aria-busy={busy}><fieldset disabled={busy} className={styles.fieldset}><div className={styles.stack}>
+    {catalog.pending && <LoadingState label="Đang tải bài tập…" />}{catalog.error && <ErrorState title="Không tải được thư viện bài tập" description={catalog.error} onRetry={catalog.reload} />}
+    <SelectField label="Thêm bài tập" value="" options={[{ value: '', label: 'Chọn bài tập từ thư viện' }, ...(catalog.data?.map((item) => ({ value: String(item.id), label: item.name })) ?? [])]}
       onChange={(event) => { if (event.target.value) setItems([...items, { exerciseDefinitionId: Number(event.target.value), exerciseOrder: items.length + 1 }]); }} />
     {items.map((item, index) => <Card key={`${index}-${item.exerciseDefinitionId}`} title={`${index + 1}. ${name(item.exerciseDefinitionId)}`}
-      action={<Button type="button" variant="tertiary" aria-label={`Remove ${name(item.exerciseDefinitionId)}`} onClick={() => setItems(items.filter((_, at) => at !== index))}>Remove</Button>}><div className={styles.stack}><div className={styles.fields}>
-      {(['distanceM', 'durationMin', 'repetitions', 'restIntervalMin'] as const).map((key) => <TextField key={key} label={{ distanceM: 'Distance (m)', durationMin: 'Duration (min)', repetitions: 'Repetitions', restIntervalMin: 'Rest interval (min)' }[key]} type="number" min="0" step={key === 'repetitions' ? '1' : 'any'} value={item[key] ?? ''} onChange={(event) => patch(index, { [key]: event.target.value === '' ? null : Number(event.target.value) })} />)}
-      <SelectField label="Intensity" value={item.intensity ?? ''} options={[{ value: '', label: 'Not specified' }, ...INTENSITIES.map((value) => ({ value, label: value }))]} onChange={(event) => patch(index, { intensity: (event.target.value || null) as Intensity | null })} />
-      <TextField label="Surface" maxLength={50} value={item.surface ?? ''} onChange={(event) => patch(index, { surface: event.target.value })} /></div>
-      <TextAreaField label="Acknowledgement / override reason" maxLength={1000} value={item.acknowledgementNote ?? ''} onChange={(event) => patch(index, { acknowledgementNote: event.target.value })} helperText="Required for category C or D. Medical hard blocks cannot be overridden." /></div></Card>)}
-    {error && <AlertBanner type="danger" title="Exercises not saved">{error}</AlertBanner>}
-    <div className={styles.row}><Button type="submit">{busy ? 'Checking…' : 'Check & save exercises'}</Button><span className="text-caption">Suitability is checked before saving and again by the server.</span></div>
+      action={<Button type="button" variant="tertiary" aria-label={`Xóa ${name(item.exerciseDefinitionId)}`} onClick={() => setItems(items.filter((_, at) => at !== index))}>Xóa</Button>}><div className={styles.stack}><div className={styles.fields}>
+      {(['distanceM', 'durationMin', 'repetitions', 'restIntervalMin'] as const).map((key) => <TextField key={key} label={{ distanceM: 'Quãng đường (m)', durationMin: 'Thời lượng (phút)', repetitions: 'Số lần lặp', restIntervalMin: 'Thời gian nghỉ (phút)' }[key]} type="number" min="0" step={key === 'repetitions' ? '1' : 'any'} value={item[key] ?? ''} onChange={(event) => patch(index, { [key]: event.target.value === '' ? null : Number(event.target.value) })} />)}
+      <SelectField label="Cường độ" value={item.intensity ?? ''} options={[{ value: '', label: 'Chưa xác định' }, ...INTENSITIES.map((value) => ({ value, label: viLabel(value) }))]} onChange={(event) => patch(index, { intensity: (event.target.value || null) as Intensity | null })} />
+      <TextField label="Mặt sân" maxLength={50} value={item.surface ?? ''} onChange={(event) => patch(index, { surface: event.target.value })} /></div>
+      <TextAreaField label="Xác nhận / lý do giữ lại" maxLength={1000} value={item.acknowledgementNote ?? ''} onChange={(event) => patch(index, { acknowledgementNote: event.target.value })} helperText="Bắt buộc với loại C hoặc D. Không thể bỏ qua chặn bắt buộc do y tế." /></div></Card>)}
+    {error && <AlertBanner type="danger" title="Chưa lưu được bài tập">{error}</AlertBanner>}
+    <div className={styles.row}><Button type="submit">{busy ? 'Đang kiểm tra…' : 'Kiểm tra & lưu bài tập'}</Button><span className="text-caption">Mức phù hợp được kiểm tra trước khi lưu và kiểm tra lại trên máy chủ.</span></div>
   </div></fieldset></form></Card>;
 }

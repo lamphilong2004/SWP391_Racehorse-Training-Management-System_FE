@@ -17,13 +17,13 @@ export function useManagementResource<T>(load: (context: ManagementRequest) => P
       setState({ status: 'loading' });
       try {
         const session = authSession.read();
-        if (!session || session.expiresAt <= Date.now()) throw new ApiError(401, 'UNAUTHORIZED', 'Session expired.');
+        if (!session || session.expiresAt <= Date.now()) throw new ApiError(401, 'UNAUTHORIZED', 'Phiên đăng nhập đã hết hạn.');
         const data = await load({ token: session.accessToken, signal: abort.signal });
         if (!abort.signal.aborted) setState({ status: 'ready', data });
       } catch (error) {
         if (abort.signal.aborted || handleApiError(error)) return;
         const forbidden = error instanceof ApiError && error.status === 403;
-        setState({ status: 'error', forbidden, message: forbidden ? 'Your account cannot access this management data.' : error instanceof ApiError && error.status === 400 ? 'The server rejected these filters. Check the values and try again.' : 'Management data could not be loaded. Try again or contact your administrator.' });
+        setState({ status: 'error', forbidden, message: forbidden ? 'Tài khoản của bạn không được truy cập dữ liệu quản lý này.' : error instanceof ApiError && error.status === 400 ? 'Máy chủ từ chối bộ lọc này. Hãy kiểm tra giá trị và thử lại.' : 'Không tải được dữ liệu quản lý. Hãy thử lại hoặc liên hệ quản trị viên.' });
       }
     });
     return () => abort.abort();

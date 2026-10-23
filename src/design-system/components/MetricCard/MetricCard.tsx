@@ -13,7 +13,7 @@ const REALTIME_ICONS: Record<RealtimeState, IconName> = {
 };
 
 /** Placeholder texts used across screens when the API has no value. */
-const UNAVAILABLE_VALUE = /^(not (provided|measured|recorded|supplied|available)|unavailable|—)$/i;
+const UNAVAILABLE_VALUE = /^(not (provided|measured|recorded|supplied|available)|unavailable|—|chưa (cung cấp|đo|ghi nhận|có)|không (có|khả dụng))$/i;
 
 const REALTIME_TONE: Record<RealtimeState, CaptionTone> = {
   normal: 'success',
