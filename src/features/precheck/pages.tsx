@@ -10,6 +10,7 @@ import { CHECK_ITEMS, type CheckKey, type Checklist, type PrecheckSession, type 
 import styles from './precheck.module.css';
 import { greeting } from '../../shared/greeting';
 import { viLabel } from '../../shared/viLabels';
+import { serverText } from '../../shared/serverText';
 
 function localDay() { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`; }
 function when(value: string) { return new Date(value).toLocaleString('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }); }
@@ -96,7 +97,7 @@ function PrecheckContent({ id, api }: { id: number; api: PrecheckApi }) {
   const reload = () => { setSession(undefined); setError(undefined); setAttempt((value) => value + 1); };
   const abnormal = CHECK_ITEMS.some(({ key }) => draft[key]?.result === 'ABNORMAL');
   const locked = busy || Boolean(check) || conflict || session?.status !== 'SCHEDULED';
-  const startGate = check ? 'Tải lại buổi tập để xác nhận các điều kiện bắt đầu còn lại.' : session?.blocked ? session.blockedMessage || session.blockedReasons.join(', ') || 'Bị chặn' : 'Không có điểm chặn';
+  const startGate = check ? 'Tải lại buổi tập để xác nhận các điều kiện bắt đầu còn lại.' : session?.blocked ? serverText(session.blockedMessage) || session.blockedReasons.map((reason) => viLabel(reason)).join(', ') || 'Bị chặn' : 'Không có điểm chặn';
   async function save() {
     if (pending.current || check || conflict) return;
     if (CHECK_ITEMS.some(({ key }) => !draft[key]?.result)) {

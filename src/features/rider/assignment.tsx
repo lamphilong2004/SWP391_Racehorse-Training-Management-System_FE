@@ -67,7 +67,7 @@ export function Exercises({ session }: { session: RiderSession }) {
     exercise.distanceM != null ? `${exercise.distanceM.toLocaleString('vi-VN')} m${exercise.repetitions != null ? ` × ${exercise.repetitions}` : ''}` : exercise.repetitions != null ? `${exercise.repetitions} lượt` : null,
     exercise.durationMin != null ? `${exercise.durationMin} phút` : null,
     exercise.restIntervalMin != null ? `Nghỉ ${exercise.restIntervalMin} phút` : 'Nghỉ —',
-    exercise.intensity ? `Cường độ ${exercise.intensity}` : 'Chưa có cường độ',
+    exercise.intensity ? `Cường độ ${viLabel(exercise.intensity).toLowerCase()}` : 'Chưa có cường độ',
     exercise.surface ?? session.surface ?? 'Chưa có mặt sân',
   ].filter((chip): chip is string => Boolean(chip));
   return <ol className={styles.exerciseList}>{[...session.exercises].sort((a, b) => a.exerciseOrder - b.exerciseOrder).map((exercise) => <li key={exercise.id} className={styles.exercise}>

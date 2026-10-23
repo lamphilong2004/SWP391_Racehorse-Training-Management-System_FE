@@ -6,6 +6,7 @@ import { ADJUSTMENT_TYPES, createProgramManagementApi } from './programManagemen
 import type { ProgramDetail } from './programTypes';
 import styles from '../main-flows/flow.module.css';
 import { viLabel } from '../../shared/viLabels';
+import { serverText } from '../../shared/serverText';
 
 type StatusTarget = 'ACTIVE' | 'PAUSED' | 'COMPLETED';
 const STATUS_ACTIONS: Record<ProgramDetail['status'], { to: StatusTarget; label: string }[]> = {
@@ -74,7 +75,7 @@ function ReassignModal({ program, onClose, onDone }: { program: ProgramDetail; o
       {candidates.error && <ErrorState title="Không tải được danh sách ứng viên" description={candidates.error} onRetry={candidates.reload} />}
       {candidates.data && (options.length === 0 ? <EmptyState title="Không có Trainer nào khác đang hoạt động" description={candidates.data.emptyReason ?? 'Chỉ có Trainer hiện tại đang hoạt động.'} /> : options.map((candidate) => <CandidateCard key={candidate.user.id}
         name={candidate.user.fullName} subtitle={`Trainer${candidate.experienceLevel ? ` · ${candidate.experienceLevel}` : ''}`}
-        tags={candidate.skills} facts={[{ label: 'Mức phù hợp', value: candidate.label.replaceAll('_', ' ') }, { label: 'Lý do', value: candidate.reasons.join(' · ') || 'Chưa cung cấp' },
+        tags={candidate.skills} facts={[{ label: 'Mức phù hợp', value: viLabel(candidate.label) }, { label: 'Lý do', value: candidate.reasons.map(serverText).join(' · ') || 'Chưa cung cấp' },
           ...(candidate.warnings.length ? [{ label: 'Cảnh báo', value: candidate.warnings.join(' · ') }] : []), ...(candidate.hardBlock ? [{ label: 'Bị chặn', value: candidate.hardBlock }] : [])]}
         className={trainerId === candidate.user.id ? styles.selected : undefined}
         actions={<Button type="button" variant="secondary" aria-pressed={trainerId === candidate.user.id} disabled={busy || Boolean(candidate.hardBlock)} onClick={() => { setTrainerId(candidate.user.id); setAcknowledged(false); }}>

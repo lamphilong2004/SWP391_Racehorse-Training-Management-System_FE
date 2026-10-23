@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { Card, ChartContainer, EmptyState, ErrorState, KeyValue, LoadingState, StatusBadge } from '../../design-system';
 import type { HorseDetail } from '../horses/api/types';
 import { ageInYears } from '../horses/shared/format';
+import { viLabel } from '../../shared/viLabels';
 import { useFlowRequest } from '../main-flows/api';
 import { useResource } from '../main-flows/useResource';
 import type { HorseSelection } from './programTypes';
@@ -12,9 +13,9 @@ export function ProgramProfile({ horse }: { horse: HorseSelection }) {
   const request = useFlowRequest();
   const load = useCallback((signal: AbortSignal) => request<HorseDetail>(`/api/horses/${horse.id}`, { signal }), [request, horse.id]);
   const resource = useResource(load), profile = resource.data;
-  return <div className={styles.columns}><div className={styles.stack}><Card title="Hồ sơ huấn luyện" action={<span className="text-caption">Read-only</span>}>
+  return <div className={styles.columns}><div className={styles.stack}><Card title="Hồ sơ huấn luyện" action={<span className="text-caption">Chỉ xem</span>}>
     {resource.pending && <LoadingState label="Đang tải hồ sơ ngựa…" />}{resource.error && <ErrorState title="Không tải được hồ sơ" description={resource.error} onRetry={resource.reload} />}
-    <div className={styles.profileFacts}><KeyValue label="Giống ngựa" value={profile?.breed ?? horse.breed ?? 'Chưa cung cấp'} /><KeyValue label="Tuổi" value={ageInYears(profile?.foaledDate ?? horse.foaledDate) == null ? 'Chưa cung cấp' : `${ageInYears(profile?.foaledDate ?? horse.foaledDate)} tuổi`} /><KeyValue label="Giới tính" value={profile?.sex ?? horse.sex ?? 'Chưa cung cấp'} /><KeyValue label="Cân nặng" value={profile?.latestWeight ? `${profile.latestWeight.weightKg} kg` : 'Chưa cung cấp'} /><KeyValue label="Khả năng tập luyện" value={<StatusBadge family="availability" status={profile?.trainingAvailability ?? horse.trainingAvailability} />} /></div>
+    <div className={styles.profileFacts}><KeyValue label="Giống ngựa" value={profile?.breed ?? horse.breed ?? 'Chưa cung cấp'} /><KeyValue label="Tuổi" value={ageInYears(profile?.foaledDate ?? horse.foaledDate) == null ? 'Chưa cung cấp' : `${ageInYears(profile?.foaledDate ?? horse.foaledDate)} tuổi`} /><KeyValue label="Giới tính" value={viLabel(profile?.sex ?? horse.sex, 'Chưa cung cấp')} /><KeyValue label="Cân nặng" value={profile?.latestWeight ? `${profile.latestWeight.weightKg} kg` : 'Chưa cung cấp'} /><KeyValue label="Khả năng tập luyện" value={<StatusBadge family="availability" status={profile?.trainingAvailability ?? horse.trainingAvailability} />} /></div>
   </Card><Card title="Tóm tắt thể lực"><EmptyState title="Chưa có đánh giá thể lực" description="Hệ thống chưa cung cấp đánh giá thể lực. Không tự suy ra đánh giá từ số liệu đã ghi." /></Card><div className={styles.fields}>
     <ChartContainer title="Khối lượng tập gần đây" seriesLabel="Khối lượng đã ghi" values={[]} yTicks={[1, 0]} xLabels={[]} emptyTitle="Chưa có khối lượng theo tuần" emptyDescription="Hệ thống chưa cung cấp chuỗi khối lượng theo tuần." />
     <ChartContainer title="Xu hướng thành tích gần đây" seriesLabel="Tốc độ tối đa" values={[]} yTicks={[1, 0]} xLabels={[]} emptyTitle="Chưa có xu hướng tốc độ tối đa" emptyDescription="Hệ thống chưa cung cấp chuỗi tốc độ tối đa." />

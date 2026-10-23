@@ -13,7 +13,7 @@ function mount(source: IncidentSource = groom, onSubmit = vi.fn().mockResolvedVa
 
 async function fill(description = 'Swelling on left hind fetlock.') {
   await userEvent.click(screen.getByRole('button', { name: 'Vấn đề móng hoặc chân' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Medium' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Trung bình' }));
   fireEvent.change(screen.getByLabelText('Mô tả *'), { target: { value: description } });
 }
 
@@ -31,7 +31,7 @@ describe('IncidentReportModal', () => {
     fireEvent.change(screen.getByLabelText('Mô tả *'), { target: { value: 'Not eating' } });
     submit();
     expect(onSubmit).not.toHaveBeenCalled();
-    await userEvent.click(screen.getByRole('button', { name: 'Low' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Thấp' }));
     submit();
     await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
   });
@@ -147,7 +147,7 @@ describe('IncidentReportModal', () => {
     rerender(<IncidentReportModal open={false} onClose={onClose} onSubmit={onSubmit} source={groom} />);
     rerender(<IncidentReportModal open onClose={onClose} onSubmit={onSubmit} source={groom} />);
     expect(screen.getByLabelText('Mô tả *')).toHaveValue('');
-    expect(screen.getByRole('button', { name: 'Medium' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: 'Trung bình' })).toHaveAttribute('aria-pressed', 'false');
     expect(screen.queryByText('Conflict')).not.toBeInTheDocument();
     await fill(); submit();
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(2));

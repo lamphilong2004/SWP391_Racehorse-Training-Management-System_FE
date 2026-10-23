@@ -123,7 +123,7 @@ function PedigreeOwnershipPageContent() {
   const baselineDone = baseline ? baseline.state === 'SATISFIED' : undefined;
   const current = horse.currentAssignment;
   const previous = assignments?.filter((a) => a.effectiveTo !== null).length;
-  const facts = [horse.horseCode, horse.breed, sexLabel(horse.sex), horse.foaledDate ? `foaled ${formatDate(horse.foaledDate)}` : null].filter(Boolean).join(' · ');
+  const facts = [horse.horseCode, horse.breed, sexLabel(horse.sex), horse.foaledDate ? `sinh ${formatDate(horse.foaledDate)}` : null].filter(Boolean).join(' · ');
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
