@@ -83,6 +83,10 @@
 .medical-progress { box-shadow: var(--elev-1); }
 .medical-progress > .medical-progress-active { border-bottom: 2px solid var(--color-brand-secondary); }
 .medical-map { border-radius: var(--card-radius); }
+.medical-instruction { background: var(--color-accent-violet-surface); border-left: 3px solid var(--color-accent-violet); padding: 14px 16px; line-height: 1.6; }
+.medical-slot { background: var(--color-accent-sky-surface); color: var(--color-accent-sky-ink); }
+.medical-groom-task-row { border-left: 3px solid var(--color-accent-violet); }
+.medical-form fieldset legend { color: var(--color-brand-primary); font-weight: 600; padding-inline: 8px; }
 @media (max-width: 767px) {
   .medical-groom-filters > :first-child, .medical-groom-filters > :last-child { flex: 1 1 100%; width: 100%; min-width: 0; }
   .medical-incident-filters > :first-child, .medical-incident-filters > :not(:first-child) { min-width: 0; flex: 1 1 100%; }

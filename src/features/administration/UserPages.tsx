@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { AlertBanner, Button, ButtonLink, Card, Checkbox, DataTable, EmptyState, ErrorState, LoadingState, RadioGroup, SelectField, StatusBadge, TextField, UnsavedChangesGuard } from '../../design-system';
+import { AlertBanner, Button, ButtonLink, Card, Checkbox, DataTable, EmptyState, ErrorState, LoadingState, RadioGroup, SelectField, StatusBadge, TableToolbar, TextField, UnsavedChangesGuard } from '../../design-system';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { ROLE_CODES, ROLE_LABELS, type RoleCode } from '../../shared/auth/roles';
 import { FlowShell } from '../main-flows/FlowShell';
@@ -18,11 +18,11 @@ export function UserListPage() {
   const load = useMemo(() => (signal: AbortSignal) => api.list(new URLSearchParams({ q, ...(role ? { role } : {}), ...(status ? { status } : {}), page: String(page), size: '20' }), signal), [api, q, role, status, page]);
   const resource = useResource(load);
   return <FlowShell title="Nhân sự & người dùng" section="Quản trị" role="CLUB_MANAGER" description="Mỗi người một tài khoản. Tài khoản chỉ bị vô hiệu hóa, không bao giờ bị xóa." actions={<div className={styles.actions}><ButtonLink variant="secondary" to="/admin/roles">Vai trò & quyền hạn</ButtonLink><ButtonLink to="/admin/users/new">Tạo người dùng</ButtonLink></div>}>
-    <div className={styles.stack}><div className={styles.filters}>
+    <div className={styles.stack}><TableToolbar label="Bộ lọc nhân sự và người dùng" scope="server" resultCount={resource.pending ? undefined : resource.data?.totalItems} hasFilters={Boolean(q || role || status)} onClear={() => { setQ(''); setRole(''); setStatus(''); setPage(0); }}>
       <TextField label="Tìm theo tên, email hoặc mã" type="search" maxLength={100} value={q} onChange={(e) => { setQ(e.target.value); setPage(0); }} />
       <SelectField label="Vai trò" value={role} options={[{ value: '', label: 'Tất cả vai trò' }, ...roleOptions]} onChange={(e) => { setRole(e.target.value); setPage(0); }} />
       <SelectField label="Trạng thái" value={status} options={[{ value: '', label: 'Tất cả trạng thái' }, { value: 'ACTIVE', label: 'Đang hoạt động' }, { value: 'INACTIVE', label: 'Ngừng hoạt động' }]} onChange={(e) => { setStatus(e.target.value); setPage(0); }} />
-    </div>
+    </TableToolbar>
     {resource.pending && <LoadingState label="Đang tải tài khoản…" />}{resource.error && <ErrorState title="Không tải được danh sách tài khoản" description={resource.error} onRetry={resource.reload} />}
     {resource.data && <><Card><div className={styles.scroll}><DataTable rows={resource.data.items} rowKey={(u) => u.id} caption="Nhân sự và người dùng" empty={<EmptyState title="Không có tài khoản phù hợp" />} columns={[
       { key: 'name', header: 'Họ tên', render: (u) => u.fullName }, { key: 'code', header: 'Mã người dùng', render: (u) => u.userCode },

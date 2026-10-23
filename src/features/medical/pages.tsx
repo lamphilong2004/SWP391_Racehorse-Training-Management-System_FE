@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { AlertBanner, ButtonLink, Button, Card, DataTable, EmptyState, KeyValue, MetricCard, StatusBadge, TextField, Tabs } from '../../design-system';
+import { AlertBanner, ButtonLink, Button, Card, DataTable, EmptyState, KeyValue, MetricCard, StatusBadge, TableToolbar, TextField, Tabs } from '../../design-system';
 import { PageHeader } from '../../layout/PageHeader';
 import { MEDICAL_ROUTES as ROUTES } from './paths';
 import { MedicalForm } from './MedicalForm';
@@ -100,7 +100,7 @@ export function CaseListPage() {
   const rows = data?.items.filter((item) => [item.id, item.horseId, item.reason].join(' ').toLowerCase().includes(query.toLowerCase())) ?? [];
   return <><PageHeader title="Ca y tế" description="Hồ sơ các ca thú y" />
     <div className="medical-actions"><ButtonLink variant="primary" to={ROUTES.medicalCaseNew}>Tạo ca y tế độc lập</ButtonLink><ButtonLink to={ROUTES.herdHealth}>Sức khỏe đàn ngựa</ButtonLink></div>
-    <Card title="Danh sách ca"><TextField label="Tìm trên trang hiện tại" value={query} onChange={(event) => setQuery(event.target.value)} />
+    <Card title="Danh sách ca"><TableToolbar label="Bộ lọc ca y tế" scope="page" resultCount={data ? rows.length : undefined} hasFilters={Boolean(query)} onClear={() => setQuery('')}><TextField label="Tìm trên trang hiện tại" type="search" value={query} onChange={(event) => setQuery(event.target.value)} /></TableToolbar>
       {!data ? <ResourceState error={error} retry={reload} /> :
         <div className="medical-stack"><DataTable<MedicalCase> caption="Ca y tế" rows={rows} rowKey={(item) => item.id} empty={<EmptyState title="Chưa có ca y tế" />} columns={[
           { key: 'id', header: 'Ca', render: (item) => <Link to={casePath(item.id)}>{item.id}</Link> },
