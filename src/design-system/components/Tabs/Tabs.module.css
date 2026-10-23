@@ -30,7 +30,7 @@
 
 :global([data-ui-v3]) .bar { max-width: 100%; overflow-x: auto; overflow-y: hidden; gap: var(--space-lg); }
 :global([data-ui-v3]) .tab { font-weight: 600; padding-inline: var(--space-xs); }
-:global([data-ui-v3]) .active { color: var(--color-brand-primary); border-bottom-color: var(--color-brand-secondary); }
+:global([data-ui-v3]) .active { color: var(--color-primary-700); border-bottom-color: var(--color-brand-secondary); background: var(--color-primary-50); }
 
 :global([data-design-system='v2']) .bar { max-width: 100%; overflow-x: auto; overflow-y: hidden; }
 @media (prefers-reduced-motion: reduce) { .tab { transition: none; } }
