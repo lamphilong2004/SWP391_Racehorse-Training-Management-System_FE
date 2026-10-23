@@ -8,6 +8,7 @@ import { sexLabel } from '../shared/options';
 import { useBreadcrumb } from '../shared/HorseManagementLayout';
 import shared from '../shared/horses.module.css';
 import styles from './PendingActivationPage.module.css';
+import { serverText } from '../../../shared/serverText';
 
 interface PendingHorse {
   status: ActivationStatus;
@@ -127,7 +128,7 @@ function PendingHorseCard({ status, horse, onViewRegister }: PendingHorse & { on
   const owner = horse.currentOwnerships[0]?.owner.fullName;
   const meta = [horse.breed, sexLabel(horse.sex), age !== null ? `${age} tuổi` : null,
     owner ? `Chủ ngựa ${owner}` : null, horse.currentBoxCode ? `Ô chuồng ${horse.currentBoxCode}` : null,
-    `registered ${formatDate(horse.createdAt)}`].filter(Boolean).join(' · ');
+    `đăng ký ${formatDate(horse.createdAt)}`].filter(Boolean).join(' · ');
   const missing = missingItems(status);
   const onlyBaseline = missing.length === 1 && missing[0] === 'VETERINARIAN_BASELINE';
   const reviewed = status.checklist.find((c) => c.id === 'HEAD_TRAINER_READINESS_REVIEW')?.state === 'REVIEWED';
@@ -151,7 +152,7 @@ function PendingHorseCard({ status, horse, onViewRegister }: PendingHorse & { on
             const complete = c.state === 'SATISFIED';
             return (
               <ChecklistRow key={c.id} icon={complete ? 'check-circle' : 'clock'} tone={complete ? 'success' : 'warning'}
-                label={c.label} sub={c.description} value={complete ? 'Hoàn tất' : `Đang chờ — ${spec.who}`} />
+                label={serverText(c.label)} sub={serverText(c.description)} value={complete ? 'Hoàn tất' : `Đang chờ — ${spec.who}`} />
             );
           })}
           <ChecklistRow icon={reviewed ? 'check-circle' : 'circle'} tone="muted" label="Đánh giá sẵn sàng của Head Trainer"
@@ -161,7 +162,7 @@ function PendingHorseCard({ status, horse, onViewRegister }: PendingHorse & { on
           <Icon name="clock" size={16} />
           <span>
             {onlyBaseline
-              ? 'Đang chờ khám ban đầu của Veterinarian — yêu cầu cuối cùng.'
+              ? 'Đang chờ khám ban đầu của Veterinarian — yêu cầu cuối cùng. '
               : `Đang chờ: ${missing.map((m) => ITEMS[m]?.label.toLowerCase() ?? m).join(', ')}. `}
             {`${horse.name} tự chuyển sang Hoạt động khi đủ mọi yêu cầu bắt buộc — không cần duyệt thủ công.`}
           </span>

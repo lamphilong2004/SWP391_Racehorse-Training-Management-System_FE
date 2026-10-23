@@ -117,7 +117,7 @@ it.each([404, 503])('keeps a created identity reachable when supporting APIs ret
   await screen.findByText('Không tải được dữ liệu thiết lập ngựa');
   expect(fetcher.mock.calls.filter(([, init]) => init?.method === 'POST')).toHaveLength(1);
   fireEvent.click(screen.getByRole('link', { name: /^Quay lại danh sách ngựa$/ }));
-  await screen.findByRole('heading', { name: 'Ngựa' });
+  await screen.findByRole('heading', { name: 'Danh sách ngựa' });
   fireEvent.click(screen.getByRole('link', { name: /Transport Draft/ }));
   await screen.findByRole('heading', { name: created.name });
   expect(router.state.location.pathname).toBe('/horses/501');

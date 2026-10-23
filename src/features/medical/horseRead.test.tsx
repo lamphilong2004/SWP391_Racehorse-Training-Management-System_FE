@@ -31,7 +31,7 @@ it('keeps the working Horse API grid when the separate clinical aggregate is una
   expect(await screen.findByText('Storm')).toBeInTheDocument();
   expect(await screen.findByText('Clinical overview unavailable')).toBeInTheDocument();
   expect(screen.getByText('ST-014 · Ô B-03')).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'FIT · 0' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Khỏe · 0' }));
   expect(await screen.findByText('Không có ngựa phù hợp bộ lọc')).toBeInTheDocument();
   expect(screen.queryByText('Storm')).not.toBeInTheDocument();
   expect(fetcher).toHaveBeenCalledTimes(3);

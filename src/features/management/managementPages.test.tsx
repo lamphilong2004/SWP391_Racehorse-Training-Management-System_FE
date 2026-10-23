@@ -124,7 +124,7 @@ describe('CORE-052 dashboard', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const { router } = mount();
     expect(await screen.findByText('9 / 18')).toBeInTheDocument();
-    expect(screen.getByText('8 ACTIVE · 1 DRAFT · 0 INACTIVE')).toBeInTheDocument();
+    expect(screen.getByText('8 hoạt động · 1 nháp · 0 ngừng hoạt động')).toBeInTheDocument();
     expect(screen.getByText('12 đang hoạt động · 1 ngừng hoạt động')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Lịch tập hôm nay' })).toBeInTheDocument();
     expect(screen.queryByText(/Deworming due|Re-exams overdue|Revenue|Inventory value/)).not.toBeInTheDocument();

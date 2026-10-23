@@ -12,7 +12,7 @@ import { greeting } from '../../shared/greeting';
 import { viLabel } from '../../shared/viLabels';
 
 function localDay() { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`; }
-function when(value: string) { return new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }); }
+function when(value: string) { return new Date(value).toLocaleString('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }); }
 function message(error: unknown) { return error instanceof Error ? error.message : 'Không tải được dữ liệu yêu cầu.'; }
 function GroomShell({ children }: { children: ReactNode }) {
   const auth = useAuth();

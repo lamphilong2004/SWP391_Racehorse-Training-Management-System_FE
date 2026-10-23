@@ -11,13 +11,13 @@ import styles from './Administration.module.css';
 import { CORE_ROLE_MATRIX } from './approvedRoleMatrix';
 
 const roleOptions = ROLE_CODES.map((value) => ({ value, label: ROLE_LABELS[value] }));
-const time = (value: string | null) => value ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) : 'Chưa bao giờ';
+const time = (value: string | null) => value ? new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) : 'Chưa bao giờ';
 export function UserListPage() {
   const request = useFlowRequest(), api = useMemo(() => accountApi(request), [request]);
   const [q, setQ] = useState(''), [role, setRole] = useState(''), [status, setStatus] = useState(''), [page, setPage] = useState(0);
   const load = useMemo(() => (signal: AbortSignal) => api.list(new URLSearchParams({ q, ...(role ? { role } : {}), ...(status ? { status } : {}), page: String(page), size: '20' }), signal), [api, q, role, status, page]);
   const resource = useResource(load);
-  return <FlowShell title="Nhân sự & người dùng" section="Administration" role="CLUB_MANAGER" description="Mỗi người một tài khoản. Tài khoản chỉ bị vô hiệu hóa, không bao giờ bị xóa." actions={<div className={styles.actions}><ButtonLink variant="secondary" to="/admin/roles">Vai trò & quyền hạn</ButtonLink><ButtonLink to="/admin/users/new">Tạo người dùng</ButtonLink></div>}>
+  return <FlowShell title="Nhân sự & người dùng" section="Quản trị" role="CLUB_MANAGER" description="Mỗi người một tài khoản. Tài khoản chỉ bị vô hiệu hóa, không bao giờ bị xóa." actions={<div className={styles.actions}><ButtonLink variant="secondary" to="/admin/roles">Vai trò & quyền hạn</ButtonLink><ButtonLink to="/admin/users/new">Tạo người dùng</ButtonLink></div>}>
     <div className={styles.stack}><div className={styles.filters}>
       <TextField label="Tìm theo tên, email hoặc mã" type="search" maxLength={100} value={q} onChange={(e) => { setQ(e.target.value); setPage(0); }} />
       <SelectField label="Vai trò" value={role} options={[{ value: '', label: 'Tất cả vai trò' }, ...roleOptions]} onChange={(e) => { setRole(e.target.value); setPage(0); }} />
@@ -34,14 +34,14 @@ export function UserListPage() {
 }
 export function UserEditorPage() {
   const { id } = useParams();
-  if (id !== undefined && (!Number.isSafeInteger(Number(id)) || Number(id) < 1)) return <FlowShell title="Không tải được người dùng" section="Administration" role="CLUB_MANAGER"><ErrorState title="Mã người dùng không hợp lệ" /></FlowShell>;
+  if (id !== undefined && (!Number.isSafeInteger(Number(id)) || Number(id) < 1)) return <FlowShell title="Không tải được người dùng" section="Quản trị" role="CLUB_MANAGER"><ErrorState title="Mã người dùng không hợp lệ" /></FlowShell>;
   return <UserEditorLoader key={id ?? 'new'} id={id === undefined ? undefined : idOf(id)} />;
 }
 function UserEditorLoader({ id }: { id?: number }) {
   const request = useFlowRequest(), api = useMemo(() => accountApi(request), [request]);
   const load = useMemo(() => (signal: AbortSignal) => id === undefined ? Promise.resolve(null) : api.detail(id, signal), [id, api]);
   const resource = useResource(load);
-  return <FlowShell title={id ? 'Sửa người dùng' : 'Tạo người dùng'} section="Administration" role="CLUB_MANAGER" description="Mỗi người đúng một vai trò; quyền hạn do hệ thống máy chủ kiểm soát.">
+  return <FlowShell title={id ? 'Sửa người dùng' : 'Tạo người dùng'} section="Quản trị" role="CLUB_MANAGER" description="Mỗi người đúng một vai trò; quyền hạn do hệ thống máy chủ kiểm soát.">
     {resource.pending && <LoadingState label="Đang tải người dùng…" />}{resource.error && <ErrorState title="Không tải được người dùng" description={resource.error} onRetry={resource.reload} />}
     {!resource.pending && !resource.error && <UserEditor key={id ?? 'new'} initial={resource.data ?? null} />}
   </FlowShell>;
@@ -104,7 +104,7 @@ function SkillPicker({ kind, value, disabled, onChange }: { kind: SkillKind; val
 export function RolesPage() {
   const request = useFlowRequest(), api = useMemo(() => accountApi(request), [request]);
   const load = useMemo(() => (signal: AbortSignal) => api.roles(signal), [api]), resource = useResource(load);
-  return <FlowShell title="Vai trò & quyền hạn" section="Administration" role="CLUB_MANAGER" description="Danh mục vai trò chỉ để xem. Không thể chỉnh quyền riêng cho từng người." actions={<ButtonLink variant="secondary" to="/admin/users">Xem người dùng</ButtonLink>}>
+  return <FlowShell title="Vai trò & quyền hạn" section="Quản trị" role="CLUB_MANAGER" description="Danh mục vai trò chỉ để xem. Không thể chỉnh quyền riêng cho từng người." actions={<ButtonLink variant="secondary" to="/admin/users">Xem người dùng</ButtonLink>}>
     {resource.pending && <LoadingState label="Đang tải vai trò…" />}{resource.error && <ErrorState title="Không tải được vai trò" description={resource.error} onRetry={resource.reload} />}
     {resource.data && <div className={styles.stack}>
       <AlertBanner type="info" title="Bảng quyền đã duyệt (chỉ xem)">V xem · C tạo · E sửa · D vô hiệu hóa/xóa mềm · X thực hiện. Phạm vi phân công và sở hữu vẫn do hệ thống máy chủ kiểm soát. Các phân hệ hoãn lại không được liệt kê.</AlertBanner>

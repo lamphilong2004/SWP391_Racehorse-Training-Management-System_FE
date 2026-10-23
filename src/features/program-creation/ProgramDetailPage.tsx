@@ -23,7 +23,7 @@ function ProgramDetailContent({ rawId }: { rawId?: string }) {
   const program = useResource(load), data = program.data;
   const canReadHistory = user?.roles.some((role) => ['HEAD_TRAINER', 'TRAINER', 'CLUB_MANAGER'].includes(role)) ?? false;
   const role = user?.roles.find((value) => ['HEAD_TRAINER', 'TRAINER', 'CLUB_MANAGER', 'VETERINARIAN', 'GROOM'].includes(value)) ?? 'HEAD_TRAINER';
-  return <FlowShell title={data ? `${data.horse.name} · ${data.horse.horseCode}` : 'Chi tiết chương trình'} description={data?.name} section="Horse Training Programs" role={role} actions={<div className={styles.row}>
+  return <FlowShell title={data ? `${data.horse.name} · ${data.horse.horseCode}` : 'Chi tiết chương trình'} description={data?.name} section="Chương trình huấn luyện ngựa" role={role} actions={<div className={styles.row}>
     {user?.roles.includes('HEAD_TRAINER') && <ButtonLink to="/training/programs">Quay lại danh sách chương trình</ButtonLink>}
     {user?.roles.includes('TRAINER') && <ButtonLink to="/training/programs/assigned">Quay lại chương trình được giao</ButtonLink>}
     {data && user?.roles.includes('HEAD_TRAINER') && <HeadTrainerProgramActions program={data} onChanged={program.reload} />}

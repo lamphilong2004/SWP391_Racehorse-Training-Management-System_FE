@@ -4,7 +4,7 @@ import { ApiError } from '../../shared/auth/authApi';
 import { createRiderApi, type RiderApi } from './api';
 import type { RiderResult, RiderSession } from './types';
 export const errorMessage = (error: unknown) => error instanceof Error ? error.message : 'Không thực hiện được yêu cầu.';
-export const when = (value: string) => new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+export const when = (value: string) => new Date(value).toLocaleString('vi-VN', { dateStyle: 'medium', timeStyle: 'short' });
 export const value = (number: number | null | undefined, unit: string) => number === null || number === undefined ? 'Chưa đo' : `${number.toLocaleString('vi-VN')} ${unit}`;
 export function useRiderApi(supplied?: RiderApi) {
   const { handleApiError } = useAuth();

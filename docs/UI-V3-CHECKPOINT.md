@@ -6,8 +6,13 @@
 - API values are unchanged: enum codes and stored English values are mapped for display only
   (`src/shared/viLabels.ts`, StatusBadge labels, `regionLabel`, sex/feedback option labels). Backend messages
   are still shown as sent (English). Dates/numbers use `vi-VN`.
-- Tests assert the Vietnamese text (985/985). Signed-in browser review per role is pending: SQL Server
-  (`MSSQLSERVER`) was stopped after the machine restart and needs an administrator to start it.
+- Tests assert the Vietnamese text (985/985).
+- Browser review 2026-10-23 with real sign-in for all 7 roles (Club Manager, Head Trainer, Trainer,
+  Veterinarian, Groom, Work Rider, Horse Owner): every screen scanned for leftover English and overflow.
+  Fixed: default-locale dates, dd/mm/yyyy, pagination "of", raw status codes in text, section breadcrumbs,
+  lost spaces in concatenated labels, "min" -> "phút". Fixed Backend texts (activation checklist, timeline
+  titles, notification titles/messages) are shown in Vietnamese via `src/shared/serverText.ts`; other
+  Backend messages and database content (horse/program names, audit summaries) remain as stored.
 
 ## CURRENT STATE (Claude takeover, 2026-10-22 evening) — read first
 

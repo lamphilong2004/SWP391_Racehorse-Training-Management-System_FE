@@ -64,7 +64,7 @@ export function ApplyAdjustmentModal({ item, onClose, onApplied }: { item: Adjus
         {phases.map((phase, index) => {
           const label = `Giai đoạn ${index + 1}`, issue = (field: string) => issues[`${index}.${field}`];
           return <fieldset key={phase.id ?? `new-${index}`} className={styles.fieldset}>
-            <div className={styles.row}><legend><strong>{label}</strong>{phase.id ? '' : '· mới'}</legend>
+            <div className={styles.row}><legend><strong>{label}</strong>{phase.id ? '' : ' · mới'}</legend>
               <Button size="sm" variant="tertiary" disabled={busy || phases.length === 1} onClick={() => setPhases(phases.filter((_, at) => at !== index))} aria-label={`Xóa ${label}`}>Xóa</Button></div>
             <div className={styles.fields}>
               <TextField label={`${label} — tên`} required maxLength={150} value={phase.name} error={issue('name')} disabled={busy} onChange={(event) => update(index, { name: event.target.value })} />

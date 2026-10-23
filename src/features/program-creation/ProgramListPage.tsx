@@ -20,7 +20,7 @@ export function ProgramListPage() {
   const trainers = [...new Map((data?.items ?? []).flatMap((item) => item.currentTrainer ? [[item.currentTrainer.id, item.currentTrainer] as const] : [])).values()];
   const horses = [...new Map((data?.items ?? []).map((item) => [item.horse.id, item.horse])).values()];
   function changePage(next: number) { setPage(next); setTrainer(''); setHorse(''); }
-  return <FlowShell title="Chương trình huấn luyện ngựa" description="Chương trình riêng cho từng ngựa — mỗi chương trình tạo từ một mẫu dùng chung và tùy chỉnh cho một con ngựa." section="Training" role="HEAD_TRAINER" actions={<ButtonLink variant="primary" to={ROUTES.trainingProgramCreate}>+ Tạo chương trình huấn luyện</ButtonLink>}>
+  return <FlowShell title="Chương trình huấn luyện ngựa" description="Chương trình riêng cho từng ngựa — mỗi chương trình tạo từ một mẫu dùng chung và tùy chỉnh cho một con ngựa." section="Huấn luyện" role="HEAD_TRAINER" actions={<ButtonLink variant="primary" to={ROUTES.trainingProgramCreate}>+ Tạo chương trình huấn luyện</ButtonLink>}>
     <div className={styles.metrics}>{['Chương trình đang hoạt động', 'Cần chú ý', 'Sắp kết thúc', 'Trainer còn trống'].map((label) => <MetricCard key={label} label={label} value="Chưa cung cấp" unavailable caption="Hệ thống chưa cung cấp số liệu này" />)}</div>
     <Card><div className={styles.stack}><div className={styles.row}>
       <TextField label="Tìm ngựa hoặc chương trình" placeholder="Tìm trên trang hiện tại…" value={search} onChange={(event) => setSearch(event.target.value)} />

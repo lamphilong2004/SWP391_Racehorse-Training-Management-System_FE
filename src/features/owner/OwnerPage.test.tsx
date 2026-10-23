@@ -68,7 +68,7 @@ describe('CORE-056 read-only Owner journey', () => {
     expect(screen.queryByRole('list', { name: 'Weight history' })).not.toBeInTheDocument();
     expect(document.querySelector('time[datetime="2026-10-18T06:00:00Z"]')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('tab', { name: 'Huấn luyện & thành tích' }));
-    expect(screen.getByText('3 / 8 sessions completed')).toBeInTheDocument(); expect(screen.queryByText('58%')).not.toBeInTheDocument();
+    expect(screen.getByText('3 / 8 buổi tập đã hoàn thành')).toBeInTheDocument(); expect(screen.queryByText('58%')).not.toBeInTheDocument();
   });
   it('supports direct-link health and keeps the selected tab in URL', async () => {
     const { router } = mount('/owner/horses/7?tab=health');

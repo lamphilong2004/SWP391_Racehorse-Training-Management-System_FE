@@ -147,7 +147,7 @@ export function HerdHealthPage() {
       </div></Card>
       <div className="medical-actions" role="group" aria-label="Bộ lọc sức khỏe ngựa đang hoạt động">
         {['', 'FIT', 'MONITORING', 'INJURED', 'QUARANTINED', 'UNASSESSED'].map((status) => <button className="medical-chip" key={status} type="button" aria-pressed={health === status} onClick={() => setHealth(status)}>
-          {status || 'Tất cả'} · {horses.data!.filter((horse) => !status || (status === 'UNASSESSED' ? horse.healthStatus === null : horse.healthStatus === status)).length}
+          {status ? (status === 'UNASSESSED' ? 'Chưa đánh giá' : viLabel(status)) : 'Tất cả'} · {horses.data!.filter((horse) => !status || (status === 'UNASSESSED' ? horse.healthStatus === null : horse.healthStatus === status)).length}
         </button>)}
       </div>
       {cases.error && <div className="medical-actions"><p className="text-caption">Không tải được tóm tắt ca y tế.</p><Button variant="secondary" onClick={cases.reload}>Tải lại tóm tắt ca</Button></div>}
@@ -183,7 +183,7 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
   const [confirmClose, setConfirmClose] = useState(false);
   const closed = item.status === 'CLOSED';
   return <><ButtonLink variant="tertiary" to={ROUTES.medical}>← Quay lại danh sách ca</ButtonLink>
-    <HorseHeading title={'Ca y tế' + item.id} horseId={item.horseId} description={'Mở lúc' + dateTime(item.openedAt)} />
+    <HorseHeading title={'Ca y tế ' + item.id} horseId={item.horseId} description={'Mở lúc ' + dateTime(item.openedAt)} />
     <div className="medical-grid"><Card title="Tổng quan ca"><div className="medical-stack">
       <KeyValue label="Trạng thái" value={<StatusBadge family="medicalCase" status={item.status} />} /><KeyValue label="Lý do" value={item.reason ?? '—'} />
       <KeyValue label="Mở lúc" value={dateTime(item.openedAt)} /><KeyValue label="Sự cố liên quan" value={item.incidentIds.join(', ') || 'Không có'} />
@@ -297,7 +297,7 @@ export function TreatmentPlanPage() {
     groomTasks: tasks.map((task) => ({ assignedGroomUserId: task.assignedGroomUserId, instruction: task.instruction, taskDate: task.taskDate, scheduledSlot: task.scheduledSlot })),
   };
   return <><ButtonLink variant="tertiary" to={casePath(id)}>← Quay lại ca y tế</ButtonLink>
-    <HorseHeading title="Phác đồ điều trị" horseId={medicalCase.horseId} description={'Ca y tế' + id} />
+    <HorseHeading title="Phác đồ điều trị" horseId={medicalCase.horseId} description={'Ca y tế ' + id} />
     {saved && <AlertBanner type="success" title="Đã lưu phác đồ điều trị" />}
     <div className="medical-grid medical-treatment-layout"><div className="medical-stack">
       {medicalCase.status === 'CLOSED' ? <AlertBanner type="danger" title="Không thể sửa ca y tế đã đóng" /> :

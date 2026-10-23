@@ -9,7 +9,9 @@ import { useNotifications } from '../../shared/notifications/NotificationsProvid
 import { useResource } from '../main-flows/useResource';
 import type { Page } from './accountApi';
 import styles from './Administration.module.css';
+import { serverText } from '../../shared/serverText';
 
+const CATEGORY_LABELS: Record<string, string> = { ALERTS: 'Cảnh báo', MEDICAL: 'Y tế', SCHEDULE: 'Lịch' };
 interface Notice { id: number; category: 'ALERTS' | 'MEDICAL' | 'SCHEDULE'; notificationType: string; title: string; message: string; readAt: string | null; targetType: string | null; targetId: number | null; isSimulated: boolean; createdAt: string }
 /** Fixed local routes only; never navigate to a URL supplied by notification content. The target retains its own RBAC. */
 function destination(notice: Notice, roles: RoleCode[]): string | undefined {
@@ -64,9 +66,9 @@ function NotificationContent({ role, roles, compact = false }: { role: RoleCode;
     {resource.pending && <LoadingState label="Đang tải thông báo…" />}{resource.error && <ErrorState title="Không tải được thông báo" description={resource.error} onRetry={resource.reload} />}
     {resource.data && <><Card>{resource.data.items.length === 0 && <EmptyState title="Không có thông báo phù hợp" />}
       {resource.data.items.map((notice) => { const target = destination(notice, roles); return <div key={notice.id} className={styles.row}>
-        <NotificationItem title={notice.title} body={notice.message} context={`${notice.category}${notice.isSimulated ? ' · SIMULATED DATA' : ''}`} time={new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(notice.createdAt))} read={notice.readAt !== null} />
+        <NotificationItem title={serverText(notice.title)} body={serverText(notice.message)} context={`${CATEGORY_LABELS[notice.category] ?? notice.category}${notice.isSimulated ? ' · DỮ LIỆU MÔ PHỎNG' : ''}`} time={new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(notice.createdAt))} read={notice.readAt !== null} />
         <div className={styles.actions}>{!notice.readAt && <Button variant="secondary" size="sm" disabled={busy} onClick={() => { void mark(notice.id); }}>Đánh dấu đã đọc</Button>}{target && <Link to={target}>Mở</Link>}</div>
       </div>; })}</Card><div className={styles.actions}><Button variant="secondary" disabled={page === 0} onClick={() => setPage(page - 1)}>Trước</Button><span>Trang {page + 1} · {resource.data.totalItems} thông báo</span><Button variant="secondary" disabled={page + 1 >= resource.data.totalPages} onClick={() => setPage(page + 1)}>Sau</Button></div></>}
     </div>;
-  return compact ? content : <FlowShell title="Thông báo" section="Workspace" role={role} description="Thông báo trong ứng dụng của tài khoản bạn. Mở thông báo không làm thay đổi dữ liệu nghiệp vụ hay quyền hạn.">{content}</FlowShell>;
+  return compact ? content : <FlowShell title="Thông báo" section="Không gian làm việc" role={role} description="Thông báo trong ứng dụng của tài khoản bạn. Mở thông báo không làm thay đổi dữ liệu nghiệp vụ hay quyền hạn.">{content}</FlowShell>;
 }

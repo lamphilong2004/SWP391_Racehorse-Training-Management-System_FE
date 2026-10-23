@@ -16,7 +16,7 @@ export function TemplateLibraryPage() {
   const [selected, setSelected] = useState<number>(), [editor, setEditor] = useState<TemplateDetail | 'new'>(), [notice, setNotice] = useState('');
   const load = useCallback((signal: AbortSignal) => api.list(status, search, page, signal), [api, status, search, page]);
   const resource = useResource(load);
-  return <FlowShell title="Mẫu chương trình" description="Các chiến lược huấn luyện dùng lại được. Lưu phiên bản mới không làm thay đổi chương trình của ngựa đang có." section="Training" role="HEAD_TRAINER" actions={<Button onClick={() => setEditor('new')}>Tạo mẫu</Button>}>
+  return <FlowShell title="Mẫu chương trình" description="Các chiến lược huấn luyện dùng lại được. Lưu phiên bản mới không làm thay đổi chương trình của ngựa đang có." section="Huấn luyện" role="HEAD_TRAINER" actions={<Button onClick={() => setEditor('new')}>Tạo mẫu</Button>}>
     {notice && <AlertBanner type="success" title={notice} />}
     <Card><form className={styles.row} onSubmit={(event) => { event.preventDefault(); setPage(0); setSearch(query); }}>
       <TextField label="Tìm mẫu chương trình" type="search" maxLength={100} value={query} onChange={(event) => setQuery(event.target.value)} />

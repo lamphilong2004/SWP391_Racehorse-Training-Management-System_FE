@@ -21,7 +21,7 @@ export function MedicalForm({ fields, initial = {}, submitLabel, onSave, onCance
     const validation: Record<string, string> = {};
     fields.forEach((field) => {
       const value = values[field.name]?.trim() ?? '';
-      if (field.required && !value) validation[field.name] = field.label + 'là bắt buộc';
+      if (field.required && !value) validation[field.name] = field.label + ' là bắt buộc';
       if (field.maxLength && value.length > field.maxLength) validation[field.name] = `${field.label} tối đa ${field.maxLength} ký tự`;
       if (field.type === 'number' && value && (!Number.isSafeInteger(Number(value)) || Number(value) < 1)) validation[field.name] = 'Nhập mã số dương';
       if (field.type === 'date' && value && !validDate(value)) validation[field.name] = 'Nhập ngày hợp lệ';

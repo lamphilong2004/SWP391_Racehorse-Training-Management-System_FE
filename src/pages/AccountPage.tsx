@@ -63,6 +63,6 @@ function AccountForm({ profile }: { profile: UserDetail }) {
         <Button type="submit" disabled={busy}>{busy ? 'Đang lưu…' : 'Đổi mật khẩu'}</Button>
         <p>Khôi phục mật khẩu chưa dùng được trên môi trường chính thức: cần có dịch vụ email được duyệt.</p>
       </form></Card>
-    </div><Card title="Tài khoản & quyền truy cập"><KeyValue label="Mã người dùng" value={profile.userCode} /><KeyValue label="Vai trò" value={profile.roles.map((r) => ROLE_LABELS[r]).join(', ')} /><KeyValue label="Trạng thái tài khoản" value={viLabel(profile.accountStatus)} /><KeyValue label="Lần đăng nhập cuối" value={profile.lastLoginAt ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(profile.lastLoginAt)) : 'Chưa bao giờ'} /><p>Vai trò và quyền hạn của bạn do Club Manager quản lý.</p></Card></div>
+    </div><Card title="Tài khoản & quyền truy cập"><KeyValue label="Mã người dùng" value={profile.userCode} /><KeyValue label="Vai trò" value={profile.roles.map((r) => ROLE_LABELS[r]).join(', ')} /><KeyValue label="Trạng thái tài khoản" value={viLabel(profile.accountStatus)} /><KeyValue label="Lần đăng nhập cuối" value={profile.lastLoginAt ? new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(profile.lastLoginAt)) : 'Chưa bao giờ'} /><p>Vai trò và quyền hạn của bạn do Club Manager quản lý.</p></Card></div>
   </>;
 }

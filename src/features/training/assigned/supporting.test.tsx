@@ -63,7 +63,7 @@ it('computes calendar periods over local calendar dates including Sunday and mon
 });
 it('calendar filters derivedBlocked without changing storedstatus and opens the CORE025 detail handoff', async () => {
   const client = api(); const router = mount(client, '/training/schedule');
-  const event = await screen.findByRole('button', { name: 'Mở SES-0044 Thunder Bolt' }); expect(event).toHaveTextContent('BLOCKED');
+  const event = await screen.findByRole('button', { name: 'Mở SES-0044 Thunder Bolt' }); expect(event).toHaveTextContent('Bị chặn');
   fireEvent.change(screen.getByLabelText('Trạng thái'), { target: { value: 'COMPLETED' } }); expect(screen.queryByRole('button', { name: 'Mở SES-0044 Thunder Bolt' })).not.toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Trạng thái'), { target: { value: 'BLOCKED' } }); fireEvent.click(screen.getByRole('button', { name: 'Mở SES-0044 Thunder Bolt' }));
   await screen.findByText('CORE-025 session handoff unavailable'); expect(router.state.location.pathname).toBe('/training/session/44');

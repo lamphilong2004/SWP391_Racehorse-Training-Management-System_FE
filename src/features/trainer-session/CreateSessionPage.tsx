@@ -63,7 +63,7 @@ export function CreateSessionPage() {
     } catch (cause) { setError(errorMessage(cause)); }
     finally { pending.current = false; setBusy(false); }
   }
-  return <FlowShell title="Tạo buổi tập" description={`Bước ${step + 1}/4 · ${STEPS[step]}`} section="Training Calendar" role="TRAINER" actions={<ButtonLink to="/training/calendar">Hủy</ButtonLink>}>
+  return <FlowShell title="Tạo buổi tập" description={`Bước ${step + 1}/4 · ${STEPS[step]}`} section="Lịch tập" role="TRAINER" actions={<ButtonLink to="/training/calendar">Hủy</ButtonLink>}>
     <WizardStepper steps={STEPS} currentStep={step} onStepClick={(value) => { if (!busy) setStep(value); }} />
     {program.data && <Card><div className={styles.row}><strong>{program.data.horse.name}</strong><span>{program.data.horse.horseCode} · {program.data.name} · {phase?.name ?? 'Chọn giai đoạn'}</span>{availability.data && <StatusBadge family="availability" status={availability.data.availability} />}</div></Card>}
     {error && <AlertBanner type="danger" title="Chưa lên lịch được buổi tập">{error}</AlertBanner>}

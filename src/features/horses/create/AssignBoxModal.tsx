@@ -120,7 +120,7 @@ export function AssignBoxModal({ open, horse, onClose, onAssigned }: AssignBoxMo
             <div className={[shared.note, shared.notePrimary, shared.noteStrong].join(' ')} role="status">
               <Icon name="check-circle" size={16} />
               <span>
-                {selected ? `Đã chọn ${selected.boxCode} — còn trống. ` : 'Chọn một ô trống.'}
+                {selected ? `Đã chọn ${selected.boxCode} — còn trống. ` : 'Chọn một ô trống. '}
                 Không thể chọn ô đã có ngựa; mỗi ô chỉ chứa một con ngựa.
               </span>
             </div>

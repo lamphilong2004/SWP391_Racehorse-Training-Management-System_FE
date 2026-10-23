@@ -5,6 +5,7 @@ import { ApiError } from '../../../shared/auth/authApi';
 import { useHorseHistoryService } from './historyService';
 import type { ReadinessChecklist } from './historyTypes';
 import styles from './history.module.css';
+import { serverText } from '../../../shared/serverText';
 
 export function ReadinessReview({ horseId }: { horseId: number }) {
   const { user, expiresAt } = useAuth();
@@ -40,7 +41,7 @@ function Review({ id }: { id: number }) {
     {success && <AlertBanner type="success" title="Đã ghi đánh giá sẵn sàng" />}
     {writeError !== undefined && <AlertBanner type="danger" title={writeError === 403 ? 'Chỉ Head Trainer được ghi đánh giá này.' : writeError === 404 ? 'Không tìm thấy ngựa.' : 'Đánh giá chưa được xác nhận. Hãy thử lại sau.'} />}
     {current?.error !== undefined ? <ErrorState title={current.error === 403 ? 'Không có quyền truy cập' : current.error === 404 ? 'Không tìm thấy ngựa' : 'Không tải được mức sẵn sàng'} description="Không tải được danh mục kích hoạt hiện tại." onRetry={current.error === 403 || current.error === 404 ? undefined : () => setRevision((n) => n + 1)} /> : !current?.value ? <LoadingState label="Đang tải danh mục sẵn sàng…" /> : <>
-      <ul className={styles.checklist}>{current.value.checklist.map((item) => <li key={item.id}><strong>{item.label}</strong><span>{item.requirement === 'RECOMMENDED' ? item.state === 'REVIEWED' ? 'Đã đánh giá · không bắt buộc' : 'Khuyến nghị · không bắt buộc' : item.state === 'SATISFIED' ? 'Hoàn tất' : 'Đang chờ'}</span></li>)}</ul>
+      <ul className={styles.checklist}>{current.value.checklist.map((item) => <li key={item.id}><strong>{serverText(item.label)}</strong><span>{item.requirement === 'RECOMMENDED' ? item.state === 'REVIEWED' ? 'Đã đánh giá · không bắt buộc' : 'Khuyến nghị · không bắt buộc' : item.state === 'SATISFIED' ? 'Hoàn tất' : 'Đang chờ'}</span></li>)}</ul>
       {user!.roles.includes('HEAD_TRAINER') && <Button disabled={busy} onClick={() => void acknowledge()}>{busy ? 'Đang ghi đánh giá…' : 'Ghi đánh giá sẵn sàng'}</Button>}
     </>}
   </Card>;

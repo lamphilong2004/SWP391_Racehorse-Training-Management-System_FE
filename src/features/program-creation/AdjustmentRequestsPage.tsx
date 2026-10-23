@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import { ApplyAdjustmentModal } from './ApplyAdjustmentModal';
+import { viLabel } from '../../shared/viLabels';
 import { AlertBanner, Button, Card, DataTable, EmptyState, ErrorState, LoadingState, Modal, SelectField, StatusBadge, TextAreaField } from '../../design-system';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { dateTime } from '../evaluation/models';
@@ -22,7 +23,7 @@ export function AdjustmentRequestsPage() {
   const load = useCallback((signal: AbortSignal) => api.adjustments({ status, page }, signal), [api, status, page]);
   const resource = useResource(load), data = resource.data;
   return <FlowShell title="Yêu cầu điều chỉnh chương trình" description={headTrainer ? 'Xem xét các thay đổi chiến lược do Trainer đề xuất. Phê duyệt chỉ ghi nhận quyết định; hãy chủ động áp dụng thay đổi đã duyệt vào chương trình.' : 'Các yêu cầu thay đổi chiến lược của bạn và quyết định của Head Trainer.'}
-    section="Horse Training Programs" role={headTrainer ? 'HEAD_TRAINER' : 'TRAINER'}>
+    section="Chương trình huấn luyện ngựa" role={headTrainer ? 'HEAD_TRAINER' : 'TRAINER'}>
     {applied && <AlertBanner type="success" title="Đã áp dụng điều chỉnh">{applied.programName} đã dùng các giai đoạn mới điều chỉnh. <Link to={`/training/programs/${applied.item.programId}`}>Mở chương trình</Link></AlertBanner>}
     <Card><div className={styles.row}>
       <SelectField label="Trạng thái" value={status} onChange={(event) => { setStatus(event.target.value as AdjustmentStatus | ''); setPage(0); }}
@@ -32,7 +33,7 @@ export function AdjustmentRequestsPage() {
     {resource.pending && <LoadingState label="Đang tải yêu cầu điều chỉnh…" />}
     {resource.error && <ErrorState title="Không tải được yêu cầu điều chỉnh" description={resource.error} onRetry={resource.reload} />}
     {data && <div className={styles.table}><DataTable<AdjustmentRequest> caption="Yêu cầu điều chỉnh chương trình, mới nhất trước" rows={data.items} rowKey={(item) => item.id}
-      empty={<EmptyState title="Chưa có yêu cầu điều chỉnh" description={status ? `Không có yêu cầu ở trạng thái ${status}.` : 'Chưa có yêu cầu nào được gửi.'} />} columns={[
+      empty={<EmptyState title="Chưa có yêu cầu điều chỉnh" description={status ? `Không có yêu cầu ở trạng thái ${viLabel(status)}.` : 'Chưa có yêu cầu nào được gửi.'} />} columns={[
         { key: 'program', header: 'Chương trình', render: (item) => <Link to={`/training/programs/${item.programId}`}>{item.horse ? `${item.horse.name} · ${item.horse.horseCode}` : `Chương trình ${item.programId}`}</Link> },
         { key: 'type', header: 'Thay đổi', render: (item) => typeLabel(item.requestType) },
         { key: 'request', header: 'Đề xuất', render: (item) => <div><p>{item.requestedValue}</p>{item.currentValue && <p className={styles.muted}>Hiện tại: {item.currentValue}</p>}</div> },
