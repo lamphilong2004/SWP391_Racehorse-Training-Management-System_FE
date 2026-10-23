@@ -50,11 +50,11 @@ export function HorseListPage() {
         { key: 'breed', header: 'Giống · Tuổi · Giới tính', render: (h) => <div className={styles.horseFacts}><span>{h.breed ?? 'Chưa ghi nhận'}</span><small>{ageInYears(h.foaledDate) ?? '—'} tuổi · {sexLabel(h.sex)}</small></div> },
         { key: 'lifecycle', header: 'Vòng đời', render: (h) => <StatusBadge family="lifecycle" status={h.lifecycle} /> },
         { key: 'health', header: 'Sức khỏe', render: (h) => h.healthStatus ? <StatusBadge family="health" status={h.healthStatus} /> : 'Chờ khám ban đầu' },
-        { key: 'availability', header: 'Khả năng tập luyện', render: (h) => <div className={styles.horseFacts}><StatusBadge family="availability" status={h.trainingAvailability} />{h.lifecycle === 'DRAFT' && <small>Chưa kích hoạt · chưa đủ điều kiện vận hành</small>}</div> },
+        { key: 'availability', header: 'Khả năng tập luyện', width: 180, render: (h) => <div className={styles.horseFacts}><StatusBadge family="availability" status={h.trainingAvailability} />{h.lifecycle === 'DRAFT' && <small title="Chưa kích hoạt · chưa đủ điều kiện vận hành" aria-label="Chưa kích hoạt · chưa đủ điều kiện vận hành">Chờ kích hoạt</small>}</div> },
         { key: 'box', header: 'Ô chuồng', nowrap: true, render: (h) => h.currentBoxCode ?? 'Chưa phân công' },
         { key: 'action', header: 'Thao tác', width: 120, nowrap: true, render: (h) => <ButtonLink to={`/horses/${h.id}`}>{canManage ? 'Quản lý' : 'Xem'} →</ButtonLink> },
       ]} /></div><div className={styles.footer}><Button variant="secondary" disabled={!query.page} onClick={() => setQuery({ ...query, page: query.page - 1 })}>Trước</Button><Button variant="secondary" disabled={query.page + 1 >= data.totalPages} onClick={() => setQuery({ ...query, page: query.page + 1 })}>Sau</Button></div></Card>
-      <p className="text-caption">Sức khỏe và khả năng tập luyện chỉ xem ở đây. Ngựa tự kích hoạt khi đủ mọi yêu cầu bắt buộc.</p>
+      <p className="text-caption">Sức khỏe và khả năng tập luyện chỉ xem ở đây. Ngựa Nháp vẫn chờ kích hoạt dù khả năng tập luyện là Sẵn sàng. Ngựa tự kích hoạt khi đủ mọi yêu cầu bắt buộc.</p>
     </>}
   </div>;
 }

@@ -188,7 +188,8 @@ it('guards a dirty Register Horse form, keeps input on Continue editing and focu
 it('clears registry filters via the API adapter and keeps DRAFT distinct from availability', async () => {
   const { requests } = mount('/horses');
   await screen.findByRole('link', { name: /Fixture Draft/ });
-  expect(screen.getByText('Chưa kích hoạt · chưa đủ điều kiện vận hành')).toBeInTheDocument();
+  expect(screen.getByLabelText('Chưa kích hoạt · chưa đủ điều kiện vận hành')).toHaveTextContent('Chờ kích hoạt');
+  expect(screen.getByText(/Ngựa Nháp vẫn chờ kích hoạt dù khả năng tập luyện là Sẵn sàng/)).toBeInTheDocument();
   fireEvent.change(screen.getByRole('searchbox', { name: 'Tìm ngựa' }), { target: { value: 'River' } });
   fireEvent.change(screen.getByLabelText('Vòng đời'), { target: { value: 'DRAFT' } });
   await userEvent.click(screen.getByRole('button', { name: 'Áp dụng bộ lọc' }));
