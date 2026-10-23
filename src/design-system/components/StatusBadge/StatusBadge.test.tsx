@@ -31,12 +31,13 @@ describe('StatusBadge', () => {
       incident: ['REPORTED', 'UNDER_REVIEW', 'RESOLVED'],
       lifecycle: ['DRAFT', 'ACTIVE', 'INACTIVE'],
       account: ['ACTIVE', 'INACTIVE'],
+      medicalCase: ['OPEN', 'CLOSED'],
       adjustment: ['PENDING', 'APPROVED', 'REJECTED'],
     });
   });
 
   it('shows the human label, not the enum key', () => {
     render(<StatusBadge family="incident" status="UNDER_REVIEW" />);
-    expect(screen.getByText('UNDER REVIEW')).toBeInTheDocument();
+    expect(screen.getByText('Đang xem xét')).toBeInTheDocument();
   });
 });

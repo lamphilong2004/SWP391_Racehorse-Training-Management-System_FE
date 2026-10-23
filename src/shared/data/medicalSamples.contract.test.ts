@@ -20,7 +20,7 @@ it('shares Incident → Case → Exam/Injury → Plan → Groom → Recovery/Clo
   const reviewed = await call<Incident>(`/api/incidents/${incident.id}/review`, 'POST', { action: 'OPEN_CASE' });
   const id = reviewed.medicalCaseId!;
   await call(`/api/medical/cases/${id}/examinations`, 'POST', { symptoms: 'Clinical findings', examinedAt: new Date().toISOString() });
-  await call(`/api/medical/cases/${id}/injuries`, 'POST', { bodyRegion: 'Left Forelimb', severity: 'MILD', recoveryStatus: 'NOT_RECOVERED' });
+  await call(`/api/medical/cases/${id}/injuries`, 'POST', { bodyRegion: 'Chân trước trái', severity: 'MILD', recoveryStatus: 'NOT_RECOVERED' });
   const plan = await call<TreatmentPlan>(`/api/medical/cases/${id}/treatment-plan`, 'PUT', { treatmentMedicationInstructions: 'Veterinarian-only detail', groomTasks: [{ assignedGroomUserId: 16, instruction: 'Check bedding', taskDate: new Date().toISOString().slice(0, 10) }] });
   actor('GROOM');
   const tasks = await call<Page<CaseTreatmentTask>>('/api/groom/treatment-tasks');
@@ -28,7 +28,7 @@ it('shares Incident → Case → Exam/Injury → Plan → Groom → Recovery/Clo
   expect(task).not.toHaveProperty('caseId'); expect(task).not.toHaveProperty('treatmentMedicationInstructions');
   await call(`/api/groom/treatment-tasks/${task.id}/complete`, 'POST', {});
   actor('VETERINARIAN');
-  await call(`/api/medical/cases/${id}/re-examinations`, 'POST', { recoveryStatus: 'RECOVERED', findings: 'Normal', examinedAt: new Date().toISOString() });
+  await call(`/api/medical/cases/${id}/re-examinations`, 'POST', { recoveryStatus: 'RECOVERED', findings: 'Bình thường', examinedAt: new Date().toISOString() });
   await call(`/api/incidents/${incident.id}/review`, 'POST', { action: 'RESOLVE' });
   await call(`/api/medical/cases/${id}/close`, 'POST');
   const restored = readSamples();

@@ -20,9 +20,9 @@ export function EvaluationForm({ onSave, interrupted, onPendingChange, onDirtyCh
     event.preventDefault();
     if (pending.current || conflict) return;
     const issues: Record<string, string> = {};
-    if (!Object.hasOwn(RESULT_LABELS, result)) issues.result = 'Choose an assessment.';
+    if (!Object.hasOwn(RESULT_LABELS, result)) issues.result = 'Hãy chọn kết quả đánh giá.';
     for (const [field, value] of Object.entries({ evaluatedSummary, evaluationNotes, recommendation })) {
-      if (value.length > 2000) issues[field] = 'Use at most 2000 characters.';
+      if (value.length > 2000) issues[field] = 'Tối đa 2000 ký tự.';
     }
     setErrors(issues); setFailure('');
     if (Object.keys(issues).length) { focusFirstInvalid(form.current); return; }
@@ -30,22 +30,22 @@ export function EvaluationForm({ onSave, interrupted, onPendingChange, onDirtyCh
     try {
       await onSave({ result: result as EvaluationResult, evaluatedSummary: evaluatedSummary.trim() || null, evaluationNotes: evaluationNotes.trim() || null, recommendation: recommendation.trim() || null });
     } catch (error) {
-      setFailure(error instanceof Error ? error.message : 'Unable to save. Your input is kept; please retry.');
+      setFailure(error instanceof Error ? error.message : 'Không lưu được. Nội dung bạn nhập vẫn được giữ; hãy thử lại.');
       if (error instanceof ApiError) {
         setErrors(Object.fromEntries(error.details.filter((detail) => detail.field).map((detail) => [detail.field!, detail.message])));
         if (error.status === 409) setConflict(true);
       }
     } finally { pending.current = false; setSaving(false); onPendingChange(false); }
   }}>
-    <Card title="Trainer evaluation">
+    <Card title="Đánh giá của Trainer">
       <div className="evaluation-stack">
-        <RadioGroup label="Assessment" required options={Object.entries(RESULT_LABELS).map(([value, label]) => ({ value, label }))} value={result} onChange={setResult} error={errors.result} disabled={saving || conflict} />
-        <TextAreaField label="Evaluation summary" value={evaluatedSummary} onChange={(event) => setSummary(event.target.value)} error={errors.evaluatedSummary} disabled={saving || conflict} helperText="Optional · at most 2000 characters" />
-        <TextAreaField label="Professional notes" value={evaluationNotes} onChange={(event) => setNotes(event.target.value)} error={errors.evaluationNotes} disabled={saving || conflict} helperText="Optional under the approved API · at most 2000 characters" rows={4} />
+        <RadioGroup label="Kết quả đánh giá" required options={Object.entries(RESULT_LABELS).map(([value, label]) => ({ value, label }))} value={result} onChange={setResult} error={errors.result} disabled={saving || conflict} />
+        <TextAreaField label="Tóm tắt đánh giá" value={evaluatedSummary} onChange={(event) => setSummary(event.target.value)} error={errors.evaluatedSummary} disabled={saving || conflict} helperText="Không bắt buộc · tối đa 2000 ký tự" />
+        <TextAreaField label="Ghi chú chuyên môn" value={evaluationNotes} onChange={(event) => setNotes(event.target.value)} error={errors.evaluationNotes} disabled={saving || conflict} helperText="Không bắt buộc · tối đa 2000 ký tự" rows={4} />
       </div>
     </Card>
-    <Card title="Recommendation — next sessions"><TextAreaField label="Recommendation note" value={recommendation} onChange={(event) => setRecommendation(event.target.value)} error={errors.recommendation} disabled={saving || conflict} helperText="Session-level recommendation only. Strategic changes require Head Trainer approval." rows={4} /></Card>
-    {failure && <AlertBanner type="danger" title={failure} children={conflict ? 'The server rejected this submission. Reload the session to review its current state before continuing.' : 'Your input is kept. You can retry.'} />}
-    <div className="evaluation-actions"><p>{interrupted ? 'Saving keeps this session INTERRUPTED.' : 'Saving keeps this session COMPLETED.'}</p><Button type="submit" disabled={saving || conflict}>{saving ? 'Saving…' : 'Save Evaluation'}</Button></div>
+    <Card title="Khuyến nghị — các buổi tập tiếp theo"><TextAreaField label="Ghi chú khuyến nghị" value={recommendation} onChange={(event) => setRecommendation(event.target.value)} error={errors.recommendation} disabled={saving || conflict} helperText="Chỉ khuyến nghị ở cấp buổi tập. Thay đổi chiến lược cần Head Trainer phê duyệt." rows={4} /></Card>
+    {failure && <AlertBanner type="danger" title={failure} children={conflict ? 'Máy chủ từ chối lần gửi này. Hãy tải lại buổi tập để xem trạng thái hiện tại trước khi tiếp tục.' : 'Nội dung bạn nhập vẫn được giữ. Bạn có thể thử lại.'} />}
+    <div className="evaluation-actions"><p>{interrupted ? 'Sau khi lưu, buổi tập vẫn ở trạng thái Bị gián đoạn.' : 'Sau khi lưu, buổi tập vẫn ở trạng thái Đã hoàn thành.'}</p><Button type="submit" disabled={saving || conflict}>{saving ? 'Đang lưu…' : 'Lưu đánh giá'}</Button></div>
   </form>;
 }

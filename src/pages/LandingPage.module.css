@@ -69,3 +69,25 @@
   .grid3, .grid4, .grid5 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .navLinks { display: none; }
 }
+
+/* Approved Stitch language; existing public content, anchors and CTAs retained. */
+.page { background: var(--color-bg-page); }
+.logo strong, .glassMetrics b { font-family: var(--font-family-headline); font-weight: 700; }
+.heroCopy h1 { font-family: var(--font-family-headline); font-size: clamp(40px, 6vw, 72px); font-weight: 800; line-height: 1.1; letter-spacing: -.045em; }
+.heroCopy em { font-style: normal; color: var(--color-brand-secondary); }
+.hero { min-height: 640px; padding-block: 96px 64px; }
+.section h2, .cta h2 { font-family: var(--font-family-headline); font-weight: 700; font-size: clamp(28px, 4vw, 48px); line-height: 1.2; }
+.nav, .glass, .card, .tile { border-radius: var(--card-radius); box-shadow: var(--elev-1); }
+.primary, .secondary, .loginButton { font-weight: 600; }
+.cta { border-radius: var(--card-radius); border: 1px solid var(--color-border-default); }
+@media (max-width: 600px) {
+  .nav, .hero, .section, .footer { margin-inline: var(--space-lg); }
+  .nav { flex-wrap: wrap; gap: var(--space-md); }
+  .hero { padding-block: 64px; min-height: 0; }
+  .grid3, .grid4, .grid5, .footer { grid-template-columns: minmax(0, 1fr); }
+  .section { padding-block: 64px; gap: var(--space-2xl); }
+  .cta { padding: var(--space-xl); }
+  .ctas > * { flex: 1 1 100%; }
+  .states, .glassMetrics { flex-wrap: wrap; }
+  .facts span + span { padding-left: 0; border-left: 0; }
+}

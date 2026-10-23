@@ -11,7 +11,7 @@ const range = () => { const now = Date.now(); return `/api/training-sessions?${n
 it('persists exercise create/edit in the shared graph with exactly approved fields and no network', async () => {
   const created = await call<Exercise>('/api/exercises', 'POST', { name: 'Walking interval', exerciseType: 'Walk', description: 'Review response', targetMetric: null });
   expect(created).toMatchObject({ name: 'Walking interval', exerciseType: 'Walk', targetMetric: null });
-  await call(`/api/exercises/${created.id}`, 'PUT', { name: 'Walking revision', exerciseType: 'Walk', description: null, targetMetric: 'Duration' });
+  await call(`/api/exercises/${created.id}`, 'PUT', { name: 'Walking revision', exerciseType: 'Walk', description: null, targetMetric: 'Thời lượng' });
   setBusinessActor(null); setBusinessActor(sampleUser('TRAINER'));
   expect(await call<Exercise>(`/api/exercises/${created.id}`)).toMatchObject({ name: 'Walking revision', description: null });
   expect(await call<Exercise[]>('/api/exercises?q=revision&exerciseType=Walk')).toHaveLength(1);

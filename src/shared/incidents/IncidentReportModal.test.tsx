@@ -12,9 +12,9 @@ function mount(source: IncidentSource = groom, onSubmit = vi.fn().mockResolvedVa
 }
 
 async function fill(description = 'Swelling on left hind fetlock.') {
-  await userEvent.click(screen.getByRole('button', { name: 'Hoof or leg problem' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Vấn đề móng hoặc chân' }));
   await userEvent.click(screen.getByRole('button', { name: 'Medium' }));
-  fireEvent.change(screen.getByLabelText('Description *'), { target: { value: description } });
+  fireEvent.change(screen.getByLabelText('Mô tả *'), { target: { value: description } });
 }
 
 function submit() { fireEvent.submit(screen.getByRole('dialog').querySelector('form') as HTMLFormElement); }
@@ -24,11 +24,11 @@ describe('IncidentReportModal', () => {
     const { onSubmit } = mount({ kind: 'groom' });
     submit();
     expect(onSubmit).not.toHaveBeenCalled();
-    expect(screen.getByRole('alert')).toHaveTextContent('Complete all required fields');
-    await userEvent.selectOptions(screen.getByLabelText('Horse *'), 'manual');
-    fireEvent.change(screen.getByLabelText('Horse ID *'), { target: { value: '31' } });
-    await userEvent.click(screen.getByRole('button', { name: 'Off feed' }));
-    fireEvent.change(screen.getByLabelText('Description *'), { target: { value: 'Not eating' } });
+    expect(screen.getByRole('alert')).toHaveTextContent('Hãy điền đủ các trường bắt buộc');
+    await userEvent.selectOptions(screen.getByLabelText('Ngựa *'), 'manual');
+    fireEvent.change(screen.getByLabelText('Mã ngựa *'), { target: { value: '31' } });
+    await userEvent.click(screen.getByRole('button', { name: 'Bỏ ăn' }));
+    fireEvent.change(screen.getByLabelText('Mô tả *'), { target: { value: 'Not eating' } });
     submit();
     expect(onSubmit).not.toHaveBeenCalled();
     await userEvent.click(screen.getByRole('button', { name: 'Low' }));
@@ -41,22 +41,22 @@ describe('IncidentReportModal', () => {
     await fill('   ');
     submit();
     expect(onSubmit).not.toHaveBeenCalled();
-    expect(screen.getByRole('alert')).toHaveTextContent('Complete all required fields');
+    expect(screen.getByRole('alert')).toHaveTextContent('Hãy điền đủ các trường bắt buộc');
   });
 
   it('keeps the horse fixed for a pre-session check and supports keyboard navigation and selection', async () => {
     mount();
-    const horse = screen.getByLabelText('Horse *');
+    const horse = screen.getByLabelText('Ngựa *');
     expect(horse).toBeDisabled();
     expect(horse).toHaveValue('31');
-    const firstType = screen.getByRole('button', { name: 'Off feed' });
-    const secondType = screen.getByRole('button', { name: 'Colic signs' });
+    const firstType = screen.getByRole('button', { name: 'Bỏ ăn' });
+    const secondType = screen.getByRole('button', { name: 'Dấu hiệu đau bụng' });
     firstType.focus();
     await userEvent.tab();
     expect(secondType).toHaveFocus();
     await userEvent.tab({ shift: true });
     expect(firstType).toHaveFocus();
-    const type = screen.getByRole('button', { name: 'Hoof or leg problem' });
+    const type = screen.getByRole('button', { name: 'Vấn đề móng hoặc chân' });
     type.focus();
     expect(type).toHaveFocus();
     await userEvent.keyboard('[Space]');
@@ -73,20 +73,20 @@ describe('IncidentReportModal', () => {
     const { onSubmit } = mount({ ...groom, preSessionCheckId } as IncidentSource);
     await fill(); submit();
     expect(onSubmit).not.toHaveBeenCalled();
-    expect(screen.getByRole('alert')).toHaveTextContent('Source context ID must be a positive integer.');
+    expect(screen.getByRole('alert')).toHaveTextContent('Mã nguồn phải là số nguyên dương.');
   });
 
   it('rejects multiple source contexts', async () => {
     const { onSubmit } = mount({ ...groom, careTaskId: 9 });
     await fill(); submit();
     expect(onSubmit).not.toHaveBeenCalled();
-    expect(screen.getByRole('alert')).toHaveTextContent('Choose one incident source context.');
+    expect(screen.getByRole('alert')).toHaveTextContent('Hãy chọn một nguồn phát sinh sự cố.');
   });
 
   it('rejects missing, malformed and future observedAt', async () => {
     const { onSubmit, rerender, onClose } = mount({ ...groom, observedAt: 'invalid' });
     await fill(); submit();
-    expect(screen.getByRole('alert')).toHaveTextContent('Observed at must be a valid time');
+    expect(screen.getByRole('alert')).toHaveTextContent('Thời điểm phát hiện phải hợp lệ');
     rerender(<IncidentReportModal open onClose={onClose} onSubmit={onSubmit} source={{ ...groom, observedAt: '2020-02-30T08:30:00Z' }} />);
     await fill(); submit();
     expect(onSubmit).not.toHaveBeenCalled();
@@ -94,8 +94,8 @@ describe('IncidentReportModal', () => {
     rerender(<IncidentReportModal open onClose={onClose} onSubmit={onSubmit} source={{ ...groom, observedAt: future.toISOString() }} />);
     await fill(); submit();
     expect(onSubmit).not.toHaveBeenCalled();
-    expect(screen.getByRole('alert')).toHaveTextContent('Observed at must be a valid time');
-    fireEvent.change(screen.getByLabelText('Observed at *'), { target: { value: '2020-02-30T08:30' } });
+    expect(screen.getByRole('alert')).toHaveTextContent('Thời điểm phát hiện phải hợp lệ');
+    fireEvent.change(screen.getByLabelText('Thời điểm phát hiện *'), { target: { value: '2020-02-30T08:30' } });
     submit();
     expect(onSubmit).not.toHaveBeenCalled();
   });
@@ -103,8 +103,8 @@ describe('IncidentReportModal', () => {
   it('serializes observedAt to UTC ISO and sends exact OpenAPI keys', async () => {
     const { onSubmit, onClose } = mount();
     await fill();
-    fireEvent.change(screen.getByLabelText('Observed at *'), { target: { value: '2020-02-29T08:30' } });
-    await userEvent.click(screen.getByRole('button', { name: 'Submit Incident' }));
+    fireEvent.change(screen.getByLabelText('Thời điểm phát hiện *'), { target: { value: '2020-02-29T08:30' } });
+    await userEvent.click(screen.getByRole('button', { name: 'Gửi sự cố' }));
     await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
     expect(onSubmit.mock.calls[0][0]).toEqual({ horseId: 31, incidentType: 'HOOF_OR_LEG_PROBLEM', observedSeverity: 'MEDIUM', observedAt: new Date(2020, 1, 29, 8, 30).toISOString(), description: 'Swelling on left hind fetlock.', preSessionCheckId: 12 });
     expect(onSubmit.mock.calls[0][0].observedAt).toMatch(/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/);
@@ -116,7 +116,7 @@ describe('IncidentReportModal', () => {
     const { onSubmit } = mount();
     await fill('a'.repeat(2001)); submit();
     expect(onSubmit).not.toHaveBeenCalled();
-    expect(screen.getByRole('alert')).toHaveTextContent('at most 2,000 characters');
+    expect(screen.getByRole('alert')).toHaveTextContent('tối đa 2.000 ký tự');
   });
 
   it('locks duplicate submit and close while pending, then closes on success', async () => {
@@ -126,9 +126,9 @@ describe('IncidentReportModal', () => {
     await fill(); submit(); submit();
     expect(onSubmit).toHaveBeenCalledOnce();
     expect(screen.getByRole('dialog').querySelector('form')).toHaveAttribute('aria-busy', 'true');
-    expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Submitting…' })).toBeDisabled();
-    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(screen.getByRole('button', { name: 'Hủy' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Đang gửi…' })).toBeDisabled();
+    await userEvent.click(screen.getByRole('button', { name: 'Đóng' }));
     fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }));
     expect(onClose).not.toHaveBeenCalled();
     resolve();
@@ -140,13 +140,13 @@ describe('IncidentReportModal', () => {
     const { onClose, rerender } = mount(groom, onSubmit);
     await fill(); submit();
     expect(await screen.findByText('Conflict')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Submit Incident' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Gửi sự cố' })).toBeEnabled();
     expect(onClose).not.toHaveBeenCalled();
-    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Hủy' }));
     expect(onClose).toHaveBeenCalledOnce();
     rerender(<IncidentReportModal open={false} onClose={onClose} onSubmit={onSubmit} source={groom} />);
     rerender(<IncidentReportModal open onClose={onClose} onSubmit={onSubmit} source={groom} />);
-    expect(screen.getByLabelText('Description *')).toHaveValue('');
+    expect(screen.getByLabelText('Mô tả *')).toHaveValue('');
     expect(screen.getByRole('button', { name: 'Medium' })).toHaveAttribute('aria-pressed', 'false');
     expect(screen.queryByText('Conflict')).not.toBeInTheDocument();
     await fill(); submit();
@@ -156,11 +156,11 @@ describe('IncidentReportModal', () => {
 
   it('has labeled dialog and fields, and closes with Escape when idle', () => {
     const { onClose } = mount();
-    const dialog = screen.getByRole('dialog', { name: 'Report Incident' });
+    const dialog = screen.getByRole('dialog', { name: 'Báo cáo sự cố' });
     expect(dialog).toHaveAttribute('aria-labelledby');
-    expect(screen.getByLabelText('Horse *')).toBeDisabled();
-    expect(screen.getByLabelText('Observed at *')).toBeRequired();
-    expect(screen.getByLabelText('Description *')).toBeRequired();
+    expect(screen.getByLabelText('Ngựa *')).toBeDisabled();
+    expect(screen.getByLabelText('Thời điểm phát hiện *')).toBeRequired();
+    expect(screen.getByLabelText('Mô tả *')).toBeRequired();
     expect(dialog.querySelector('[data-icon="clipboard-list"]')?.tagName).toBe('SPAN');
     expect(dialog.querySelector('[data-icon="info"]')?.tagName).toBe('SPAN');
     fireEvent(dialog, new Event('cancel', { cancelable: true }));

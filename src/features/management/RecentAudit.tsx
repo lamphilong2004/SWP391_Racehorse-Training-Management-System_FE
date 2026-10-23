@@ -4,8 +4,8 @@ import type { AuditEntry } from './types';
 import styles from './Management.module.css';
 
 export function RecentAudit({ entries }: { entries: AuditEntry[] }) {
-  if (!entries.length) return <EmptyState title="No recent audit activity" description="System activity will appear here when records are available." />;
-  return <ul className={styles.recentList} aria-label="Recent audit activity, newest first">
+  if (!entries.length) return <EmptyState title="Chưa có hoạt động gần đây" description="Hoạt động của hệ thống sẽ hiện ở đây khi có dữ liệu." />;
+  return <ul className={styles.recentList} aria-label="Hoạt động gần đây, mới nhất trước">
     {newestAudit(entries).map((entry) => <li key={entry.id}>
       <time dateTime={entry.occurredAt} title={entry.occurredAt}>{auditDate(entry.occurredAt)} · {auditClock(entry.occurredAt)}</time>
       <span className={styles.recentActor}>{auditActor(entry)}{entry.actorRole ? ` · ${auditRole(entry)}` : ''}</span>

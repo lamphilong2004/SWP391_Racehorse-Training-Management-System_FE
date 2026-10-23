@@ -26,7 +26,7 @@ function mount(role: string, path = '/care/tasks') {
 }
 it.each(['CLUB_MANAGER', 'HEAD_TRAINER', 'TRAINER', 'WORK_RIDER', 'VETERINARIAN', 'HORSE_OWNER'])('blocks %s before any Groom request', async (role) => {
   const { fetcher } = mount(role);
-  expect(await screen.findByText('Access denied')).toBeInTheDocument();
+  expect(await screen.findByText('Không có quyền truy cập')).toBeInTheDocument();
   expect(fetcher).toHaveBeenCalledOnce();
 });
 it('Groom accesses assigned tasks through the real adapter and cannot open clinical routes', async () => {
@@ -34,14 +34,14 @@ it('Groom accesses assigned tasks through the real adapter and cannot open clini
   expect(await screen.findAllByText(/Cold compress/)).toHaveLength(2);
   expect(fetcher.mock.calls.some(([url]) => url.includes('/api/groom/treatment-tasks'))).toBe(true);
   await router.navigate('/medical/cases/9');
-  expect(await screen.findByText('Access denied')).toBeInTheDocument();
+  expect(await screen.findByText('Không có quyền truy cập')).toBeInTheDocument();
   expect(fetcher.mock.calls.some(([url]) => url.includes('/api/medical/'))).toBe(false);
 });
 it('blocks anonymous direct links using the existing shared login', async () => {
   const router = createMemoryRouter(buildRoutes(false), { initialEntries: ['/care/tasks'] });
   const fetcher = vi.fn(); vi.stubGlobal('fetch', fetcher);
   render(<AuthProvider><RouterProvider router={router} /></AuthProvider>);
-  expect(await screen.findByRole('heading', { name: 'Sign in to Racehorse Ops' })).toBeInTheDocument();
+  expect(await screen.findByRole('heading', { name: 'Đăng nhập Racehorse Ops' })).toBeInTheDocument();
   expect(fetcher).not.toHaveBeenCalled();
 });
 it('confirms completion only after success, locks duplicate submits and rereads assigned tasks', async () => {
@@ -49,12 +49,12 @@ it('confirms completion only after success, locks duplicate submits and rereads 
   const list = vi.fn().mockResolvedValueOnce(page([task])).mockResolvedValueOnce(page([{ ...task, status: 'COMPLETED', completedAt: '2026-10-19T04:00:00Z' }]));
   const complete = vi.fn().mockReturnValue(new Promise<GroomTreatmentTask>((resolve) => { finish = resolve; }));
   render(<GroomTasks service={{ list, complete }} />);
-  const checkbox = await screen.findByRole('checkbox', { name: 'Complete task 12' });
+  const checkbox = await screen.findByRole('checkbox', { name: 'Hoàn thành công việc 12' });
   fireEvent.click(checkbox); fireEvent.click(checkbox);
   expect(complete).toHaveBeenCalledOnce();
   expect(screen.queryByText(/Task 12 completed/)).not.toBeInTheDocument();
   finish({ ...task, status: 'COMPLETED', completedAt: '2026-10-19T04:00:00Z' });
-  await waitFor(() => expect(screen.getByRole('checkbox', { name: 'Complete task 12' })).toBeChecked());
+  await waitFor(() => expect(screen.getByRole('checkbox', { name: 'Hoàn thành công việc 12' })).toBeChecked());
   expect(list).toHaveBeenCalledTimes(2);
   expect(screen.getByRole('checkbox')).toBeDisabled();
 });
@@ -63,7 +63,7 @@ it('preserves failed completion, masks server clinical error text and offers lis
   const complete = vi.fn().mockRejectedValue(new ApiError(409, 'CONFLICT', 'Private diagnosis must not be displayed'));
   render(<GroomTasks service={{ list, complete }} />);
   fireEvent.click(await screen.findByRole('checkbox'));
-  expect(await screen.findByRole('alert')).toHaveTextContent('Task changed or was already completed');
+  expect(await screen.findByRole('alert')).toHaveTextContent('Công việc đã thay đổi hoặc đã hoàn thành');
   expect(screen.getByRole('checkbox')).not.toBeChecked();
   expect(screen.queryByText(/Private diagnosis/)).not.toBeInTheDocument();
   expect(screen.queryByText(/Task 12 completed/)).not.toBeInTheDocument();
@@ -72,19 +72,19 @@ it('provides empty state and completed/upcoming/horse filters without adding API
   const list = vi.fn().mockResolvedValue(page([task, { ...task, id: 13, horseId: 15, taskDate: '2099-01-01', instruction: 'Future task' }]));
   render(<GroomTasks service={{ list, complete: vi.fn() }} />);
   await screen.findByRole('checkbox');
-  fireEvent.click(screen.getByRole('button', { name: 'Completed' }));
-  expect(await screen.findByText('No assigned tasks for this filter')).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'Upcoming' }));
-  expect(await screen.findByRole('checkbox', { name: 'Complete task 13' })).toBeInTheDocument();
-  fireEvent.change(screen.getByLabelText('Horse'), { target: { value: '14' } });
-  expect(await screen.findByText('No assigned tasks for this filter')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Đã hoàn thành' }));
+  expect(await screen.findByText('Không có công việc nào với bộ lọc này')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Sắp tới' }));
+  expect(await screen.findByRole('checkbox', { name: 'Hoàn thành công việc 13' })).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Ngựa'), { target: { value: '14' } });
+  expect(await screen.findByText('Không có công việc nào với bộ lọc này')).toBeInTheDocument();
   expect(list).toHaveBeenCalledOnce();
 });
 it('drops a delayed read when the task screen unmounts', async () => {
   let finish!: (data: ReturnType<typeof page>) => void;
   const list = vi.fn().mockReturnValue(new Promise((resolve) => { finish = resolve; }));
   const { unmount } = render(<GroomTasks service={{ list, complete: vi.fn() } as GroomService} />);
-  expect(screen.getByRole('status')).toHaveTextContent('Loading assigned');
+  expect(screen.getByRole('status')).toHaveTextContent('Đang tải công việc điều trị được giao');
   unmount(); finish(page([task]));
   await Promise.resolve();
   expect(screen.queryByText(/Cold compress/)).not.toBeInTheDocument();

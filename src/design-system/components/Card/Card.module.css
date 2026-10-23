@@ -39,3 +39,6 @@
   height: 1px;
   background: var(--color-border-default);
 }
+
+:global([data-ui-v3]) .title { font-family: var(--font-family-headline); letter-spacing: -.02em; }
+:global([data-ui-v3]) .header { flex-wrap: wrap; }

@@ -3,7 +3,7 @@ import { authSession } from '../../../shared/auth/authSession';
 import type { Ownership, Page, StableAssignment } from '../api/types';
 import type { HorseHistoryService, ReadinessChecklist, TimelineEvent } from './historyTypes';
 
-const invalid = () => new ApiError(502, 'INVALID_RESPONSE', 'Horse history does not match the API contract.');
+const invalid = () => new ApiError(502, 'INVALID_RESPONSE', 'Dữ liệu lịch sử ngựa không hợp lệ.');
 const object = (v: unknown): Record<string, unknown> => { if (!v || typeof v !== 'object' || Array.isArray(v)) throw invalid(); return v as Record<string, unknown>; };
 const list = (v: unknown): unknown[] => { if (!Array.isArray(v)) throw invalid(); return v; };
 const int = (v: unknown, min = 0): number => { if (!Number.isSafeInteger(v) || (v as number) < min) throw invalid(); return v as number; };
@@ -35,9 +35,9 @@ export function parseChecklist(value: unknown, id: number): ReadinessChecklist {
 /** Shared HTTP client, exact pinned paths, no error-to-sample fallback. */
 export function createHorseHistoryApi(options: { fetcher?: typeof fetch; baseUrl?: string; getToken?: () => string | undefined } = {}): HorseHistoryService {
   const call = async (id: number, suffix: string, signal?: AbortSignal, method = 'GET') => {
-    if (!Number.isSafeInteger(id) || id < 1) throw new ApiError(400, 'VALIDATION_ERROR', 'Choose a valid horse.');
+    if (!Number.isSafeInteger(id) || id < 1) throw new ApiError(400, 'VALIDATION_ERROR', 'Hãy chọn ngựa hợp lệ.');
     signal?.throwIfAborted(); const token = options.getToken ? options.getToken() : authSession.read()?.accessToken;
-    if (!token) throw new ApiError(401, 'UNAUTHORIZED', 'Sign in again to view horse history.');
+    if (!token) throw new ApiError(401, 'UNAUTHORIZED', 'Đăng nhập lại để xem lịch sử ngựa.');
     let responseStatus: number | undefined;
     const fetcher: typeof fetch = async (input, init) => { const response = await (options.fetcher ?? fetch)(input, init); responseStatus = response.status; return response; };
     const value = await requestApi<unknown>(`/api/horses/${id}/${suffix}`, { method, signal }, { ...options, token, fetcher });
@@ -47,7 +47,7 @@ export function createHorseHistoryApi(options: { fetcher?: typeof fetch; baseUrl
   return {
     source: 'api',
     async timeline(id, page, signal) {
-      if (!Number.isSafeInteger(page) || page < 0) throw new ApiError(400, 'VALIDATION_ERROR', 'Choose a valid page.');
+      if (!Number.isSafeInteger(page) || page < 0) throw new ApiError(400, 'VALIDATION_ERROR', 'Hãy chọn trang hợp lệ.');
       const v = object(await call(id, `timeline?page=${page}&size=20`, signal));
       const items = list(v.items).map((value): TimelineEvent => {
         const e = object(value), title = text(e.title);

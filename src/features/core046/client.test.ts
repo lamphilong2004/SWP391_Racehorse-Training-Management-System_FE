@@ -32,30 +32,30 @@ describe('CORE-046 Medical API adapter', () => {
     vi.stubGlobal('fetch', fetcher);
     const client = new Core046Client('token');
     await expect(client.completeTreatmentTask(8)).rejects.toEqual(new ApiError('Assigned Groom only', 403));
-    await expect(client.listIncidents()).rejects.toEqual(new ApiError('The request could not be completed. Try again.', 200));
+    await expect(client.listIncidents()).rejects.toEqual(new ApiError('Không thực hiện được yêu cầu. Hãy thử lại.', 200));
   });
 
   it('rejects a 201 envelope without a usable incident code', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(ok({ id: 11 }, 201)));
     const client = new Core046Client('token-from-host');
-    await expect(client.reportIncident({ horseId: 2, incidentType: 'FEVER', observedSeverity: 'HIGH', observedAt: '2026-10-16T01:00:00.000Z' })).rejects.toThrow('Unexpected incident response.');
+    await expect(client.reportIncident({ horseId: 2, incidentType: 'FEVER', observedSeverity: 'HIGH', observedAt: '2026-10-16T01:00:00.000Z' })).rejects.toThrow('Dữ liệu sự cố trả về không hợp lệ.');
   });
 
   it('does not silently show an incomplete result set', async () => {
-    await expect(collectPages(async () => ({ items: [], page: 0, size: 100, totalElements: 1 }))).rejects.toThrow('Incomplete paged response');
+    await expect(collectPages(async () => ({ items: [], page: 0, size: 100, totalElements: 1 }))).rejects.toThrow('Dữ liệu phân trang chưa đầy đủ; hãy tải lại để thử lại.');
   });
 
   it.each([0, -1, Number.NaN, 1.5, Number.POSITIVE_INFINITY])('rejects invalid resource ID %s before any request', (id) => {
     const fetcher = vi.fn();
     vi.stubGlobal('fetch', fetcher);
     const client = new Core046Client('token');
-    expect(() => client.completeTreatmentTask(id)).toThrow('positive numeric ID');
-    expect(() => client.getIncident(id)).toThrow('positive numeric ID');
+    expect(() => client.completeTreatmentTask(id)).toThrow('Cần một mã số dương.');
+    expect(() => client.getIncident(id)).toThrow('Cần một mã số dương.');
     expect(fetcher).not.toHaveBeenCalled();
   });
 
   it('rejects null success data instead of confirming a mutation', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(ok(null)));
-    await expect(new Core046Client('token').completeTreatmentTask(7)).rejects.toMatchObject({ status: 200, message: 'Unexpected API response.' });
+    await expect(new Core046Client('token').completeTreatmentTask(7)).rejects.toMatchObject({ status: 200, message: 'Phản hồi từ máy chủ không như mong đợi.' });
   });
 });

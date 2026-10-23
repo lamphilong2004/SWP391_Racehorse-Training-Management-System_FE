@@ -5,6 +5,7 @@ import { ApiError } from '../../../shared/auth/authApi';
 import { useHorseHistoryService } from './historyService';
 import type { ReadinessChecklist } from './historyTypes';
 import styles from './history.module.css';
+import { serverText } from '../../../shared/serverText';
 
 export function ReadinessReview({ horseId }: { horseId: number }) {
   const { user, expiresAt } = useAuth();
@@ -34,14 +35,14 @@ function Review({ id }: { id: number }) {
     } catch (e) { if (mounted.current && currentSource.current === source && !handleApiError(e)) setWriteError(e instanceof ApiError ? e.status : 500); }
     finally { if (mounted.current) { locked.current = false; setBusy(false); } }
   };
-  return <Card title="Head Trainer readiness review">
-    <p className={styles.subtitle}>Recommended before training. This acknowledgement does not approve activation or change health, availability or lifecycle.</p>
-    {service.source === 'sample' && <p className={styles.subtitle}>Sample acknowledgement · saved in this browser.</p>}
-    {success && <AlertBanner type="success" title="Readiness review recorded" />}
-    {writeError !== undefined && <AlertBanner type="danger" title={writeError === 403 ? 'Only the Head Trainer can record this review.' : writeError === 404 ? 'Horse not found.' : 'Review was not confirmed. Try again later.'} />}
-    {current?.error !== undefined ? <ErrorState title={current.error === 403 ? 'Access denied' : current.error === 404 ? 'Horse not found' : 'Readiness unavailable'} description="The current activation checklist could not be loaded." onRetry={current.error === 403 || current.error === 404 ? undefined : () => setRevision((n) => n + 1)} /> : !current?.value ? <LoadingState label="Loading readiness checklist…" /> : <>
-      <ul className={styles.checklist}>{current.value.checklist.map((item) => <li key={item.id}><strong>{item.label}</strong><span>{item.requirement === 'RECOMMENDED' ? item.state === 'REVIEWED' ? 'Reviewed · non-blocking' : 'Recommended · non-blocking' : item.state === 'SATISFIED' ? 'Complete' : 'Pending'}</span></li>)}</ul>
-      {user!.roles.includes('HEAD_TRAINER') && <Button disabled={busy} onClick={() => void acknowledge()}>{busy ? 'Recording review…' : 'Record readiness review'}</Button>}
+  return <Card title="Đánh giá sẵn sàng của Head Trainer">
+    <p className={styles.subtitle}>Nên làm trước khi tập. Xác nhận này không duyệt kích hoạt và không đổi sức khỏe, khả năng tập luyện hay vòng đời.</p>
+    {service.source === 'sample' && <p className={styles.subtitle}>Xác nhận mẫu · chỉ lưu trên trình duyệt này.</p>}
+    {success && <AlertBanner type="success" title="Đã ghi đánh giá sẵn sàng" />}
+    {writeError !== undefined && <AlertBanner type="danger" title={writeError === 403 ? 'Chỉ Head Trainer được ghi đánh giá này.' : writeError === 404 ? 'Không tìm thấy ngựa.' : 'Đánh giá chưa được xác nhận. Hãy thử lại sau.'} />}
+    {current?.error !== undefined ? <ErrorState title={current.error === 403 ? 'Không có quyền truy cập' : current.error === 404 ? 'Không tìm thấy ngựa' : 'Không tải được mức sẵn sàng'} description="Không tải được danh mục kích hoạt hiện tại." onRetry={current.error === 403 || current.error === 404 ? undefined : () => setRevision((n) => n + 1)} /> : !current?.value ? <LoadingState label="Đang tải danh mục sẵn sàng…" /> : <>
+      <ul className={styles.checklist}>{current.value.checklist.map((item) => <li key={item.id}><strong>{serverText(item.label)}</strong><span>{item.requirement === 'RECOMMENDED' ? item.state === 'REVIEWED' ? 'Đã đánh giá · không bắt buộc' : 'Khuyến nghị · không bắt buộc' : item.state === 'SATISFIED' ? 'Hoàn tất' : 'Đang chờ'}</span></li>)}</ul>
+      {user!.roles.includes('HEAD_TRAINER') && <Button disabled={busy} onClick={() => void acknowledge()}>{busy ? 'Đang ghi đánh giá…' : 'Ghi đánh giá sẵn sàng'}</Button>}
     </>}
   </Card>;
 }

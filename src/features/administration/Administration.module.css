@@ -6,3 +6,17 @@
 .row > :first-child { flex: 1; min-width: 0; }
 .muted { color: var(--color-text-secondary, #5a6478); }
 @media (max-width: 900px) { .columns { grid-template-columns: minmax(0, 1fr); } }
+
+/* Shared staff, roles, notification and account presentation. */
+.stack > *, .columns > * { min-width: 0; }
+.filters { padding: var(--space-lg); border: 1px solid var(--color-border-default); border-radius: var(--card-radius); background: var(--color-bg-surface); box-shadow: var(--elev-1); }
+.filters > * { flex: 1 1 180px; min-width: 0; }
+.row { flex-wrap: wrap; }
+.row > * { overflow-wrap: anywhere; }
+.scroll { border-radius: var(--radius-md); }
+.scroll table { min-width: 720px; }
+.statusAction { align-self: flex-start; }
+.skills { border: 0; margin: 0; padding: 0; min-width: 0; display: flex; flex-direction: column; gap: var(--space-sm); }
+.skills legend { padding: 0; margin-bottom: var(--space-sm); font-size: 13px; font-weight: 600; }
+.skillGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--space-sm) var(--space-lg); }
+@media (max-width: 767px) { .filters > * { flex-basis: 100%; } .actions { width: 100%; } }

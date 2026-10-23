@@ -11,7 +11,7 @@ import styles from './rider.module.css';
 
 const sameDay = (a: Date, b: Date) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 /** Figma formats: 24-hour time, "Thu 22 · 06:30", "Tue 20 Oct · 06:00". */
-const FORMAT_LOCALE = 'en-GB';
+const FORMAT_LOCALE = 'vi-VN';
 const time = (value: string) => new Date(value).toLocaleTimeString(FORMAT_LOCALE, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
 const dayTime = (value: string) => `${new Date(value).toLocaleDateString(FORMAT_LOCALE, { weekday: 'short', day: 'numeric' })} · ${time(value)}`;
 const dateTime = (value: string) => `${new Date(value).toLocaleDateString(FORMAT_LOCALE, { weekday: 'short', day: 'numeric', month: 'short' })} · ${time(value)}`;
@@ -27,13 +27,13 @@ const sessionLabel = (ride: RiderSession) => [ride.focus, ride.phaseName].filter
 function HorseCell({ ride }: { ride: RiderSession }) {
   return <div className={styles.cellStack}><span className={styles.strong}>{ride.horse.name}</span><span className={styles.caption}>{ride.horse.horseCode}</span></div>;
 }
-const chevron: DataTableColumn<RiderSession> = { key: 'open', header: 'Actions', width: 144, render: (ride) => <ButtonLink size="sm" to={`/rider/assignments/${ride.id}`} aria-label={`View ride ${ride.horse.name}`} onClick={(event) => event.stopPropagation()}>View ride<Icon name="chevron-right" size={16} /></ButtonLink> };
+const chevron: DataTableColumn<RiderSession> = { key: 'open', header: 'Thao tác', width: 144, render: (ride) => <ButtonLink size="sm" to={`/rider/assignments/${ride.id}`} aria-label={`Xem lượt cưỡi ${ride.horse.name}`} onClick={(event) => event.stopPropagation()}>Xem lượt cưỡi<Icon name="chevron-right" size={16} /></ButtonLink> };
 
 function preCheck(ride: RiderSession, today: boolean) {
   const result = ride.preSessionCheck?.overallResult ?? ride.preCheckResult;
-  if (result === 'ABNORMAL' || (ride.blocked && result === 'ALL_NORMAL')) return <span className={styles.toneDanger}>Start blocked</span>;
-  if (result === 'ALL_NORMAL') return <span className={styles.toneSuccess}>Ready</span>;
-  return today ? <span className={styles.toneWarning}>Check pending</span> : <span className={styles.muted}>Scheduled</span>;
+  if (result === 'ABNORMAL' || (ride.blocked && result === 'ALL_NORMAL')) return <span className={styles.toneDanger}>Bị chặn bắt đầu</span>;
+  if (result === 'ALL_NORMAL') return <span className={styles.toneSuccess}>Sẵn sàng</span>;
+  return today ? <span className={styles.toneWarning}>Chưa kiểm tra</span> : <span className={styles.muted}>Đã lên lịch</span>;
 }
 
 function useLoad<T>(load: () => Promise<T>, deps: unknown[]) {
@@ -62,40 +62,40 @@ export function AssignmentsTable({ api }: { api: RiderApi }) {
   const upcomingRides = sorted.filter((ride) => !todayRides.includes(ride));
   const open = (ride: RiderSession) => navigate(`/rider/assignments/${ride.id}`);
   const columns = (today: boolean): DataTableColumn<RiderSession>[] => [
-    { key: 'when', header: 'When', width: 126, render: (ride) => <span className={styles.strong}>{today ? time(ride.scheduledStart) : dayTime(ride.scheduledStart)}</span> },
-    { key: 'horse', header: 'Horse', width: 180, render: (ride) => <HorseCell ride={ride} /> },
-    { key: 'session', header: 'Session', render: sessionLabel },
-    { key: 'surface', header: 'Surface · duration', width: 160, render: (ride) => <span className={styles.muted}>{[ride.surface, minutes(ride.scheduledStart, ride.scheduledEnd) !== null ? `${minutes(ride.scheduledStart, ride.scheduledEnd)} min` : null].filter(Boolean).join(' · ') || '—'}</span> },
+    { key: 'when', header: 'Thời gian', width: 126, render: (ride) => <span className={styles.strong}>{today ? time(ride.scheduledStart) : dayTime(ride.scheduledStart)}</span> },
+    { key: 'horse', header: 'Ngựa', width: 180, render: (ride) => <HorseCell ride={ride} /> },
+    { key: 'session', header: 'Buổi tập', render: sessionLabel },
+    { key: 'surface', header: 'Mặt sân · thời lượng', width: 160, render: (ride) => <span className={styles.muted}>{[ride.surface, minutes(ride.scheduledStart, ride.scheduledEnd) !== null ? `${minutes(ride.scheduledStart, ride.scheduledEnd)} phút` : null].filter(Boolean).join(' · ') || '—'}</span> },
     { key: 'trainer', header: 'Trainer', width: 110, render: (ride) => <span className={styles.muted}>{ride.trainer?.fullName ?? '—'}</span> },
-    { key: 'status', header: 'Status', width: 110, render: (ride) => <StatusBadge family="session" status={ride.status} /> },
+    { key: 'status', header: 'Trạng thái', width: 110, render: (ride) => <StatusBadge family="session" status={ride.status} /> },
     { key: 'precheck', header: 'Pre-check', width: 128, render: (ride) => preCheck(ride, today) },
     chevron,
   ];
   const table = (rows: RiderSession[], today: boolean, caption: string, empty: string) => (
     <div className="table-scroll" role="region" aria-label={caption} tabIndex={0}>
-      <DataTable columns={columns(today)} rows={rows} rowKey={(ride) => ride.id} onRowClick={open} caption={caption} empty={<EmptyState title={empty} description="There are no rides for this selection." />} />
+      <DataTable columns={columns(today)} rows={rows} rowKey={(ride) => ride.id} onRowClick={open} caption={caption} empty={<EmptyState title={empty} description="Không có lượt cưỡi nào cho lựa chọn này." />} />
     </div>
   );
   const state = tab === 'completed' ? completed : active;
   return (
     <div className={styles.stack}>
       <div className={styles.header}>
-        <div><h1 className={styles.heading}>My Riding Assignments</h1><p className={styles.muted}>{user?.fullName} · own assignments only</p></div>
-        <Tabs label="Assignment period" value={tab} onChange={(value) => setTab(value as typeof tab)} items={[
-          { value: 'today', label: `Today · ${active.data ? todayRides.length : '–'}` },
-          { value: 'upcoming', label: `Upcoming · ${active.data ? upcomingRides.length : '–'}` },
-          { value: 'completed', label: 'Completed' },
+        <div><h1 className={styles.heading}>Lịch cưỡi của tôi</h1><p className={styles.muted}>{user?.fullName} · chỉ lịch của bạn</p></div>
+        <Tabs label="Khoảng thời gian" value={tab} onChange={(value) => setTab(value as typeof tab)} items={[
+          { value: 'today', label: `Hôm nay · ${active.data ? todayRides.length : '–'}` },
+          { value: 'upcoming', label: `Sắp tới · ${active.data ? upcomingRides.length : '–'}` },
+          { value: 'completed', label: 'Đã hoàn thành' },
         ]} />
       </div>
       <ReadState error={state.error} loading={!state.data} retry={state.retry} />
       {tab !== 'completed' && active.data && (
         <>
-          {tab === 'today' && <Card className={styles.tableCard}><p className={styles.overline}>Today · {dayTitle(now)}</p>{table(todayRides, true, 'Today’s rides', 'No rides today')}</Card>}
-          <Card className={styles.tableCard}><p className={styles.overline}>Upcoming</p>{table(upcomingRides, false, 'Upcoming rides', 'No upcoming rides')}</Card>
+          {tab === 'today' && <Card className={styles.tableCard}><p className={styles.overline}>Hôm nay · {dayTitle(now)}</p>{table(todayRides, true, 'Lượt cưỡi hôm nay', 'Hôm nay không có lượt cưỡi')}</Card>}
+          <Card className={styles.tableCard}><p className={styles.overline}>Sắp tới</p>{table(upcomingRides, false, 'Lượt cưỡi sắp tới', 'Không có lượt cưỡi sắp tới')}</Card>
         </>
       )}
-      {tab === 'completed' && completed.data && <Card className={styles.tableCard}><p className={styles.overline}>Completed</p>{table(completed.data, false, 'Completed rides', 'No completed rides')}</Card>}
-      <p className={styles.caption}>Only your own assignments are shown.</p>
+      {tab === 'completed' && completed.data && <Card className={styles.tableCard}><p className={styles.overline}>Đã hoàn thành</p>{table(completed.data, false, 'Lượt cưỡi đã hoàn thành', 'Chưa có lượt cưỡi hoàn thành')}</Card>}
+      <p className={styles.caption}>Chỉ hiển thị lịch của bạn.</p>
     </div>
   );
 }
@@ -119,40 +119,40 @@ export function HistoryTable({ api }: { api: RiderApi }) {
   const inMonth = rides.filter((ride) => { const date = new Date(ride.scheduledStart); return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth(); });
   const shown = tab === 'recent' ? rides : rides.filter((ride) => ride.status === tab);
   const columns: DataTableColumn<RiderSession>[] = [
-    { key: 'date', header: 'Date · time', width: 166, render: (ride) => <span className={styles.strong}>{dateTime(rideTime(ride))}</span> },
-    { key: 'status', header: 'Status', width: 150, render: (ride) => <StatusBadge family="session" status={ride.status} /> },
-    { key: 'horse', header: 'Horse', width: 130, render: (ride) => <span className={styles.strong}>{ride.horse.name}</span> },
-    { key: 'session', header: 'Session', render: sessionLabel },
+    { key: 'date', header: 'Ngày · giờ', width: 166, render: (ride) => <span className={styles.strong}>{dateTime(rideTime(ride))}</span> },
+    { key: 'status', header: 'Trạng thái', width: 150, render: (ride) => <StatusBadge family="session" status={ride.status} /> },
+    { key: 'horse', header: 'Ngựa', width: 130, render: (ride) => <span className={styles.strong}>{ride.horse.name}</span> },
+    { key: 'session', header: 'Buổi tập', render: sessionLabel },
     { key: 'trainer', header: 'Trainer', width: 110, render: (ride) => <span className={styles.muted}>{ride.trainer?.fullName ?? '—'}</span> },
-    { key: 'surface', header: 'Surface', width: 100, render: (ride) => <span className={styles.muted}>{ride.surface ?? '—'}</span> },
-    { key: 'duration', header: 'Duration', width: 80, render: (ride) => <span className={styles.muted}>{minutes(ride.actualStart, ride.actualEnd) !== null ? `${minutes(ride.actualStart, ride.actualEnd)} min` : '—'}</span> },
-    { key: 'feedback', header: 'Feedback', width: 80, render: (ride) => (ride.hasRiderFeedback ? <span className={styles.toneSuccess}>Sent</span> : <span className={styles.toneWarning}>Not sent</span>) },
+    { key: 'surface', header: 'Mặt sân', width: 100, render: (ride) => <span className={styles.muted}>{ride.surface ?? '—'}</span> },
+    { key: 'duration', header: 'Thời lượng', width: 80, render: (ride) => <span className={styles.muted}>{minutes(ride.actualStart, ride.actualEnd) !== null ? `${minutes(ride.actualStart, ride.actualEnd)} phút` : '—'}</span> },
+    { key: 'feedback', header: 'Phản hồi', width: 80, render: (ride) => (ride.hasRiderFeedback ? <span className={styles.toneSuccess}>Đã gửi</span> : <span className={styles.toneWarning}>Chưa gửi</span>) },
     chevron,
   ];
   return (
     <div className={styles.stack}>
       <div className={styles.header}>
-        <div><h1 className={styles.heading}>My Riding History</h1><p className={styles.muted}>{user?.fullName} · all horses and programs</p></div>
-        <Tabs label="History filter" value={tab} onChange={(value) => setTab(value as typeof tab)} items={[
-          { value: 'recent', label: 'Recent' }, { value: 'COMPLETED', label: 'Completed' }, { value: 'INTERRUPTED', label: 'Interrupted' },
+        <div><h1 className={styles.heading}>Lịch sử cưỡi của tôi</h1><p className={styles.muted}>{user?.fullName} · mọi ngựa và chương trình</p></div>
+        <Tabs label="Bộ lọc lịch sử" value={tab} onChange={(value) => setTab(value as typeof tab)} items={[
+          { value: 'recent', label: 'Gần đây' }, { value: 'COMPLETED', label: 'Đã hoàn thành' }, { value: 'INTERRUPTED', label: 'Bị gián đoạn' },
         ]} />
       </div>
       <ReadState error={history.error} loading={!history.data} retry={history.retry} />
       {history.data && (
         <>
           <div className={styles.metrics3}>
-            <MetricCard label={`Rides in ${month}`} value={String(inMonth.length)} />
-            <MetricCard label="Completed" value={String(rides.filter((ride) => ride.status === 'COMPLETED').length)} />
-            <MetricCard label="Interrupted" value={String(rides.filter((ride) => ride.status === 'INTERRUPTED').length)} />
+            <MetricCard label={`Lượt cưỡi trong ${month}`} value={String(inMonth.length)} />
+            <MetricCard label="Đã hoàn thành" value={String(rides.filter((ride) => ride.status === 'COMPLETED').length)} />
+            <MetricCard label="Bị gián đoạn" value={String(rides.filter((ride) => ride.status === 'INTERRUPTED').length)} />
           </div>
           <Card className={styles.tableCard}>
-            <div className="table-scroll" role="region" aria-label="Riding history" tabIndex={0}>
-              <DataTable columns={columns} rows={shown} rowKey={(ride) => ride.id} caption="Riding history" onRowClick={(ride) => navigate(`/rider/assignments/${ride.id}`)} empty={<EmptyState title="No rides yet" description="Completed and interrupted rides appear here." />} />
+            <div className="table-scroll" role="region" aria-label="Lịch sử cưỡi" tabIndex={0}>
+              <DataTable columns={columns} rows={shown} rowKey={(ride) => ride.id} caption="Lịch sử cưỡi" onRowClick={(ride) => navigate(`/rider/assignments/${ride.id}`)} empty={<EmptyState title="Chưa có lượt cưỡi" description="Lượt cưỡi đã hoàn thành và bị gián đoạn sẽ hiện ở đây." />} />
             </div>
           </Card>
         </>
       )}
-      <p className={styles.caption}>Only your own rides are shown. Horse performance trends are reviewed by your Trainer.</p>
+      <p className={styles.caption}>Chỉ hiển thị lượt cưỡi của bạn. Xu hướng thành tích của ngựa do Trainer xem xét.</p>
     </div>
   );
 }

@@ -18,10 +18,15 @@
 }
 
 .left {
+  flex: 1 1 auto;
   gap: var(--space-2xl);
 }
 
+/* The breadcrumb and search give way first so the account button never overflows the header. */
+.left :global(nav) { min-width: 0; overflow: hidden; }
+
 .right {
+  flex-shrink: 0;
   gap: 20px;
 }
 
@@ -159,11 +164,25 @@
 
 .menu:hover, .bell:hover { background: var(--color-bg-subtle); }
 
+:global([data-ui-v3]) .header {
+  box-shadow: var(--elev-1);
+}
+:global([data-ui-v3]) .search {
+  border-radius: var(--radius-md);
+}
+:global([data-ui-v3]) .avatar {
+  background: var(--color-brand-primary);
+  color: #ffffff;
+}
+:global([data-ui-v3]) .fullName {
+  font-weight: 600;
+}
+
 /* Design System v2 §E/§I: keep the header usable at every supported width without horizontal overflow. */
 @media (max-width: 1279px) {
   .header { padding: 0 var(--space-xl); }
   .left { gap: var(--space-lg); }
-  .search { width: 240px; }
+  .search { width: 240px; flex-shrink: 1; min-width: 160px; }
 }
 
 @media (max-width: 1023px) {

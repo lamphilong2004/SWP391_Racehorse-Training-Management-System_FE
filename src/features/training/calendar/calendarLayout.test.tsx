@@ -34,7 +34,7 @@ it('renders every overlapping event with separate horizontal positions and align
   const api: SupportingApi = { programs: vi.fn(), sessions: vi.fn().mockResolvedValue(sessions), exercises: vi.fn(), exercise: vi.fn(), saveExercise: vi.fn() };
   const router = createMemoryRouter([{ path: '/training/schedule', element: <TrainingCalendarPage api={api} /> }, { path: '/training/session/:id', element: <h1>Session detail handoff</h1> }], { initialEntries: ['/training/schedule'] });
   render(<RouterProvider router={router} />);
-  const events = await screen.findAllByRole('button', { name: /^Open SES-/ });
+  const events = await screen.findAllByRole('button', { name: /^Mở SES-/ });
   expect(events).toHaveLength(6); expect(new Set(events.map((entry) => entry.style.left)).size).toBe(6);
   for (const [index, event] of events.entries()) {
     expect(event).toHaveAttribute('data-calendar-session', String(42 + index)); expect(event).toHaveAttribute('data-calendar-lanes', '6');

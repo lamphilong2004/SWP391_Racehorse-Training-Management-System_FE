@@ -24,36 +24,36 @@ function setup({ role = 'HEAD_TRAINER', path = '/training/programs/new', overrid
   return { actor: userEvent.setup({ delay: null }), fetchMock, router, posts };
 }
 function change(label: string, value: string) { fireEvent.change(screen.getByLabelText(label, { exact: false }), { target: { value } }); }
-async function next(actor: Actor) { await actor.click(screen.getByRole('button', { name: 'Continue' })); }
+async function next(actor: Actor) { await actor.click(screen.getByRole('button', { name: 'Tiếp tục' })); }
 async function chooseTemplate(actor: Actor) {
-  await actor.click(await screen.findByRole('radio', { name: /^Select Thunder\ Bolt \(/ }));
-  await waitFor(() => expect(screen.getByRole('button', { name: 'Continue' })).toBeEnabled());
+  await actor.click(await screen.findByRole('radio', { name: /^Chọn Thunder Bolt \(/ }));
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Tiếp tục' })).toBeEnabled());
   await next(actor); await next(actor);
-  await actor.click(await screen.findByRole('button', { name: 'Use recommended Race Preparation 1600m' }));
-  await screen.findByLabelText('Template version');
+  await actor.click(await screen.findByRole('button', { name: 'Dùng mẫu gợi ý Race Preparation 1600m' }));
+  await screen.findByLabelText('Phiên bản mẫu');
   await next(actor);
 }
 function customize() {
-  change('Program name', 'Horse-specific program'); change('Goals', 'Build endurance');
-  change('Program start date', '2026-11-01'); change('Program end date', '2026-11-30');
-  change('Target metrics', 'Improve sustained gallop'); change('Notes', 'Protect recovery');
-  change('Phase 1 start date', '2026-11-01'); change('Phase 1 end date', '2026-11-07');
-  change('Phase 2 start date', '2026-11-08'); change('Phase 2 end date', '2026-11-30');
+  change('Tên chương trình', 'Horse-specific program'); change('Mục tiêu huấn luyện', 'Build endurance');
+  change('Ngày bắt đầu chương trình', '2026-11-01'); change('Ngày kết thúc chương trình', '2026-11-30');
+  change('Chỉ số mục tiêu', 'Improve sustained gallop'); change('Ghi chú', 'Protect recovery');
+  change('Giai đoạn 1 — ngày bắt đầu', '2026-11-01'); change('Giai đoạn 1 — ngày kết thúc', '2026-11-07');
+  change('Giai đoạn 2 — ngày bắt đầu', '2026-11-08'); change('Giai đoạn 2 — ngày kết thúc', '2026-11-30');
 }
 async function toTrainer(actor: Actor) {
   await chooseTemplate(actor); customize(); await next(actor);
-  await actor.selectOptions(screen.getByLabelText('Phase 1 minimum intensity'), 'LOW');
-  await actor.selectOptions(screen.getByLabelText('Phase 1 maximum intensity'), 'MEDIUM');
-  change('Phase 2 workload', 'Progress gradually'); await next(actor);
+  await actor.selectOptions(screen.getByLabelText('Giai đoạn 1 — cường độ tối thiểu'), 'LOW');
+  await actor.selectOptions(screen.getByLabelText('Giai đoạn 1 — cường độ tối đa'), 'MEDIUM');
+  change('Giai đoạn 2 — khối lượng', 'Progress gradually'); await next(actor);
 }
 async function review(actor: Actor) {
   await toTrainer(actor);
-  await actor.click(screen.getByRole('button', { name: 'Select Fixture Trainer' }));
-  change('Trainer effective from', '2026-11-01');
-  await actor.click(screen.getByRole('checkbox', { name: 'I acknowledge the Trainer warnings' }));
+  await actor.click(screen.getByRole('button', { name: 'Chọn Fixture Trainer' }));
+  change('Trainer phụ trách từ ngày', '2026-11-01');
+  await actor.click(screen.getByRole('checkbox', { name: 'Tôi đã đọc các cảnh báo về Trainer' }));
   await next(actor);
 }
-const submit = () => screen.getByRole('button', { name: 'Create and activate program' });
+const submit = () => screen.getByRole('button', { name: 'Tạo và kích hoạt chương trình' });
 
 describe('CORE-022 UI + production router + real transport with HTTP fixtures (not live BE)', () => {
   beforeEach(() => { localStorage.clear(); sessionStorage.clear(); });
@@ -61,13 +61,13 @@ describe('CORE-022 UI + production router + real transport with HTTP fixtures (n
 
   it('lets Head Trainer enter from workspace, complete all steps, send a pinned DTO and read the saved result', async () => {
     const { actor, router, posts, fetchMock } = setup({ path: '/dashboard' });
-    await actor.click(await screen.findByRole('link', { name: 'Create program' }));
+    await actor.click(await screen.findByRole('link', { name: 'Tạo chương trình' }));
     expect(router.state.location.pathname).toBe('/training/programs/new');
-    expect(await screen.findByRole('radio', { name: /^Select Locked\ Horse \(/ })).toBeDisabled();
+    expect(await screen.findByRole('radio', { name: /^Chọn Locked Horse \(/ })).toBeDisabled();
     await review(actor);
     expect(screen.queryByLabelText(/Target race|Target date|preferred surface/i)).not.toBeInTheDocument();
     await actor.click(submit());
-    expect(await screen.findByText('Program ID: 1001')).toBeInTheDocument();
+    expect(await screen.findByText('Mã chương trình: 1001')).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/training/programs/new');
     expect(posts()).toHaveLength(1);
     const [, init] = posts()[0];
@@ -82,51 +82,51 @@ describe('CORE-022 UI + production router + real transport with HTTP fixtures (n
     expect(fetchMock.mock.calls.every(([url]) => String(url).startsWith('http://localhost:8080/api/'))).toBe(true);
     expect(fetchMock.mock.calls.filter(([, options]) => ['PUT', 'PATCH'].includes(options?.method ?? ''))).toHaveLength(0);
     expect(template.version.phases[0].name).toBe('Foundation');
-    await actor.click(screen.getByRole('button', { name: 'Reload saved program' }));
+    await actor.click(screen.getByRole('button', { name: 'Tải lại chương trình đã lưu' }));
     expect(await screen.findByRole('heading', { name: 'Saved server program' })).toBeInTheDocument();
     expect(posts()).toHaveLength(1);
   });
 
   it.each(ROLE_CODES.filter((role) => role !== 'HEAD_TRAINER'))('blocks %s before loading feature data or creating a program', async (role) => {
     const { actor, fetchMock, posts } = setup({ role });
-    expect(await screen.findByText('Access denied')).toBeInTheDocument();
+    expect(await screen.findByText('Không có quyền truy cập')).toBeInTheDocument();
     expect(fetchMock.mock.calls.map(([url]) => new URL(String(url)).pathname)).toEqual(['/api/auth/me']);
     expect(posts()).toHaveLength(0);
-    await actor.click(screen.getByRole('button', { name: 'Back to workspace' }));
-    const accountMenu = await screen.findByRole('button', { name: 'Account menu' });
-    expect(screen.queryByRole('link', { name: 'Create program' })).not.toBeInTheDocument();
+    await actor.click(screen.getByRole('button', { name: 'Quay lại không gian làm việc' }));
+    const accountMenu = await screen.findByRole('button', { name: 'Menu tài khoản' });
+    expect(screen.queryByRole('link', { name: 'Tạo chương trình' })).not.toBeInTheDocument();
     await actor.click(accountMenu);
-    expect(await screen.findByRole('heading', { name: 'My Account' })).toBeInTheDocument();
-    expect(await screen.findByRole('button', { name: 'Sign out' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Tài khoản của tôi' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Đăng xuất' })).toBeInTheDocument();
     expect(authSession.read()?.accessToken).toBe('fixture-program-jwt');
   });
 
   it('clears dates, phase lineage and Trainer state when version/template/horse changes', async () => {
     const { actor, fetchMock, posts } = setup();
     await review(actor);
-    await actor.click(screen.getByRole('button', { name: 'Template' }));
-    await actor.selectOptions(screen.getByLabelText('Template version'), '3');
-    await screen.findByLabelText('Template version');
+    await actor.click(screen.getByRole('button', { name: 'Mẫu chương trình' }));
+    await actor.selectOptions(screen.getByLabelText('Phiên bản mẫu'), '3');
+    await screen.findByLabelText('Phiên bản mẫu');
     await next(actor);
-    expect(screen.getByLabelText('Program start date', { exact: false })).toHaveValue('');
-    expect(screen.getByLabelText('Phase 1 start date', { exact: false })).toHaveValue('');
-    expect(screen.getByText('Source phase: 41')).toBeInTheDocument();
+    expect(screen.getByLabelText('Ngày bắt đầu chương trình', { exact: false })).toHaveValue('');
+    expect(screen.getByLabelText('Giai đoạn 1 — ngày bắt đầu', { exact: false })).toHaveValue('');
+    expect(screen.getByText('Giai đoạn gốc: 41')).toBeInTheDocument();
     customize(); await next(actor); await next(actor);
-    expect(screen.getByRole('button', { name: 'Select Fixture Trainer' })).toHaveAttribute('aria-pressed', 'false');
-    expect(screen.queryByRole('checkbox', { name: 'I acknowledge the Trainer warnings' })).not.toBeInTheDocument();
-    expect(screen.getByLabelText('Trainer effective from', { exact: false })).toHaveValue('');
-    await actor.click(screen.getByRole('button', { name: 'Template' }));
-    await actor.click(screen.getByRole('button', { name: 'Use Recovery' }));
-    await screen.findByLabelText('Template version');
+    expect(screen.getByRole('button', { name: 'Chọn Fixture Trainer' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.queryByRole('checkbox', { name: 'Tôi đã đọc các cảnh báo về Trainer' })).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Trainer phụ trách từ ngày', { exact: false })).toHaveValue('');
+    await actor.click(screen.getByRole('button', { name: 'Mẫu chương trình' }));
+    await actor.click(screen.getByRole('button', { name: 'Dùng Recovery' }));
+    await screen.findByLabelText('Phiên bản mẫu');
     await next(actor);
-    expect(screen.getByLabelText('Program start date', { exact: false })).toHaveValue('');
-    await actor.click(screen.getByRole('button', { name: 'Horse' }));
-    await actor.click(screen.getByRole('radio', { name: /^Select Silver\ Star \(/ }));
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Continue' })).toBeEnabled());
+    expect(screen.getByLabelText('Ngày bắt đầu chương trình', { exact: false })).toHaveValue('');
+    await actor.click(screen.getByRole('button', { name: 'Ngựa' }));
+    await actor.click(screen.getByRole('radio', { name: /^Chọn Silver Star \(/ }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Tiếp tục' })).toBeEnabled());
     await next(actor); await next(actor);
-    expect(screen.queryByLabelText('Template version')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Phiên bản mẫu')).not.toBeInTheDocument();
     await next(actor);
-    expect(screen.getAllByText('Select an ACTIVE template version.').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Hãy chọn một phiên bản mẫu đang hoạt động.').length).toBeGreaterThan(0);
     expect(posts()).toHaveLength(0);
     expect(fetchMock.mock.calls.some(([url]) => String(url).includes('templateVersionId=303'))).toBe(true);
     expect(fetchMock.mock.calls.some(([url]) => String(url).includes('templateVersionId=403'))).toBe(true);
@@ -134,20 +134,20 @@ describe('CORE-022 UI + production router + real transport with HTTP fixtures (n
 
   it('blocks invalid phase dates/intensity and unacknowledged Trainer warnings before POST', async () => {
     const { actor, posts } = setup();
-    await chooseTemplate(actor); customize(); change('Phase 2 start date', '2026-11-07');
+    await chooseTemplate(actor); customize(); change('Giai đoạn 2 — ngày bắt đầu', '2026-11-07');
     await next(actor);
-    expect(screen.getByLabelText('Phase 2 start date', { exact: false })).toHaveAttribute('aria-invalid', 'true');
-    expect(screen.getAllByText('Phase date ranges must not overlap.').length).toBeGreaterThan(0);
-    change('Phase 2 start date', '2026-11-08'); await next(actor);
-    await actor.selectOptions(screen.getByLabelText('Phase 1 minimum intensity'), 'HIGH');
-    await actor.selectOptions(screen.getByLabelText('Phase 1 maximum intensity'), 'LOW'); await next(actor);
-    expect(screen.getByLabelText('Phase 1 maximum intensity')).toHaveAttribute('aria-invalid', 'true');
-    await actor.selectOptions(screen.getByLabelText('Phase 1 maximum intensity'), 'HIGH'); await next(actor);
-    await actor.click(screen.getByRole('button', { name: 'Select Fixture Trainer' }));
-    change('Trainer effective from', '2026-11-01'); await next(actor);
-    expect(screen.getByRole('checkbox', { name: 'I acknowledge the Trainer warnings' })).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('Giai đoạn 2 — ngày bắt đầu', { exact: false })).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getAllByText('Thời gian các giai đoạn không được chồng lấn.').length).toBeGreaterThan(0);
+    change('Giai đoạn 2 — ngày bắt đầu', '2026-11-08'); await next(actor);
+    await actor.selectOptions(screen.getByLabelText('Giai đoạn 1 — cường độ tối thiểu'), 'HIGH');
+    await actor.selectOptions(screen.getByLabelText('Giai đoạn 1 — cường độ tối đa'), 'LOW'); await next(actor);
+    expect(screen.getByLabelText('Giai đoạn 1 — cường độ tối đa')).toHaveAttribute('aria-invalid', 'true');
+    await actor.selectOptions(screen.getByLabelText('Giai đoạn 1 — cường độ tối đa'), 'HIGH'); await next(actor);
+    await actor.click(screen.getByRole('button', { name: 'Chọn Fixture Trainer' }));
+    change('Trainer phụ trách từ ngày', '2026-11-01'); await next(actor);
+    expect(screen.getByRole('checkbox', { name: 'Tôi đã đọc các cảnh báo về Trainer' })).toHaveAttribute('aria-invalid', 'true');
     expect(posts()).toHaveLength(0);
-    await actor.click(screen.getByRole('checkbox', { name: 'I acknowledge the Trainer warnings' })); await next(actor);
+    await actor.click(screen.getByRole('checkbox', { name: 'Tôi đã đọc các cảnh báo về Trainer' })); await next(actor);
     expect(submit()).toBeEnabled();
   });
 
@@ -155,16 +155,16 @@ describe('CORE-022 UI + production router + real transport with HTTP fixtures (n
     let finish!: (response: Response) => void;
     const { actor, fetchMock, posts } = setup({ override: (url, init) => url.pathname === '/api/program-templates/3'
       ? new Promise((resolve) => { finish = resolve; }) : fixtureResponse(url, init) });
-    await actor.click(await screen.findByRole('radio', { name: /^Select Thunder\ Bolt \(/ }));
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Continue' })).toBeEnabled());
+    await actor.click(await screen.findByRole('radio', { name: /^Chọn Thunder Bolt \(/ }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Tiếp tục' })).toBeEnabled());
     await next(actor); await next(actor);
-    await actor.click(screen.getByRole('button', { name: 'Use recommended Race Preparation 1600m' }));
-    await actor.click(screen.getByRole('button', { name: 'Horse' }));
-    await actor.click(screen.getByRole('radio', { name: /^Select Silver\ Star \(/ }));
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Continue' })).toBeEnabled());
+    await actor.click(screen.getByRole('button', { name: 'Dùng mẫu gợi ý Race Preparation 1600m' }));
+    await actor.click(screen.getByRole('button', { name: 'Ngựa' }));
+    await actor.click(screen.getByRole('radio', { name: /^Chọn Silver Star \(/ }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Tiếp tục' })).toBeEnabled());
     finish(fixtureResponse(new URL('http://localhost:8080/api/program-templates/3?versionNo=2')));
     await next(actor); await next(actor);
-    expect(screen.queryByLabelText('Template version')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Phiên bản mẫu')).not.toBeInTheDocument();
     expect(fetchMock.mock.calls.some(([url]) => String(url).includes('/trainer-recommendations'))).toBe(false);
     expect(posts()).toHaveLength(0);
   });
@@ -173,13 +173,13 @@ describe('CORE-022 UI + production router + real transport with HTTP fixtures (n
     let finish!: (response: Response) => void;
     const { actor, posts } = setup({ override: (url, init) => url.pathname === '/api/training-programs' && init?.method === 'POST' ? new Promise((resolve) => { finish = resolve; }) : undefined });
     await review(actor);
-    const form = screen.getByRole('form', { name: 'Create training program' });
+    const form = screen.getByRole('form', { name: 'Tạo chương trình huấn luyện' });
     fireEvent.submit(form); fireEvent.submit(form);
     await waitFor(() => expect(posts()).toHaveLength(1));
-    expect(screen.getByRole('button', { name: 'Creating program…' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Back' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Đang tạo chương trình…' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Quay lại' })).toBeDisabled();
     finish(new Response(JSON.stringify({ success: true, data: createdProgram }), { status: 201 }));
-    await screen.findByText('Program ID: 1001');
+    await screen.findByText('Mã chương trình: 1001');
     expect(screen.queryByRole('form')).not.toBeInTheDocument(); expect(posts()).toHaveLength(1);
   });
 
@@ -189,17 +189,17 @@ describe('CORE-022 UI + production router + real transport with HTTP fixtures (n
       if (url.pathname === '/api/training-programs' && init?.method === 'POST' && ++attempts === 1) return failure(400, 'VALIDATION_ERROR', 'Check program fields.', [{ field: 'phases.0.name', message: 'Use a distinct phase name.' }]);
     } });
     await review(actor); await actor.click(submit());
-    const input = await screen.findByLabelText('Phase 1 name', { exact: false });
+    const input = await screen.findByLabelText('Giai đoạn 1 — tên', { exact: false });
     expect(input).toHaveAttribute('aria-invalid', 'true');
-    expect(screen.getByLabelText('Program name', { exact: false })).toHaveValue('Horse-specific program');
-    change('Phase 1 name', 'Adjusted foundation'); await next(actor); await next(actor); await next(actor);
-    await actor.click(submit()); await screen.findByText('Program ID: 1001');
+    expect(screen.getByLabelText('Tên chương trình', { exact: false })).toHaveValue('Horse-specific program');
+    change('Giai đoạn 1 — tên', 'Adjusted foundation'); await next(actor); await next(actor); await next(actor);
+    await actor.click(submit()); await screen.findByText('Mã chương trình: 1001');
     expect(JSON.parse(String(posts()[1][1]?.body)).phases[0].name).toBe('Adjusted foundation');
   });
 
   it.each(['conflict', 'network', 'forbidden'] as const)('preserves draft and session on %s and permits retry', async (kind) => {
     let attempts = 0;
-    const message = kind === 'conflict' ? 'Horse is LOCKED: rest required by Veterinarian.' : kind === 'forbidden' ? 'You do not have permission to perform this action.' : 'Cannot reach the server. Check your connection and try again.';
+    const message = kind === 'conflict' ? 'Horse is LOCKED: rest required by Veterinarian.' : kind === 'forbidden' ? 'You do not have permission to perform this action.' : 'Không kết nối được máy chủ. Hãy kiểm tra kết nối và thử lại.';
     const { actor, posts } = setup({ override: (url, init) => {
       if (url.pathname === '/api/training-programs' && init?.method === 'POST' && ++attempts === 1) {
         if (kind === 'network') throw new TypeError('Fixture connection failed');
@@ -212,8 +212,8 @@ describe('CORE-022 UI + production router + real transport with HTTP fixtures (n
     if (kind === 'conflict') expect(screen.getByText('Veterinarian restriction: no training until cleared.')).toBeInTheDocument();
     expect(authSession.read()?.accessToken).toBe('fixture-program-jwt');
     expect(screen.getByText('Horse-specific program')).toBeInTheDocument();
-    expect(screen.queryByText('Program created')).not.toBeInTheDocument();
-    await actor.click(submit()); await screen.findByText('Program ID: 1001');
+    expect(screen.queryByText('Đã tạo chương trình')).not.toBeInTheDocument();
+    await actor.click(submit()); await screen.findByText('Mã chương trình: 1001');
     expect(posts()).toHaveLength(2);
     expect(posts()[0][1]?.body).toBe(posts()[1][1]?.body);
   });
@@ -221,7 +221,7 @@ describe('CORE-022 UI + production router + real transport with HTTP fixtures (n
   it.each([401, 403])('uses canonical session handling for %s expired/inactive protected requests', async (status) => {
     const { posts, router } = setup({ override: (url) => url.pathname === '/api/horses'
       ? failure(status, status === 401 ? 'UNAUTHORIZED' : 'FORBIDDEN', status === 401 ? 'Token expired.' : 'Your account is deactivated.') : undefined });
-    expect(await screen.findByRole('heading', { name: 'Sign in to Racehorse Ops' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Đăng nhập Racehorse Ops' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/login'); expect(authSession.read()).toBeNull(); expect(posts()).toHaveLength(0);
   });
 });

@@ -1,16 +1,18 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { AlertBanner, Button, Card, DataTable, EmptyState, KeyValue, MetricCard, StatusBadge, TextField, Tabs } from '../../design-system';
+import { AlertBanner, ButtonLink, Button, Card, DataTable, EmptyState, KeyValue, MetricCard, StatusBadge, TextField, Tabs } from '../../design-system';
 import { PageHeader } from '../../layout/PageHeader';
 import { MEDICAL_ROUTES as ROUTES } from './paths';
 import { MedicalForm } from './MedicalForm';
 import { TreatmentPlanEditor } from './TreatmentPlanEditor';
 import { InjuryMap } from './InjuryMap';
+import { regionLabel } from './bodyRegions';
 import type { ClinicalSeverity, MedicalCase, MedicalService, RecoveryStatus, TrainingAvailability } from './models';
 import { useMedicalRuntime } from './runtimeContext';
 import { dateTime } from '../evaluation/models';
 import { medicalErrorMessage } from './errors';
 import './medical.css';
+import { viLabel } from '../../shared/viLabels';
 
 const casePath = (id: number) => ROUTES.medicalCaseDetail.replace(':caseId', String(id));
 const latest = <T extends { examinedAt: string },>(items: T[]) => [...items].sort((a, b) => Date.parse(b.examinedAt) - Date.parse(a.examinedAt))[0];
@@ -18,42 +20,42 @@ async function collectCases(service: MedicalService) {
   const first = await service.listCases(0), rows = [...first.items];
   for (let page = 1; page < Math.ceil(first.totalElements / first.size); page++) {
     const next = await service.listCases(page);
-    if (next.size !== first.size || next.totalElements !== first.totalElements) throw new Error('Medical cases changed while loading. Reload to retry.');
+    if (next.size !== first.size || next.totalElements !== first.totalElements) throw new Error('Danh sách ca y tế đã thay đổi trong lúc tải. Hãy tải lại.');
     rows.push(...next.items);
   }
-  if (rows.length !== first.totalElements || new Set(rows.map((r) => r.id)).size !== rows.length) throw new Error('Medical case overview is incomplete. Reload to retry.');
+  if (rows.length !== first.totalElements || new Set(rows.map((r) => r.id)).size !== rows.length) throw new Error('Tổng quan ca y tế chưa đầy đủ. Hãy tải lại.');
   return rows;
 }
 /** Registered name and code for a horse id; falls back to the id when identity is unavailable. */
 function HorseName({ horseId }: { horseId: number }) {
   const { service } = useMedicalRuntime();
   const { data } = useResource(useCallback(() => service.getHorse(horseId), [service, horseId]));
-  return <>{data ? `${data.name} · ${data.horseCode}` : `Horse ${horseId}`}</>;
+  return <>{data ? `${data.name} · ${data.horseCode}` : `Ngựa ${horseId}`}</>;
 }
 
 function HorseHeading({ horseId, title, description }: { horseId: number; title: string; description: string }) {
   const { service } = useMedicalRuntime();
   const { data, error } = useResource(useCallback(() => service.getHorse(horseId), [service, horseId]));
-  return <><PageHeader title={`${title} · ${data?.name ?? `Horse ${horseId}`}`} description={data ? `${data.horseCode}${data.currentBoxCode ? ` · Box ${data.currentBoxCode}` : ''} · ${description}` : description}
+  return <><PageHeader title={`${title} · ${data?.name ?? `Ngựa ${horseId}`}`} description={data ? `${data.horseCode}${data.currentBoxCode ? ` · Ô ${data.currentBoxCode}` : ''} · ${description}` : description}
     actions={data && <div className="medical-actions">{data.healthStatus && <StatusBadge family="health" status={data.healthStatus} />}<StatusBadge family="availability" status={data.trainingAvailability} /></div>} />
-    {error && <p className="text-caption">Horse identity details are unavailable.</p>}</>;
+    {error && <p className="text-caption">Không tải được thông tin nhận dạng ngựa.</p>}</>;
 }
 function TreatmentCaseSummary({ item }: { item: MedicalCase }) {
   const { service } = useMedicalRuntime();
   const horse = useResource(useCallback(() => service.getHorse(item.horseId), [service, item.horseId]));
   const availability = useResource(useCallback(() => service.getAvailability(item.horseId), [service, item.horseId]));
   const review = latest(item.reexaminations);
-  return <Card className="medical-groom-panel" title="Case summary"><div className="medical-stack">
-    <KeyValue label="Health status" value={horse.data?.healthStatus ? <StatusBadge family="health" status={horse.data.healthStatus} /> : 'Unavailable'} />
+  return <Card className="medical-groom-panel" title="Tóm tắt ca"><div className="medical-stack">
+    <KeyValue label="Tình trạng sức khỏe" value={horse.data?.healthStatus ? <StatusBadge family="health" status={horse.data.healthStatus} /> : 'Không có'} />
     {availability.data ? <AvailabilityDetails availability={availability.data} /> : <ResourceState error={availability.error} retry={availability.reload} />}
-    <KeyValue label="Last re-examination" value={review ? `${dateTime(review.examinedAt)} · ${review.recoveryStatus}` : 'None'} />
-    <KeyValue label="Next review" value={item.treatmentPlan?.reexaminationDate ?? 'Not scheduled'} />
-    <p className="text-caption">Training Availability is changed separately. Saving this plan does not change it.</p>
+    <KeyValue label="Lần tái khám gần nhất" value={review ? `${dateTime(review.examinedAt)} · ${viLabel(review.recoveryStatus)}` : 'Không có'} />
+    <KeyValue label="Lần khám tiếp theo" value={item.treatmentPlan?.reexaminationDate ?? 'Chưa lên lịch'} />
+    <p className="text-caption">Khả năng tập luyện được thay đổi riêng. Lưu phác đồ này không làm thay đổi nó.</p>
   </div></Card>;
 }
 const positiveId = (value: string) => {
   const id = Number(value);
-  if (!Number.isSafeInteger(id) || id < 1) throw new Error('Enter a valid positive numeric ID.');
+  if (!Number.isSafeInteger(id) || id < 1) throw new Error('Nhập mã số dương hợp lệ.');
   return id;
 };
 function useResource<T>(load: () => Promise<T>) {
@@ -62,13 +64,13 @@ function useResource<T>(load: () => Promise<T>) {
   useEffect(() => {
     let active = true;
     load().then((data) => { if (active) setState({ data, source: load }); })
-      .catch((error: unknown) => { if (active) setState({ error: medicalErrorMessage(error, 'Unable to load data.'), source: load }); });
+      .catch((error: unknown) => { if (active) setState({ error: medicalErrorMessage(error, 'Không tải được dữ liệu.'), source: load }); });
     return () => { active = false; };
   }, [load, revision]);
   return { ...(state.source === load ? state : {}), reload: () => { setState({}); setRevision((value) => value + 1); } };
 }
 function ResourceState({ error, retry }: { error?: string; retry: () => void }) {
-  return error ? <div className="medical-stack"><AlertBanner type="danger" title={error} /><Button onClick={retry}>Retry</Button></div> : <p role="status">Loading medical data…</p>;
+  return error ? <div className="medical-stack"><AlertBanner type="danger" title={error} /><Button onClick={retry}>Thử lại</Button></div> : <p role="status">Đang tải dữ liệu y tế…</p>;
 }
 function History({ children, empty, count }: { children: ReactNode; empty: string; count: number }) {
   return count ? <ul className="medical-history">{children}</ul> : <EmptyState title={empty} />;
@@ -77,15 +79,15 @@ function AvailabilityCard({ horseId }: { horseId: number }) {
   const { service } = useMedicalRuntime();
   const load = useCallback(() => service.getAvailability(horseId), [service, horseId]);
   const { data, error, reload } = useResource(load);
-  return <Card title="Training availability">
+  return <Card title="Khả năng tập luyện">
     {!data ? <ResourceState error={error} retry={reload} /> :
-      <div className="medical-stack"><AvailabilityDetails availability={data} /><p className="text-caption">Restrictions are managed separately. Closing a case does not lift one.</p></div>}
+      <div className="medical-stack"><AvailabilityDetails availability={data} /><p className="text-caption">Hạn chế được quản lý riêng. Đóng ca y tế không tự gỡ hạn chế.</p></div>}
   </Card>;
 }
 function AvailabilityDetails({ availability }: { availability: TrainingAvailability }) {
   return <div className="medical-stack"><div className="medical-actions"><StatusBadge family="availability" status={availability.availability} />
-    <span>{availability.reason || (availability.availability === 'AVAILABLE' ? 'No active medical restriction' : 'Reason unavailable')}</span></div>
-    {availability.exerciseRules?.map((rule, index) => <KeyValue key={index} label={rule.ruleType === 'ALLOWED' ? 'Permitted' : 'Prohibited'} value={rule.exerciseTypeNote ?? `Exercise ${rule.exerciseId}`} />)}
+    <span>{availability.reason || (availability.availability === 'AVAILABLE' ? 'Không có hạn chế y tế' : 'Không có lý do')}</span></div>
+    {availability.exerciseRules?.map((rule, index) => <KeyValue key={index} label={rule.ruleType === 'ALLOWED' ? 'Được phép' : 'Bị cấm'} value={rule.exerciseTypeNote ?? `Bài tập ${rule.exerciseId}`} />)}
   </div>;
 }
 
@@ -96,30 +98,30 @@ export function CaseListPage() {
   const load = useCallback(() => service.listCases(page), [service, page]);
   const { data, error, reload } = useResource(load);
   const rows = data?.items.filter((item) => [item.id, item.horseId, item.reason].join(' ').toLowerCase().includes(query.toLowerCase())) ?? [];
-  return <><PageHeader title="Medical Cases" description="Veterinary case records" />
-    <div className="medical-actions"><Link to={ROUTES.medicalCaseNew}>Create independent case</Link><Link to={ROUTES.herdHealth}>Herd health</Link></div>
-    <Card title="Cases"><TextField label="Search current page" value={query} onChange={(event) => setQuery(event.target.value)} />
+  return <><PageHeader title="Ca y tế" description="Hồ sơ các ca thú y" />
+    <div className="medical-actions"><ButtonLink variant="primary" to={ROUTES.medicalCaseNew}>Tạo ca y tế độc lập</ButtonLink><ButtonLink to={ROUTES.herdHealth}>Sức khỏe đàn ngựa</ButtonLink></div>
+    <Card title="Danh sách ca"><TextField label="Tìm trên trang hiện tại" value={query} onChange={(event) => setQuery(event.target.value)} />
       {!data ? <ResourceState error={error} retry={reload} /> :
-        <div className="medical-stack"><DataTable<MedicalCase> caption="Medical cases" rows={rows} rowKey={(item) => item.id} empty={<EmptyState title="No medical cases" />} columns={[
-          { key: 'id', header: 'Case', render: (item) => <Link to={casePath(item.id)}>{item.id}</Link> },
-          { key: 'horse', header: 'Horse', render: (item) => <HorseName horseId={item.horseId} /> },
-          { key: 'reason', header: 'Reason', render: (item) => item.reason ?? '—' },
-          { key: 'status', header: 'Status', render: (item) => item.status },
-        ]} /><div className="medical-actions"><Button variant="secondary" disabled={page === 0} onClick={() => setPage(page - 1)}>Previous</Button><span>Page {page + 1} · {data.totalElements} total</span><Button variant="secondary" disabled={(page + 1) * data.size >= data.totalElements} onClick={() => setPage(page + 1)}>Next</Button></div></div>}
+        <div className="medical-stack"><DataTable<MedicalCase> caption="Ca y tế" rows={rows} rowKey={(item) => item.id} empty={<EmptyState title="Chưa có ca y tế" />} columns={[
+          { key: 'id', header: 'Ca', render: (item) => <Link to={casePath(item.id)}>{item.id}</Link> },
+          { key: 'horse', header: 'Ngựa', render: (item) => <HorseName horseId={item.horseId} /> },
+          { key: 'reason', header: 'Lý do', render: (item) => item.reason ?? '—' },
+          { key: 'status', header: 'Trạng thái', render: (item) => <StatusBadge family="medicalCase" status={item.status} /> },
+        ]} /><div className="medical-actions"><Button variant="secondary" disabled={page === 0} onClick={() => setPage(page - 1)}>Trước</Button><span>Trang {page + 1} · tổng {data.totalElements}</span><Button variant="secondary" disabled={(page + 1) * data.size >= data.totalElements} onClick={() => setPage(page + 1)}>Sau</Button></div></div>}
     </Card></>;
 }
 
 export function CreateCasePage() {
   const { service } = useMedicalRuntime();
   const navigate = useNavigate();
-  return <><Link to={ROUTES.medical}>Back to cases</Link><PageHeader title="Create Medical Case" />
-    <Card title="Independent case"><MedicalForm submitLabel="Create case" onCancel={() => navigate(ROUTES.medical)} fields={[
-      { name: 'horseId', label: 'Horse ID', type: 'number', required: true },
-      { name: 'reason', label: 'Reason', type: 'textarea', required: true, maxLength: 2000 },
+  return <><ButtonLink variant="tertiary" to={ROUTES.medical}>← Quay lại danh sách ca</ButtonLink><PageHeader title="Tạo ca y tế" />
+    <Card title="Ca y tế độc lập"><MedicalForm submitLabel="Tạo ca" onCancel={() => navigate(ROUTES.medical)} fields={[
+      { name: 'horseId', label: 'Mã ngựa', type: 'number', required: true },
+      { name: 'reason', label: 'Lý do', type: 'textarea', required: true, maxLength: 2000 },
     ]} onSave={async (values) => {
       const item = await service.createCase({ horseId: positiveId(values.horseId), reason: values.reason });
       navigate(casePath(item.id));
-    }} /><p className="text-caption">To open a case from an incident, use Incident review.</p></Card></>;
+    }} /><p className="text-caption">Để mở ca từ một sự cố, hãy dùng màn hình xem xét sự cố.</p></Card></>;
 }
 
 export function HerdHealthPage() {
@@ -131,30 +133,30 @@ export function HerdHealthPage() {
   const cases = useResource(useCallback(() => collectCases(service), [service]));
   const [health, setHealth] = useState('');
   const visible = horses.data?.filter((horse) => !health || (health === 'UNASSESSED' ? horse.healthStatus === null : horse.healthStatus === health)) ?? [];
-  return <><PageHeader title="Herd Health Overview" description="Health Status and Training Availability are shown separately" actions={<Button onClick={() => navigate(ROUTES.medical)}>View Medical Cases</Button>} />
+  return <><PageHeader title="Tổng quan sức khỏe đàn ngựa" description="Tình trạng sức khỏe và khả năng tập luyện được hiển thị riêng" actions={<Button onClick={() => navigate(ROUTES.medical)}>Xem ca y tế</Button>} />
     {!data ? <ResourceState error={error} retry={reload} /> : <div className="medical-stack">
-      <p className="text-caption">{data.totalHorses} horses · {data.unassessed} unassessed</p>
-      <p className="medical-overline">Health Status · club totals</p><div className="medical-grid medical-herd-grid">
-        {[['Fit', data.fit], ['Monitoring', data.monitoring], ['Injured', data.injured], ['Quarantined', data.quarantined]].map(([label, value]) =>
+      <p className="text-caption">{data.totalHorses} con ngựa · {data.unassessed} chưa đánh giá</p>
+      <p className="medical-overline">Tình trạng sức khỏe · toàn câu lạc bộ</p><div className="medical-grid medical-herd-grid">
+        {[['Khỏe', data.fit], ['Đang theo dõi', data.monitoring], ['Bị chấn thương', data.injured], ['Đang cách ly', data.quarantined]].map(([label, value]) =>
           <MetricCard key={label} label={String(label)} value={String(value)} />)}
       </div>
     </div>}
     {!horses.data ? <ResourceState error={horses.error} retry={horses.reload} /> : <div className="medical-stack">
-      <Card><div className="medical-actions"><span className="medical-overline">Training availability · {horses.data.length} active horses</span>
+      <Card><div className="medical-actions"><span className="medical-overline">Khả năng tập luyện · {horses.data.length} ngựa đang hoạt động</span>
         {(['AVAILABLE', 'LIMITED', 'LOCKED'] as const).map((level) => <span key={level} className="medical-actions"><StatusBadge family="availability" status={level} />{horses.data!.filter((horse) => horse.trainingAvailability === level).length}</span>)}
       </div></Card>
-      <div className="medical-actions" role="group" aria-label="Active horse health filters">
+      <div className="medical-actions" role="group" aria-label="Bộ lọc sức khỏe ngựa đang hoạt động">
         {['', 'FIT', 'MONITORING', 'INJURED', 'QUARANTINED', 'UNASSESSED'].map((status) => <button className="medical-chip" key={status} type="button" aria-pressed={health === status} onClick={() => setHealth(status)}>
-          {status || 'All'} · {horses.data!.filter((horse) => !status || (status === 'UNASSESSED' ? horse.healthStatus === null : horse.healthStatus === status)).length}
+          {status ? (status === 'UNASSESSED' ? 'Chưa đánh giá' : viLabel(status)) : 'Tất cả'} · {horses.data!.filter((horse) => !status || (status === 'UNASSESSED' ? horse.healthStatus === null : horse.healthStatus === status)).length}
         </button>)}
       </div>
-      {cases.error && <div className="medical-actions"><p className="text-caption">Case summaries are unavailable.</p><Button variant="secondary" onClick={cases.reload}>Retry case summaries</Button></div>}
-      {!visible.length ? <EmptyState title="No active horses for this filter" /> : <div className="medical-grid medical-herd-grid">{visible.map((horse) => <Card key={horse.id} className="medical-herd-horse">
-        <h3 className="text-h3">{horse.name}</h3><p className="text-caption">{horse.horseCode}{horse.currentBoxCode ? ` · Box ${horse.currentBoxCode}` : ''}</p>
-        <div className="medical-actions">{horse.healthStatus ? <StatusBadge family="health" status={horse.healthStatus} /> : <span className="text-caption">{horse.healthStatus === null ? 'Unassessed' : 'Health status unavailable'}</span>}<StatusBadge family="availability" status={horse.trainingAvailability} /></div>
+      {cases.error && <div className="medical-actions"><p className="text-caption">Không tải được tóm tắt ca y tế.</p><Button variant="secondary" onClick={cases.reload}>Tải lại tóm tắt ca</Button></div>}
+      {!visible.length ? <EmptyState title="Không có ngựa phù hợp bộ lọc" /> : <div className="medical-grid medical-herd-grid">{visible.map((horse) => <Card key={horse.id} className="medical-herd-horse">
+        <h3 className="text-h3">{horse.name}</h3><p className="text-caption">{horse.horseCode}{horse.currentBoxCode ? ` · Ô ${horse.currentBoxCode}` : ''}</p>
+        <div className="medical-actions">{horse.healthStatus ? <StatusBadge family="health" status={horse.healthStatus} /> : <span className="text-caption">{horse.healthStatus === null ? 'Chưa đánh giá' : 'Không có tình trạng sức khỏe'}</span>}<StatusBadge family="availability" status={horse.trainingAvailability} /></div>
         {cases.data ? cases.data.filter((item) => item.horseId === horse.id && item.status === 'OPEN').length ? cases.data.filter((item) => item.horseId === horse.id && item.status === 'OPEN').map((item) => <div key={item.id} className="medical-case-preview">
-          <p>Open case · {item.reason ?? `Case ${item.id}`}</p><p className="text-caption">{item.treatmentPlan?.reexaminationDate ? `Next review ${item.treatmentPlan.reexaminationDate}` : 'Review not scheduled'}</p><Link to={casePath(item.id)}>Open case →</Link>
-        </div>) : <p className="text-caption">No open case</p> : <p className="text-caption">{cases.error ? 'Case summary unavailable' : 'Loading case summary…'}</p>}
+          <p>Ca đang mở · {item.reason ?? `Ca ${item.id}`}</p><p className="text-caption">{item.treatmentPlan?.reexaminationDate ? `Tái khám ${item.treatmentPlan.reexaminationDate}` : 'Chưa hẹn tái khám'}</p><Link to={casePath(item.id)}>Mở ca →</Link>
+        </div>) : <p className="text-caption">Không có ca đang mở</p> : <p className="text-caption">{cases.error ? 'Không tải được tóm tắt ca' : 'Đang tải tóm tắt ca…'}</p>}
       </Card>)}</div>}
     </div>}
   </>;
@@ -165,11 +167,11 @@ export function CaseDetailPage() {
   const { service } = useMedicalRuntime();
   const id = Number(caseId);
   const load = useCallback(async () => {
-    if (!Number.isSafeInteger(id) || id < 1) throw new Error('Invalid medical case ID.');
+    if (!Number.isSafeInteger(id) || id < 1) throw new Error('Mã ca y tế không hợp lệ.');
     return service.getCase(id);
   }, [service, id]);
   const { data, error, reload } = useResource(load);
-  if (!Number.isSafeInteger(id) || id < 1) return <EmptyState title="Medical case not found" />;
+  if (!Number.isSafeInteger(id) || id < 1) return <EmptyState title="Không tìm thấy ca y tế" />;
   if (!data) return <ResourceState error={error} retry={reload} />;
   return <CaseDetails item={data} reload={reload} />;
 }
@@ -180,37 +182,37 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
   const [closing, setClosing] = useState(false);
   const [confirmClose, setConfirmClose] = useState(false);
   const closed = item.status === 'CLOSED';
-  return <><Link to={ROUTES.medical}>Back to cases</Link>
-    <HorseHeading title={'Medical Case ' + item.id} horseId={item.horseId} description={'Opened ' + dateTime(item.openedAt)} />
-    <div className="medical-grid"><Card title="Case overview"><div className="medical-stack">
-      <KeyValue label="Status" value={item.status} /><KeyValue label="Reason" value={item.reason ?? '—'} />
-      <KeyValue label="Opened" value={dateTime(item.openedAt)} /><KeyValue label="Linked incidents" value={item.incidentIds.join(', ') || 'None'} />
+  return <><ButtonLink variant="tertiary" to={ROUTES.medical}>← Quay lại danh sách ca</ButtonLink>
+    <HorseHeading title={'Ca y tế ' + item.id} horseId={item.horseId} description={'Mở lúc ' + dateTime(item.openedAt)} />
+    <div className="medical-grid"><Card title="Tổng quan ca"><div className="medical-stack">
+      <KeyValue label="Trạng thái" value={<StatusBadge family="medicalCase" status={item.status} />} /><KeyValue label="Lý do" value={item.reason ?? '—'} />
+      <KeyValue label="Mở lúc" value={dateTime(item.openedAt)} /><KeyValue label="Sự cố liên quan" value={item.incidentIds.join(', ') || 'Không có'} />
     </div></Card><AvailabilityCard horseId={item.horseId} /></div>
-    <Tabs label="Medical case sections" idPrefix="case" value={panel} onChange={setPanel} items={[
-      { value: 'record', label: 'Record' }, { value: 'examination', label: 'Examination' },
-      { value: 'injury', label: 'Injury' }, { value: 'treatment', label: 'Treatment' },
+    <Tabs label="Các mục của ca y tế" idPrefix="case" value={panel} onChange={setPanel} items={[
+      { value: 'record', label: 'Hồ sơ' }, { value: 'examination', label: 'Khám' },
+      { value: 'injury', label: 'Chấn thương' }, { value: 'treatment', label: 'Điều trị' },
       { value: 'recovery', label: 'Re-examination' },
     ]} />
     <div role="tabpanel" id="case-panel-record" aria-labelledby="case-tab-record" hidden={panel !== 'record'} className="medical-stack">
-      <Card title="Current condition"><KeyValue label="Latest diagnosis" value={latest(item.examinations)?.diagnosis ?? (item.examinations.length ? 'No diagnosis recorded' : 'Awaiting examination')} />
-        <KeyValue label="Recovery" value={latest(item.reexaminations)?.recoveryStatus ?? 'Not assessed'} />
-        <KeyValue label="Next review" value={item.treatmentPlan?.reexaminationDate ?? 'Not scheduled'} /></Card>
-      {!closed && <Card title="Close medical case"><p>The server requires an examination or re-examination. If an injury or treatment plan exists, the latest re-examination must be RECOVERED. Treatment tasks must be complete, linked incidents resolved and case restrictions lifted.</p>
+      <Card title="Thể trạng hiện tại"><KeyValue label="Chẩn đoán gần nhất" value={latest(item.examinations)?.diagnosis ?? (item.examinations.length ? 'Chưa có chẩn đoán' : 'Đang chờ khám')} />
+        <KeyValue label="Hồi phục" value={viLabel(latest(item.reexaminations)?.recoveryStatus)} />
+        <KeyValue label="Lần khám tiếp theo" value={item.treatmentPlan?.reexaminationDate ?? 'Chưa lên lịch'} /></Card>
+      {!closed && <Card title="Đóng ca y tế"><p>Cần có ít nhất một lần khám hoặc tái khám. Nếu có chấn thương hoặc phác đồ điều trị, lần tái khám gần nhất phải là Đã hồi phục. Mọi công việc điều trị phải hoàn thành, sự cố liên quan đã xử lý xong và hạn chế của ca đã được gỡ.</p>
         {closeError && <AlertBanner type="danger" title={closeError} />}
-        {confirmClose ? <div className="medical-actions"><span>Close case {item.id}?</span><Button disabled={closing} onClick={async () => {
+        {confirmClose ? <div className="medical-actions"><span>Đóng ca {item.id}?</span><Button disabled={closing} onClick={async () => {
           setClosing(true); setCloseError('');
-          try { await service.closeCase(item.id); reload(); } catch (failure) { setCloseError(medicalErrorMessage(failure, 'Unable to close case.')); } finally { setClosing(false); }
-        }}>{closing ? 'Closing…' : 'Confirm close'}</Button><Button variant="secondary" onClick={() => setConfirmClose(false)}>Cancel</Button></div> :
-          <Button variant="secondary" onClick={() => setConfirmClose(true)}>Close case</Button>}</Card>}
+          try { await service.closeCase(item.id); reload(); } catch (failure) { setCloseError(medicalErrorMessage(failure, 'Không đóng được ca y tế.')); } finally { setClosing(false); }
+        }}>{closing ? 'Đang đóng…' : 'Xác nhận đóng'}</Button><Button variant="secondary" onClick={() => setConfirmClose(false)}>Hủy</Button></div> :
+          <Button variant="secondary" onClick={() => setConfirmClose(true)}>Đóng ca</Button>}</Card>}
     </div>
     <div role="tabpanel" id="case-panel-examination" aria-labelledby="case-tab-examination" hidden={panel !== 'examination'} className="medical-stack">
-      <Card title="Examinations"><History count={item.examinations.length} empty="No examinations">{item.examinations.map((exam) =>
-        <li key={exam.id}><strong>{dateTime(exam.examinedAt)}</strong><p>{exam.symptoms}</p><p>{exam.diagnosis || 'No diagnosis'} · {exam.severity || 'Severity not set'}</p></li>)}</History>
-        {!closed && <MedicalForm submitLabel="Save examination" fields={[
-          { name: 'symptoms', label: 'Symptoms and findings', type: 'textarea', required: true },
-          { name: 'diagnosis', label: 'Diagnosis', type: 'textarea', maxLength: 1000 },
-          { name: 'severity', label: 'Severity', options: ['MILD', 'MODERATE', 'SEVERE'] },
-          { name: 'healthStatus', label: 'Horse health status', options: ['FIT', 'MONITORING', 'INJURED', 'QUARANTINED'] },
+      <Card title="Các lần khám"><History count={item.examinations.length} empty="Chưa có lần khám nào">{item.examinations.map((exam) =>
+        <li key={exam.id}><strong>{dateTime(exam.examinedAt)}</strong><p>{exam.symptoms}</p><p>{exam.diagnosis || 'Chưa có chẩn đoán'} · {exam.severity || 'Chưa đặt mức độ'}</p></li>)}</History>
+        {!closed && <MedicalForm submitLabel="Lưu lần khám" fields={[
+          { name: 'symptoms', label: 'Triệu chứng và phát hiện', type: 'textarea', required: true },
+          { name: 'diagnosis', label: 'Chẩn đoán', type: 'textarea', maxLength: 1000 },
+          { name: 'severity', label: 'Mức độ', options: ['MILD', 'MODERATE', 'SEVERE'] },
+          { name: 'healthStatus', label: 'Tình trạng sức khỏe của ngựa', options: ['FIT', 'MONITORING', 'INJURED', 'QUARANTINED'] },
         ]} onSave={async (values) => { await service.addExamination(item.id, {
           symptoms: values.symptoms, examinedAt: new Date().toISOString(),
           ...(values.diagnosis ? { diagnosis: values.diagnosis } : {}),
@@ -220,14 +222,14 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
     </div>
     <div role="tabpanel" id="case-panel-injury" aria-labelledby="case-tab-injury" hidden={panel !== 'injury'} className="medical-stack">
       <InjuryMap injuries={item.injuries} />
-      <Card title="Injury records"><History count={item.injuries.length} empty="No injuries">{item.injuries.map((injury) =>
-        <li key={injury.id}>{injury.bodyRegion} · {injury.severity} · {injury.recoveryStatus}{injury.position3d && <p>Position marker: {injury.position3d}</p>}</li>)}</History>
-        {!closed && <MedicalForm submitLabel="Save injury" fields={[
-          { name: 'bodyRegion', label: 'Body region', maxLength: 100, required: true },
-          { name: 'severity', label: 'Severity', options: ['MILD', 'MODERATE', 'SEVERE'], required: true },
-          { name: 'recoveryStatus', label: 'Recovery status', options: ['NOT_RECOVERED', 'IMPROVING', 'RECOVERED'], required: true },
-          { name: 'position3d', label: 'Position marker (optional)', maxLength: 100 },
-          { name: 'side', label: 'Side (optional)', maxLength: 20 },
+      <Card title="Hồ sơ chấn thương"><History count={item.injuries.length} empty="Chưa có chấn thương">{item.injuries.map((injury) =>
+        <li key={injury.id}>{regionLabel(injury.bodyRegion)} · {viLabel(injury.severity)} · {viLabel(injury.recoveryStatus)}{injury.position3d && <p>Điểm đánh dấu vị trí: {injury.position3d}</p>}</li>)}</History>
+        {!closed && <MedicalForm submitLabel="Lưu chấn thương" fields={[
+          { name: 'bodyRegion', label: 'Vùng cơ thể', maxLength: 100, required: true },
+          { name: 'severity', label: 'Mức độ', options: ['MILD', 'MODERATE', 'SEVERE'], required: true },
+          { name: 'recoveryStatus', label: 'Tình trạng hồi phục', options: ['NOT_RECOVERED', 'IMPROVING', 'RECOVERED'], required: true },
+          { name: 'position3d', label: 'Điểm đánh dấu vị trí (không bắt buộc)', maxLength: 100 },
+          { name: 'side', label: 'Bên (không bắt buộc)', maxLength: 20 },
         ]} onSave={async (values) => { await service.addInjury(item.id, {
           bodyRegion: values.bodyRegion, severity: values.severity as ClinicalSeverity,
           recoveryStatus: values.recoveryStatus as RecoveryStatus,
@@ -236,22 +238,22 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
         }); reload(); }} />}</Card>
     </div>
     <div role="tabpanel" id="case-panel-treatment" aria-labelledby="case-tab-treatment" hidden={panel !== 'treatment'} className="medical-stack">
-      <Card title="Treatment plan">{item.treatmentPlan ? <div className="medical-stack">
-        <KeyValue label="Treatment and medication" value={item.treatmentPlan.treatmentMedicationInstructions} />
-        <KeyValue label="Rest" value={item.treatmentPlan.restInstructions ?? '—'} />
-        <KeyValue label="Care" value={item.treatmentPlan.careInstructions ?? '—'} />
-        <KeyValue label="Re-examination" value={item.treatmentPlan.reexaminationDate ?? 'Not scheduled'} />
-      </div> : <EmptyState title="No treatment plan" />}
-        {!closed && <Link to={casePath(item.id) + '/treatment-plan'}>Open treatment plan editor</Link>}</Card>
+      <Card title="Phác đồ điều trị">{item.treatmentPlan ? <div className="medical-stack">
+        <KeyValue label="Điều trị và thuốc" value={item.treatmentPlan.treatmentMedicationInstructions} />
+        <KeyValue label="Nghỉ ngơi" value={item.treatmentPlan.restInstructions ?? '—'} />
+        <KeyValue label="Chăm sóc" value={item.treatmentPlan.careInstructions ?? '—'} />
+        <KeyValue label="Re-examination" value={item.treatmentPlan.reexaminationDate ?? 'Chưa lên lịch'} />
+      </div> : <EmptyState title="Chưa có phác đồ điều trị" />}
+        {!closed && <ButtonLink to={casePath(item.id) + '/treatment-plan'}>Mở trình soạn phác đồ điều trị</ButtonLink>}</Card>
       <CaseTasks caseId={item.id} />
     </div>
     <div role="tabpanel" id="case-panel-recovery" aria-labelledby="case-tab-recovery" hidden={panel !== 'recovery'} className="medical-stack">
-      <Card title="Re-examinations"><History count={item.reexaminations.length} empty="No re-examinations">{item.reexaminations.map((exam) =>
-        <li key={exam.id}>{exam.recoveryStatus}<p>{exam.findings}</p><small>{dateTime(exam.examinedAt)}</small></li>)}</History>
-        {!closed && <MedicalForm submitLabel="Save re-examination" fields={[
-          { name: 'recoveryStatus', label: 'Recovery status', options: ['NOT_RECOVERED', 'IMPROVING', 'RECOVERED'], required: true },
-          { name: 'findings', label: 'Findings', type: 'textarea', required: true },
-          { name: 'healthStatus', label: 'Horse health status', options: ['FIT', 'MONITORING', 'INJURED', 'QUARANTINED'] },
+      <Card title="Re-examinations"><History count={item.reexaminations.length} empty="Chưa có lần tái khám">{item.reexaminations.map((exam) =>
+        <li key={exam.id}>{viLabel(exam.recoveryStatus)}<p>{exam.findings}</p><small>{dateTime(exam.examinedAt)}</small></li>)}</History>
+        {!closed && <MedicalForm submitLabel="Lưu lần tái khám" fields={[
+          { name: 'recoveryStatus', label: 'Tình trạng hồi phục', options: ['NOT_RECOVERED', 'IMPROVING', 'RECOVERED'], required: true },
+          { name: 'findings', label: 'Kết quả khám', type: 'textarea', required: true },
+          { name: 'healthStatus', label: 'Tình trạng sức khỏe của ngựa', options: ['FIT', 'MONITORING', 'INJURED', 'QUARANTINED'] },
         ]} onSave={async (values) => { await service.addReexamination(item.id, {
           recoveryStatus: values.recoveryStatus as RecoveryStatus, findings: values.findings,
           examinedAt: new Date().toISOString(),
@@ -267,7 +269,7 @@ export function TreatmentPlanPage() {
   const { service } = useMedicalRuntime();
   const id = Number(caseId);
   const load = useCallback(async () => {
-    if (!Number.isSafeInteger(id) || id < 1) throw new Error('Invalid medical case ID.');
+    if (!Number.isSafeInteger(id) || id < 1) throw new Error('Mã ca y tế không hợp lệ.');
     const medicalCase = await service.getCase(id);
     const tasks = [] as Awaited<ReturnType<typeof service.listCaseTasks>>['items'];
     if (medicalCase.treatmentPlan) {
@@ -277,33 +279,33 @@ export function TreatmentPlanPage() {
         const result = await service.listCaseTasks(id, page);
         total ??= result.totalElements;
         size ??= result.size;
-        if (result.totalElements !== total || result.size !== size) throw new Error('Treatment tasks changed while loading. Reload before editing.');
+        if (result.totalElements !== total || result.size !== size) throw new Error('Công việc điều trị đã thay đổi trong lúc tải. Hãy tải lại trước khi sửa.');
         tasks.push(...result.items);
         if (tasks.length >= result.totalElements) break;
-        if (result.items.length === 0 || result.size < 1) throw new Error('Treatment tasks could not be loaded completely. Editing is unavailable.');
+        if (result.items.length === 0 || result.size < 1) throw new Error('Không tải đủ công việc điều trị. Tạm khóa chỉnh sửa.');
       }
-      if (new Set(tasks.map((task) => task.id)).size !== tasks.length || tasks.length !== total) throw new Error('Treatment task history is inconsistent. Reload before editing.');
+      if (new Set(tasks.map((task) => task.id)).size !== tasks.length || tasks.length !== total) throw new Error('Lịch sử công việc điều trị không nhất quán. Hãy tải lại trước khi sửa.');
     }
     return { medicalCase, tasks };
   }, [service, id]);
   const { data, error, reload } = useResource(load);
-  if (!Number.isSafeInteger(id) || id < 1) return <EmptyState title="Medical case not found" />;
+  if (!Number.isSafeInteger(id) || id < 1) return <EmptyState title="Không tìm thấy ca y tế" />;
   if (!data) return <ResourceState error={error} retry={reload} />;
   const { medicalCase, tasks } = data;
   const initial = {
     ...medicalCase.treatmentPlan,
     groomTasks: tasks.map((task) => ({ assignedGroomUserId: task.assignedGroomUserId, instruction: task.instruction, taskDate: task.taskDate, scheduledSlot: task.scheduledSlot })),
   };
-  return <><Link to={casePath(id)}>Back to medical case</Link>
-    <HorseHeading title="Treatment Plan" horseId={medicalCase.horseId} description={'Medical case ' + id} />
-    {saved && <AlertBanner type="success" title="Treatment plan saved" />}
+  return <><ButtonLink variant="tertiary" to={casePath(id)}>← Quay lại ca y tế</ButtonLink>
+    <HorseHeading title="Phác đồ điều trị" horseId={medicalCase.horseId} description={'Ca y tế ' + id} />
+    {saved && <AlertBanner type="success" title="Đã lưu phác đồ điều trị" />}
     <div className="medical-grid medical-treatment-layout"><div className="medical-stack">
-      {medicalCase.status === 'CLOSED' ? <AlertBanner type="danger" title="Closed cases cannot be edited" /> :
+      {medicalCase.status === 'CLOSED' ? <AlertBanner type="danger" title="Không thể sửa ca y tế đã đóng" /> :
         <TreatmentPlanEditor key={medicalCase.treatmentPlan?.id ?? 'new'} openedAt={medicalCase.openedAt} initial={initial} retainedTaskCount={tasks.length} onCancel={() => navigate(casePath(id))} onSave={async (input) => { await service.saveTreatment(id, input); setSaved(true); reload(); }} />}
       <CaseTasks caseId={id} />
     </div><div className="medical-stack">
       <TreatmentCaseSummary item={medicalCase} />
-      <Card title="Plan delivery"><p>Groom sees assigned care instructions only. Clinical diagnosis and medication details stay in the veterinary record.</p></Card>
+      <Card title="Triển khai phác đồ"><p>Groom chỉ thấy hướng dẫn chăm sóc được giao. Chẩn đoán và chi tiết thuốc vẫn nằm trong hồ sơ thú y.</p></Card>
     </div></div></>;
 }
 function CaseTasks({ caseId }: { caseId: number }) {
@@ -311,9 +313,9 @@ function CaseTasks({ caseId }: { caseId: number }) {
   const [page, setPage] = useState(0);
   const load = useCallback(() => service.listCaseTasks(caseId, page), [service, caseId, page]);
   const { data, error, reload } = useResource(load);
-  return <Card title="Assigned treatment tasks">{!data ? <ResourceState error={error} retry={reload} /> : <div className="medical-stack">
-    <History count={data.items.length} empty="No assigned treatment tasks">{data.items.map((task) =>
-      <li key={task.id}>{task.taskDate} · Groom {task.assignedGroomUserId} · {task.status}<p>{task.instruction}</p></li>)}</History>
-    <div className="medical-actions"><Button variant="secondary" disabled={page === 0} onClick={() => setPage(page - 1)}>Previous</Button><span>Page {page + 1} · {data.totalElements} total</span><Button variant="secondary" disabled={(page + 1) * data.size >= data.totalElements} onClick={() => setPage(page + 1)}>Next</Button></div>
+  return <Card title="Công việc điều trị đã giao">{!data ? <ResourceState error={error} retry={reload} /> : <div className="medical-stack">
+    <History count={data.items.length} empty="Chưa giao công việc điều trị nào">{data.items.map((task) =>
+      <li key={task.id}>{task.taskDate} · Groom {task.assignedGroomUserId} · {viLabel(task.status)}<p>{task.instruction}</p></li>)}</History>
+    <div className="medical-actions"><Button variant="secondary" disabled={page === 0} onClick={() => setPage(page - 1)}>Trước</Button><span>Trang {page + 1} · tổng {data.totalElements}</span><Button variant="secondary" disabled={(page + 1) * data.size >= data.totalElements} onClick={() => setPage(page + 1)}>Sau</Button></div>
   </div>}</Card>;
 }

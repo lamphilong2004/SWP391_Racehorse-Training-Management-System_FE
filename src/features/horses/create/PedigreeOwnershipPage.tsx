@@ -8,6 +8,7 @@ import { ApiRequestError } from '../api/horsesApi';
 import { useHorsesApi } from '../api/HorsesApiContext';
 import type { ActivationStatus, HorseDetail, StableAssignment, UserSummary } from '../api/types';
 import { formatDate, todayIsoDate } from '../shared/format';
+import { sexLabel } from '../shared/options';
 import { useBreadcrumb } from '../shared/HorseManagementLayout';
 import styles from '../shared/horses.module.css';
 import { AssignBoxModal } from './AssignBoxModal';
@@ -57,10 +58,10 @@ function PedigreeOwnershipPageContent() {
   const [saved, setSaved] = useState(false);
   const form = useRef<HTMLFormElement>(null);
 
-  useBreadcrumb([{ label: 'Horses', to: '/horses' }, { label: data?.horse.name ?? 'Horse' }, { label: 'Pedigree & Ownership' }]);
+  useBreadcrumb([{ label: 'Ngựa', to: '/horses' }, { label: data?.horse.name ?? 'Ngựa' }, { label: 'Phả hệ & quyền sở hữu' }]);
 
   const fetchAll = useCallback(async (): Promise<Loaded> => {
-    if (!Number.isSafeInteger(id) || id <= 0) throw new ApiRequestError(400, 'VALIDATION_ERROR', 'Invalid horse identifier.');
+    if (!Number.isSafeInteger(id) || id <= 0) throw new ApiRequestError(400, 'VALIDATION_ERROR', 'Mã ngựa không hợp lệ.');
     const horse = await api.getHorse(id);
     const [owners, assignments, activation] = await Promise.allSettled([
       api.listHorseOwners(), api.listStableAssignments(id), api.getActivationStatus(id),
@@ -71,9 +72,9 @@ function PedigreeOwnershipPageContent() {
       assignments: assignments.status === 'fulfilled' ? assignments.value : undefined,
       activation: activation.status === 'fulfilled' ? activation.value : undefined,
       unavailable: [
-        owners.status === 'rejected' ? 'Owner accounts' : null,
-        assignments.status === 'rejected' ? 'Stable assignment history' : null,
-        activation.status === 'rejected' ? 'Activation checklist' : null,
+        owners.status === 'rejected' ? 'Tài khoản chủ ngựa' : null,
+        assignments.status === 'rejected' ? 'Lịch sử xếp chuồng' : null,
+        activation.status === 'rejected' ? 'Danh mục kích hoạt' : null,
       ].filter((item): item is string => item !== null),
     };
   }, [api, id]);
@@ -91,7 +92,7 @@ function PedigreeOwnershipPageContent() {
   }, []);
 
   const loadFailed = (e: unknown) => {
-    setLoadError(e instanceof ApiRequestError && e.status === 404 ? 'This horse was not found.' : e instanceof ApiRequestError && e.status === 403 ? 'You do not have permission to view this horse.' : 'The horse could not be loaded.');
+    setLoadError(e instanceof ApiRequestError && e.status === 404 ? 'Không tìm thấy ngựa này.' : e instanceof ApiRequestError && e.status === 403 ? 'Bạn không có quyền xem ngựa này.' : 'Không tải được thông tin ngựa.');
   };
 
   useEffect(() => {
@@ -110,11 +111,11 @@ function PedigreeOwnershipPageContent() {
 
   if (loadError) {
     return <div className={styles.page}>
-      <ErrorState title="Horse not available" description={loadError} onRetry={() => { setLoadError(undefined); void load(); }} />
+      <ErrorState title="Không có ngựa này" description={loadError} onRetry={() => { setLoadError(undefined); void load(); }} />
     </div>;
   }
   if (!data) {
-    return <LoadingState label="Loading horse…" />;
+    return <LoadingState label="Đang tải thông tin ngựa…" />;
   }
 
   const { horse, owners, assignments, activation, unavailable } = data;
@@ -122,17 +123,17 @@ function PedigreeOwnershipPageContent() {
   const baselineDone = baseline ? baseline.state === 'SATISFIED' : undefined;
   const current = horse.currentAssignment;
   const previous = assignments?.filter((a) => a.effectiveTo !== null).length;
-  const facts = [horse.horseCode, horse.breed, horse.sex, horse.foaledDate ? `foaled ${formatDate(horse.foaledDate)}` : null].filter(Boolean).join(' · ');
+  const facts = [horse.horseCode, horse.breed, sexLabel(horse.sex), horse.foaledDate ? `foaled ${formatDate(horse.foaledDate)}` : null].filter(Boolean).join(' · ');
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (pending.current || refreshing || unavailable.length > 0 || !owners?.length) return;
     const missing: Partial<Record<Field, string>> = {};
-    if (!sire.trim()) missing.sire = 'Enter the sire.';
-    if (!dam.trim()) missing.dam = 'Enter the dam.';
+    if (!sire.trim()) missing.sire = 'Nhập ngựa cha.';
+    if (!dam.trim()) missing.dam = 'Nhập ngựa mẹ.';
     // Ownership is an activation requirement, not a pedigree prerequisite: an unknown owner may be declared later.
     const alreadyOwned = !ownerId || horse.currentOwnerships.some((item) => item.owner.id === Number(ownerId));
-    if (!alreadyOwned && (!Number.isFinite(Number(share)) || Number(share) <= 0 || Number(share) > 100 || !effectiveFrom)) missing.owner = 'Enter an ownership share (greater than 0, at most 100) and effective date.';
+    if (!alreadyOwned && (!Number.isFinite(Number(share)) || Number(share) <= 0 || Number(share) > 100 || !effectiveFrom)) missing.owner = 'Nhập tỷ lệ sở hữu (lớn hơn 0, tối đa 100) và ngày hiệu lực.';
     setErrors(missing);
     setFormError(undefined);
     if (Object.keys(missing).length > 0) { focusFirstInvalid(form.current); return; }
@@ -155,7 +156,7 @@ function PedigreeOwnershipPageContent() {
       flushSync(() => setSaved(true));
       navigate('/horses/pending-activation', { state: { completedHorseId: horse.id } });
     } catch (e) {
-      setFormError(e instanceof ApiRequestError ? e.message : 'The changes could not be saved. Please try again.');
+      setFormError(e instanceof ApiRequestError ? e.message : 'Không lưu được thay đổi. Hãy thử lại.');
     } finally {
       pending.current = false; setSaving(false);
     }
@@ -168,35 +169,35 @@ function PedigreeOwnershipPageContent() {
   return (
     <form ref={form} className={styles.page} onSubmit={submit} noValidate>
       <UnsavedChangesGuard dirty={dirty} />
-      <button type="button" className={styles.back} onClick={() => navigate(-1)}>{'←  Back'}</button>
+      <button type="button" className={styles.back} onClick={() => navigate(-1)}>{'← Quay lại'}</button>
 
       <div className={styles.titleRow}>
         <div className={styles.titleBlock}>
-          <h1 className={styles.title}>{`Pedigree & Ownership · ${horse.name}`}</h1>
-          <p className={styles.subtitle}>{`Step 2 of 2 · ${facts}`}</p>
+          <h1 className={styles.title}>{`Phả hệ & quyền sở hữu · ${horse.name}`}</h1>
+          <p className={styles.subtitle}>{`Bước 2/2 · ${facts}`}</p>
         </div>
         <StatusBadge family="lifecycle" status={horse.lifecycle} />
       </div>
 
       {location.state?.photoUploadFailed && (
-        <AlertBanner type="warning" title="Some photos were not uploaded">The horse was saved. Add the photos again from the horse profile.</AlertBanner>
+        <AlertBanner type="warning" title="Một số ảnh chưa được tải lên">Đã lưu ngựa. Hãy thêm lại ảnh từ hồ sơ ngựa.</AlertBanner>
       )}
-      {formError && <AlertBanner type="danger" title="Changes not saved">{formError}</AlertBanner>}
-      {unavailable.length > 0 && <AlertBanner type="warning" title="Horse setup unavailable">
-        <p>{`${unavailable.join(', ')} could not be loaded. The saved horse remains available. Saving is disabled until the required setup data can be verified.`}</p>
-        <Button variant="secondary" disabled={refreshing || saving} onClick={() => void load()}>{refreshing ? 'Retrying…' : 'Try again'}</Button>
-        <p><ButtonLink to={`/horses/${id}`}>View saved horse profile</ButtonLink>{' · '}<ButtonLink to="/horses">Back to Horses</ButtonLink></p>
+      {formError && <AlertBanner type="danger" title="Chưa lưu thay đổi">{formError}</AlertBanner>}
+      {unavailable.length > 0 && <AlertBanner type="warning" title="Không tải được dữ liệu thiết lập ngựa">
+        <p>{`Không tải được: ${unavailable.join(', ')}. Ngựa đã lưu vẫn còn. Tạm khóa lưu cho đến khi kiểm tra được dữ liệu cần thiết.`}</p>
+        <Button variant="secondary" disabled={refreshing || saving} onClick={() => void load()}>{refreshing ? 'Đang thử lại…' : 'Thử lại'}</Button>
+        <p><ButtonLink to={`/horses/${id}`}>Xem hồ sơ ngựa đã lưu</ButtonLink>{' · '}<ButtonLink to="/horses">Quay lại danh sách ngựa</ButtonLink></p>
       </AlertBanner>}
 
       <div className={styles.twoCol}>
         <div className={styles.colMain}>
           <Card>
             <div className={styles.cardBody}>
-              <h2 className={styles.cardTitle}>Pedigree</h2>
+              <h2 className={styles.cardTitle}>Phả hệ</h2>
               <div className={styles.row}>
-                <TextField label="Sire *" value={sire} maxLength={150} error={errors.sire} disabled={saving}
+                <TextField label="Ngựa cha *" value={sire} maxLength={150} error={errors.sire} disabled={saving}
                   onChange={(e) => { setSire(e.target.value); setErrors((x) => ({ ...x, sire: undefined })); }} />
-                <TextField label="Dam *" value={dam} maxLength={150} error={errors.dam} disabled={saving}
+                <TextField label="Ngựa mẹ *" value={dam} maxLength={150} error={errors.dam} disabled={saving}
                   onChange={(e) => { setDam(e.target.value); setErrors((x) => ({ ...x, dam: undefined })); }} />
               </div>
             </div>
@@ -204,35 +205,35 @@ function PedigreeOwnershipPageContent() {
 
           <Card>
             <div className={styles.cardBody}>
-              <h2 className={styles.cardTitle}>Ownership</h2>
-              <p className={styles.cardHelp}>The owner sees this horse read-only in the Owner portal — owners cannot edit administrative data.</p>
-              <SelectField label="Owner" placeholder="Owner not declared yet" value={ownerId} error={errors.owner}
+              <h2 className={styles.cardTitle}>Quyền sở hữu</h2>
+              <p className={styles.cardHelp}>Chủ ngựa xem ngựa này ở chế độ chỉ đọc trong cổng Horse Owner — chủ ngựa không sửa được dữ liệu quản lý.</p>
+              <SelectField label="Chủ ngựa" placeholder="Chưa khai báo chủ ngựa" value={ownerId} error={errors.owner}
                 disabled={!owners || saving || refreshing}
-                helperText={owners ? (owners.length ? 'Optional now; an owner is required before activation.' : 'No active Horse Owner accounts were returned. Contact the Club Manager.') : 'Owner accounts unavailable. Retry setup data.'}
-                options={(owners ?? []).map((o) => ({ value: String(o.id), label: `${o.fullName} · Horse Owner account` }))}
+                helperText={owners ? (owners.length ? 'Có thể để trống lúc này; cần có chủ ngựa trước khi kích hoạt.' : 'Chưa có tài khoản Horse Owner nào đang hoạt động. Hãy liên hệ Club Manager.') : 'Không tải được tài khoản chủ ngựa. Hãy tải lại dữ liệu thiết lập.'}
+                options={(owners ?? []).map((o) => ({ value: String(o.id), label: `${o.fullName} · tài khoản Horse Owner` }))}
                 onChange={(e) => { setOwnerId(e.target.value); setErrors((x) => ({ ...x, owner: undefined })); }} />
               {!horse.currentOwnerships.some((item) => item.owner.id === Number(ownerId)) && <>
-                <TextField label="Ownership share (%)" type="number" min={0.01} max={100} step={0.01} value={share} disabled={saving} onChange={(event) => setShare(event.target.value)} />
-                <TextField label="Ownership effective from" type="date" value={effectiveFrom} disabled={saving} onChange={(event) => setEffectiveFrom(event.target.value)} />
-                <Checkbox label="Managing owner" checked={managing} disabled={saving} onChange={(event) => setManaging(event.target.checked)} />
+                <TextField label="Tỷ lệ sở hữu (%)" type="number" min={0.01} max={100} step={0.01} value={share} disabled={saving} onChange={(event) => setShare(event.target.value)} />
+                <TextField label="Sở hữu có hiệu lực từ" type="date" value={effectiveFrom} disabled={saving} onChange={(event) => setEffectiveFrom(event.target.value)} />
+                <Checkbox label="Chủ quản lý" checked={managing} disabled={saving} onChange={(event) => setManaging(event.target.checked)} />
               </>}
-              <p className={styles.cardHelp}>Existing ownerships are retained. This form does not assume a single owner or a 100% share.</p>
+              <p className={styles.cardHelp}>Các quyền sở hữu hiện có vẫn được giữ. Biểu mẫu không mặc định chỉ có một chủ hay sở hữu 100%.</p>
             </div>
           </Card>
 
           <Card>
             <div className={styles.cardBody}>
-              <h2 className={styles.cardTitle}>Stable box</h2>
-              <p className={styles.cardHelp}>Required before activation. Only a free box can be assigned.</p>
+              <h2 className={styles.cardTitle}>Ô chuồng</h2>
+              <p className={styles.cardHelp}>Bắt buộc trước khi kích hoạt. Chỉ xếp được ô còn trống.</p>
               <div className={styles.boxRow}>
                 <div className={styles.boxValue}>
-                  <span className={styles.boxValueMain}>{current ? `Box ${current.boxCode}${current.yard ? ` · ${current.yard}` : ''}` : 'No box assigned yet'}</span>
+                  <span className={styles.boxValueMain}>{current ? `Ô ${current.boxCode}${current.yard ? ` · ${current.yard}` : ''}` : 'Chưa xếp ô chuồng'}</span>
                   <span className={styles.boxValueSub}>
-                    {previous === undefined ? 'Box history unavailable' : previous === 0 ? (current ? `Assigned ${formatDate(current.effectiveFrom)}` : 'Box history: none — new arrival')
-                      : `Box history: ${previous} previous ${previous === 1 ? 'box' : 'boxes'}`}
+                    {previous === undefined ? 'Không tải được lịch sử ô chuồng' : previous === 0 ? (current ? `Xếp ngày ${formatDate(current.effectiveFrom)}` : 'Lịch sử ô chuồng: chưa có — ngựa mới đến')
+                      : `Lịch sử ô chuồng: ${previous} ô trước đây`}
                   </span>
                 </div>
-                <Button variant="secondary" disabled={saving || refreshing} onClick={() => setBoxModalOpen(true)}>Assign Stable Box</Button>
+                <Button variant="secondary" disabled={saving || refreshing} onClick={() => setBoxModalOpen(true)}>Xếp ô chuồng</Button>
               </div>
             </div>
           </Card>
@@ -241,24 +242,24 @@ function PedigreeOwnershipPageContent() {
         <aside className={styles.colSide}>
           <Card>
             <div className={styles.cardBody}>
-              <h2 className={styles.cardTitle}>Horse summary</h2>
-              <div className={styles.kv}><span className={styles.kvLabel}>Horse</span><span className={styles.kvValue}>{`${horse.name} · ${horse.horseCode}`}</span></div>
-              <div className={styles.kv}><span className={styles.kvLabel}>Breed · sex</span><span className={styles.kvValue}>{[horse.breed, horse.sex].filter(Boolean).join(' · ') || '—'}</span></div>
-              <div className={styles.kv}><span className={styles.kvLabel}>Lifecycle</span><StatusBadge family="lifecycle" status={horse.lifecycle} /></div>
-              <div className={styles.kv}><span className={styles.kvLabel}>Health baseline</span>
-                <span className={styles.kvValue}>{baselineDone === undefined ? 'Baseline status unavailable' : baselineDone ? 'Recorded (Veterinarian)' : 'Not yet recorded (Veterinarian)'}</span></div>
+              <h2 className={styles.cardTitle}>Tóm tắt ngựa</h2>
+              <div className={styles.kv}><span className={styles.kvLabel}>Ngựa</span><span className={styles.kvValue}>{`${horse.name} · ${horse.horseCode}`}</span></div>
+              <div className={styles.kv}><span className={styles.kvLabel}>Giống · giới tính</span><span className={styles.kvValue}>{[horse.breed, sexLabel(horse.sex)].filter(Boolean).join(' · ') || '—'}</span></div>
+              <div className={styles.kv}><span className={styles.kvLabel}>Vòng đời</span><StatusBadge family="lifecycle" status={horse.lifecycle} /></div>
+              <div className={styles.kv}><span className={styles.kvLabel}>Khám sức khỏe ban đầu</span>
+                <span className={styles.kvValue}>{baselineDone === undefined ? 'Không tải được trạng thái khám ban đầu' : baselineDone ? 'Đã ghi (Veterinarian)' : 'Chưa ghi (Veterinarian)'}</span></div>
             </div>
           </Card>
           <div className={[styles.note, styles.notePrimary].join(' ')}>
             <Icon name="info" size={16} />
-            <span>Pedigree, owner and box complete the administrative profile. The horse stays DRAFT until all activation requirements — including the Veterinarian’s initial health baseline — are met.</span>
+            <span>Phả hệ, chủ ngựa và ô chuồng hoàn tất hồ sơ quản lý. Ngựa giữ trạng thái Nháp cho đến khi đủ mọi yêu cầu kích hoạt — kể cả kết quả khám ban đầu của Veterinarian.</span>
           </div>
         </aside>
       </div>
 
       <div className={styles.footer}>
-        <Button variant="secondary" onClick={() => navigate('/horses')} disabled={saving}>Cancel</Button>
-        <Button type="submit" disabled={saving || refreshing || unavailable.length > 0 || !owners?.length}>{'Save & Continue'}</Button>
+        <Button variant="secondary" onClick={() => navigate('/horses')} disabled={saving}>Hủy</Button>
+        <Button type="submit" disabled={saving || refreshing || unavailable.length > 0 || !owners?.length}>{'Lưu & tiếp tục'}</Button>
       </div>
 
       {boxModalOpen && (

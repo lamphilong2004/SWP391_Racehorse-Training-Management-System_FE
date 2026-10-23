@@ -65,7 +65,7 @@ export function createProgramCreationApi(request: ProgramTransport) {
         || !Number.isSafeInteger(result.size) || result.size < 1
         || !Number.isSafeInteger(result.totalItems) || result.totalItems < 0
         || !Number.isSafeInteger(result.totalPages) || result.totalPages < 0)
-        throw new ApiError(200, 'INVALID_RESPONSE', 'Program list pagination is unavailable. Reload to retry.');
+        throw new ApiError(200, 'INVALID_RESPONSE', 'Không phân trang được danh sách chương trình. Hãy tải lại.');
       return result;
     },
     listHorses: (query: ListQuery = {}, signal?: AbortSignal) =>

@@ -3,7 +3,7 @@ import { isRoleCode } from '../../shared/auth/roles';
 import { auditSearchParams, isAuditDate, validateAuditQuery } from './auditQuery';
 import type { AuditEntry, AuditPage, ClubManagerDashboard, CountByKey, ManagementService } from './types';
 
-function invalid(): never { throw new ApiError(200, 'INVALID_RESPONSE', 'Management response does not match the approved contract.'); }
+function invalid(): never { throw new ApiError(200, 'INVALID_RESPONSE', 'Dữ liệu quản lý trả về không hợp lệ.'); }
 function record(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return invalid();
   return value as Record<string, unknown>;
@@ -69,7 +69,7 @@ export function createManagementService(options: { fetcher?: typeof fetch; baseU
   return {
     dashboard: async ({ token, signal }) => parseDashboard(await requestApi('/api/dashboard/club-manager', { method: 'GET', signal }, { ...options, token })),
     audit: async (query, { token, signal }) => {
-      if (Object.keys(validateAuditQuery(query)).length) throw new ApiError(400, 'VALIDATION_ERROR', 'Check the audit filters.');
+      if (Object.keys(validateAuditQuery(query)).length) throw new ApiError(400, 'VALIDATION_ERROR', 'Hãy kiểm tra bộ lọc nhật ký.');
       const page = parseAuditPage(await requestApi(`/api/admin/audit-log?${auditSearchParams(query)}`, { method: 'GET', signal }, { ...options, token }));
       if (page.page !== query.page || page.size !== query.size) return invalid();
       return page;

@@ -9,110 +9,110 @@ import styles from './LandingPage.module.css';
  * are implemented. Figma photography is replaced by design-system surfaces.
  */
 const PLATFORM: { icon: IconName; title: string; text: string }[] = [
-  { icon: 'horseshoe', title: 'One record per horse', text: 'Profile, pedigree, ownership, stable box, weight, training and health history in one place.' },
-  { icon: 'users', title: 'Seven role workspaces', text: 'Club Manager, Head Trainer, Trainer, Work Rider, Veterinarian, Groom and Horse Owner — access assigned by the club.' },
-  { icon: 'shield-check', title: 'Traceable by design', text: 'Important actions are audit-logged. Medical and training history is kept, never silently removed.' },
+  { icon: 'horseshoe', title: 'Mỗi ngựa một hồ sơ', text: 'Hồ sơ, phả hệ, sở hữu, ô chuồng, cân nặng, lịch sử huấn luyện và sức khỏe ở cùng một nơi.' },
+  { icon: 'users', title: 'Bảy không gian theo vai trò', text: 'Club Manager, Head Trainer, Trainer, Work Rider, Veterinarian, Groom và Horse Owner — quyền truy cập do câu lạc bộ cấp.' },
+  { icon: 'shield-check', title: 'Truy vết được mọi thao tác', text: 'Các thao tác quan trọng đều được ghi nhật ký. Lịch sử y tế và huấn luyện được lưu giữ, không bao giờ bị xóa âm thầm.' },
 ];
 const SHOWCASE = [
-  { title: 'Horse Management', text: 'Profile, pedigree and history, ownership and stable box for every horse.' },
-  { title: 'Training Management', text: 'Programs built from templates, sessions within the approved phase, live monitoring.' },
-  { title: 'Medical Management', text: 'Records, 3D injury location, and Training Availability set by the Veterinarian.' },
+  { title: 'Quản lý ngựa', text: 'Hồ sơ, phả hệ và lịch sử, quyền sở hữu và ô chuồng của từng ngựa.' },
+  { title: 'Quản lý huấn luyện', text: 'Chương trình xây dựng từ mẫu, buổi tập trong giai đoạn đã duyệt, giám sát trực tiếp.' },
+  { title: 'Quản lý y tế', text: 'Hồ sơ, vị trí chấn thương 3D và khả năng tập luyện do Veterinarian đặt.' },
 ];
-const PIPELINE = ['Program template', 'Horse training program', 'Training session', 'Live monitoring', 'Evaluation'];
+const PIPELINE = ['Mẫu chương trình', 'Chương trình huấn luyện ngựa', 'Buổi tập', 'Giám sát trực tiếp', 'Đánh giá'];
 const TILES: { icon: IconName; title: string; text: string; planned?: boolean }[] = [
-  { icon: 'clipboard-list', title: 'Daily care & nutrition', text: 'Care plans, rations and the Groom’s daily tasks.', planned: true },
-  { icon: 'calendar', title: 'Preventive healthcare', text: 'Vaccination, deworming, farrier and re-examination due dates.', planned: true },
-  { icon: 'bell', title: 'Realtime alerts', text: 'Threshold alerts and notifications.' },
-  { icon: 'bar-chart', title: 'Dashboards & reports', text: 'Role dashboards and management reports.', planned: true },
-  { icon: 'lock', title: 'Access & audit', text: 'Seven roles and an audit log.' },
+  { icon: 'clipboard-list', title: 'Chăm sóc & dinh dưỡng hằng ngày', text: 'Kế hoạch chăm sóc, khẩu phần và công việc hằng ngày của Groom.', planned: true },
+  { icon: 'calendar', title: 'Chăm sóc phòng ngừa', text: 'Lịch tiêm phòng, tẩy giun, đóng móng và tái khám.', planned: true },
+  { icon: 'bell', title: 'Cảnh báo tức thời', text: 'Cảnh báo theo ngưỡng và thông báo.' },
+  { icon: 'bar-chart', title: 'Tổng quan & báo cáo', text: 'Trang tổng quan theo vai trò và báo cáo quản lý.', planned: true },
+  { icon: 'lock', title: 'Phân quyền & nhật ký', text: 'Bảy vai trò và nhật ký hệ thống.' },
 ];
 const ROLES: { icon: IconName; role: string; step: string; text: string }[] = [
-  { icon: 'stethoscope', role: 'Veterinarian', step: 'Step 1', text: 'Examines the horse and sets Training Availability — the gate every session checks.' },
-  { icon: 'target', role: 'Head Trainer', step: 'Step 2', text: 'Builds the horse’s program from a template and assigns the Trainer.' },
-  { icon: 'activity', role: 'Trainer', step: 'Step 3', text: 'Schedules sessions inside the approved phase and monitors them live.' },
-  { icon: 'play', role: 'Work Rider', step: 'Step 4', text: 'Rides the session, reports issues and gives feedback for the Trainer’s review.' },
+  { icon: 'stethoscope', role: 'Veterinarian', step: 'Bước 1', text: 'Khám ngựa và đặt khả năng tập luyện — điều kiện mọi buổi tập đều kiểm tra.' },
+  { icon: 'target', role: 'Head Trainer', step: 'Bước 2', text: 'Xây dựng chương trình cho ngựa từ mẫu và phân công Trainer.' },
+  { icon: 'activity', role: 'Trainer', step: 'Bước 3', text: 'Lên lịch buổi tập trong giai đoạn đã duyệt và giám sát trực tiếp.' },
+  { icon: 'play', role: 'Work Rider', step: 'Bước 4', text: 'Cưỡi buổi tập, báo cáo vấn đề và gửi phản hồi để Trainer đánh giá.' },
 ];
 
 function Logo() {
   return <span className={styles.logo}><span className={styles.logomark}><Icon name="horseshoe" size={18} /></span>
-    <span><strong>Racehorse Ops</strong><small>Racehorse Training &amp; Management System</small></span></span>;
+    <span><strong>Racehorse Ops</strong><small>Hệ thống quản lý &amp; huấn luyện ngựa đua</small></span></span>;
 }
 
 export function LandingPage() {
   return <div className={styles.page}>
     <header className={styles.nav}>
       <Logo />
-      <nav aria-label="Landing sections" className={styles.navLinks}>
-        <a href="#platform">Platform</a><a href="#showcase">Showcase</a><a href="#capabilities">Capabilities</a><a href="#workflow">Workflow</a>
+      <nav aria-label="Các mục trang giới thiệu" className={styles.navLinks}>
+        <a href="#platform">Nền tảng</a><a href="#showcase">Giới thiệu</a><a href="#capabilities">Tính năng</a><a href="#workflow">Quy trình</a>
       </nav>
-      <Link className={styles.loginButton} to={ROUTES.login}>Login</Link>
+      <Link className={styles.loginButton} to={ROUTES.login}>Đăng nhập</Link>
     </header>
 
     <main>
       <section className={styles.hero}>
         <div className={styles.heroCopy}>
-          <p className={styles.eyebrow}><span aria-hidden="true" />RACEHORSE TRAINING &amp; MANAGEMENT SYSTEM</p>
-          <h1 className="text-landing-display-xl">Precision in <em>Every Stride.</em></h1>
-          <p className={styles.lead}>An integrated platform for racehorse management, intelligent training coordination, and veterinary care.</p>
-          <div className={styles.ctas}><Link className={styles.primary} to={ROUTES.login}>Access the Platform →</Link><a className={styles.secondary} href="#platform">Explore the System</a></div>
-          <p className={styles.facts}><span>7 role-based workspaces</span><span>Horse · Training · Medical</span><span>Live session monitoring</span></p>
+          <p className={styles.eyebrow}><span aria-hidden="true" />HỆ THỐNG QUẢN LÝ &amp; HUẤN LUYỆN NGỰA ĐUA</p>
+          <h1 className="text-landing-display-xl">Chính xác trong <em>Từng sải bước.</em></h1>
+          <p className={styles.lead}>Nền tảng tích hợp quản lý ngựa đua, điều phối huấn luyện thông minh và chăm sóc thú y.</p>
+          <div className={styles.ctas}><Link className={styles.primary} to={ROUTES.login}>Truy cập hệ thống →</Link><a className={styles.secondary} href="#platform">Khám phá hệ thống</a></div>
+          <p className={styles.facts}><span>7 không gian theo vai trò</span><span>Ngựa · Huấn luyện · Y tế</span><span>Giám sát buổi tập trực tiếp</span></p>
         </div>
-        <div className={styles.heroCards} aria-label="Product illustration">
+        <div className={styles.heroCards} aria-label="Minh họa sản phẩm">
           <div className={styles.glass}>
-            <div className={styles.glassHead}><span>LIVE SESSION</span><span className={styles.pillLive}>IN PROGRESS</span></div>
-            <strong>Thunder Bolt · Gallop Session</strong>
-            <div className={styles.glassMetrics}><span><b>152</b> bpm<small>Heart rate</small></span><span><b>36</b> km/h<small>Speed</small></span></div>
-            <small className={styles.muted}>Illustration · simulated demo values</small>
+            <div className={styles.glassHead}><span>BUỔI TẬP TRỰC TIẾP</span><span className={styles.pillLive}>ĐANG TẬP</span></div>
+            <strong>Thunder Bolt · Buổi phi nước đại</strong>
+            <div className={styles.glassMetrics}><span><b>152</b> bpm<small>Nhịp tim</small></span><span><b>36</b> km/h<small>Tốc độ</small></span></div>
+            <small className={styles.muted}>Minh họa · số liệu mô phỏng</small>
           </div>
           <div className={styles.glass}>
-            <div className={styles.glassHead}><span>TRAINING AVAILABILITY</span><span className={styles.pillLimited}>LIMITED</span></div>
+            <div className={styles.glassHead}><span>KHẢ NĂNG TẬP LUYỆN</span><span className={styles.pillLimited}>HẠN CHẾ</span></div>
             <strong>Storm · ST-014</strong>
-            <small className={styles.muted}>Walk and trot permitted · sprint work blocked by the Veterinarian.</small>
+            <small className={styles.muted}>Được đi bộ và chạy nước kiệu · Veterinarian chặn bài chạy nước rút.</small>
           </div>
         </div>
       </section>
 
       <section id="platform" className={styles.section}>
-        <div className={styles.split}><div><p className={styles.overline}>THE PLATFORM</p><h2 className="text-landing-display-l">Training, health and daily care — finally in one connected record.</h2></div>
-          <p className={styles.lead}>Every horse has one record that the Head Trainer, Trainer, Work Rider, Veterinarian and stable team work from. Each role sees what it needs, and every important decision stays traceable.</p></div>
+        <div className={styles.split}><div><p className={styles.overline}>NỀN TẢNG</p><h2 className="text-landing-display-l">Huấn luyện, sức khỏe và chăm sóc hằng ngày — cuối cùng đã nằm trong một hồ sơ liên thông.</h2></div>
+          <p className={styles.lead}>Mỗi ngựa có một hồ sơ chung cho Head Trainer, Trainer, Work Rider, Veterinarian và đội chuồng trại. Mỗi vai trò thấy đúng phần mình cần, và mọi quyết định quan trọng đều truy vết được.</p></div>
         <div className={styles.grid3}>{PLATFORM.map((item) => <article key={item.title} className={styles.feature}><span className={styles.iconChip}><Icon name={item.icon} size={20} /></span><h3>{item.title}</h3><p>{item.text}</p></article>)}</div>
       </section>
 
       <section id="showcase" className={styles.section}>
-        <p className={styles.overline}>PRODUCT SHOWCASE</p><h2 className="text-landing-display-l">Built for the people who run the stable.</h2>
+        <p className={styles.overline}>GIỚI THIỆU SẢN PHẨM</p><h2 className="text-landing-display-l">Xây dựng cho những người vận hành trại ngựa.</h2>
         <div className={styles.grid3}>{SHOWCASE.map((item) => <article key={item.title} className={styles.card}><h3>{item.title}</h3><p>{item.text}</p></article>)}</div>
       </section>
 
       <section id="capabilities" className={styles.section}>
-        <div className={styles.split}><div><p className={styles.overline}>CORE CAPABILITIES</p><h2 className="text-landing-display-l">Every module, connected through the same horse.</h2></div>
-          <p className={styles.lead}>From the first veterinary baseline to the last training session, every module reads and writes the same horse record.</p></div>
+        <div className={styles.split}><div><p className={styles.overline}>TÍNH NĂNG CỐT LÕI</p><h2 className="text-landing-display-l">Mọi phân hệ đều kết nối qua cùng một con ngựa.</h2></div>
+          <p className={styles.lead}>Từ lần khám ban đầu đến buổi tập cuối cùng, mọi phân hệ đều đọc và ghi trên cùng một hồ sơ ngựa.</p></div>
         <div className={styles.bento}>
-          <article className={styles.card}><p className={styles.overline}>TRAINING</p><h3>From template to evaluation</h3><p>The Head Trainer builds a horse program from a template; Trainers schedule sessions inside the approved phase and review every result.</p>
+          <article className={styles.card}><p className={styles.overline}>HUẤN LUYỆN</p><h3>Từ mẫu chương trình đến đánh giá</h3><p>Head Trainer xây dựng chương trình cho ngựa từ mẫu; Trainer lên lịch buổi tập trong giai đoạn đã duyệt và đánh giá từng kết quả.</p>
             <ol className={styles.pipeline}>{PIPELINE.map((step) => <li key={step}>{step}</li>)}</ol></article>
-          <article className={styles.card}><p className={styles.overline}>MEDICAL</p><h3>The Veterinarian decides what training is safe</h3><p>Medical records, examinations and injury tracking with a 3D injury location. Training Availability is set only by the Veterinarian — and every session checks it.</p>
-            <p className={styles.states}><span>AVAILABLE</span><span>LIMITED</span><span>LOCKED</span></p></article>
+          <article className={styles.card}><p className={styles.overline}>Y TẾ</p><h3>Veterinarian quyết định mức tập an toàn</h3><p>Hồ sơ y tế, khám bệnh và theo dõi chấn thương với vị trí chấn thương 3D. Chỉ Veterinarian đặt khả năng tập luyện — và mọi buổi tập đều kiểm tra điều này.</p>
+            <p className={styles.states}><span>SẴN SÀNG</span><span>HẠN CHẾ</span><span>KHÓA</span></p></article>
         </div>
-        <div className={styles.grid5}>{TILES.map((tile) => <article key={tile.title} className={styles.tile}><span className={styles.iconChip}><Icon name={tile.icon} size={20} /></span><h3>{tile.title}</h3><p>{tile.text}</p>{tile.planned && <span className={styles.planned}>Planned</span>}</article>)}</div>
+        <div className={styles.grid5}>{TILES.map((tile) => <article key={tile.title} className={styles.tile}><span className={styles.iconChip}><Icon name={tile.icon} size={20} /></span><h3>{tile.title}</h3><p>{tile.text}</p>{tile.planned && <span className={styles.planned}>Kế hoạch</span>}</article>)}</div>
       </section>
 
       <section id="workflow" className={styles.section}>
-        <div className={styles.split}><div><p className={styles.overline}>COORDINATION</p><h2 className="text-landing-display-l">Four roles. One session. No hand-offs lost.</h2></div>
-          <p className={styles.lead}>Each role works in its own workspace, but every action lands on the same horse record — so the next person always starts from the latest, approved state.</p></div>
+        <div className={styles.split}><div><p className={styles.overline}>ĐIỀU PHỐI</p><h2 className="text-landing-display-l">Bốn vai trò. Một buổi tập. Không bỏ sót bước bàn giao nào.</h2></div>
+          <p className={styles.lead}>Mỗi vai trò làm việc trong không gian riêng, nhưng mọi thao tác đều ghi vào cùng một hồ sơ ngựa — nên người tiếp theo luôn bắt đầu từ trạng thái mới nhất đã được duyệt.</p></div>
         <div className={styles.grid4}>{ROLES.map((item) => <article key={item.role} className={styles.card}><span className={styles.iconChip}><Icon name={item.icon} size={20} /></span><h3>{item.role}</h3><small className={styles.muted}>{item.step}</small><p>{item.text}</p></article>)}</div>
-        <p className={styles.muted}>Feedback returns to the Trainer’s review; any medical concern goes back to the Veterinarian.</p>
-        <p className={styles.muted}>Also in the platform: Club Manager · Groom / Stable Hand · Horse Owner (read-only, own horses)</p>
+        <p className={styles.muted}>Phản hồi quay về để Trainer đánh giá; mọi vấn đề y tế được chuyển lại cho Veterinarian.</p>
+        <p className={styles.muted}>Hệ thống còn có: Club Manager · Groom / Stable Hand · Horse Owner (chỉ xem ngựa của mình)</p>
       </section>
 
       <section className={styles.section}>
-        <div className={styles.cta}><h2 className="text-landing-display-m">Ready for today’s session?</h2><p>Sign in with the account issued by your club. Racehorse Ops has no public sign-up.</p><Link className={styles.primary} to={ROUTES.login}>Access the Platform →</Link></div>
+        <div className={styles.cta}><h2 className="text-landing-display-m">Sẵn sàng cho buổi tập hôm nay?</h2><p>Đăng nhập bằng tài khoản câu lạc bộ cấp. Racehorse Ops không cho đăng ký công khai.</p><Link className={styles.primary} to={ROUTES.login}>Truy cập hệ thống →</Link></div>
       </section>
     </main>
 
     <footer className={styles.footer}>
-      <div><Logo /><p className={styles.muted}>A web platform for racehorse management, training coordination and veterinary care.</p></div>
-      <nav aria-label="Footer"><strong>Platform</strong><a href="#platform">Platform</a><a href="#showcase">Showcase</a><a href="#capabilities">Capabilities</a><a href="#workflow">Workflow</a></nav>
-      <nav aria-label="Access"><strong>Access</strong><Link to={ROUTES.login}>Login</Link></nav>
-      <p className={styles.copyright}>© 2026 Racehorse Ops · SWP391 project · Web application</p>
+      <div><Logo /><p className={styles.muted}>Nền tảng web quản lý ngựa đua, điều phối huấn luyện và chăm sóc thú y.</p></div>
+      <nav aria-label="Chân trang"><strong>Nền tảng</strong><a href="#platform">Nền tảng</a><a href="#showcase">Giới thiệu</a><a href="#capabilities">Tính năng</a><a href="#workflow">Quy trình</a></nav>
+      <nav aria-label="Truy cập"><strong>Truy cập</strong><Link to={ROUTES.login}>Đăng nhập</Link></nav>
+      <p className={styles.copyright}>© 2026 Racehorse Ops · Đồ án SWP391 · Ứng dụng web</p>
     </footer>
   </div>;
 }

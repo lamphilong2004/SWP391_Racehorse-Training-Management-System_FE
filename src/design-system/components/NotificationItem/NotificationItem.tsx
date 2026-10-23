@@ -39,7 +39,7 @@ export function NotificationItem({
         <span className={styles.titleRow}>
           <span className={styles.title}>{title}</span>
           <span className={styles.time}>{time}</span>
-          {!read && <span className={styles.dot} aria-label="Unread" role="img" />}
+          {!read && <span className={styles.dot} aria-label="Chưa đọc" role="img" />}
         </span>
         <span className={styles.body}>{body}</span>
         {context && <span className={styles.context}>{context}</span>}

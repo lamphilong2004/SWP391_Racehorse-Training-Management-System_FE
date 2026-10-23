@@ -43,3 +43,10 @@
 .stack > *, .smallStack > * { min-width: 0; }
 .header > * { min-width: 0; }
 .notice { white-space: normal; }
+
+.title { font-family: var(--font-family-headline); font-weight: 700; letter-spacing: -.025em; }
+.filters { padding: var(--space-lg); border: 1px solid var(--color-border-default); border-radius: var(--card-radius); background: var(--color-bg-surface); }
+.tableWrap { border-radius: var(--radius-md); }
+.primaryLink { font-weight: 600; box-shadow: var(--elev-1); }
+/* ...but inside table cells stacked text keeps its natural minimum, so names never overlap the next column. */
+.tableWrap .smallStack > *, .tableWrap .cellStack > * { min-width: auto; }

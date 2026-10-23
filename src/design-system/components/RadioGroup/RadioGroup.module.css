@@ -1,6 +1,8 @@
 .options {
-  display: flex;
-  align-items: flex-start;
+  /* Equal columns; options wrap to a new row instead of squeezing labels (7 roles in Edit User). */
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 148px), 1fr));
+  align-items: stretch;
   gap: var(--space-sm);
   width: 100%;
 }

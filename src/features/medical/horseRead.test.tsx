@@ -10,7 +10,7 @@ const empty = { items: [], page: 0, size: 100, totalItems: 0, totalPages: 0 };
 const ok = (data: unknown) => new Response(JSON.stringify({ success: true, data }), { status: 200 });
 it('reads the approved ACTIVE HorseSummary projection and all pages, retaining only required overview fields', async () => {
   const fetcher = vi.fn().mockResolvedValueOnce(ok({ items: [storm], page: 0, size: 1, totalItems: 2, totalPages: 2 }))
-    .mockResolvedValueOnce(ok({ items: [{ ...storm, id: 15, name: 'Other', breed: 'do not copy unrelated fields' }], page: 1, size: 1, totalItems: 2, totalPages: 2 }));
+    .mockResolvedValueOnce(ok({ items: [{ ...storm, id: 15, name: 'Khác', breed: 'do not copy unrelated fields' }], page: 1, size: 1, totalItems: 2, totalPages: 2 }));
   const rows = await readActiveHerd('session', undefined, { baseUrl: '', fetcher });
   expect(rows.map((h) => h.id)).toEqual([14, 15]);
   expect(rows[1]).not.toHaveProperty('breed');
@@ -30,9 +30,9 @@ it('keeps the working Horse API grid when the separate clinical aggregate is una
   render(<MemoryRouter><MedicalProvider value={{ actor: { id: 7, fullName: 'Vet', email: 'vet@example.test', userCode: 'V7', accountStatus: 'ACTIVE', roles: ['VETERINARIAN'] }, service: createMedicalService('session', undefined, { baseUrl: '', fetcher }) }}><HerdHealthPage /></MedicalProvider></MemoryRouter>);
   expect(await screen.findByText('Storm')).toBeInTheDocument();
   expect(await screen.findByText('Clinical overview unavailable')).toBeInTheDocument();
-  expect(screen.getByText('ST-014 · Box B-03')).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'FIT · 0' }));
-  expect(await screen.findByText('No active horses for this filter')).toBeInTheDocument();
+  expect(screen.getByText('ST-014 · Ô B-03')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Khỏe · 0' }));
+  expect(await screen.findByText('Không có ngựa phù hợp bộ lọc')).toBeInTheDocument();
   expect(screen.queryByText('Storm')).not.toBeInTheDocument();
   expect(fetcher).toHaveBeenCalledTimes(3);
 });

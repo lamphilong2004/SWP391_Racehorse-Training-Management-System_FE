@@ -41,8 +41,8 @@ export function ChartContainer({
   yTicks,
   xLabels,
   threshold,
-  emptyTitle = 'No data for this period',
-  emptyDescription = 'Samples will appear here once the session records data.',
+  emptyTitle = 'Không có dữ liệu trong khoảng thời gian này',
+  emptyDescription = 'Dữ liệu đo sẽ hiện ở đây khi buổi tập bắt đầu ghi nhận.',
   className,
 }: ChartContainerProps) {
   const max = Math.max(...yTicks);
@@ -70,7 +70,7 @@ export function ChartContainer({
               <svg width="16" height="2" aria-hidden="true">
                 <line x1="0" y1="1" x2="16" y2="1" className={styles.legendThresholdStroke} />
               </svg>
-              {threshold.legend ?? 'Threshold'}
+              {threshold.legend ?? 'Ngưỡng'}
             </span>
           )}
         </span>
@@ -117,8 +117,9 @@ export function ChartContainer({
       </div>
 
       <div className={styles.xAxis}>
-        {xLabels.map((label) => (
-          <span key={label}>{label}</span>
+        {xLabels.map((label, index) => (
+          // Axis labels can repeat (two samples in the same minute); position keeps keys unique.
+          <span key={`${index}-${label}`}>{label}</span>
         ))}
       </div>
     </figure>

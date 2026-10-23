@@ -31,7 +31,7 @@ it('surfaces refused subscriptions and never sends telemetry or the JWT in the U
   const socket = new FakeSocket(), status = vi.fn(), createSocket = vi.fn(() => socket as unknown as WebSocket);
   const stop = connectSessionStream({ sessionId: 42, token: 'test-jwt', onEvent: vi.fn(), onStatus: status, createSocket, url: 'wss://api.example.test/ws' });
   socket.onopen?.(); socket.receive('ERROR\nmessage:Forbidden\n\nSubscription refused\0');
-  expect(status).toHaveBeenLastCalledWith('Unavailable', expect.stringContaining('refused'));
+  expect(status).toHaveBeenLastCalledWith('Unavailable', expect.stringContaining('Máy chủ từ chối kết nối trực tiếp. Hãy tải lại hoặc đăng nhập lại.'));
   expect(createSocket).toHaveBeenCalledWith('wss://api.example.test/ws', ['v12.stomp']);
   expect(socket.sent.some((frame) => frame.startsWith('SEND'))).toBe(false); stop();
 });
@@ -42,7 +42,7 @@ it('reports a lost negotiated server heartbeat and clears its timers on cleanup'
     const stop = connectSessionStream({ sessionId: 42, token: 'test-jwt', onEvent: vi.fn(), onStatus: status, createSocket: () => socket as unknown as WebSocket, url: 'wss://api.example.test/ws' });
     socket.onopen?.(); socket.receive('CONNECTED\nversion:1.2\nheart-beat:10000,0\n\n\0');
     vi.advanceTimersByTime(30000);
-    expect(status).toHaveBeenLastCalledWith('Unavailable', expect.stringContaining('heartbeat lost'));
+    expect(status).toHaveBeenLastCalledWith('Unavailable', expect.stringContaining('Mất tín hiệu trực tiếp. Hãy kết nối lại để tải lại buổi tập.'));
     stop(); expect(vi.getTimerCount()).toBe(0);
   } finally { vi.useRealTimers(); }
 });

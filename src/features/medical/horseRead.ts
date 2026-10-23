@@ -9,7 +9,7 @@ export interface HorseIdentity {
 export interface HerdHorse extends HorseIdentity { lifecycle: 'ACTIVE' }
 function object(v: unknown): v is Record<string, unknown> { return typeof v === 'object' && v !== null && !Array.isArray(v); }
 const integer = (v: unknown, min = 0): v is number => Number.isSafeInteger(v) && Number(v) >= min;
-const invalid = () => new ApiError(200, 'INVALID_RESPONSE', 'Horse overview data is incomplete or does not match the approved contract. Reload to retry.');
+const invalid = () => new ApiError(200, 'INVALID_RESPONSE', 'Dữ liệu tổng quan ngựa chưa đầy đủ hoặc không hợp lệ. Hãy tải lại để thử lại.');
 export function readHorseIdentityData(v: unknown): HorseIdentity {
   if (!object(v) || !integer(v.id, 1) || typeof v.horseCode !== 'string' || typeof v.name !== 'string' || !['DRAFT', 'ACTIVE', 'INACTIVE'].includes(String(v.lifecycle)) ||
     !['AVAILABLE', 'LIMITED', 'LOCKED'].includes(String(v.trainingAvailability)) ||
@@ -25,7 +25,7 @@ function horse(v: unknown): HerdHorse {
 }
 /** Read only the already-assigned horse IDs for Groom; the approved GET is non-clinical. */
 export async function readHorseIdentity(token: string, id: number, onApiError?: (error: unknown) => boolean, options: { baseUrl?: string; fetcher?: typeof fetch } = {}): Promise<HorseIdentity> {
-  if (!integer(id, 1)) throw new Error('Invalid horse ID.');
+  if (!integer(id, 1)) throw new Error('Mã ngựa không hợp lệ.');
   try {
     const result = readHorseIdentityData(await requestApi<unknown>(`/api/horses/${id}`, { method: 'GET' }, { token, ...options }));
     if (result.id !== id) throw invalid();

@@ -22,5 +22,5 @@ it.each([
 });
 it.each(['/horses/7/baseline', '/training/schedule/session/new', '/training/session/42', '/medical/restrictions', '/training/monitoring?sessionId=42'])('blocks Groom before mounting %s', async (path) => {
   auth.user.roles = ['GROOM']; render(<RouterProvider router={createMemoryRouter(buildRoutes(false), { initialEntries: [path] })} />);
-  expect(await screen.findByText('Your account does not have permission to access this page.')).toBeInTheDocument();
+  expect(await screen.findByText('Tài khoản của bạn không có quyền truy cập trang này.')).toBeInTheDocument();
 });

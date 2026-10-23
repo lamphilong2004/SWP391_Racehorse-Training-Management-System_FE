@@ -29,36 +29,36 @@ function VetThresholdOverride({ horseId }: { horseId: number }) {
     try {
       if (stage === 'set') await api.set(horseId, { metricType: 'HEART_RATE', thresholdValue: Number(value), effectiveFrom: new Date(from).toISOString(), reason });
       else await api.end(horseId, new Date(to).toISOString());
-      setMessage('Threshold operation confirmed by the server. Reloading the effective value.'); resource.reload();
+      setMessage('Máy chủ đã xác nhận thay đổi ngưỡng. Đang tải lại giá trị đang áp dụng.'); resource.reload();
       setOpen(false); setStage('edit'); setValue(''); setReason(''); setFrom(''); setTo('');
     } catch (cause) { setError(errorMessage(cause)); }
     finally { pending.current = false; setBusy(false); }
   }
-  return <Card title="Medical alert threshold"><div className={styles.stack}>
-    {resource.pending && <LoadingState label="Loading effective threshold…" />}
-    {resource.error && <ErrorState title="Threshold unavailable" description={resource.error} onRetry={resource.reload} />}
-    {message && <AlertBanner type="success" title="Threshold request confirmed">{message}</AlertBanner>}
-    <KeyValue label="Effective heart-rate critical threshold" value={current ? `${current.thresholdValue} bpm · ${current.scope}` : 'Not provided'} />
-    <Button variant="secondary" disabled={resource.pending || !!resource.error} onClick={() => { setError(''); setMessage(''); setStage('edit'); setOpen(true); }}>Threshold Override</Button>
-    <Modal open={open} onClose={close} title={stage === 'edit' ? `Threshold Override · Horse ${horseId}` : stage === 'set' ? 'Confirm threshold override' : 'Confirm end of threshold override'} footer={<>
-      <Button variant="secondary" disabled={busy} onClick={close}>Cancel</Button>
-      {stage === 'edit' ? <><Button variant="secondary" disabled={!canEnd || resource.pending || !!resource.error} onClick={() => setStage('end')}>Review end override</Button><Button disabled={!canSet || resource.pending || !!resource.error} onClick={() => setStage('set')}>Review override</Button></>
-        : <><Button variant="secondary" disabled={busy} onClick={() => { setStage('edit'); setError(''); }}>Back to edit</Button><Button disabled={busy || resource.pending || !!resource.error || (stage === 'set' ? !canSet : !canEnd)} onClick={() => void confirm()}>{busy ? 'Saving…' : stage === 'set' ? 'Confirm override' : 'Confirm end override'}</Button></>}
+  return <Card title="Ngưỡng cảnh báo y tế"><div className={styles.stack}>
+    {resource.pending && <LoadingState label="Đang tải ngưỡng đang áp dụng…" />}
+    {resource.error && <ErrorState title="Không tải được ngưỡng" description={resource.error} onRetry={resource.reload} />}
+    {message && <AlertBanner type="success" title="Đã xác nhận yêu cầu ngưỡng">{message}</AlertBanner>}
+    <KeyValue label="Ngưỡng nhịp tim nghiêm trọng đang áp dụng" value={current ? `${current.thresholdValue} bpm · ${current.scope}` : 'Chưa cung cấp'} />
+    <Button variant="secondary" disabled={resource.pending || !!resource.error} onClick={() => { setError(''); setMessage(''); setStage('edit'); setOpen(true); }}>Ngưỡng riêng</Button>
+    <Modal open={open} onClose={close} title={stage === 'edit' ? `Ngưỡng riêng · Ngựa ${horseId}` : stage === 'set' ? 'Xác nhận đặt ngưỡng riêng' : 'Xác nhận kết thúc ngưỡng riêng'} footer={<>
+      <Button variant="secondary" disabled={busy} onClick={close}>Hủy</Button>
+      {stage === 'edit' ? <><Button variant="secondary" disabled={!canEnd || resource.pending || !!resource.error} onClick={() => setStage('end')}>Xem lại việc kết thúc</Button><Button disabled={!canSet || resource.pending || !!resource.error} onClick={() => setStage('set')}>Xem lại ngưỡng riêng</Button></>
+        : <><Button variant="secondary" disabled={busy} onClick={() => { setStage('edit'); setError(''); }}>Quay lại chỉnh sửa</Button><Button disabled={busy || resource.pending || !!resource.error || (stage === 'set' ? !canSet : !canEnd)} onClick={() => void confirm()}>{busy ? 'Đang lưu…' : stage === 'set' ? 'Xác nhận ngưỡng riêng' : 'Xác nhận kết thúc'}</Button></>}
     </>}><div className={styles.stack}>
-      <AlertBanner type="danger" title="Veterinarian authority only">This changes the horse’s critical heart-rate threshold. Trainers and Head Trainers cannot edit it.</AlertBanner>
-      {error && <AlertBanner type="danger" title="Threshold not confirmed">{error}</AlertBanner>}
-      <KeyValue label="Metric" value="Heart rate · critical threshold" /><KeyValue label="Current effective value" value={current ? `${current.thresholdValue} bpm · ${current.scope}` : 'Not provided'} />
-      <KeyValue label="Global default" value={current?.scope === 'GLOBAL' ? `${current.thresholdValue} bpm` : 'Not provided by the effective-threshold API'} />
+      <AlertBanner type="danger" title="Chỉ Veterinarian có quyền">Thao tác này đổi ngưỡng nhịp tim nghiêm trọng của ngựa. Trainer và Head Trainer không sửa được.</AlertBanner>
+      {error && <AlertBanner type="danger" title="Chưa xác nhận được ngưỡng">{error}</AlertBanner>}
+      <KeyValue label="Chỉ số" value="Nhịp tim · ngưỡng nghiêm trọng" /><KeyValue label="Giá trị đang áp dụng" value={current ? `${current.thresholdValue} bpm · ${current.scope}` : 'Chưa cung cấp'} />
+      <KeyValue label="Mặc định chung" value={current?.scope === 'GLOBAL' ? `${current.thresholdValue} bpm` : 'Hệ thống chưa cung cấp'} />
       {stage === 'edit' ? <fieldset disabled={busy} className={`${styles.fieldset} ${styles.stack}`}>
-        <TextField label="Override threshold (bpm)" type="number" min="0.01" max="99999.99" step="0.01" value={value} onChange={(event) => setValue(event.target.value)} helperText="Positive value, at most two decimals. No default is assumed." />
-        <TextField label="Effective from" type="datetime-local" value={from} onChange={(event) => setFrom(event.target.value)} required />
-        <TextAreaField label="Override reason" maxLength={1000} value={reason} onChange={(event) => setReason(event.target.value)} />
-        <TextField label="End override at" type="datetime-local" value={to} onChange={(event) => setTo(event.target.value)} disabled={current?.scope !== 'HORSE_OVERRIDE'} helperText={current?.effectiveFrom ? `Must be on or after ${dateTime(current.effectiveFrom)}.` : 'An existing horse override is required. The server validates its effective interval.'} />
-        <p>Leaving the value empty does not remove an override. Ending it requires a separate confirmation.</p>
-      </fieldset> : <><KeyValue label={stage === 'set' ? 'New critical threshold' : 'End override'} value={stage === 'set' ? `${value} bpm · ${dateTime(new Date(from).toISOString())}` : dateTime(new Date(to).toISOString())} />
-        {stage === 'set' && <KeyValue label="Reason" value={reason.trim() || 'Not provided'} />}
-        <p>{stage === 'set' ? 'The server replaces the open override atomically and checks conflicting effective intervals.' : 'The server ends the open override and resolves the effective threshold again. No global value is assumed here.'}</p></>}
-      <p className="text-caption">Warning threshold is not provided. No warning value or severity is calculated in the browser.</p>
+        <TextField label="Ngưỡng riêng (bpm)" type="number" min="0.01" max="99999.99" step="0.01" value={value} onChange={(event) => setValue(event.target.value)} helperText="Giá trị dương, tối đa hai chữ số thập phân. Không có giá trị mặc định." />
+        <TextField label="Hiệu lực từ" type="datetime-local" value={from} onChange={(event) => setFrom(event.target.value)} required />
+        <TextAreaField label="Lý do đặt ngưỡng riêng" maxLength={1000} value={reason} onChange={(event) => setReason(event.target.value)} />
+        <TextField label="Kết thúc ngưỡng riêng lúc" type="datetime-local" value={to} onChange={(event) => setTo(event.target.value)} disabled={current?.scope !== 'HORSE_OVERRIDE'} helperText={current?.effectiveFrom ? `Phải từ ${dateTime(current.effectiveFrom)} trở đi.` : 'Cần có ngưỡng riêng đang áp dụng. Hệ thống kiểm tra khoảng hiệu lực.'} />
+        <p>Để trống giá trị không xóa ngưỡng riêng. Muốn kết thúc phải xác nhận riêng.</p>
+      </fieldset> : <><KeyValue label={stage === 'set' ? 'Ngưỡng nghiêm trọng mới' : 'Kết thúc ngưỡng riêng'} value={stage === 'set' ? `${value} bpm · ${dateTime(new Date(from).toISOString())}` : dateTime(new Date(to).toISOString())} />
+        {stage === 'set' && <KeyValue label="Lý do" value={reason.trim() || 'Chưa cung cấp'} />}
+        <p>{stage === 'set' ? 'Hệ thống thay ngưỡng riêng hiện tại và kiểm tra xung đột về khoảng hiệu lực.' : 'Hệ thống kết thúc ngưỡng riêng và xác định lại ngưỡng áp dụng. Ở đây không giả định giá trị mặc định chung.'}</p></>}
+      <p className="text-caption">Chưa có ngưỡng cảnh báo. Trình duyệt không tự tính giá trị hay mức cảnh báo.</p>
     </div></Modal>
   </div></Card>;
 }

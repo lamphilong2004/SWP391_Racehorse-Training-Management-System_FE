@@ -36,15 +36,16 @@ export interface PerformancePoint {
   totalDistanceM?: number | null; durationMin?: number | null; maxHeartRate?: number | null;
   avgSpeedKmh?: number | null; result?: EvaluationResult | null;
 }
-export const RESULT_LABELS: Record<EvaluationResult, string> = { MET: 'Met target', PARTIALLY_MET: 'Partially met target', NOT_MET: 'Did not meet target' };
+export const RESULT_LABELS: Record<EvaluationResult, string> = { MET: 'Đạt mục tiêu', PARTIALLY_MET: 'Đạt một phần mục tiêu', NOT_MET: 'Không đạt mục tiêu' };
 export const isTerminal = (status: SessionStatus) => status === 'COMPLETED' || status === 'INTERRUPTED';
 export const metric = (value: number | null | undefined, unit: string) =>
-  typeof value === 'number' && Number.isFinite(value) ? `${value.toLocaleString('en-US', { maximumFractionDigits: 3 })} ${unit}` : 'Not measured';
+  typeof value === 'number' && Number.isFinite(value) ? `${value.toLocaleString('vi-VN', { maximumFractionDigits: 3 })} ${unit}` : 'Chưa đo';
 
-const DATE_TIME = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
-const CLOCK = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' });
+const DATE = new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+const HOUR_MINUTE = new Intl.DateTimeFormat('vi-VN', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+const CLOCK = new Intl.DateTimeFormat('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' });
 const valid = (value: string | null | undefined) => (value && Number.isFinite(Date.parse(value)) ? new Date(value) : null);
-/** Server ISO timestamp as Figma's "20 Oct 2026 · 08:34" in the viewer's time zone; never invents a value. */
-export const dateTime = (value: string | null | undefined) => { const date = valid(value); return date ? DATE_TIME.format(date).replace(', ', ' · ') : 'Not recorded'; };
+/** Server ISO timestamp as "20/10/2026 · 08:34" in the viewer's time zone; never invents a value. */
+export const dateTime = (value: string | null | undefined) => { const date = valid(value); return date ? `${DATE.format(date)} · ${HOUR_MINUTE.format(date)}` : 'Chưa ghi nhận'; };
 /** Recorded-sample clock time (HH:mm:ss). */
-export const clockTime = (value: string | null | undefined) => { const date = valid(value); return date ? CLOCK.format(date) : 'Not recorded'; };
+export const clockTime = (value: string | null | undefined) => { const date = valid(value); return date ? CLOCK.format(date) : 'Chưa ghi nhận'; };

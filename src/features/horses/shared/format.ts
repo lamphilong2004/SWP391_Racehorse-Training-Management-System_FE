@@ -1,14 +1,12 @@
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-/** "2023-03-14" or an ISO instant → "14 Mar 2023" (the date format used on the Figma frames). */
+/** "2023-03-14" or an ISO instant → "14/03/2023" (Vietnamese day/month/year). */
 export function formatDate(value: string | null | undefined): string {
   if (!value) return '—';
   const [y, m, d] = value.slice(0, 10).split('-').map(Number);
   if (!y || !m || !d) return '—';
-  return `${d} ${MONTHS[m - 1]} ${y}`;
+  return `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`;
 }
 
-/** Whole years between a foaled date and today ("3 yrs"). */
+/** Whole years between a foaled date and today. */
 export function ageInYears(foaledDate: string | null | undefined, now = new Date()): number | null {
   if (!foaledDate) return null;
   const [y, m, d] = foaledDate.slice(0, 10).split('-').map(Number);

@@ -8,7 +8,7 @@ export interface ProgramProgress {
     scheduled: number; completed: number; interrupted: number; totalDistanceM?: number | null; lastEvaluationLabel?: string | null }[];
 }
 export interface ProgramHistoryEntry { occurredAt: string; entryType: string; summary: string; actor?: UserRef | null }
-const invalid = () => new ApiError(200, 'INVALID_RESPONSE', 'Program data is unavailable: the response does not match the approved contract.');
+const invalid = () => new ApiError(200, 'INVALID_RESPONSE', 'Không tải được dữ liệu chương trình: dữ liệu trả về không hợp lệ.');
 
 /** Approved CORE-021 reads only. No program/template mutation or client-derived progress. */
 export function createProgramDetailApi(request: FlowRequest) {

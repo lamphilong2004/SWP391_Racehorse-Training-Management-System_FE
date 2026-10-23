@@ -2,8 +2,8 @@ import type { RoleCode } from '../../shared/auth/roles';
 
 export const REGISTRATION_STATUSES = ['PENDING_APPROVAL', 'APPROVED', 'REJECTED'] as const;
 export type RegistrationStatus = typeof REGISTRATION_STATUSES[number];
-export const STATUS_LABELS: Record<RegistrationStatus, string> = { PENDING_APPROVAL: 'Pending approval', APPROVED: 'Approved', REJECTED: 'Rejected' };
-export const NEUTRAL_CONFIRMATION = 'If the details can be accepted, your request is waiting for Club Manager approval.';
+export const STATUS_LABELS: Record<RegistrationStatus, string> = { PENDING_APPROVAL: 'Chờ duyệt', APPROVED: 'Đã duyệt', REJECTED: 'Đã từ chối' };
+export const NEUTRAL_CONFIRMATION = 'Nếu thông tin hợp lệ, yêu cầu của bạn đang chờ Club Manager phê duyệt.';
 export interface RegisterRequest { fullName: string; email: string; password: string; confirmPassword: string }
 export interface RegistrationRequest {
   id: number; fullName: string; email: string; status: RegistrationStatus; requestedAt: string;

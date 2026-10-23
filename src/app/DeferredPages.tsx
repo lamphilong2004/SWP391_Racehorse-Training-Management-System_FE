@@ -5,7 +5,7 @@ import { LoadingState } from '../design-system';
 function deferred(load: () => Promise<{ default: ComponentType }>) {
   const Page = lazy(load);
   return function DeferredPage() {
-    return <Suspense fallback={<LoadingState label="Loading screen…" />}><Page /></Suspense>;
+    return <Suspense fallback={<LoadingState label="Đang tải màn hình…" />}><Page /></Suspense>;
   };
 }
 

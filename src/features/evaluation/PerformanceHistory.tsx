@@ -12,9 +12,9 @@ function SessionSeries({ rows, title, label, unit, pick, step }: { rows: Perform
   const series = complete ? (values as number[]) : [];
   const min = series.length ? Math.floor(Math.min(...series) / step) * step : 0;
   const max = series.length ? Math.max(Math.ceil(Math.max(...series) / step) * step, min + step) : step;
-  return <ChartContainer title={title} seriesLabel={`${label} (${unit}) per session`} values={series} yTicks={[max, (max + min) / 2, min]}
+  return <ChartContainer title={title} seriesLabel={`${label} (${unit}) theo buổi tập`} values={series} yTicks={[max, (max + min) / 2, min]}
     xLabels={series.length ? [...new Set([rows[0].date, rows.at(-1)!.date])] : []}
-    emptyTitle={`No complete ${label.toLowerCase()} series`} emptyDescription={`At least one returned session has no recorded ${label.toLowerCase()}.`} />;
+    emptyTitle={`Chưa có chuỗi dữ liệu ${label.toLowerCase()} đầy đủ`} emptyDescription={`Có ít nhất một buổi tập chưa ghi nhận ${label.toLowerCase()}.`} />;
 }
 
 /** Only contract fields are shown: no invented recovery, phase filters, top-speed history or aggregates. */
@@ -29,36 +29,36 @@ export function PerformanceHistory({ horseId, api, onError }: { horseId: number;
     const controller = new AbortController();
     api.performance(horseId, range, controller.signal).then((rows) => {
       if (active) setState({ rows });
-    }).catch((error: unknown) => { if (active && !onError(error)) setState({ error: error instanceof Error ? error.message : 'Unable to load history.' }); });
+    }).catch((error: unknown) => { if (active && !onError(error)) setState({ error: error instanceof Error ? error.message : 'Không tải được lịch sử.' }); });
     return () => { active = false; controller.abort(); };
   }, [horseId, api, range, attempt, onError]);
-  return <div className="evaluation-stack"><h2 className="text-h2">Performance History</h2>
+  return <div className="evaluation-stack"><h2 className="text-h2">Lịch sử thành tích</h2>
     <form className="evaluation-filters" noValidate onSubmit={(event) => {
       event.preventDefault();
-      if ((from && !/^\d{4}-\d{2}-\d{2}$/.test(from)) || (to && !/^\d{4}-\d{2}-\d{2}$/.test(to)) || (from && to && from > to)) { setValidation('Enter a valid date range; From must not be after To.'); return; }
+      if ((from && !/^\d{4}-\d{2}-\d{2}$/.test(from)) || (to && !/^\d{4}-\d{2}-\d{2}$/.test(to)) || (from && to && from > to)) { setValidation('Nhập khoảng ngày hợp lệ; ngày bắt đầu không được sau ngày kết thúc.'); return; }
       setValidation(''); setState({}); setRange({ from: from || undefined, to: to || undefined });
-    }}><TextField label="From" type="date" value={from} onChange={(event) => setFrom(event.target.value)} /><TextField label="To" type="date" value={to} onChange={(event) => setTo(event.target.value)} error={validation || undefined} /><Button type="submit">Apply dates</Button></form>
-    {state.error ? <ErrorState title="History unavailable" description={state.error} onRetry={() => { setState({}); setAttempt(attempt + 1); }} /> : !state.rows ? <LoadingState label="Loading performance history…" /> :
+    }}><TextField label="Từ ngày" type="date" value={from} onChange={(event) => setFrom(event.target.value)} /><TextField label="Đến ngày" type="date" value={to} onChange={(event) => setTo(event.target.value)} error={validation || undefined} /><Button type="submit">Áp dụng</Button></form>
+    {state.error ? <ErrorState title="Không tải được lịch sử" description={state.error} onRetry={() => { setState({}); setAttempt(attempt + 1); }} /> : !state.rows ? <LoadingState label="Đang tải lịch sử thành tích…" /> :
       <><div className="evaluation-metrics">
-        <MetricCard label="Sessions returned" value={String(state.rows.length)} caption={`${state.rows.filter((row) => row.status === 'COMPLETED').length} completed · ${state.rows.filter((row) => row.status === 'INTERRUPTED').length} interrupted`} />
-        <MetricCard label="Evaluated" value={String(state.rows.filter((row) => row.result).length)} caption="Trainer evaluation recorded" />
-        <MetricCard label="Pending review" value={String(state.rows.filter((row) => !row.result).length)} caption="No trainer evaluation yet" />
-        <MetricCard label="Latest session" value={state.rows.at(-1)?.date ?? 'None'} caption={state.rows.at(-1)?.sessionCode ?? 'No sessions in this period'} />
+        <MetricCard label="Số buổi tập" value={String(state.rows.length)} caption={`${state.rows.filter((row) => row.status === 'COMPLETED').length} đã hoàn thành · ${state.rows.filter((row) => row.status === 'INTERRUPTED').length} bị gián đoạn`} />
+        <MetricCard label="Đã đánh giá" value={String(state.rows.filter((row) => row.result).length)} caption="Đã có đánh giá của Trainer" />
+        <MetricCard label="Chờ đánh giá" value={String(state.rows.filter((row) => !row.result).length)} caption="Chưa có đánh giá của Trainer" />
+        <MetricCard label="Buổi tập gần nhất" value={state.rows.at(-1)?.date ?? 'Không có'} caption={state.rows.at(-1)?.sessionCode ?? 'Không có buổi tập trong khoảng này'} />
       </div>
       <div className="evaluation-charts">
-        <SessionSeries rows={state.rows} title="Peak heart rate" label="Peak heart rate" unit="bpm" step={20} pick={(row) => row.maxHeartRate} />
-        <SessionSeries rows={state.rows} title="Average speed" label="Average speed" unit="km/h" step={10} pick={(row) => row.avgSpeedKmh} />
+        <SessionSeries rows={state.rows} title="Nhịp tim cao nhất" label="Nhịp tim cao nhất" unit="bpm" step={20} pick={(row) => row.maxHeartRate} />
+        <SessionSeries rows={state.rows} title="Tốc độ trung bình" label="Tốc độ trung bình" unit="km/h" step={10} pick={(row) => row.avgSpeedKmh} />
       </div>
-      <Card title="Session history"><div className="evaluation-table"><DataTable<PerformancePoint> caption="Session history, newest first" rowKey={(row) => row.sessionId} rows={[...state.rows].reverse()} empty={<EmptyState title="No performance history" description="No sessions were returned for this period." />} columns={[
-        { key: 'date', header: 'Date', render: (row) => row.date },
-        { key: 'session', header: 'Session', render: (row) => <Link to={evaluationPath(row.sessionId)}>{row.sessionCode}</Link> },
-        { key: 'status', header: 'Status', render: (row) => <StatusBadge family="session" status={row.status} /> },
-        { key: 'distance', header: 'Distance', render: (row) => metric(row.totalDistanceM, 'm') },
-        { key: 'duration', header: 'Duration', render: (row) => metric(row.durationMin, 'min') },
-        { key: 'speed', header: 'Average speed', render: (row) => metric(row.avgSpeedKmh, 'km/h') },
-        { key: 'hr', header: 'Peak HR', render: (row) => metric(row.maxHeartRate, 'bpm') },
-        { key: 'result', header: 'Evaluation', render: (row) => row.result ? RESULT_LABELS[row.result] : 'Pending review' },
+      <Card title="Lịch sử buổi tập"><div className="evaluation-table"><DataTable<PerformancePoint> caption="Lịch sử buổi tập, mới nhất trước" rowKey={(row) => row.sessionId} rows={[...state.rows].reverse()} empty={<EmptyState title="Chưa có lịch sử thành tích" description="Không có buổi tập nào trong khoảng thời gian này." />} columns={[
+        { key: 'date', header: 'Ngày', render: (row) => row.date },
+        { key: 'session', header: 'Buổi tập', render: (row) => <Link to={evaluationPath(row.sessionId)}>{row.sessionCode}</Link> },
+        { key: 'status', header: 'Trạng thái', render: (row) => <StatusBadge family="session" status={row.status} /> },
+        { key: 'distance', header: 'Quãng đường', render: (row) => metric(row.totalDistanceM, 'm') },
+        { key: 'duration', header: 'Thời lượng', render: (row) => metric(row.durationMin, 'phút') },
+        { key: 'speed', header: 'Tốc độ trung bình', render: (row) => metric(row.avgSpeedKmh, 'km/h') },
+        { key: 'hr', header: 'Nhịp tim cao nhất', render: (row) => metric(row.maxHeartRate, 'bpm') },
+        { key: 'result', header: 'Đánh giá', render: (row) => row.result ? RESULT_LABELS[row.result] : 'Chờ đánh giá' },
       ]} /></div></Card></>}
-    <p className="text-caption">Values come from the server. Recovery time and top-speed history are not supplied by this API. Distance aggregation semantics await approval.</p>
+    <p className="text-caption">Số liệu lấy từ máy chủ. Hệ thống chưa cung cấp thời gian hồi phục và lịch sử tốc độ tối đa. Cách cộng dồn quãng đường đang chờ phê duyệt.</p>
   </div>;
 }

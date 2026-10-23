@@ -2,137 +2,137 @@
 export const CORE_ROLE_MATRIX = [
   {
     "id": "MF-01",
-    "feature": "Horse Profile, Ownership & Pedigree",
+    "feature": "Hồ sơ ngựa, quyền sở hữu & phả hệ",
     "access": [
       "V C E D",
       "V",
-      "V (assigned)",
+      "V (được phân công)",
       "—",
       "V",
       "V",
-      "V (own)"
+      "V (của mình)"
     ]
   },
   {
     "id": "MF-02",
-    "feature": "Health Status & Medical Records",
+    "feature": "Tình trạng sức khỏe & hồ sơ y tế",
     "access": [
       "V",
-      "V (summary)",
-      "V (summary, assigned)",
+      "V (tóm tắt)",
+      "V (tóm tắt, được phân công)",
       "—",
       "V C E",
-      "V + X (assigned tasks)",
-      "V (own · status, weight, summary)"
+      "V + X (công việc được giao)",
+      "V (của mình · trạng thái, cân nặng, tóm tắt)"
     ]
   },
   {
     "id": "MF-03",
-    "feature": "Injury Location & Recovery Tracking",
+    "feature": "Vị trí chấn thương & theo dõi hồi phục",
     "access": [
       "V",
-      "V (summary)",
-      "V (summary, assigned)",
+      "V (tóm tắt)",
+      "V (tóm tắt, được phân công)",
       "—",
       "V C E",
       "—",
-      "V (own · recovery status)"
+      "V (của mình · tình trạng hồi phục)"
     ]
   },
   {
     "id": "MF-04",
-    "feature": "Training Program Management",
+    "feature": "Quản lý chương trình huấn luyện",
     "access": [
       "V",
-      "V C E D · templates · approves adjustment requests",
-      "V (assigned) · template read-only · C adjustment request",
+      "V C E D · mẫu chương trình · duyệt yêu cầu điều chỉnh",
+      "V (được phân công) · xem mẫu chương trình · C yêu cầu điều chỉnh",
       "—",
       "V",
       "V",
-      "V (own)"
+      "V (của mình)"
     ]
   },
   {
     "id": "MF-05",
-    "feature": "Training Schedule & Staff Assignment",
+    "feature": "Lịch tập & phân công nhân sự",
     "access": [
       "V",
-      "V (read)",
-      "V C E D (assigned)",
-      "V + X (assigned)",
+      "V (chỉ xem)",
+      "V C E D (được phân công)",
+      "V + X (được phân công)",
       "V",
-      "V + X (pre-check sessions)",
-      "V (own)"
+      "V + X (buổi tập cần kiểm tra trước)",
+      "V (của mình)"
     ]
   },
   {
     "id": "MF-06",
-    "feature": "Training Result & Performance Evaluation",
+    "feature": "Kết quả tập & đánh giá thành tích",
     "access": [
       "V",
-      "V (read)",
-      "V C E (assigned)",
-      "V + C (assigned)",
+      "V (chỉ xem)",
+      "V C E (được phân công)",
+      "V + C (được phân công)",
       "V",
       "—",
-      "V (own)"
+      "V (của mình)"
     ]
   },
   {
     "id": "MF-07",
-    "feature": "Realtime Training Monitoring & Alerts",
+    "feature": "Giám sát tập luyện trực tiếp & cảnh báo",
     "access": [
       "V",
-      "V (read)",
-      "V + X (assigned)",
-      "C (assigned · data feed)",
-      "V + X (acknowledge CRITICAL)",
+      "V (chỉ xem)",
+      "V + X (được phân công)",
+      "C (được phân công · nguồn dữ liệu)",
+      "V + X (xác nhận cảnh báo NGHIÊM TRỌNG)",
       "—",
       "—"
     ]
   },
   {
     "id": "MF-08",
-    "feature": "Medical Training Restriction / Training Lock",
+    "feature": "Hạn chế tập luyện y tế / Khóa tập luyện",
     "access": [
       "V",
-      "V (restriction + reason)",
-      "V (restriction + reason, assigned)",
-      "V (restriction + reason, assigned)",
-      "V C E · sole writer",
+      "V (hạn chế + lý do)",
+      "V (hạn chế + lý do, được phân công)",
+      "V (hạn chế + lý do, được phân công)",
+      "V C E · người duy nhất được ghi",
       "V",
-      "V (own · readiness only)"
+      "V (của mình · chỉ mức sẵn sàng)"
     ]
   },
   {
     "id": "MF-12",
-    "feature": "Stable Incident Reporting",
+    "feature": "Báo cáo sự cố chuồng trại",
     "access": [
       "V",
       "V C",
-      "V C (assigned)",
-      "V C (assigned)",
-      "V + E (handling status)",
+      "V C (được phân công)",
+      "V C (được phân công)",
+      "V + E (trạng thái xử lý)",
       "V C",
       "—"
     ]
   },
   {
     "id": "MF-15",
-    "feature": "Horse Owner Portal",
+    "feature": "Cổng thông tin Horse Owner",
     "access": [
-      "V (support)",
+      "V (hỗ trợ)",
       "—",
       "—",
       "—",
       "—",
       "—",
-      "V (own)"
+      "V (của mình)"
     ]
   },
   {
     "id": "MF-17",
-    "feature": "Staff & User Management",
+    "feature": "Quản lý nhân sự & người dùng",
     "access": [
       "V C E D",
       "—",
@@ -145,9 +145,9 @@ export const CORE_ROLE_MATRIX = [
   },
   {
     "id": "MF-18",
-    "feature": "Role-Based Access Control",
+    "feature": "Phân quyền theo vai trò",
     "access": [
-      "V E (role assignment)",
+      "V E (gán vai trò)",
       "—",
       "—",
       "—",
@@ -158,20 +158,20 @@ export const CORE_ROLE_MATRIX = [
   },
   {
     "id": "MF-19",
-    "feature": "Dashboard & Management Reports",
+    "feature": "Tổng quan & báo cáo quản lý",
     "access": [
-      "V (management)",
-      "V (training, club-wide)",
-      "V (own sessions)",
+      "V (quản lý)",
+      "V (huấn luyện, toàn câu lạc bộ)",
+      "V (buổi tập của mình)",
       "—",
-      "V (herd health)",
+      "V (sức khỏe đàn ngựa)",
       "—",
       "—"
     ]
   },
   {
     "id": "MF-20",
-    "feature": "Audit Log & Activity Tracking",
+    "feature": "Nhật ký hệ thống & theo dõi hoạt động",
     "access": [
       "V",
       "—",

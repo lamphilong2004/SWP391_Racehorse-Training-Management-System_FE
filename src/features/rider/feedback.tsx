@@ -8,10 +8,11 @@ import { ReadState, RiderShell } from './common';
 import { errorMessage, useRiderApi, useRiderSession, when } from './data';
 import { isTerminal, type RiderFeedbackInput } from './types';
 import styles from './rider.module.css';
+import { viLabel } from '../../shared/viLabels';
 
 export function RiderFeedbackPage({ api: supplied }: { api?: RiderApi }) {
   const api = useRiderApi(supplied); const { id = '' } = useParams();
-  return <RiderShell>{!/^\d+$/.test(id) || !Number.isSafeInteger(Number(id)) || Number(id) < 1 ? <EmptyState title="Ride not found" /> : <Feedback key={id} id={Number(id)} api={api} />}</RiderShell>;
+  return <RiderShell>{!/^\d+$/.test(id) || !Number.isSafeInteger(Number(id)) || Number(id) < 1 ? <EmptyState title="Không tìm thấy lượt cưỡi" /> : <Feedback key={id} id={Number(id)} api={api} />}</RiderShell>;
 }
 function Feedback({ id, api }: { id: number; api: RiderApi }) {
   const state = useRiderSession(id, api); const { handleApiError } = useAuth();
@@ -26,12 +27,12 @@ function Feedback({ id, api }: { id: number; api: RiderApi }) {
   const locked = busy || saved || conflict || Boolean(existing) || Boolean(session.hasRiderFeedback);
   async function submit(event: FormEvent) {
     event.preventDefault(); if (pending.current || locked || !isTerminal(session.status)) return;
-    if (Object.entries(responses).some(([key, text]) => text != null && text.length > (key === 'notes' || key === 'preInterruptionDescription' ? 1000 : 500))) { setError('Feedback text exceeds the approved field limit.'); return; }
+    if (Object.entries(responses).some(([key, text]) => text != null && text.length > (key === 'notes' || key === 'preInterruptionDescription' ? 1000 : 500))) { setError('Nội dung phản hồi vượt quá giới hạn cho phép.'); return; }
     const payload = { responses: Object.fromEntries(Object.entries(responses).filter(([key]) => interrupted || key !== 'preInterruptionDescription').map(([key, text]) => [key, text?.trim() || null])) };
     pending.current = true; setBusy(true); setError('');
     try {
       const response = await api.feedback(id, payload);
-      if (response.sessionId !== id || !Number.isSafeInteger(response.id) || response.id < 1) throw new ApiError(201, 'INVALID_RESPONSE', 'Feedback could not be confirmed. Reload before retrying.');
+      if (response.sessionId !== id || !Number.isSafeInteger(response.id) || response.id < 1) throw new ApiError(201, 'INVALID_RESPONSE', 'Chưa xác nhận được phản hồi. Hãy tải lại trước khi thử lại.');
       setSaved(true);
     } catch (cause) {
       if (!handleApiError(cause)) {
@@ -44,17 +45,17 @@ function Feedback({ id, api }: { id: number; api: RiderApi }) {
   // Feedback text stays in memory only; leaving before the server confirms it asks first.
   const dirty = !saved && !existing && !session.hasRiderFeedback && Object.values(responses).some((text) => Boolean(text?.trim()));
   function update(key: keyof RiderFeedbackInput['responses'], text: string) { setResponses((old) => ({ ...old, [key]: text })); }
-  return <div className={styles.stack}><UnsavedChangesGuard dirty={dirty} /><Link className={styles.link} to={`/rider/assignments/${id}`}>← Assignment</Link><h1 className={styles.heading}>Rider Feedback</h1><p className={styles.muted}>Submit when safely able — from the trackside workstation or office.</p>{!isTerminal(session.status) ? <AlertBanner type="warning" title="Feedback is not available yet">Finish the session or wait for an interrupted outcome. Current status: {session.status}.</AlertBanner> : <div className={styles.columns}><Card><form onSubmit={submit} className={styles.stack}>
-    <RadioGroup label={interrupted ? 'Horse response before the stop' : 'How did the horse respond?'} value={selected.horseResponse ?? ''} onChange={(text) => update('horseResponse', text)} disabled={locked} options={['Strong', 'Normal', 'Sluggish'].map((text) => ({ value: text, label: text }))} />
-    <RadioGroup label={interrupted ? 'Balance and handling before the stop' : 'Balance and handling'} value={selected.balance ?? ''} onChange={(text) => update('balance', text)} disabled={locked} options={['Good', 'Some issues', 'Difficult'].map((text) => ({ value: text, label: text }))} />
-    <TextAreaField label="Breathing observations" value={selected.breathing ?? ''} disabled={locked} maxLength={500} onChange={(event) => update('breathing', event.target.value)} />
-    <TextAreaField label="Stride feeling" value={selected.strideFeeling ?? ''} disabled={locked} maxLength={500} onChange={(event) => update('strideFeeling', event.target.value)} />
-    <TextAreaField label="Anything unusual?" value={selected.abnormalBehavior ?? ''} disabled={locked} maxLength={500} onChange={(event) => update('abnormalBehavior', event.target.value)} />
-    {interrupted && <TextAreaField label="What did you notice before the stop?" value={selected.preInterruptionDescription ?? ''} disabled={locked} maxLength={1000} onChange={(event) => update('preInterruptionDescription', event.target.value)} />}
-    <TextAreaField label="Notes (optional)" value={selected.notes ?? ''} disabled={locked} maxLength={1000} onChange={(event) => update('notes', event.target.value)} />
-    <AlertBanner type="info" title={`The session stays ${session.status}`}>Feedback never completes an interrupted session. Your feedback is available to the Trainer for review.</AlertBanner>
-    {(saved || existing || session.hasRiderFeedback) && <AlertBanner type="success" title="Rider Feedback submitted">{existing ? `Submitted ${when(existing.submittedAt)}.` : 'Only one feedback submission is allowed for this ride.'}</AlertBanner>}
-    {error && <AlertBanner type="danger" title="Feedback could not be confirmed">{error}</AlertBanner>}
-    {conflict ? <Button variant="secondary" onClick={state.reload}>Reload feedback</Button> : !saved && !existing && !session.hasRiderFeedback ? <Button type="submit" disabled={locked}>{busy ? 'Submitting…' : 'Submit Feedback'}</Button> : null}
-    </form></Card><Card title={`${session.horse.name} · ${session.focus || session.phaseName}`}><p>{session.sessionCode} · {when(session.scheduledStart)}</p><StatusBadge family="session" status={session.status} /><p>Trainer {session.trainer?.fullName ?? 'Not supplied'} · Rider {session.workRider.fullName}</p>{interrupted && <p>{session.interruptionReason || 'Interruption reason not supplied.'}</p>}{Boolean(state.resultError) && <AlertBanner type="warning" title="Feedback snapshot unavailable">{errorMessage(state.resultError)} The backend still enforces one submission per session.</AlertBanner>}<Link className={styles.link} to="/rider/history">View Riding History</Link></Card></div>}</div>;
+  return <div className={styles.stack}><UnsavedChangesGuard dirty={dirty} /><Link className={styles.link} to={`/rider/assignments/${id}`}>← Lịch phân công</Link><h1 className={styles.heading}>Phản hồi của người cưỡi</h1><p className={styles.muted}>Hãy gửi khi an toàn — từ máy cạnh đường đua hoặc văn phòng.</p>{!isTerminal(session.status) ? <AlertBanner type="warning" title="Chưa thể gửi phản hồi">Hãy hoàn thành buổi tập hoặc chờ kết quả gián đoạn. Trạng thái hiện tại: {viLabel(session.status)}.</AlertBanner> : <div className={styles.columns}><Card><form onSubmit={submit} className={styles.stack}>
+    <RadioGroup label={interrupted ? 'Phản ứng của ngựa trước khi dừng' : 'Ngựa phản ứng thế nào?'} value={selected.horseResponse ?? ''} onChange={(text) => update('horseResponse', text)} disabled={locked} options={['Strong', 'Normal', 'Sluggish'].map((text) => ({ value: text, label: viLabel(text) }))} />
+    <RadioGroup label={interrupted ? 'Thăng bằng và điều khiển trước khi dừng' : 'Thăng bằng và điều khiển'} value={selected.balance ?? ''} onChange={(text) => update('balance', text)} disabled={locked} options={['Good', 'Some issues', 'Difficult'].map((text) => ({ value: text, label: viLabel(text) }))} />
+    <TextAreaField label="Quan sát hô hấp" value={selected.breathing ?? ''} disabled={locked} maxLength={500} onChange={(event) => update('breathing', event.target.value)} />
+    <TextAreaField label="Cảm nhận sải bước" value={selected.strideFeeling ?? ''} disabled={locked} maxLength={500} onChange={(event) => update('strideFeeling', event.target.value)} />
+    <TextAreaField label="Có gì bất thường không?" value={selected.abnormalBehavior ?? ''} disabled={locked} maxLength={500} onChange={(event) => update('abnormalBehavior', event.target.value)} />
+    {interrupted && <TextAreaField label="Bạn thấy gì trước khi dừng?" value={selected.preInterruptionDescription ?? ''} disabled={locked} maxLength={1000} onChange={(event) => update('preInterruptionDescription', event.target.value)} />}
+    <TextAreaField label="Ghi chú (không bắt buộc)" value={selected.notes ?? ''} disabled={locked} maxLength={1000} onChange={(event) => update('notes', event.target.value)} />
+    <AlertBanner type="info" title={`Buổi tập giữ trạng thái ${viLabel(session.status)}`}>Gửi phản hồi không làm buổi tập bị gián đoạn thành hoàn thành. Trainer sẽ xem phản hồi của bạn.</AlertBanner>
+    {(saved || existing || session.hasRiderFeedback) && <AlertBanner type="success" title="Đã gửi phản hồi">{existing ? `Đã gửi lúc ${when(existing.submittedAt)}.` : 'Mỗi lượt cưỡi chỉ được gửi phản hồi một lần.'}</AlertBanner>}
+    {error && <AlertBanner type="danger" title="Chưa xác nhận được phản hồi">{error}</AlertBanner>}
+    {conflict ? <Button variant="secondary" onClick={state.reload}>Tải lại phản hồi</Button> : !saved && !existing && !session.hasRiderFeedback ? <Button type="submit" disabled={locked}>{busy ? 'Đang gửi…' : 'Gửi phản hồi'}</Button> : null}
+    </form></Card><Card title={`${session.horse.name} · ${session.focus || session.phaseName}`}><p>{session.sessionCode} · {when(session.scheduledStart)}</p><StatusBadge family="session" status={session.status} /><p>Trainer {session.trainer?.fullName ?? 'Chưa cung cấp'} · Người cưỡi {session.workRider.fullName}</p>{interrupted && <p>{session.interruptionReason || 'Không có lý do gián đoạn.'}</p>}{Boolean(state.resultError) && <AlertBanner type="warning" title="Không tải được phản hồi">{errorMessage(state.resultError)} Hệ thống vẫn chỉ cho gửi một lần mỗi buổi tập.</AlertBanner>}<Link className={styles.link} to="/rider/history">Xem lịch sử cưỡi</Link></Card></div>}</div>;
 }

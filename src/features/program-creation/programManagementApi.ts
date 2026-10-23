@@ -1,16 +1,16 @@
 import { idOf, jsonBody, type FlowRequest } from '../main-flows/api';
-import type { CandidateList, ProgramDetail, TemplateDetail, UserRef } from './programTypes';
+import type { CandidateList, ProgramDetail, ProgramPhaseInput, TemplateDetail, UserRef } from './programTypes';
 
 /** DEC-005 request types; TARGET_RACE stays deferred. */
 export const ADJUSTMENT_TYPES = [
-  { value: 'PHASE_WORKLOAD_INTENSITY', label: 'Phase workload / intensity' },
-  { value: 'PHASE_TIMELINE', label: 'Phase timeline' },
-  { value: 'PHASE_OBJECTIVE', label: 'Phase objective' },
-  { value: 'PHASE_STRUCTURE', label: 'Phase structure' },
-  { value: 'TOTAL_DURATION', label: 'Total program duration' },
-  { value: 'PRIMARY_GOAL', label: 'Primary goal' },
-  { value: 'SOURCE_TEMPLATE', label: 'Source template' },
-  { value: 'OTHER_STRUCTURAL', label: 'Other structural change' },
+  { value: 'PHASE_WORKLOAD_INTENSITY', label: 'Khối lượng / cường độ giai đoạn' },
+  { value: 'PHASE_TIMELINE', label: 'Thời gian giai đoạn' },
+  { value: 'PHASE_OBJECTIVE', label: 'Mục tiêu giai đoạn' },
+  { value: 'PHASE_STRUCTURE', label: 'Cấu trúc giai đoạn' },
+  { value: 'TOTAL_DURATION', label: 'Tổng thời gian chương trình' },
+  { value: 'PRIMARY_GOAL', label: 'Mục tiêu chính' },
+  { value: 'SOURCE_TEMPLATE', label: 'Mẫu gốc' },
+  { value: 'OTHER_STRUCTURAL', label: 'Thay đổi cấu trúc khác' },
 ] as const;
 export type AdjustmentStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 export interface AdjustmentRequest {
@@ -45,6 +45,9 @@ export function createProgramManagementApi(request: FlowRequest) {
     },
     approve: (id: number, decisionReason?: string) =>
       request<AdjustmentRequest>(`/api/adjustment-requests/${idOf(id)}/approve`, jsonBody('POST', { decisionReason: decisionReason || undefined })),
+    /** PUT /phases: replaces the program's phases; the server requires the request to be APPROVED for this program. */
+    applyPhases: (programId: number, adjustmentRequestId: number, phases: (ProgramPhaseInput & { id?: number })[]) =>
+      request<ProgramDetail>(`/api/training-programs/${idOf(programId)}/phases`, jsonBody('PUT', { adjustmentRequestId: idOf(adjustmentRequestId), phases })),
     reject: (id: number, decisionReason: string) =>
       request<AdjustmentRequest>(`/api/adjustment-requests/${idOf(id)}/reject`, jsonBody('POST', { decisionReason })),
   };

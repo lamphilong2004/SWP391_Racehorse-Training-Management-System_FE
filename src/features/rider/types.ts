@@ -19,17 +19,17 @@ export interface IssueResult { incidentId: number; incidentCode: string; session
 export const isTerminal = (status: RiderSession['status']) => status === 'COMPLETED' || status === 'INTERRUPTED';
 export function startBlocks(session: RiderSession, now = Date.now()): string[] {
   const reasons = [...(session.blockedReasons ?? [])];
-  if (session.status !== 'SCHEDULED') reasons.push('Only a scheduled session can start.');
-  if ((session.preSessionCheck?.overallResult ?? session.preCheckResult) !== 'ALL_NORMAL') reasons.push('The Groom pre-session check must be ALL_NORMAL.');
-  if (session.trainingAvailability === 'LOCKED') reasons.push('Training is locked by the Veterinarian.');
-  if (!Number.isFinite(Date.parse(session.scheduledStart)) || Date.parse(session.scheduledStart) > now) reasons.push('No early start. Your Trainer must reschedule if needed.');
-  if (session.blocked && reasons.length === 0) reasons.push(session.blockedMessage || 'The server has blocked this session.');
+  if (session.status !== 'SCHEDULED') reasons.push('Chỉ buổi tập đã lên lịch mới bắt đầu được.');
+  if ((session.preSessionCheck?.overallResult ?? session.preCheckResult) !== 'ALL_NORMAL') reasons.push('Kết quả kiểm tra trước buổi tập của Groom phải là Tất cả bình thường.');
+  if (session.trainingAvailability === 'LOCKED') reasons.push('Veterinarian đã khóa tập luyện.');
+  if (!Number.isFinite(Date.parse(session.scheduledStart)) || Date.parse(session.scheduledStart) > now) reasons.push('Không được bắt đầu sớm. Trainer cần đổi lịch nếu cần.');
+  if (session.blocked && reasons.length === 0) reasons.push(session.blockedMessage || 'Hệ thống đã chặn buổi tập này.');
   return [...new Set(reasons)];
 }
 export function metricInput(values: { heartRate: string; speedKmh: string; distanceM: string }, recordedAt = new Date().toISOString()): MetricInput {
   const parsed = Object.fromEntries(Object.entries(values).map(([key, value]) => [key, value.trim() === '' ? null : Number(value)])) as Pick<MetricInput, 'heartRate' | 'speedKmh' | 'distanceM'>;
-  if (Object.values(parsed).every((value) => value === null)) throw new Error('Enter at least one metric.');
-  if (Object.values(parsed).some((value) => value !== null && (!Number.isFinite(value) || value < 0))) throw new Error('Metrics must be finite nonnegative numbers.');
-  if (parsed.heartRate !== null && !Number.isInteger(parsed.heartRate)) throw new Error('Heart rate must be a whole number.');
+  if (Object.values(parsed).every((value) => value === null)) throw new Error('Nhập ít nhất một chỉ số.');
+  if (Object.values(parsed).some((value) => value !== null && (!Number.isFinite(value) || value < 0))) throw new Error('Chỉ số phải là số không âm.');
+  if (parsed.heartRate !== null && !Number.isInteger(parsed.heartRate)) throw new Error('Nhịp tim phải là số nguyên.');
   return { recordedAt, ...parsed };
 }

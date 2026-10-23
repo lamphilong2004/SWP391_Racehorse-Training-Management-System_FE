@@ -11,7 +11,7 @@ export interface SummaryService {
   getAvailability: (id: number) => Promise<import('./models').TrainingAvailability>;
   listCases: () => Promise<CaseSummary[]>;
 }
-const invalid = () => new ApiError(200, 'INVALID_RESPONSE', 'Summary data does not match the authorized projection.');
+const invalid = () => new ApiError(200, 'INVALID_RESPONSE', 'Dữ liệu tóm tắt không hợp lệ.');
 function readSummary(value: unknown): CaseSummary {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw invalid();
   const v = value as Record<string, unknown>;
@@ -29,7 +29,7 @@ export function createSummaryService(token: string, onError?: (error: unknown) =
   return {
     listHorses: () => readActiveHerd(token, onError, options),
     getHorse: async (id) => {
-      if (!Number.isSafeInteger(id) || id < 1) throw new Error('Invalid horse ID.');
+      if (!Number.isSafeInteger(id) || id < 1) throw new Error('Mã ngựa không hợp lệ.');
       const raw = await get(`/api/horses/${id}`), identity = readHorseIdentityData(raw), v = raw as Record<string, unknown>;
       if (identity.id !== id || ['breed', 'sex'].some((key) => v[key] != null && typeof v[key] !== 'string') ||
         (v.foaledDate != null && (typeof v.foaledDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v.foaledDate) || !Number.isFinite(Date.parse(v.foaledDate))))) throw invalid();
@@ -41,7 +41,7 @@ export function createSummaryService(token: string, onError?: (error: unknown) =
         yard: assignment?.yard as string | null | undefined, latestWeight: weight ? { weightKg: Number(weight.weightKg), recordedAt: String(weight.recordedAt) } : weight };
     },
     getAvailability: async (id) => {
-      if (!Number.isSafeInteger(id) || id < 1) throw new Error('Invalid horse ID.');
+      if (!Number.isSafeInteger(id) || id < 1) throw new Error('Mã ngựa không hợp lệ.');
       return readAvailability(await get(`/api/horses/${id}/training-availability`), id);
     },
     listCases: async () => {

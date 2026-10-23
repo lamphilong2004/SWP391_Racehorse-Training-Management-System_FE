@@ -6,7 +6,7 @@ import { authSession } from '../../shared/auth/authSession';
 export type FlowRequest = <T>(path: string, init?: RequestInit) => Promise<T>;
 export function idOf(value: string | number | undefined): number {
   const id = Number(value);
-  if (!Number.isSafeInteger(id) || id < 1) throw new Error('Choose a valid record to continue.');
+  if (!Number.isSafeInteger(id) || id < 1) throw new Error('Hãy chọn bản ghi hợp lệ để tiếp tục.');
   return id;
 }
 export function useFlowRequest(): FlowRequest {
@@ -14,14 +14,14 @@ export function useFlowRequest(): FlowRequest {
   return useMemo(() => async <T,>(path: string, init?: RequestInit): Promise<T> => {
     try {
       const session = authSession.read();
-      if (!session || session.expiresAt <= Date.now()) throw new ApiError(401, 'UNAUTHORIZED', 'Your session expired. Sign in again.');
+      if (!session || session.expiresAt <= Date.now()) throw new ApiError(401, 'UNAUTHORIZED', 'Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại.');
       return await requestApi<T>(path, init, { token: session.accessToken });
     } catch (error) { handleApiError(error); throw error; }
   }, [handleApiError]);
 }
 export function errorMessage(error: unknown): string {
   if (error instanceof ApiError) return [error.message, ...error.details.map((detail) => detail.message)].join(' ');
-  return error instanceof Error ? error.message : 'The server could not complete this request.';
+  return error instanceof Error ? error.message : 'Máy chủ không xử lý được yêu cầu này.';
 }
 export function jsonBody(method: string, body: unknown): RequestInit {
   return { method, body: JSON.stringify(body) };

@@ -24,7 +24,7 @@ function mount(path = '/owner/horses', options: { role?: RoleCode; anonymous?: b
     if (options.offline) throw new Error('offline');
     if (options.status) return new Response(JSON.stringify({ success: false, error: { code: 'FORBIDDEN', message: 'CLINICAL-SECRET', details: [] } }), { status: options.status });
     if (url.pathname === '/api/owner/horses') return ok(options.malformed ? { items: [horse] } : [horse]);
-    if (url.pathname.endsWith('/profile')) return ok({ horse, pedigree: { sire: { name: 'Sire' }, dam: {} }, myOwnership: { sharePercentage: 60, effectiveFrom: '2026-01-01', isManagingOwner: true }, diagnosis: 'CLINICAL-SECRET' });
+    if (url.pathname.endsWith('/profile')) return ok({ horse, pedigree: { sire: { name: 'Ngựa cha' }, dam: {} }, myOwnership: { sharePercentage: 60, effectiveFrom: '2026-01-01', isManagingOwner: true }, diagnosis: 'CLINICAL-SECRET' });
     if (url.pathname.endsWith('/health-summary')) return ok({ healthStatus: null, trainingAvailability: 'AVAILABLE', weights: [], diagnosis: 'CLINICAL-SECRET' });
     if (url.pathname.endsWith('/training-summary')) return ok({ currentProgram: null, recentSessions: [], feedback: 'CLINICAL-SECRET' });
     throw new Error(`Unapproved request ${url.pathname}`);
@@ -40,20 +40,20 @@ describe('CORE-056 actual application HTTP route mounting', () => {
   it('mounts the canonical list from an array and navigates to all read-only tabs through the real provider', async () => {
     const { requests } = mount();
     await screen.findByRole('heading', { name: 'API owned horse' });
-    await userEvent.click(screen.getByRole('link', { name: /View horse/ }));
-    await screen.findByRole('heading', { name: 'Profile' });
-    await userEvent.click(screen.getByRole('tab', { name: 'Health & Readiness' }));
-    await screen.findByText('A summary for owners. Updated by the club’s Veterinarian.');
-    await userEvent.click(screen.getByRole('tab', { name: 'Training & Performance' }));
-    await screen.findByRole('heading', { name: 'Recent sessions' });
-    expect(requests).toEqual(['/api/owner/horses', '/api/owner/horses/7/profile', '/api/owner/horses/7/health-summary', '/api/owner/horses/7/training-summary']);
+    await userEvent.click(screen.getByRole('link', { name: /Xem ngựa/ }));
+    await screen.findByRole('heading', { name: 'Hồ sơ' });
+    await userEvent.click(screen.getByRole('tab', { name: 'Sức khỏe & mức sẵn sàng' }));
+    await screen.findByText('Bản tóm tắt dành cho chủ ngựa, do Veterinarian của câu lạc bộ cập nhật.');
+    await userEvent.click(screen.getByRole('tab', { name: 'Huấn luyện & thành tích' }));
+    await screen.findByRole('heading', { name: 'Buổi tập gần đây' });
+    expect(requests).toEqual(['/api/owner/horses', '/api/owner/horses/7/training-summary', '/api/owner/horses/7/profile', '/api/owner/horses/7/health-summary', '/api/owner/horses/7/training-summary']);
     expect(document.body).not.toHaveTextContent('CLINICAL-SECRET');
     expect(localStorage.getItem('racehorse.business-samples.v1')).toBeNull();
     expect(screen.queryByRole('button', { name: /Save|Edit|Activate/ })).not.toBeInTheDocument();
   });
   it.each(['/owner/horses/7?tab=health', '/my-horses/7?tab=health#summary'])('supports refresh/direct-link %s and legacy canonicalization', async (path) => {
     const { router } = mount(path);
-    await screen.findByText('A summary for owners. Updated by the club’s Veterinarian.');
+    await screen.findByText('Bản tóm tắt dành cho chủ ngựa, do Veterinarian của câu lạc bộ cập nhật.');
     expect(router.state.location.pathname).toBe('/owner/horses/7');
     expect(router.state.location.search).toBe('?tab=health');
     expect(router.state.location.hash).toBe(path.includes('#') ? '#summary' : '');
@@ -64,30 +64,30 @@ describe('CORE-056 actual application HTTP route mounting', () => {
   });
   it.each(['CLUB_MANAGER', 'HEAD_TRAINER', 'GROOM', 'VETERINARIAN', 'TRAINER', 'WORK_RIDER'] as const)('denies %s before any Owner HTTP request', async (role) => {
     const { requests } = mount('/owner/horses/7?tab=health', { role });
-    await screen.findByText('Access denied'); expect(requests).toEqual([]);
+    await screen.findByText('Không có quyền truy cập'); expect(requests).toEqual([]);
   });
   it.each(['/my-horses', '/my-horses/7?tab=health'])('denies a staff legacy link %s before redirecting or reading Owner data', async (path) => {
     const { router, requests } = mount(path, { role: 'HEAD_TRAINER' });
-    await screen.findByText('Access denied');
+    await screen.findByText('Không có quyền truy cập');
     expect(router.state.location.pathname).toBe(path.split('?')[0]); expect(requests).toEqual([]);
   });
   it('uses shared login for an anonymous deep link, retaining return-location state', async () => {
     const { requests, router } = mount('/owner/horses/7?tab=training', { anonymous: true });
-    await screen.findByRole('heading', { name: 'Sign in to Racehorse Ops' });
+    await screen.findByRole('heading', { name: 'Đăng nhập Racehorse Ops' });
     expect(router.state.location.state.from.search).toBe('?tab=training'); expect(requests).toEqual([]);
   });
   it.each([403, 404])('halts detail authorization at profile HTTP %s without requesting summaries', async (status) => {
     const { requests } = mount('/owner/horses/7?tab=health', { status });
-    await screen.findByText(status === 403 ? 'Access denied' : 'Horse not found');
+    await screen.findByText(status === 403 ? 'Không có quyền truy cập' : 'Không tìm thấy ngựa');
     expect(requests).toEqual(['/api/owner/horses/7/profile']); expect(document.body).not.toHaveTextContent('CLINICAL-SECRET');
   });
   it('clears the shared session on Owner 401', async () => {
-    mount('/owner/horses/7', { status: 401 }); await screen.findByRole('heading', { name: 'Sign in to Racehorse Ops' });
+    mount('/owner/horses/7', { status: 401 }); await screen.findByRole('heading', { name: 'Đăng nhập Racehorse Ops' });
     await waitFor(() => expect(authSession.read()).toBeNull());
   });
   it.each([{ status: 500 }, { offline: true }, { malformed: true }])('keeps API failures visible without sample fallback: %j', async (options) => {
     const { requests } = mount('/owner/horses', options);
-    await screen.findByText('Owner information unavailable');
+    await screen.findByText('Không tải được thông tin chủ ngựa');
     expect(requests).toEqual(['/api/owner/horses']); expect(screen.queryByText('Thunder Bolt')).not.toBeInTheDocument();
     expect(localStorage.getItem('racehorse.business-samples.v1')).toBeNull();
   });

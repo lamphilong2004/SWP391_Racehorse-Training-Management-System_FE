@@ -5,7 +5,7 @@ import styles from './NotFoundPage.module.css';
 export function NotFoundPage() {
   return (
     <div className={styles.page}>
-      <EmptyState title="Page not found." description="This screen is not available yet." />
+      <EmptyState title="Không tìm thấy trang." description="Màn hình này chưa có." />
     </div>
   );
 }

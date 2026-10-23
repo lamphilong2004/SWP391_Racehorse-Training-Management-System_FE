@@ -31,3 +31,8 @@
   gap: var(--space-md);
   flex-shrink: 0;
 }
+
+.heading { font-family: var(--font-family-headline); font-weight: 700; letter-spacing: -.025em; }
+.row { flex-wrap: wrap; }
+.actions { flex-wrap: wrap; }
+@media (max-width: 767px) { .title { flex-basis: 100%; } .actions { max-width: 100%; } }

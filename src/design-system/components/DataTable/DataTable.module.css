@@ -53,3 +53,31 @@
 .emptyCell {
   padding: var(--space-lg);
 }
+
+:global([data-ui-v3]) .headerCell {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+:global([data-ui-v3]) .cell {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+:global([data-ui-v3]) .cell a:not([class]) {
+  color: var(--color-brand-primary);
+  font-weight: 600;
+  text-decoration-color: var(--color-border-strong);
+  text-underline-offset: 3px;
+}
+
+/* Stacked cell content (grid/flex with min-width: 0) must not let a column shrink below its longest
+   word or badge; otherwise text overflows into the next column. */
+.table td > *,
+.table td > * > * {
+  min-width: min-content;
+}
+
+.nowrap {
+  white-space: nowrap;
+}

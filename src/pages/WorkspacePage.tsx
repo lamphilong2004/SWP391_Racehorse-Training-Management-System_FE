@@ -13,66 +13,66 @@ import styles from './WorkspacePage.module.css';
 type WorkspaceAction = { title: string; description: string; label: string; to: string; icon: IconName };
 const WORKSPACES: Record<RoleCode, { description: string; primary: WorkspaceAction; actions: WorkspaceAction[] }> = {
   VETERINARIAN: {
-    description: 'Review new arrivals, follow medical cases and manage the health of your horses.',
-    primary: { title: 'Medical cases', description: '', label: 'Open medical cases', to: ROUTES.medical, icon: 'stethoscope' },
+    description: 'Xem ngựa mới đến, theo dõi ca y tế và quản lý sức khỏe đàn ngựa.',
+    primary: { title: 'Ca y tế', description: '', label: 'Mở ca y tế', to: ROUTES.medical, icon: 'stethoscope' },
     actions: [
-      { title: 'Horse profiles & baseline', description: 'Choose a horse, review its profile and record the initial health examination.', label: 'View horses', to: ROUTES.horses, icon: 'horseshoe' },
-      { title: 'Medical cases', description: 'Open examinations, restrictions, treatment plans and recovery records.', label: 'View cases', to: ROUTES.medical, icon: 'stethoscope' },
-      { title: 'Herd health', description: 'Review the herd health overview and identify horses requiring attention.', label: 'View herd health', to: ROUTES.herdHealth, icon: 'activity' },
-      { title: 'Incident review', description: 'Review reported observations and continue the medical response.', label: 'Review incidents', to: ROUTES.incidents, icon: 'shield-alert' },
+      { title: 'Hồ sơ ngựa & khám ban đầu', description: 'Chọn ngựa, xem hồ sơ và ghi kết quả khám sức khỏe ban đầu.', label: 'Xem danh sách ngựa', to: ROUTES.horses, icon: 'horseshoe' },
+      { title: 'Ca y tế', description: 'Mở các lần khám, hạn chế, phác đồ điều trị và hồ sơ hồi phục.', label: 'Xem ca y tế', to: ROUTES.medical, icon: 'stethoscope' },
+      { title: 'Sức khỏe đàn ngựa', description: 'Xem tổng quan sức khỏe đàn ngựa và nhận biết ngựa cần chú ý.', label: 'Xem sức khỏe đàn ngựa', to: ROUTES.herdHealth, icon: 'activity' },
+      { title: 'Xem xét sự cố', description: 'Xem các quan sát đã báo và tiếp tục xử lý y tế.', label: 'Xem xét sự cố', to: ROUTES.incidents, icon: 'shield-alert' },
     ],
   },
   HEAD_TRAINER: {
-    description: 'Review horse readiness, choose a reusable strategy and assign the right Trainer.',
-    primary: { title: 'Create program', description: '', label: 'Create program', to: ROUTES.trainingProgramCreate, icon: 'plus' },
+    description: 'Xem mức sẵn sàng của ngựa, chọn chiến lược dùng lại được và phân công Trainer phù hợp.',
+    primary: { title: 'Tạo chương trình', description: '', label: 'Tạo chương trình', to: ROUTES.trainingProgramCreate, icon: 'plus' },
     actions: [
-      { title: 'Horse readiness', description: 'Review profiles, baseline health and availability before planning training.', label: 'Review horses', to: ROUTES.horses, icon: 'horseshoe' },
-      { title: 'Program Templates', description: 'Compare reusable strategies and their saved versions.', label: 'Browse templates', to: ROUTES.programTemplates, icon: 'book-open' },
-      { title: 'Horse Training Programs', description: 'Open horse programs, pinned template versions and Trainer assignments.', label: 'View programs', to: ROUTES.trainingPrograms, icon: 'clipboard-list' },
-      { title: 'Training Schedule', description: 'Review the sessions scheduled for the club.', label: 'View schedule', to: ROUTES.trainingSchedule, icon: 'calendar' },
+      { title: 'Mức sẵn sàng của ngựa', description: 'Xem hồ sơ, sức khỏe ban đầu và khả năng tập luyện trước khi lên kế hoạch huấn luyện.', label: 'Xem ngựa', to: ROUTES.horses, icon: 'horseshoe' },
+      { title: 'Mẫu chương trình', description: 'So sánh các chiến lược dùng lại được và các phiên bản đã lưu.', label: 'Xem mẫu chương trình', to: ROUTES.programTemplates, icon: 'book-open' },
+      { title: 'Chương trình huấn luyện ngựa', description: 'Mở chương trình của ngựa, phiên bản mẫu đã chọn và phân công Trainer.', label: 'Xem chương trình', to: ROUTES.trainingPrograms, icon: 'clipboard-list' },
+      { title: 'Lịch tập', description: 'Xem các buổi tập đã lên lịch của câu lạc bộ.', label: 'Xem lịch tập', to: ROUTES.trainingSchedule, icon: 'calendar' },
     ],
   },
   GROOM: {
-    description: 'Your assigned pre-session observations and care tasks, ready to open.',
-    primary: { title: 'Today', description: '', label: 'Open Today & prechecks', to: ROUTES.groomToday, icon: 'clipboard-list' },
+    description: 'Các mục kiểm tra trước buổi tập và công việc chăm sóc được giao cho bạn.',
+    primary: { title: 'Hôm nay', description: '', label: 'Mở hôm nay & kiểm tra', to: ROUTES.groomToday, icon: 'clipboard-list' },
     actions: [
-      { title: 'Today & prechecks', description: 'Find your assigned horse and complete all five pre-session observations.', label: 'Open pre-session checks', to: ROUTES.groomToday, icon: 'clipboard-list' },
-      { title: 'Treatment tasks', description: 'Follow the Veterinarian’s instructions and record completed care.', label: 'View treatment tasks', to: ROUTES.careTasks, icon: 'check-circle' },
-      { title: 'Reported incidents', description: 'Follow the handling status of observations you reported.', label: 'View incidents', to: ROUTES.incidents, icon: 'alert-triangle' },
+      { title: 'Hôm nay & kiểm tra', description: 'Tìm ngựa được giao và hoàn tất cả năm mục kiểm tra trước buổi tập.', label: 'Mở kiểm tra trước buổi tập', to: ROUTES.groomToday, icon: 'clipboard-list' },
+      { title: 'Công việc điều trị', description: 'Làm theo hướng dẫn của Veterinarian và ghi nhận công việc chăm sóc đã làm.', label: 'Xem công việc điều trị', to: ROUTES.careTasks, icon: 'check-circle' },
+      { title: 'Sự cố đã báo', description: 'Theo dõi trạng thái xử lý các quan sát bạn đã báo.', label: 'Xem sự cố', to: ROUTES.incidents, icon: 'alert-triangle' },
     ],
   },
   WORK_RIDER: {
-    description: 'Review your assigned rides, check readiness and follow the Trainer’s instructions.',
-    primary: { title: 'Assignments', description: '', label: 'Open my assignments', to: ROUTES.assignments, icon: 'play' },
+    description: 'Xem lượt cưỡi được giao, kiểm tra mức sẵn sàng và làm theo hướng dẫn của Trainer.',
+    primary: { title: 'Lịch phân công', description: '', label: 'Mở lịch phân công', to: ROUTES.assignments, icon: 'play' },
     actions: [
-      { title: 'Today’s rides', description: 'Open today’s sessions and review the assigned exercise plans.', label: 'View today’s rides', to: ROUTES.myRides, icon: 'calendar' },
-      { title: 'My assignments', description: 'Review readiness checks and start only when every gate is clear.', label: 'View assignments', to: ROUTES.assignments, icon: 'clipboard-list' },
-      { title: 'Riding history', description: 'Revisit completed rides and your submitted feedback.', label: 'View riding history', to: ROUTES.ridingHistory, icon: 'history' },
+      { title: 'Lượt cưỡi hôm nay', description: 'Mở buổi tập hôm nay và xem kế hoạch bài tập được giao.', label: 'Xem lượt cưỡi hôm nay', to: ROUTES.myRides, icon: 'calendar' },
+      { title: 'Lịch phân công của tôi', description: 'Xem các mục sẵn sàng và chỉ bắt đầu khi mọi điều kiện đều đạt.', label: 'Xem lịch phân công', to: ROUTES.assignments, icon: 'clipboard-list' },
+      { title: 'Lịch sử cưỡi', description: 'Xem lại các lượt cưỡi đã hoàn thành và phản hồi đã gửi.', label: 'Xem lịch sử cưỡi', to: ROUTES.ridingHistory, icon: 'history' },
     ],
   },
   HORSE_OWNER: {
-    description: 'Your horses, their health and their training — in one read-only portal.',
-    primary: { title: 'My Horses', description: '', label: 'Open My Horses', to: ROUTES.myHorses, icon: 'horseshoe' },
+    description: 'Ngựa của bạn, sức khỏe và việc huấn luyện — trong một cổng thông tin chỉ xem.',
+    primary: { title: 'Ngựa của tôi', description: '', label: 'Mở ngựa của tôi', to: ROUTES.myHorses, icon: 'horseshoe' },
     actions: [
-      { title: 'My Horses', description: 'View your horse profiles, pedigree, stable, health and training summaries.', label: 'View my horses', to: ROUTES.myHorses, icon: 'horseshoe' },
-      { title: 'Notifications', description: 'Open updates available to your account.', label: 'View notifications', to: ROUTES.notifications, icon: 'bell' },
+      { title: 'Ngựa của tôi', description: 'Xem hồ sơ, phả hệ, chuồng, tóm tắt sức khỏe và huấn luyện của ngựa.', label: 'Xem ngựa của tôi', to: ROUTES.myHorses, icon: 'horseshoe' },
+      { title: 'Thông báo', description: 'Mở các cập nhật dành cho tài khoản của bạn.', label: 'Xem thông báo', to: ROUTES.notifications, icon: 'bell' },
     ],
   },
   CLUB_MANAGER: {
-    description: 'Manage horse registration and review the club register.',
-    primary: { title: 'Register Horse', description: '', label: 'Register Horse', to: '/horses/new', icon: 'plus' },
+    description: 'Quản lý đăng ký ngựa và xem danh sách ngựa của câu lạc bộ.',
+    primary: { title: 'Thêm ngựa', description: '', label: 'Thêm ngựa', to: '/horses/new', icon: 'plus' },
     actions: [
-      { title: 'Horse register', description: 'View registered horses and their current profiles.', label: 'View horses', to: ROUTES.horses, icon: 'horseshoe' },
-      { title: 'Pending activation', description: 'Complete the requirements for newly registered horses.', label: 'Review pending horses', to: ROUTES.pendingActivation, icon: 'clipboard-list' },
+      { title: 'Danh sách ngựa', description: 'Xem các ngựa đã đăng ký và hồ sơ hiện tại.', label: 'Xem danh sách ngựa', to: ROUTES.horses, icon: 'horseshoe' },
+      { title: 'Chờ kích hoạt', description: 'Hoàn tất các yêu cầu cho ngựa mới đăng ký.', label: 'Xem ngựa chờ kích hoạt', to: ROUTES.pendingActivation, icon: 'clipboard-list' },
     ],
   },
   TRAINER: {
-    description: 'Open your assigned programs, plan sessions and review results.',
-    primary: { title: 'Assigned Programs', description: '', label: 'Open assigned programs', to: ROUTES.assignedPrograms, icon: 'clipboard-list' },
+    description: 'Mở chương trình được giao, lên kế hoạch buổi tập và xem kết quả.',
+    primary: { title: 'Chương trình được giao', description: '', label: 'Mở chương trình được giao', to: ROUTES.assignedPrograms, icon: 'clipboard-list' },
     actions: [
-      { title: 'Assigned Programs', description: 'Review the horse-specific programs assigned to you.', label: 'View assigned programs', to: ROUTES.assignedPrograms, icon: 'clipboard-list' },
-      { title: 'Training Calendar', description: 'Plan sessions within the approved program and medical limits.', label: 'View calendar', to: ROUTES.trainingCalendar, icon: 'calendar' },
-      { title: 'Performance', description: 'Review session results and evaluations.', label: 'View performance', to: ROUTES.performance, icon: 'bar-chart' },
+      { title: 'Chương trình được giao', description: 'Xem các chương trình riêng cho từng ngựa được giao cho bạn.', label: 'Xem chương trình được giao', to: ROUTES.assignedPrograms, icon: 'clipboard-list' },
+      { title: 'Lịch tập', description: 'Lên kế hoạch buổi tập trong giới hạn chương trình và y tế đã duyệt.', label: 'Xem lịch', to: ROUTES.trainingCalendar, icon: 'calendar' },
+      { title: 'Thành tích', description: 'Xem kết quả và đánh giá buổi tập.', label: 'Xem thành tích', to: ROUTES.performance, icon: 'bar-chart' },
     ],
   },
 };
@@ -81,26 +81,26 @@ export function WorkspacePage() {
   const { user } = useAuth();
   if (!user) return null;
   const role = user.roles[0], workspace = WORKSPACES[role];
-  return <AppShell designSystem="v2" user={{ fullName: user.fullName, role }} breadcrumb={[{ label: 'Dashboard' }]}>
+  return <AppShell designSystem="v2" user={{ fullName: user.fullName, role }} breadcrumb={[{ label: 'Tổng quan' }]}>
     <div className={styles.page}>
       <header className={styles.heading}>
-        <div><p className={styles.eyebrow}>YOUR WORKSPACE</p><h1 className="text-h1">{NAVIGATION[role].workspaceLabel}</h1><p className={styles.description}>{workspace.description}</p></div>
+        <div><p className={styles.eyebrow}>KHÔNG GIAN CỦA BẠN</p><h1 className="text-h1">{NAVIGATION[role].workspaceLabel}</h1><p className={styles.description}>{workspace.description}</p></div>
         <ButtonLink variant="primary" to={workspace.primary.to}><Icon name={workspace.primary.icon} size={18} />{workspace.primary.label}</ButtonLink>
       </header>
-      <section className={styles.welcome} aria-label="Workspace overview">
+      <section className={styles.welcome} aria-label="Tổng quan không gian làm việc">
         <div className={styles.welcomeIcon}><Icon name={workspace.primary.icon} size={28} /></div>
-        <div><span className={styles.eyebrow}>{ROLE_LABELS[role]}</span><h2>Welcome, {user.fullName}</h2><p>Choose a task below to continue your work.</p></div>
-        <span className={styles.access}><Icon name="shield-check" size={16} />Role-based access</span>
+        <div><span className={styles.eyebrow}>{ROLE_LABELS[role]}</span><h2>Xin chào, {user.fullName}</h2><p>Chọn một công việc bên dưới để tiếp tục.</p></div>
+        <span className={styles.access}><Icon name="shield-check" size={16} />Truy cập theo vai trò</span>
       </section>
       <section aria-labelledby="workspace-actions-title" className={styles.section}>
-        <div className={styles.sectionHeading}><h2 id="workspace-actions-title">Quick actions</h2><span>Open a workspace</span></div>
+        <div className={styles.sectionHeading}><h2 id="workspace-actions-title">Thao tác nhanh</h2><span>Mở không gian làm việc</span></div>
         <div className={styles.actionGrid}>{workspace.actions.map((action) => <Card key={action.to} className={styles.actionCard}>
           <span className={styles.actionIcon}><Icon name={action.icon} size={24} /></span><h3>{action.title}</h3><p>{action.description}</p>
           <ButtonLink to={action.to}>{action.label}<Icon name="chevron-right" size={16} /></ButtonLink>
         </Card>)}</div>
       </section>
       {role === 'VETERINARIAN' && <VeterinaryArrivals />}
-      <footer className={styles.identity}><span><Icon name="user" size={16} />{user.email}</span><span>{ROLE_LABELS[role]} · {user.userCode}</span><ButtonLink variant="tertiary" to={ROUTES.account}>View account</ButtonLink></footer>
+      <footer className={styles.identity}><span><Icon name="user" size={16} />{user.email}</span><span>{ROLE_LABELS[role]} · {user.userCode}</span><ButtonLink variant="tertiary" to={ROUTES.account}>Xem tài khoản</ButtonLink></footer>
     </div>
   </AppShell>;
 }
@@ -110,16 +110,16 @@ function VeterinaryArrivals() {
   const load = useCallback((signal: AbortSignal) => request<Page<HorseDetail>>('/api/horses?lifecycle=DRAFT&page=0&size=6', { signal }), [request]);
   const resource = useResource(load), data = resource.data;
   return <section className={styles.section} aria-labelledby="arrivals-title">
-    <div className={styles.sectionHeading}><div><h2 id="arrivals-title">New arrivals</h2><p>Draft horses from the club register. Open a profile to review its onboarding requirements.</p></div><Button variant="secondary" onClick={resource.reload}><Icon name="history" size={16} />Refresh</Button></div>
-    {resource.pending && <LoadingState label="Loading new arrivals…" />}
-    {resource.error && <ErrorState title="New arrivals unavailable" description={resource.error} onRetry={resource.reload} />}
-    {data && <><div className={styles.metrics}><MetricCard label="Draft horses" value={String(data.totalItems)} caption="In the club register" /><MetricCard label="Shown here" value={String(data.items.length)} caption="Latest six draft profiles" /></div>
-      <Card><div className={styles.table} role="region" aria-label="New arrival horses" tabIndex={0}><DataTable<HorseDetail> caption="New arrival horses" rows={data.items} rowKey={(horse) => horse.id} empty={<EmptyState title="No draft horses" description="New registrations appear here when saved by the Club Manager." />} columns={[
-        { key: 'horse', header: 'Horse', render: (horse) => <div className={styles.horseName}><strong>{horse.name}</strong><span>{horse.horseCode}</span></div> },
-        { key: 'box', header: 'Stable', render: (horse) => horse.currentBoxCode ?? 'Not assigned' },
-        { key: 'status', header: 'Status', render: (horse) => <StatusBadge family="lifecycle" status={horse.lifecycle} /> },
-        { key: 'health', header: 'Health', render: (horse) => horse.healthStatus ? <StatusBadge family="health" status={horse.healthStatus} /> : 'Not recorded' },
-        { key: 'actions', header: 'Actions', render: (horse) => <div className={styles.rowActions}><ButtonLink size="sm" to={`/horses/${horse.id}`}>View profile</ButtonLink>{!horse.healthStatus && <ButtonLink size="sm" to={`/horses/${horse.id}/baseline`}>Record baseline</ButtonLink>}</div> },
+    <div className={styles.sectionHeading}><div><h2 id="arrivals-title">Ngựa mới đến</h2><p>Ngựa nháp trong danh sách của câu lạc bộ. Mở hồ sơ để xem các yêu cầu tiếp nhận.</p></div><Button variant="secondary" onClick={resource.reload}><Icon name="history" size={16} />Làm mới</Button></div>
+    {resource.pending && <LoadingState label="Đang tải ngựa mới đến…" />}
+    {resource.error && <ErrorState title="Không tải được ngựa mới đến" description={resource.error} onRetry={resource.reload} />}
+    {data && <><div className={styles.metrics}><MetricCard label="Ngựa nháp" value={String(data.totalItems)} caption="Trong danh sách câu lạc bộ" /><MetricCard label="Hiển thị ở đây" value={String(data.items.length)} caption="Sáu hồ sơ nháp mới nhất" /></div>
+      <Card><div className={styles.table} role="region" aria-label="Ngựa mới đến" tabIndex={0}><DataTable<HorseDetail> caption="Ngựa mới đến" rows={data.items} rowKey={(horse) => horse.id} empty={<EmptyState title="Không có ngựa nháp" description="Ngựa mới đăng ký sẽ hiện ở đây khi Club Manager lưu." />} columns={[
+        { key: 'horse', header: 'Ngựa', render: (horse) => <div className={styles.horseName}><strong>{horse.name}</strong><span>{horse.horseCode}</span></div> },
+        { key: 'box', header: 'Chuồng', render: (horse) => horse.currentBoxCode ?? 'Chưa phân công' },
+        { key: 'status', header: 'Trạng thái', render: (horse) => <StatusBadge family="lifecycle" status={horse.lifecycle} /> },
+        { key: 'health', header: 'Sức khỏe', render: (horse) => horse.healthStatus ? <StatusBadge family="health" status={horse.healthStatus} /> : 'Chưa ghi nhận' },
+        { key: 'actions', header: 'Thao tác', render: (horse) => <div className={styles.rowActions}><ButtonLink size="sm" to={`/horses/${horse.id}`}>Xem hồ sơ</ButtonLink>{!horse.healthStatus && <ButtonLink size="sm" to={`/horses/${horse.id}/baseline`}>Ghi khám ban đầu</ButtonLink>}</div> },
       ]} /></div></Card></>}
   </section>;
 }

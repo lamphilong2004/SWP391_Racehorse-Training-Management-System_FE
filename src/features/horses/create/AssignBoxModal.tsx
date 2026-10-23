@@ -6,6 +6,7 @@ import type { HorseLifecycle, StableAssignment, StableBox } from '../api/types';
 import { todayIsoDate } from '../shared/format';
 import styles from './AssignBoxModal.module.css';
 import shared from '../shared/horses.module.css';
+import { viLabel } from '../../../shared/viLabels';
 
 export interface AssignBoxModalProps {
   open: boolean;
@@ -70,7 +71,7 @@ export function AssignBoxModal({ open, horse, onClose, onAssigned }: AssignBoxMo
       const assignment = await api.assignStableBox(horse.id, { stableBoxId: selected.id, effectiveFrom: todayIsoDate() });
       onAssigned(assignment);
     } catch (e) {
-      setSaveError(e instanceof ApiRequestError ? e.message : 'The box could not be assigned. Please try again.');
+      setSaveError(e instanceof ApiRequestError ? e.message : 'Không xếp được ô chuồng. Hãy thử lại.');
       if (e instanceof ApiRequestError && e.status === 409) {
         setSelectedId(undefined);
         reload();
@@ -81,32 +82,32 @@ export function AssignBoxModal({ open, horse, onClose, onAssigned }: AssignBoxMo
   };
 
   return (
-    <Modal open={open} size="lg" className={styles.modal} onClose={saving ? () => undefined : onClose} title={`Assign Stable Box · ${horse.name}`}
+    <Modal open={open} size="lg" className={styles.modal} onClose={saving ? () => undefined : onClose} title={`Xếp ô chuồng · ${horse.name}`}
       footer={<>
-        <Button variant="secondary" onClick={onClose} disabled={saving}>Cancel</Button>
-        <Button onClick={assign} disabled={!selected || saving}>Assign Box</Button>
+        <Button variant="secondary" onClick={onClose} disabled={saving}>Hủy</Button>
+        <Button onClick={assign} disabled={!selected || saving}>Xác nhận xếp ô</Button>
       </>}>
       <div className={styles.body}>
-        <p className={styles.subtitle}>{`${horse.horseCode} · ${horse.lifecycle} · choose a free box`}</p>
-        {saveError && <AlertBanner type="danger" title="Box not assigned">{saveError}</AlertBanner>}
-        {loadError && <ErrorState title="Stable boxes unavailable" description="The stable boxes could not be loaded." onRetry={reload} />}
-        {!loadError && !boxes && <LoadingState label="Loading stable boxes…" />}
-        {boxes && boxes.length === 0 && <EmptyState title="No stable boxes" description="No stable boxes are registered yet." />}
+        <p className={styles.subtitle}>{`${horse.horseCode} · ${viLabel(horse.lifecycle)} · chọn một ô trống`}</p>
+        {saveError && <AlertBanner type="danger" title="Không xếp được ô chuồng">{saveError}</AlertBanner>}
+        {loadError && <ErrorState title="Không tải được danh sách ô chuồng" description="Không tải được danh sách ô chuồng." onRetry={reload} />}
+        {!loadError && !boxes && <LoadingState label="Đang tải ô chuồng…" />}
+        {boxes && boxes.length === 0 && <EmptyState title="Chưa có ô chuồng" description="Chưa có ô chuồng nào được đăng ký." />}
         {boxes && boxes.length > 0 && (
           <>
             <div className={styles.topRow}>
               {yards.length > 0 && (
                 <div className={styles.yard}>
-                  <SelectField label="Yard" value={yard} onChange={(e) => { setYard(e.target.value); setSelectedId(undefined); }}
+                  <SelectField label="Khu chuồng" value={yard} onChange={(e) => { setYard(e.target.value); setSelectedId(undefined); }}
                     options={yards.map((y) => ({ value: y, label: y }))} />
                 </div>
               )}
               <span className={styles.spacer} />
-              <span className={styles.counts}>{`${free} free · ${inYard.length - free} occupied`}</span>
+              <span className={styles.counts}>{`${free} ô trống · ${inYard.length - free} ô có ngựa`}</span>
             </div>
             {rows.map(([row, list]) => (
-              <section key={row} className={styles.row} aria-label={row ? `Row ${row}` : 'Boxes'}>
-                {row && <h3 className={styles.rowLabel}>Row {row}</h3>}
+              <section key={row} className={styles.row} aria-label={row ? `Dãy ${row}` : 'Ô chuồng'}>
+                {row && <h3 className={styles.rowLabel}>Dãy {row}</h3>}
                 <div className={styles.tiles}>
                   {list.map((box) => (
                     <StableBoxTile key={box.id} boxId={box.boxCode} horseName={box.currentHorse?.name}
@@ -119,8 +120,8 @@ export function AssignBoxModal({ open, horse, onClose, onAssigned }: AssignBoxMo
             <div className={[shared.note, shared.notePrimary, shared.noteStrong].join(' ')} role="status">
               <Icon name="check-circle" size={16} />
               <span>
-                {selected ? `${selected.boxCode} selected — free. ` : 'Select a free box. '}
-                Occupied boxes cannot be selected; a box holds one horse.
+                {selected ? `Đã chọn ${selected.boxCode} — còn trống. ` : 'Chọn một ô trống. '}
+                Không thể chọn ô đã có ngựa; mỗi ô chỉ chứa một con ngựa.
               </span>
             </div>
           </>

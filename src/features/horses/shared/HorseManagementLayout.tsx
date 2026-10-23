@@ -12,13 +12,13 @@ interface LayoutContext { setBreadcrumb: (items: BreadcrumbItem[]) => void }
 export function HorseManagementLayout() {
   const auth = useAuth();
   const handleApiError = auth.handleApiError;
-  const [breadcrumb, setBreadcrumb] = useState<BreadcrumbItem[]>([{ label: 'Horses' }]);
+  const [breadcrumb, setBreadcrumb] = useState<BreadcrumbItem[]>([{ label: 'Ngựa' }]);
   const context = useMemo<LayoutContext>(() => ({ setBreadcrumb }), []);
   const api = useMemo(() => createHorsesApi({ request: async <T,>(method: 'GET' | 'POST' | 'PUT', path: string, options?: { body?: unknown; query?: Record<string, string | number | undefined> }) => {
     const query = new URLSearchParams();
     Object.entries(options?.query ?? {}).forEach(([key, value]) => { if (value !== undefined) query.set(key, String(value)); });
     const token = authSession.read()?.accessToken;
-    if (!token) throw new ApiRequestError(401, 'UNAUTHORIZED', 'Sign in again to view horses.');
+    if (!token) throw new ApiRequestError(401, 'UNAUTHORIZED', 'Đăng nhập lại để xem danh sách ngựa.');
     try {
       return await requestApi<T>(path + (query.size ? `?${query}` : ''), { method, ...(options?.body === undefined ? {} : { body: options.body instanceof FormData ? options.body : JSON.stringify(options.body) }) }, { token });
     } catch (error) {

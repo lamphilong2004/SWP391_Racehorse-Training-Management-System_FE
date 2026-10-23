@@ -13,7 +13,7 @@ const manager: CurrentUser = { id: 201, userCode: 'FIX-CM', fullName: 'Fixture M
 const horse = (id = 81): HorseDetail => ({ id, horseCode: 'FIX-81', name: 'Fixture Draft', breed: null, sex: null, foaledDate: null, lifecycle: 'DRAFT', healthStatus: null, trainingAvailability: 'AVAILABLE', currentBoxCode: null, primaryPhotoUrl: null, countryOfOrigin: null, registrationNo: null, activatedAt: null, pedigree: { sire: { horseId: null, name: null }, dam: { horseId: null, name: null } }, currentOwnerships: [], currentAssignment: null, createdAt: '2026-10-19T00:00:00Z', updatedAt: null });
 const checklist = (): ActivationStatus => ({ horseId: 81, horseCode: 'FIX-81', name: 'Fixture Draft', lifecycle: 'DRAFT', activatedAt: null, checklist: [
   ...(['IDENTITY', 'PEDIGREE', 'OWNER', 'FREE_STABLE_BOX', 'VETERINARIAN_BASELINE'] as const).map((id) => ({ id, label: id, description: `${id} detail`, requirement: 'MANDATORY' as const, state: id === 'IDENTITY' ? 'SATISFIED' as const : 'PENDING' as const })),
-  { id: 'HEAD_TRAINER_READINESS_REVIEW', label: 'Head Trainer readiness review', description: 'Recommended — does not block activation', requirement: 'RECOMMENDED', state: 'NOT_REVIEWED' },
+  { id: 'HEAD_TRAINER_READINESS_REVIEW', label: 'Đánh giá sẵn sàng của Head Trainer', description: 'Recommended — does not block activation', requirement: 'RECOMMENDED', state: 'NOT_REVIEWED' },
 ] });
 const ok = (data: unknown, status = 200) => new Response(JSON.stringify({ success: true, data }), { status });
 const failure = (status: number, message = 'Fixture request failed') => new Response(JSON.stringify({ success: false, error: { code: status === 401 ? 'UNAUTHORIZED' : status === 403 ? 'FORBIDDEN' : status === 409 ? 'CONFLICT' : 'NOT_FOUND', message, details: [] } }), { status });
@@ -63,72 +63,72 @@ afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); localStorage.clea
 
 it('enters Horse register from workspace menu, creates a DRAFT then lists/details/refreshes through HTTP fixtures', async () => {
   const state = mount('/dashboard', { store: [] });
-  await userEvent.click(await screen.findByRole('link', { name: 'Horses' }));
-  await userEvent.click(await screen.findByRole('link', { name: 'Register Horse' }));
-  fireEvent.change(screen.getByLabelText('Horse name *'), { target: { value: 'New Fixture' } });
-  fireEvent.change(screen.getByLabelText('Horse ID *'), { target: { value: 'FIX-NEW' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Save Draft & Continue' }));
-  await screen.findByRole('heading', { name: 'Pedigree & Ownership · New Fixture' });
-  expect(screen.getByText('Horse setup unavailable')).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Save & Continue' })).toBeDisabled();
+  await userEvent.click(await screen.findByRole('link', { name: 'Ngựa' }));
+  await userEvent.click(await screen.findByRole('link', { name: 'Thêm ngựa' }));
+  fireEvent.change(screen.getByLabelText('Tên ngựa *'), { target: { value: 'New Fixture' } });
+  fireEvent.change(screen.getByLabelText('Mã ngựa *'), { target: { value: 'FIX-NEW' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Lưu nháp & tiếp tục' }));
+  await screen.findByRole('heading', { name: 'Phả hệ & quyền sở hữu · New Fixture' });
+  expect(screen.getByText('Không tải được dữ liệu thiết lập ngựa')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Lưu & tiếp tục' })).toBeDisabled();
   expect(state.requests.find((r) => r.method === 'POST')).toMatchObject({ path: '/api/horses', body: { name: 'New Fixture', horseCode: 'FIX-NEW', breed: null, sex: null, foaledDate: null } });
   expect(state.requests.find((r) => r.method === 'POST')!.body).not.toHaveProperty('lifecycle');
-  await userEvent.click(screen.getByRole('link', { name: 'View saved horse profile' }));
+  await userEvent.click(screen.getByRole('link', { name: 'Xem hồ sơ ngựa đã lưu' }));
   await screen.findByRole('heading', { name: 'New Fixture' });
-  await userEvent.click(screen.getByRole('link', { name: '← Back to Horses' }));
+  await userEvent.click(screen.getByRole('link', { name: '← Quay lại danh sách ngựa' }));
   await userEvent.click(await screen.findByRole('link', { name: /New Fixture/ }));
   await screen.findByRole('heading', { name: 'New Fixture' });
   cleanup(); mount('/horses/82', { store: state.store });
   await screen.findByRole('heading', { name: 'New Fixture' });
-  expect(screen.getAllByText('DRAFT').length).toBeGreaterThan(0);
+  expect(screen.getAllByText('Nháp').length).toBeGreaterThan(0);
 });
 it('validates required identity locally and keeps inputs after duplicate-code/network errors', async () => {
   const { requests } = mount('/horses/new', { create: async () => failure(409, 'Duplicate code') });
-  await screen.findByRole('heading', { name: 'Register Horse' });
-  fireEvent.click(screen.getByRole('button', { name: 'Save Draft & Continue' }));
-  expect(screen.getByText('Enter the horse name.')).toBeInTheDocument(); expect(requests).toHaveLength(0);
-  fireEvent.change(screen.getByLabelText('Horse name *'), { target: { value: 'Keep my edits' } });
-  fireEvent.change(screen.getByLabelText('Horse ID *'), { target: { value: 'DUPLICATE' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Save Draft & Continue' }));
+  await screen.findByRole('heading', { name: 'Thêm ngựa' });
+  fireEvent.click(screen.getByRole('button', { name: 'Lưu nháp & tiếp tục' }));
+  expect(screen.getByText('Nhập tên ngựa.')).toBeInTheDocument(); expect(requests).toHaveLength(0);
+  fireEvent.change(screen.getByLabelText('Tên ngựa *'), { target: { value: 'Keep my edits' } });
+  fireEvent.change(screen.getByLabelText('Mã ngựa *'), { target: { value: 'DUPLICATE' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Lưu nháp & tiếp tục' }));
   await screen.findByText('Duplicate code');
-  expect(screen.getByLabelText('Horse name *')).toHaveValue('Keep my edits');
-  expect(screen.getByLabelText('Horse ID *')).toHaveValue('DUPLICATE');
+  expect(screen.getByLabelText('Tên ngựa *')).toHaveValue('Keep my edits');
+  expect(screen.getByLabelText('Mã ngựa *')).toHaveValue('DUPLICATE');
 });
 it('sends only one pending create request despite repeated submit', async () => {
   let finish!: (r: Response) => void;
   const { requests } = mount('/horses/new', { create: () => new Promise((resolve) => { finish = resolve; }) });
-  await screen.findByRole('heading', { name: 'Register Horse' });
-  fireEvent.change(screen.getByLabelText('Horse name *'), { target: { value: 'One request' } });
-  fireEvent.change(screen.getByLabelText('Horse ID *'), { target: { value: 'ONE' } });
-  const form = screen.getByRole('button', { name: 'Save Draft & Continue' }).closest('form')!;
+  await screen.findByRole('heading', { name: 'Thêm ngựa' });
+  fireEvent.change(screen.getByLabelText('Tên ngựa *'), { target: { value: 'One request' } });
+  fireEvent.change(screen.getByLabelText('Mã ngựa *'), { target: { value: 'ONE' } });
+  const form = screen.getByRole('button', { name: 'Lưu nháp & tiếp tục' }).closest('form')!;
   fireEvent.submit(form); fireEvent.submit(form);
   await waitFor(() => expect(requests.filter((r) => r.method === 'POST')).toHaveLength(1));
   await act(async () => finish(failure(500)));
-  expect(screen.getByLabelText('Horse name *')).toHaveValue('One request');
+  expect(screen.getByLabelText('Tên ngựa *')).toHaveValue('One request');
 });
 it('preserves deliberately edited/cleared setup fields when supporting APIs recover', async () => {
   const state = mount('/horses/81/edit');
-  await screen.findByText('Horse setup unavailable');
-  fireEvent.change(screen.getByLabelText('Sire *'), { target: { value: 'Draft sire' } });
-  fireEvent.change(screen.getByLabelText('Dam *'), { target: { value: '' } });
-  fireEvent.change(screen.getByLabelText('Ownership share (%)'), { target: { value: '65' } });
-  expect(screen.getByRole('button', { name: 'Save & Continue' })).toBeDisabled();
-  expect(screen.getByText('Box history unavailable')).toBeInTheDocument();
-  state.restoreSetup(); await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
-  await waitFor(() => expect(screen.queryByText('Horse setup unavailable')).not.toBeInTheDocument());
-  expect(screen.getByLabelText('Sire *')).toHaveValue('Draft sire'); expect(screen.getByLabelText('Dam *')).toHaveValue('');
-  expect(screen.getByLabelText('Ownership share (%)')).toHaveValue(65);
+  await screen.findByText('Không tải được dữ liệu thiết lập ngựa');
+  fireEvent.change(screen.getByLabelText('Ngựa cha *'), { target: { value: 'Draft sire' } });
+  fireEvent.change(screen.getByLabelText('Ngựa mẹ *'), { target: { value: '' } });
+  fireEvent.change(screen.getByLabelText('Tỷ lệ sở hữu (%)'), { target: { value: '65' } });
+  expect(screen.getByRole('button', { name: 'Lưu & tiếp tục' })).toBeDisabled();
+  expect(screen.getByText('Không tải được lịch sử ô chuồng')).toBeInTheDocument();
+  state.restoreSetup(); await userEvent.click(screen.getByRole('button', { name: 'Thử lại' }));
+  await waitFor(() => expect(screen.queryByText('Không tải được dữ liệu thiết lập ngựa')).not.toBeInTheDocument());
+  expect(screen.getByLabelText('Ngựa cha *')).toHaveValue('Draft sire'); expect(screen.getByLabelText('Ngựa mẹ *')).toHaveValue('');
+  expect(screen.getByLabelText('Tỷ lệ sở hữu (%)')).toHaveValue(65);
   expect(state.requests.every((r) => r.method === 'GET')).toBe(true);
 });
 it('shows FREE/OCCUPIED boxes without fabricating an assignment when its API is missing', async () => {
-  const { requests } = mount('/horses/81/edit'); await screen.findByText('Horse setup unavailable');
-  await userEvent.click(screen.getByRole('button', { name: 'Assign Stable Box' }));
+  const { requests } = mount('/horses/81/edit'); await screen.findByText('Không tải được dữ liệu thiết lập ngựa');
+  await userEvent.click(screen.getByRole('button', { name: 'Xếp ô chuồng' }));
   expect(await screen.findByText('B-02')).toBeInTheDocument();
-  expect(screen.getByText('Occupied')).toBeInTheDocument();
+  expect(screen.getByText('Đang có ngựa')).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: /B-02/ })).not.toBeInTheDocument();
   await userEvent.click(screen.getByRole('button', { name: /B-01/ }));
-  await userEvent.click(screen.getByRole('button', { name: 'Assign Box' }));
-  await screen.findByText('Box not assigned');
+  await userEvent.click(screen.getByRole('button', { name: 'Xác nhận xếp ô' }));
+  await screen.findByText('Không xếp được ô chuồng');
   expect(screen.getByRole('dialog')).toBeInTheDocument();
   expect(requests.find((r) => r.method === 'POST')).toMatchObject({ path: '/api/horses/81/stable-assignments', body: { stableBoxId: 31 } });
 });
@@ -136,51 +136,51 @@ it('renders the approved six checklist rows without a manual activation action',
   mount('/horses/pending-activation', { setup: true });
   await screen.findByText('Fixture Draft · FIX-81');
   expect(screen.getByText('PEDIGREE')).toBeInTheDocument(); expect(screen.getByText('OWNER')).toBeInTheDocument();
-  expect(screen.getByText('Recommended before training — does not block activation')).toBeInTheDocument();
+  expect(screen.getByText('Nên làm trước khi tập — không chặn việc kích hoạt')).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: /Activate|Approve/ })).not.toBeInTheDocument();
 });
 it.each(['HEAD_TRAINER', 'TRAINER', 'WORK_RIDER', 'VETERINARIAN', 'GROOM', 'HORSE_OWNER'] as const)('denies %s creating horses before business requests', async (role) => {
-  const { requests } = mount('/horses/new', { role }); await screen.findByText('Access denied'); expect(requests).toHaveLength(0);
+  const { requests } = mount('/horses/new', { role }); await screen.findByText('Không có quyền truy cập'); expect(requests).toHaveLength(0);
 });
 it.each(['WORK_RIDER', 'HORSE_OWNER'] as const)('denies %s register reads', async (role) => {
-  const { requests } = mount('/horses', { role }); await screen.findByText('Access denied'); expect(requests).toHaveLength(0);
+  const { requests } = mount('/horses', { role }); await screen.findByText('Không có quyền truy cập'); expect(requests).toHaveLength(0);
 });
 it.each(['CLUB_MANAGER', 'HEAD_TRAINER', 'TRAINER', 'VETERINARIAN', 'GROOM'] as const)('allows approved %s register reads', async (role) => {
   mount('/horses', { role }); await screen.findByRole('link', { name: /Fixture Draft/ });
-  expect(Boolean(screen.queryByRole('link', { name: 'Register Horse' }))).toBe(role === 'CLUB_MANAGER');
+  expect(Boolean(screen.queryByRole('link', { name: 'Thêm ngựa' }))).toBe(role === 'CLUB_MANAGER');
 });
 it.each(['/horses/no-id', '/horses/0', '/horses/9007199254740992', '/horses/81?tab=clinical', '/horses/no-id/edit'])('rejects invalid %s without business HTTP', async (path) => {
-  const { requests } = mount(path); await screen.findByText(/Horse not found|Invalid profile section|Horse not available/); expect(requests).toHaveLength(0);
+  const { requests } = mount(path); await screen.findByText(/Không tìm thấy ngựa|Mục hồ sơ không hợp lệ|Không có ngựa này/); expect(requests).toHaveLength(0);
 });
 it.each([403, 404, 500])('shows real HTTP%s error without sample fallback and retains session', async (status) => {
-  const { requests } = mount('/horses', { status }); await screen.findByText('Horse data unavailable');
+  const { requests } = mount('/horses', { status }); await screen.findByText('Không tải được dữ liệu ngựa');
   expect(requests).toHaveLength(1); expect(authSession.read()).not.toBeNull();
   expect(screen.queryByRole('link', { name: /Fixture Draft/ })).not.toBeInTheDocument();
 });
 it('clears session on401 and redirects anonymous access before business HTTP', async () => {
-  mount('/horses', { status: 401 }); await screen.findByRole('heading', { name: 'Sign in to Racehorse Ops' }); expect(authSession.read()).toBeNull();
+  mount('/horses', { status: 401 }); await screen.findByRole('heading', { name: 'Đăng nhập Racehorse Ops' }); expect(authSession.read()).toBeNull();
   cleanup(); const { requests } = mount('/horses/new', { anonymous: true });
-  await screen.findByRole('heading', { name: 'Sign in to Racehorse Ops' }); expect(requests).toHaveLength(0);
+  await screen.findByRole('heading', { name: 'Đăng nhập Racehorse Ops' }); expect(requests).toHaveLength(0);
 });
 it('clears former Horse content when shared session switches or logs out', async () => {
   mount('/horses/81'); await screen.findByRole('heading', { name: 'Fixture Draft' });
   await userEvent.click(screen.getByRole('button', { name: 'Fixture switch' }));
   await screen.findByText('Second Manager');
   await userEvent.click(screen.getByRole('button', { name: 'Fixture logout' }));
-  await screen.findByRole('heading', { name: 'Sign in to Racehorse Ops' }); expect(screen.queryByText('Fixture Draft')).not.toBeInTheDocument();
+  await screen.findByRole('heading', { name: 'Đăng nhập Racehorse Ops' }); expect(screen.queryByText('Fixture Draft')).not.toBeInTheDocument();
 });
 it('guards a dirty Register Horse form, keeps input on Continue editing and focuses the first invalid field', async () => {
   const { router } = mount('/horses/new');
-  await screen.findByRole('heading', { name: 'Register Horse' });
-  fireEvent.click(screen.getByRole('button', { name: 'Save Draft & Continue' }));
-  await waitFor(() => expect(screen.getByLabelText('Horse name *')).toHaveFocus());
-  fireEvent.change(screen.getByLabelText('Horse name *'), { target: { value: 'Keep me' } });
-  await userEvent.click(screen.getByRole('button', { name: /Back to Horses/ }));
-  expect(await screen.findByRole('dialog', { name: 'Unsaved changes' })).toBeInTheDocument();
-  await userEvent.click(screen.getByRole('button', { name: 'Continue editing' }));
+  await screen.findByRole('heading', { name: 'Thêm ngựa' });
+  fireEvent.click(screen.getByRole('button', { name: 'Lưu nháp & tiếp tục' }));
+  await waitFor(() => expect(screen.getByLabelText('Tên ngựa *')).toHaveFocus());
+  fireEvent.change(screen.getByLabelText('Tên ngựa *'), { target: { value: 'Keep me' } });
+  await userEvent.click(screen.getByRole('button', { name: /Quay lại danh sách ngựa/ }));
+  expect(await screen.findByRole('dialog', { name: 'Thay đổi chưa lưu' })).toBeInTheDocument();
+  await userEvent.click(screen.getByRole('button', { name: 'Tiếp tục chỉnh sửa' }));
   expect(router.state.location.pathname).toBe('/horses/new');
-  expect(screen.getByLabelText('Horse name *')).toHaveValue('Keep me');
-  await userEvent.click(screen.getByRole('button', { name: /Back to Horses/ }));
-  await userEvent.click(await screen.findByRole('button', { name: 'Discard changes' }));
+  expect(screen.getByLabelText('Tên ngựa *')).toHaveValue('Keep me');
+  await userEvent.click(screen.getByRole('button', { name: /Quay lại danh sách ngựa/ }));
+  await userEvent.click(await screen.findByRole('button', { name: 'Hủy thay đổi' }));
   await waitFor(() => expect(router.state.location.pathname).toBe('/horses'));
 });

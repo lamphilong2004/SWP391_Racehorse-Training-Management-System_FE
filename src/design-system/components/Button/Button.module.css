@@ -83,6 +83,14 @@
 .icon { padding: 0; aspect-ratio: 1; background: transparent; color: var(--color-text-secondary); }
 .icon:hover:not(:disabled) { background: var(--color-bg-subtle); }
 .pendingLabel { opacity: 0; }
+:global([data-ui-v3]) .button,
+:global([data-app-shell]:has([data-ui-v3])) .button {
+  font-weight: 600;
+}
+:global([data-ui-v3]) .primary:not(:disabled),
+:global([data-app-shell]:has([data-ui-v3])) .primary:not(:disabled) {
+  box-shadow: 0 1px 3px rgb(11 19 43 / 12%);
+}
 .button[aria-busy='true'] .spinner { color: var(--color-primary-600); }
 .spinner { position: absolute; width: 18px; height: 18px; border: 2px solid currentColor; border-right-color: transparent; border-radius: var(--radius-full); animation: pending .8s linear infinite; }
 @keyframes pending { to { transform: rotate(360deg); } }

@@ -3,6 +3,7 @@ import { AlertBanner, Button, SelectField } from '../../design-system';
 import { errorMessage } from '../main-flows/api';
 import type { Intensity } from '../program-creation/programTypes';
 import type { createSessionApi, TrainingSession } from './sessionApi';
+import { viLabel } from '../../shared/viLabels';
 
 export function ReduceIntensity({ api, session, onSaved }: { api: ReturnType<typeof createSessionApi>; session: TrainingSession; onSaved: () => void }) {
   const [value, setValue] = useState(''), [error, setError] = useState(''), [busy, setBusy] = useState(false);
@@ -16,9 +17,9 @@ export function ReduceIntensity({ api, session, onSaved }: { api: ReturnType<typ
     finally { pending.current = false; setBusy(false); }
   }
   return <>
-    {error && <AlertBanner type="danger" title="Intensity unchanged">{error}</AlertBanner>}
-    <SelectField label="Lower session intensity" value={value} placeholder="Choose a lower intensity" disabled={busy || !lower.length || session.trainingAvailability === 'LOCKED'}
-      options={lower.map((intensity) => ({ value: intensity, label: intensity.replaceAll('_', ' ') }))} onChange={(event) => setValue(event.target.value)} />
-    <Button disabled={busy || !value || !lower.includes(value as Intensity) || session.trainingAvailability === 'LOCKED'} onClick={() => void reduce()}>Reduce intensity</Button>
+    {error && <AlertBanner type="danger" title="Chưa đổi được cường độ">{error}</AlertBanner>}
+    <SelectField label="Giảm cường độ buổi tập" value={value} placeholder="Chọn cường độ thấp hơn" disabled={busy || !lower.length || session.trainingAvailability === 'LOCKED'}
+      options={lower.map((intensity) => ({ value: intensity, label: viLabel(intensity) }))} onChange={(event) => setValue(event.target.value)} />
+    <Button disabled={busy || !value || !lower.includes(value as Intensity) || session.trainingAvailability === 'LOCKED'} onClick={() => void reduce()}>Giảm cường độ</Button>
   </>;
 }

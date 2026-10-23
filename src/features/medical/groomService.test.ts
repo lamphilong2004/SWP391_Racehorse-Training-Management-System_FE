@@ -54,8 +54,8 @@ it('collects complete server pages and rejects changed totals/duplicates', async
 });
 it('rejects invalid IDs/pages before sending a Groom request', async () => {
   const fetcher = vi.fn(), api = createGroomService('session', 6, undefined, { baseUrl: '', fetcher });
-  await expect(api.complete(0)).rejects.toThrow('Invalid task ID');
-  await expect(api.list(NaN)).rejects.toThrow('Invalid page');
+  await expect(api.complete(0)).rejects.toThrow('Mã công việc không hợp lệ.');
+  await expect(api.list(NaN)).rejects.toThrow('Trang không hợp lệ');
   expect(fetcher).not.toHaveBeenCalled();
 });
 it('validates clinical read DTOs and identity before rendering or claiming data loaded', async () => {

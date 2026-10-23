@@ -10,10 +10,10 @@ const Audit = lazy(() => import('../features/management/IntegratedManagement').t
 export function ManagementDashboardEntry() {
   const { user } = useAuth();
   return user?.roles.includes('CLUB_MANAGER')
-    ? <Suspense fallback={<LoadingState label="Loading management workspace…" />}><Dashboard /></Suspense>
+    ? <Suspense fallback={<LoadingState label="Đang tải không gian quản lý…" />}><Dashboard /></Suspense>
     : user?.roles.includes('TRAINER') ? <TrainerDashboardPage /> : <WorkspacePage />;
 }
 
 export function ManagementAuditEntry() {
-  return <Suspense fallback={<LoadingState label="Loading audit viewer…" />}><Audit /></Suspense>;
+  return <Suspense fallback={<LoadingState label="Đang tải nhật ký hệ thống…" />}><Audit /></Suspense>;
 }

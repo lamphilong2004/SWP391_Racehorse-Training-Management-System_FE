@@ -79,11 +79,11 @@ describe('CORE-008 auth flow', () => {
     const actor = userEvent.setup();
 
     await actor.type(await screen.findByRole('textbox', { name: 'Email' }), 'bao@example.com');
-    await actor.type(screen.getByLabelText('Password'), 'correct-horse-battery');
+    await actor.type(screen.getByLabelText('Mật khẩu'), 'correct-horse-battery');
     window.sessionStorage.setItem('racehorse.auth.session.v1', JSON.stringify({ accessToken: 'stale-session-jwt', expiresAt: Date.now() + 60_000 }));
-    await actor.click(screen.getByRole('button', { name: 'Sign In' }));
+    await actor.click(screen.getByRole('button', { name: 'Đăng nhập' }));
 
-    expect(await screen.findByRole('heading', { name: 'Head Trainer Workspace' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Không gian Head Trainer' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/dashboard');
     expect(fetchMock).toHaveBeenCalledWith(
       'http://localhost:8080/api/auth/login',
@@ -102,13 +102,13 @@ describe('CORE-008 auth flow', () => {
     const actor = userEvent.setup();
 
     await actor.type(await screen.findByRole('textbox', { name: 'Email' }), 'bao@example.com');
-    await actor.type(screen.getByLabelText('Password'), 'password');
-    await actor.click(screen.getByRole('checkbox', { name: 'Remember me' }));
+    await actor.type(screen.getByLabelText('Mật khẩu'), 'password');
+    await actor.click(screen.getByRole('checkbox', { name: 'Ghi nhớ đăng nhập' }));
     window.localStorage.setItem('racehorse.auth.local.v1', JSON.stringify({ accessToken: 'stale-local-jwt', expiresAt: Date.now() + 60_000 }));
     window.sessionStorage.setItem('racehorse.auth.session.v1', JSON.stringify({ accessToken: 'stale-session-jwt', expiresAt: Date.now() + 60_000 }));
-    await actor.click(screen.getByRole('button', { name: 'Sign In' }));
+    await actor.click(screen.getByRole('button', { name: 'Đăng nhập' }));
 
-    await screen.findByRole('heading', { name: 'Head Trainer Workspace' });
+    await screen.findByRole('heading', { name: 'Không gian Head Trainer' });
     expect(window.localStorage.getItem('racehorse.auth.local.v1')).toBeNull();
     expect(window.sessionStorage.getItem('racehorse.auth.session.v1')).toContain('tab-jwt');
   });
@@ -123,8 +123,8 @@ describe('CORE-008 auth flow', () => {
     const actor = userEvent.setup();
 
     await actor.type(await screen.findByRole('textbox', { name: 'Email' }), 'bao@example.com');
-    await actor.type(screen.getByLabelText('Password'), 'wrong-password');
-    await actor.click(screen.getByRole('button', { name: 'Sign In' }));
+    await actor.type(screen.getByLabelText('Mật khẩu'), 'wrong-password');
+    await actor.click(screen.getByRole('button', { name: 'Đăng nhập' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(message);
     expect(window.localStorage.getItem('racehorse.auth.local.v1')).toBeNull();
@@ -137,7 +137,7 @@ describe('CORE-008 auth flow', () => {
     vi.stubGlobal('fetch', fetchMock);
     const router = renderApp('/dashboard');
 
-    expect(await screen.findByRole('heading', { name: 'Head Trainer Workspace' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Không gian Head Trainer' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/dashboard');
     expect(fetchMock).toHaveBeenCalledWith(
       'http://localhost:8080/api/auth/me',
@@ -148,13 +148,13 @@ describe('CORE-008 auth flow', () => {
   });
 
   it.each([
-    ['CLUB_MANAGER', 'Club Manager Dashboard', 'Staff & Users', '/admin/users'],
-    ['HEAD_TRAINER', 'Head Trainer Workspace', 'Horse Training Programs', '/training/programs'],
-    ['TRAINER', 'Trainer Dashboard', 'Assigned Programs', '/training/programs/assigned'],
-    ['WORK_RIDER', 'Work Rider Workspace', 'My Rides', '/rider'],
-    ['VETERINARIAN', 'Veterinary Workspace', 'Medical / Health', '/medical'],
-    ['GROOM', 'Stable Care Workspace', 'Today', '/groom/today'],
-    ['HORSE_OWNER', 'Horse Owner Portal', 'My Horses', '/owner/horses'],
+    ['CLUB_MANAGER', 'Tổng quan Club Manager', 'Nhân sự & người dùng', '/admin/users'],
+    ['HEAD_TRAINER', 'Không gian Head Trainer', 'Chương trình huấn luyện ngựa', '/training/programs'],
+    ['TRAINER', 'Tổng quan Trainer', 'Chương trình được giao', '/training/programs/assigned'],
+    ['WORK_RIDER', 'Không gian Work Rider', 'Lượt cưỡi của tôi', '/rider'],
+    ['VETERINARIAN', 'Không gian Veterinarian', 'Y tế / sức khỏe', '/medical'],
+    ['GROOM', 'Không gian Groom', 'Hôm nay', '/groom/today'],
+    ['HORSE_OWNER', 'Cổng thông tin Horse Owner', 'Ngựa của tôi', '/owner/horses'],
   ])('uses canonical workspace and navigation for %s', async (role, workspace, navItem, navPath) => {
     savedSession('sessionStorage');
     vi.stubGlobal('fetch', vi.fn<typeof fetch>(async (input) => String(input).includes('/api/dashboard/club-manager') ? envelope(dashboardFixture)
@@ -172,7 +172,7 @@ describe('CORE-008 auth flow', () => {
     vi.stubGlobal('fetch', fetchMock);
     const router = renderApp('/dashboard');
 
-    expect(await screen.findByText('Your session expired. Sign in again to continue.')).toBeInTheDocument();
+    expect(await screen.findByText('Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại để tiếp tục.')).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/login');
     expect(window.localStorage.getItem(key)).toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
@@ -182,7 +182,7 @@ describe('CORE-008 auth flow', () => {
     const expiredKey = savedSession('localStorage');
     vi.stubGlobal('fetch', vi.fn(async () => errorEnvelope(401, 'UNAUTHORIZED', 'Missing, invalid or expired JWT.')));
     const expiredRouter = renderApp('/dashboard');
-    expect(await screen.findByText('Your session expired. Sign in again to continue.')).toBeInTheDocument();
+    expect(await screen.findByText('Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại để tiếp tục.')).toBeInTheDocument();
     expect(expiredRouter.state.location.pathname).toBe('/login');
     expect(window.localStorage.getItem(expiredKey)).toBeNull();
 
@@ -198,7 +198,7 @@ describe('CORE-008 auth flow', () => {
     const inactiveKey = savedSession('localStorage');
     vi.stubGlobal('fetch', vi.fn(async () => errorEnvelope(403, 'FORBIDDEN', 'Your account is deactivated.')));
     const inactiveRouter = renderApp('/dashboard');
-    expect(await screen.findByText('Your account is deactivated. Sign in again to continue.')).toBeInTheDocument();
+    expect(await screen.findByText('Tài khoản của bạn đã bị vô hiệu hóa. Hãy đăng nhập lại để tiếp tục.')).toBeInTheDocument();
     expect(inactiveRouter.state.location.pathname).toBe('/login');
     expect(window.localStorage.getItem(inactiveKey)).toBeNull();
 
@@ -206,9 +206,9 @@ describe('CORE-008 auth flow', () => {
     savedSession('sessionStorage');
     vi.stubGlobal('fetch', vi.fn(async () => envelope(user)));
     renderApp('/dashboard', <ApiErrorProbe error={new ApiError(403, 'FORBIDDEN', 'You do not have permission to perform this action.')} />);
-    expect(await screen.findByRole('heading', { name: 'Head Trainer Workspace' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Không gian Head Trainer' })).toBeInTheDocument();
     await userEvent.setup().click(screen.getByRole('button', { name: 'Handle API error' }));
-    expect(screen.getByRole('heading', { name: 'Head Trainer Workspace' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Không gian Head Trainer' })).toBeInTheDocument();
     expect(window.sessionStorage.getItem('racehorse.auth.session.v1')).toContain('fixture-jwt');
   });
 
@@ -224,9 +224,9 @@ describe('CORE-008 auth flow', () => {
     const router = renderApp('/dashboard');
     const actor = userEvent.setup();
 
-    await actor.click(await screen.findByRole('button', { name: 'Account menu' }));
+    await actor.click(await screen.findByRole('button', { name: 'Menu tài khoản' }));
     expect(router.state.location.pathname).toBe('/account');
-    await actor.click(await screen.findByRole('button', { name: 'Sign out' }));
+    await actor.click(await screen.findByRole('button', { name: 'Đăng xuất' }));
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/login'));
     expect(fetchMock).toHaveBeenCalledWith(
@@ -248,12 +248,12 @@ describe('CORE-008 auth flow', () => {
     const router = renderApp('/dashboard');
     const actor = userEvent.setup();
 
-    await actor.click(await screen.findByRole('button', { name: 'Account menu' }));
+    await actor.click(await screen.findByRole('button', { name: 'Menu tài khoản' }));
     expect(router.state.location.pathname).toBe('/account');
-    await actor.click(await screen.findByRole('button', { name: 'Sign out' }));
+    await actor.click(await screen.findByRole('button', { name: 'Đăng xuất' }));
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/login'));
-    expect(await screen.findByText('Signed out on this device. Server sign-out and audit were not confirmed.')).toBeInTheDocument();
+    expect(await screen.findByText('Đã đăng xuất trên thiết bị này. Chưa xác nhận được việc đăng xuất trên máy chủ.')).toBeInTheDocument();
     expect(window.localStorage.getItem('racehorse.auth.local.v1')).toBeNull();
     expect(window.sessionStorage.getItem('racehorse.auth.session.v1')).toBeNull();
   });

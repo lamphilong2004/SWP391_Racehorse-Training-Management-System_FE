@@ -11,7 +11,8 @@ export interface OwnerHorse {
   sire: string | null; dam: string | null;
   ownership?: { sharePercentage: number; effectiveFrom: string; isManagingOwner: boolean };
   healthSummary?: { reviewDate: string | null; recovery: 'NOT_RECOVERED' | 'IMPROVING' | 'RECOVERED' | null; examinedAt: string | null; weights: { weightKg: number; recordedAt: string }[] };
-  program: { name: string; phase: string | null; from: string | null; to: string | null; trainer: string | null; completed?: number; planned?: number } | null;
+  /** undefined: the list projection could not load the training summary (shown as unknown, never as "no program"). */
+  program?: { name: string; phase: string | null; from: string | null; to: string | null; trainer: string | null; completed?: number; planned?: number } | null;
   sessions: { id: number; date: string; title: string | null; distanceM: number | null; status: StatusOf<'session'> }[];
   nextSession: { date: string; end: string | null; title: string | null; phase: string | null } | null;
 }

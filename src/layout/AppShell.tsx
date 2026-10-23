@@ -48,18 +48,18 @@ export function AppShell({ children, designSystem, ...headerProps }: AppShellPro
   const close = () => { setNavOpen(false); menuButton.current?.focus(); };
 
   return (
-    <div className={styles.shell}>
-      <a className={styles.skip} href="#main-content">Skip to main content</a>
+    <div className={styles.shell} data-app-shell>
+      <a className={styles.skip} href="#main-content">Bỏ qua đến nội dung chính</a>
       <Sidebar role={headerProps.user.role} id="app-navigation" open={navOpen} />
-      {navOpen && <button type="button" className={styles.scrim} aria-label="Close navigation" tabIndex={-1} onClick={close} />}
+      {navOpen && <button type="button" className={styles.scrim} aria-label="Đóng menu" tabIndex={-1} onClick={close} />}
       <div className={styles.main}>
         <Header {...headerProps} unreadCount={notifications ? notifications.unreadCount : headerProps.unreadCount}
           unreadStatus={notifications?.error ? 'unavailable' : notifications?.pending ? 'loading' : undefined}
           onNotificationsClick={headerProps.onNotificationsClick ?? (() => setNoticesOpen(true))} menuButtonRef={menuButton} navigationId="app-navigation" navigationOpen={navOpen} onMenuClick={toggle} />
-        {noticesOpen && <Suspense fallback={<p role="status">Loading notifications…</p>}><NotificationDrawer onClose={() => setNoticesOpen(false)} /></Suspense>}
+        {noticesOpen && <Suspense fallback={<p role="status">Đang tải thông báo…</p>}><NotificationDrawer onClose={() => setNoticesOpen(false)} /></Suspense>}
         <main id="main-content" tabIndex={-1} className={styles.content} data-design-system={designSystem}>
-          {ROLE_TEST_LOGIN && <AlertBanner type="warning" title="Protected test sign-in — UI inspection only">Server operations are unavailable for test roles. Nothing is created, changed or saved.</AlertBanner>}
-          {businessDataMode() === 'sample' && <AlertBanner type="info" title="Sample business data (test fixtures)">Records come from the test-only sample store.</AlertBanner>}
+          {ROLE_TEST_LOGIN && <AlertBanner type="warning" title="Đăng nhập thử được bảo vệ — chỉ để xem giao diện">Vai trò thử không dùng được thao tác máy chủ. Không có gì được tạo, sửa hay lưu.</AlertBanner>}
+          {businessDataMode() === 'sample' && <AlertBanner type="info" title="Dữ liệu nghiệp vụ mẫu (dữ liệu thử)">Dữ liệu lấy từ kho mẫu chỉ dùng để thử.</AlertBanner>}
           {children}
         </main>
       </div>

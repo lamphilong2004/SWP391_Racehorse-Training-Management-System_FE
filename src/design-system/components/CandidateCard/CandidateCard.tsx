@@ -38,7 +38,7 @@ export function CandidateCard({ name, subtitle, tags = [], facts = [], actions, 
         </div>
       </div>
       {tags.length > 0 && (
-        <ul className={styles.tags} aria-label="Skills">
+        <ul className={styles.tags} aria-label="Kỹ năng">
           {tags.map((tag) => (
             <li key={tag} className={styles.tag}>
               {tag}

@@ -1,7 +1,7 @@
 import { createOwnerApi } from './ownerApi';
 
 const card = { id: 7, horseCode: 'RH-7', name: 'Owned horse', lifecycle: 'ACTIVE', trainingAvailability: 'AVAILABLE', healthStatus: null };
-const profile = { horse: card, pedigree: { sire: { name: 'Sire' }, dam: {} }, myOwnership: { sharePercentage: 60, effectiveFrom: '2026-01-01', isManagingOwner: true } };
+const profile = { horse: card, pedigree: { sire: { name: 'Ngựa cha' }, dam: {} }, myOwnership: { sharePercentage: 60, effectiveFrom: '2026-01-01', isManagingOwner: true } };
 const health = { healthStatus: 'MONITORING', trainingAvailability: 'LIMITED', weights: [{ weightKg: 501.25, recordedAt: '2026-10-18T06:00:00Z' }], restrictionReviewDate: '2026-10-25', recoveryStatus: 'IMPROVING', lastExaminedAt: '2026-10-17T06:00:00Z' };
 const training = { currentProgram: { name: 'Foundation', status: 'ACTIVE', periodStart: '2026-10-01', periodEnd: '2026-10-31', currentPhaseName: null, sessionsCompleted: 3, sessionsPlanned: 8 }, recentSessions: [{ sessionCode: 'SES-42', scheduledStart: '2026-10-17T06:00:00Z', status: 'COMPLETED' }] };
 function setup(data: { list?: unknown; profile?: unknown; health?: unknown; training?: unknown; fail?: string; status?: number } = {}) {
@@ -16,11 +16,17 @@ function setup(data: { list?: unknown; profile?: unknown; health?: unknown; trai
 describe('CORE-056 pinned CORE-004 HTTP contract', () => {
   it('reads the array envelope using shared HTTP, Bearer session and no invented query parameters', async () => {
     const { service, fetcher } = setup();
-    expect((await service.list({ actorId: 17 })).map((item) => item.id)).toEqual([7]);
-    expect(fetcher).toHaveBeenCalledOnce();
-    expect(fetcher.mock.calls[0][0]).toBe('https://api.example.test/api/owner/horses');
+    const horses = await service.list({ actorId: 17 });
+    expect(horses.map((item) => item.id)).toEqual([7]);
+    // The card has no program field: each owned horse's training summary fills it.
+    expect(fetcher.mock.calls.map(([url]) => String(url))).toEqual(['https://api.example.test/api/owner/horses', 'https://api.example.test/api/owner/horses/7/training-summary']);
+    expect(horses[0].program).toMatchObject({ name: 'Foundation', completed: 3, planned: 8 });
     const init = (fetcher.mock.calls as unknown as [string, RequestInit][])[0][1];
     expect(init.method).toBe('GET'); expect(new Headers(init.headers).get('Authorization')).toBe('Bearer fixture-only'); expect(init.body).toBeUndefined();
+  });
+  it('marks the list program unknown, not absent, when a training summary cannot be read', async () => {
+    const [horse] = await setup({ fail: '/training-summary' }).service.list({ actorId: 17 });
+    expect(horse.program).toBeUndefined();
   });
   it('accepts an empty array without sample seed or pagination', async () => { expect(await setup({ list: [] }).service.list({ actorId: 17 })).toEqual([]); });
   it('rejects paginated objects rather than silently adapting a different DTO', async () => {

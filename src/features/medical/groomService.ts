@@ -27,11 +27,11 @@ function validTask(v: unknown, actorId: number): v is GroomTreatmentTask {
     (v.completedAt === undefined || (typeof v.completedAt === 'string' && Number.isFinite(Date.parse(v.completedAt)))) &&
     (v.status !== 'COMPLETED' || typeof v.completedAt === 'string') && (v.status !== 'PENDING' || v.completedAt === undefined);
 }
-const invalid = () => new ApiError(200, 'INVALID_RESPONSE', 'Treatment task data does not match the authorized contract. Reload to retry.');
+const invalid = () => new ApiError(200, 'INVALID_RESPONSE', 'Dữ liệu công việc điều trị không hợp lệ. Hãy tải lại để thử lại.');
 
 export function createGroomService(token: string, actorId: number, onApiError?: (error: unknown) => boolean,
   options: { baseUrl?: string; fetcher?: typeof fetch } = {}) {
-  if (!token.trim() || !positive(actorId)) throw new Error('An authenticated Groom session is required.');
+  if (!token.trim() || !positive(actorId)) throw new Error('Cần đăng nhập bằng tài khoản Groom.');
   async function request(path: string, init: RequestInit = {}) {
     try { return await requestApi<unknown>(path, init, { token, ...options }); }
     catch (error) { onApiError?.(error); throw error; }
@@ -39,14 +39,14 @@ export function createGroomService(token: string, actorId: number, onApiError?: 
   return {
     horse: (horseId: number) => readHorseIdentity(token, horseId, onApiError, options),
     async list(page = 0): Promise<Page<GroomTreatmentTask>> {
-      if (!Number.isSafeInteger(page) || page < 0) throw new Error('Invalid page.');
+      if (!Number.isSafeInteger(page) || page < 0) throw new Error('Trang không hợp lệ.');
       const v = await request(`/api/groom/treatment-tasks?page=${page}&size=100`, { method: 'GET' });
       if (!object(v) || !Array.isArray(v.items) || v.page !== page || !positive(v.size) || v.size > 100 ||
         !Number.isSafeInteger(v.totalElements) || Number(v.totalElements) < 0 || !v.items.every((row) => validTask(row, actorId))) throw invalid();
       return v as unknown as Page<GroomTreatmentTask>;
     },
     async complete(id: number): Promise<GroomTreatmentTask> {
-      if (!positive(id)) throw new Error('Invalid task ID.');
+      if (!positive(id)) throw new Error('Mã công việc không hợp lệ.');
       // Actor/time are supplied by the server JWT. Completion notes have no approved persistence contract.
       const v = await request(`/api/groom/treatment-tasks/${id}/complete`, { method: 'POST', body: '{}' });
       if (!validTask(v, actorId) || v.id !== id || v.status !== 'COMPLETED') throw invalid();

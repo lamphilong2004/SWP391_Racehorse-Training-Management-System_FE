@@ -33,7 +33,7 @@ export interface HeaderProps {
 export function Header({
   breadcrumb,
   user,
-  searchPlaceholder = 'Search…',
+  searchPlaceholder = 'Tìm kiếm…',
   onSearch,
   unreadCount = 0,
   unreadStatus,
@@ -50,7 +50,7 @@ export function Header({
       <div className={styles.left}>
         {onMenuClick && (
           <button type="button" ref={menuButtonRef} className={styles.menu} onClick={onMenuClick}
-            aria-label={navigationOpen ? 'Close navigation' : 'Open navigation'} aria-controls={navigationId} aria-expanded={navigationOpen}>
+            aria-label={navigationOpen ? 'Đóng menu' : 'Mở menu'} aria-controls={navigationId} aria-expanded={navigationOpen}>
             <Icon name={navigationOpen ? 'x' : 'menu'} size={22} />
           </button>
         )}
@@ -66,7 +66,7 @@ export function Header({
         >
           <Icon name="search" size={16} className={styles.searchIcon} />
           <input name="q" type="search" placeholder={searchPlaceholder} aria-label={searchPlaceholder}
-            disabled={!onSearch} title={onSearch ? undefined : 'Global search is unavailable on this screen. Use its module filters.'} />
+            disabled={!onSearch} title={onSearch ? undefined : 'Màn hình này không hỗ trợ tìm kiếm chung. Hãy dùng bộ lọc của trang.'} />
         </form>
       </div>
       <div className={styles.right}>
@@ -74,13 +74,13 @@ export function Header({
           type="button"
           className={styles.bell}
           onClick={onNotificationsClick ?? (() => navigate(ROUTES.notifications))}
-          aria-label={unreadStatus === 'unavailable' ? 'Notifications, unread count unavailable' : unreadStatus === 'loading' ? 'Notifications, checking unread count' : unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
-          title={unreadStatus === 'unavailable' ? 'Unread count unavailable. Open notifications to retry.' : undefined}
+          aria-label={unreadStatus === 'unavailable' ? 'Thông báo, không lấy được số chưa đọc' : unreadStatus === 'loading' ? 'Thông báo, đang kiểm tra số chưa đọc' : unreadCount > 0 ? `Thông báo, ${unreadCount} chưa đọc` : 'Thông báo'}
+          title={unreadStatus === 'unavailable' ? 'Không lấy được số chưa đọc. Mở thông báo để thử lại.' : undefined}
         >
           <Icon name="bell" size={22} />
           {!unreadStatus && unreadCount > 0 && <span className={styles.count}>{unreadCount > 99 ? '99+' : unreadCount}</span>}
         </button>
-        <button type="button" className={styles.user} onClick={onUserMenuClick ?? (() => navigate(ROUTES.account))} aria-label="Account menu">
+        <button type="button" className={styles.user} onClick={onUserMenuClick ?? (() => navigate(ROUTES.account))} aria-label="Menu tài khoản">
           <span className={styles.avatar} aria-hidden="true">
             {initials(user.fullName)}
           </span>

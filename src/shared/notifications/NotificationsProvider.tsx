@@ -31,7 +31,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 function countOf(value: unknown): number {
   const unread = (value as { unread?: unknown } | null)?.unread;
   if (typeof unread !== 'number' || !Number.isSafeInteger(unread) || unread < 0)
-    throw new ApiError(200, 'INVALID_RESPONSE', 'The server returned an invalid unread count.');
+    throw new ApiError(200, 'INVALID_RESPONSE', 'Máy chủ trả về số chưa đọc không hợp lệ.');
   return unread;
 }
 
@@ -50,7 +50,7 @@ function SessionNotifications({ session, handleApiError, children }: {
   }, [session]);
 
   const request = useCallback<FlowRequest>(async <T,>(path: string, init: RequestInit = {}) => {
-    if (!isCurrent()) throw new Error('Notification session changed.');
+    if (!isCurrent()) throw new Error('Phiên thông báo đã thay đổi.');
     const controller = new AbortController();
     const abort = () => controller.abort();
     if (init.signal?.aborted) controller.abort();
@@ -58,7 +58,7 @@ function SessionNotifications({ session, handleApiError, children }: {
     requests.current.add(controller);
     try {
       const result = await requestApi<T>(path, { ...init, signal: controller.signal }, { token: session.accessToken });
-      if (controller.signal.aborted || !isCurrent()) throw new Error('Notification session changed.');
+      if (controller.signal.aborted || !isCurrent()) throw new Error('Phiên thông báo đã thay đổi.');
       return result;
     } catch (error) {
       // A late 401/inactive response from the old account must not sign out its replacement.
@@ -76,7 +76,7 @@ function SessionNotifications({ session, handleApiError, children }: {
     const controller = new AbortController();
     countRequest.current = controller;
     if (!isCurrent()) {
-      setState({ source: session, pending: false, error: 'Notification session changed. Sign in again.' });
+      setState({ source: session, pending: false, error: 'Phiên thông báo đã thay đổi. Hãy đăng nhập lại.' });
       setRevision((value) => value + 1);
       return;
     }
@@ -87,13 +87,13 @@ function SessionNotifications({ session, handleApiError, children }: {
       if (!controller.signal.aborted && current === generation.current && isCurrent()) setState({ source: session, unreadCount, pending: false });
     } catch {
       if (!controller.signal.aborted && current === generation.current && isCurrent())
-        setState({ source: session, pending: false, error: 'Unread count unavailable. Retry notifications.' });
+        setState({ source: session, pending: false, error: 'Không lấy được số chưa đọc. Hãy tải lại thông báo.' });
     }
   }, [request, isCurrent, session]);
 
   const markRead = useCallback(async (id?: number) => {
-    if (id !== undefined && (!Number.isSafeInteger(id) || id < 1)) throw new Error('Invalid notification ID.');
-    if (writing.current) throw new Error('A notification update is already in progress.');
+    if (id !== undefined && (!Number.isSafeInteger(id) || id < 1)) throw new Error('Mã thông báo không hợp lệ.');
+    if (writing.current) throw new Error('Đang cập nhật thông báo.');
     writing.current = true;
     // Invalidate earlier reads before the write; their responses must not restore an old badge.
     invalidateCount(); setState({ source: session, pending: true });
@@ -102,7 +102,7 @@ function SessionNotifications({ session, handleApiError, children }: {
         { method: id === undefined ? 'POST' : 'PATCH' });
       if (id === undefined) countOf(result);
       else if (result?.id !== id || typeof result.readAt !== 'string' || !Number.isFinite(Date.parse(result.readAt)))
-        throw new ApiError(200, 'INVALID_RESPONSE', 'The server did not confirm this notification as read.');
+        throw new ApiError(200, 'INVALID_RESPONSE', 'Máy chủ chưa xác nhận đã đọc thông báo này.');
       if (isCurrent()) setRevision((value) => value + 1);
     } finally {
       writing.current = false;

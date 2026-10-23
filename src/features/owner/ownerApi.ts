@@ -5,7 +5,7 @@ import type { OwnerContext, OwnerHorse, OwnerService } from './ownerModel';
 
 // CORE-004 docs/api/flow1-horse.openapi.yaml @ f8e7895ba4ad4816f951c56d6480fd01178f1bc5.
 // Only whitelisted Owner fields cross this boundary; no all-horses request or sample fallback.
-const invalid = () => new ApiError(502, 'INVALID_RESPONSE', 'The Owner response does not match the contract.');
+const invalid = () => new ApiError(502, 'INVALID_RESPONSE', 'Dữ liệu chủ ngựa trả về không hợp lệ.');
 type Row = Record<string, unknown>;
 const row = (value: unknown): Row => { if (!value || typeof value !== 'object' || Array.isArray(value)) throw invalid(); return value as Row; };
 const string = (value: unknown) => { if (typeof value !== 'string') throw invalid(); return value; };
@@ -33,6 +33,15 @@ function card(value: unknown): OwnerHorse {
     photo: null, stable: null, stableSince: null, sire: null, dam: null, program: null, sessions: [], nextSession: null,
   };
 }
+function programOf(training: Row): OwnerHorse['program'] {
+  if (training.currentProgram == null) return null;
+  const program = row(training.currentProgram);
+  enumeration(program.status, ['ACTIVE', 'PAUSED', 'COMPLETED']);
+  return { name: string(program.name), phase: optionalString(program.currentPhaseName), from: date(program.periodStart), to: date(program.periodEnd), trainer: null,
+    ...(program.sessionsCompleted === undefined ? {} : { completed: integer(program.sessionsCompleted) }),
+    ...(program.sessionsPlanned === undefined ? {} : { planned: integer(program.sessionsPlanned) }),
+  };
+}
 function detail(profileValue: unknown, healthValue: unknown, trainingValue: unknown, id: number): OwnerHorse {
   const profile = row(profileValue), health = row(healthValue), training = row(trainingValue);
   const horse = card(profile.horse);
@@ -52,14 +61,7 @@ function detail(profileValue: unknown, healthValue: unknown, trainingValue: unkn
     weights: array(health.weights, 12).map((value) => { const item = row(value), weightKg = number(item.weightKg); if (weightKg <= 0 || weightKg > 9999.99 || Math.abs(weightKg * 100 - Math.round(weightKg * 100)) > 0.00001) throw invalid(); return { weightKg, recordedAt: date(item.recordedAt, true) }; }),
   };
   // Preserve the contract's newest-first weight order; do not infer missing records.
-  if (training.currentProgram != null) {
-    const program = row(training.currentProgram);
-    enumeration(program.status, ['ACTIVE', 'PAUSED', 'COMPLETED']);
-    horse.program = { name: string(program.name), phase: optionalString(program.currentPhaseName), from: date(program.periodStart), to: date(program.periodEnd), trainer: null,
-      ...(program.sessionsCompleted === undefined ? {} : { completed: integer(program.sessionsCompleted) }),
-      ...(program.sessionsPlanned === undefined ? {} : { planned: integer(program.sessionsPlanned) }),
-    };
-  }
+  horse.program = programOf(training);
   horse.sessions = array(training.recentSessions, 10).map((value, index) => {
     const item = row(value);
     // Evaluation labels are contract-allowed but their business vocabulary is not yet approved by Dung.
@@ -73,16 +75,25 @@ export function createOwnerApi(options: { fetcher?: typeof fetch; baseUrl?: stri
   const read = async (path: string, context: OwnerContext) => {
     context.signal?.throwIfAborted();
     const token = options.getToken ? options.getToken() : authSession.read()?.accessToken;
-    if (!token) throw new ApiError(401, 'UNAUTHORIZED', 'Sign in again to view your horses.');
+    if (!token) throw new ApiError(401, 'UNAUTHORIZED', 'Đăng nhập lại để xem ngựa của bạn.');
     const result = await requestApi<unknown>(path, { method: 'GET', signal: context.signal }, { ...options, token });
     context.signal?.throwIfAborted();
     return result;
   };
   return {
     source: 'api',
-    async list(context) { return array(await read('/api/owner/horses', context)).map(card); },
+    async list(context) {
+      const horses = array(await read('/api/owner/horses', context)).map(card);
+      // The card projection has no program; read each owned horse's training summary so the card
+      // never claims "no program" for a horse that has one. A failed read leaves it unknown.
+      await Promise.all(horses.map(async (horse) => {
+        try { horse.program = programOf(row(await read(`/api/owner/horses/${horse.id}/training-summary`, context))); }
+        catch (error) { if (context.signal?.aborted) throw error; horse.program = undefined; }
+      }));
+      return horses;
+    },
     async detail(id, context) {
-      if (!Number.isSafeInteger(id) || id <= 0) throw new ApiError(400, 'VALIDATION_ERROR', 'Choose a valid horse.');
+      if (!Number.isSafeInteger(id) || id <= 0) throw new ApiError(400, 'VALIDATION_ERROR', 'Hãy chọn ngựa hợp lệ.');
       // Authorize/profile first: a denied direct link never triggers summary requests.
       const profile = await read(`/api/owner/horses/${id}/profile`, context);
       const [health, training] = await Promise.all([

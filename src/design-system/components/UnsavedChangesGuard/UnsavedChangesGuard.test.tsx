@@ -8,7 +8,7 @@ function mount(dirty = true) {
   function Form() {
     const [changed, setChanged] = useState(dirty);
     return <><UnsavedChangesGuard dirty={changed} /><input aria-label="Draft input" defaultValue="Retained" />
-      <Link to="/other">Leave form</Link><Link to="/login">Sign out</Link><button onClick={() => setChanged(false)}>Mark clean</button></>;
+      <Link to="/other">Leave form</Link><Link to="/login">Đăng xuất</Link><button onClick={() => setChanged(false)}>Mark clean</button></>;
   }
   const router = createMemoryRouter([{ path: '/edit', Component: Form }, { path: '/other', element: <h1>Destination</h1> }, { path: '/login', element: <h1>Sign in</h1> }], { initialEntries: ['/other', '/edit'], initialIndex: 1 });
   const view = render(<RouterProvider router={router} />);
@@ -16,13 +16,13 @@ function mount(dirty = true) {
 }
 it('retains current view and input when a dirty route leave is cancelled', async () => {
   mount(); await userEvent.click(screen.getByRole('link', { name: 'Leave form' }));
-  expect(await screen.findByRole('dialog', { name: 'Unsaved changes' })).toBeInTheDocument();
-  await userEvent.click(screen.getByRole('button', { name: 'Continue editing' }));
+  expect(await screen.findByRole('dialog', { name: 'Thay đổi chưa lưu' })).toBeInTheDocument();
+  await userEvent.click(screen.getByRole('button', { name: 'Tiếp tục chỉnh sửa' }));
   expect(screen.getByRole('textbox')).toHaveValue('Retained'); expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });
 it('requires explicit discard to finish a blocked browser Back navigation', async () => {
   const { router } = mount(); await act(() => router.navigate(-1));
-  await userEvent.click(await screen.findByRole('button', { name: 'Discard changes' }));
+  await userEvent.click(await screen.findByRole('button', { name: 'Hủy thay đổi' }));
   expect(await screen.findByRole('heading', { name: 'Destination' })).toBeInTheDocument();
 });
 it('cancels a pending leave on Escape without discarding the form', async () => {
@@ -33,7 +33,7 @@ it('cancels a pending leave on Escape without discarding the form', async () => 
 it('does not block clean forms or an auth redirect to login', async () => {
   const clean = mount(false); await userEvent.click(screen.getByRole('link', { name: 'Leave form' }));
   expect(await screen.findByRole('heading', { name: 'Destination' })).toBeInTheDocument(); clean.unmount();
-  mount(); await userEvent.click(screen.getByRole('link', { name: 'Sign out' }));
+  mount(); await userEvent.click(screen.getByRole('link', { name: 'Đăng xuất' }));
   expect(await screen.findByRole('heading', { name: 'Sign in' })).toBeInTheDocument(); expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });
 it('warns before reload only while dirty and removes the listener on unmount', async () => {
@@ -45,7 +45,7 @@ it('warns before reload only while dirty and removes the listener on unmount', a
 });
 it('does not write draft data to any browser storage', async () => {
   const write = vi.spyOn(Storage.prototype, 'setItem'); mount();
-  await userEvent.click(screen.getByRole('link', { name: 'Leave form' })); await userEvent.click(await screen.findByRole('button', { name: 'Continue editing' }));
+  await userEvent.click(screen.getByRole('link', { name: 'Leave form' })); await userEvent.click(await screen.findByRole('button', { name: 'Tiếp tục chỉnh sửa' }));
   expect(write).not.toHaveBeenCalled(); write.mockRestore();
 });
 it('can allow query-only view changes on the same route while still guarding a route leave', async () => {
@@ -58,6 +58,6 @@ it('can allow query-only view changes on the same route while still guarding a r
   await userEvent.click(screen.getByRole('link', { name: 'History view' }));
   expect(router.state.location.search).toBe('?view=history'); expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   await userEvent.click(screen.getByRole('link', { name: 'Leave form' }));
-  expect(await screen.findByRole('dialog', { name: 'Unsaved changes' })).toBeInTheDocument();
+  expect(await screen.findByRole('dialog', { name: 'Thay đổi chưa lưu' })).toBeInTheDocument();
   expect(router.state.location.pathname).toBe('/edit');
 });

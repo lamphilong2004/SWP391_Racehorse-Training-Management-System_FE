@@ -12,7 +12,7 @@ export interface EvaluationApi {
 export function createEvaluationApi(options: { fetcher?: typeof fetch; baseUrl?: string } = {}): EvaluationApi {
   const request = <T>(path: string, init: RequestInit = {}) => {
     const session = authSession.read();
-    if (!session || session.expiresAt <= Date.now()) return Promise.reject(new ApiError(401, 'UNAUTHORIZED', 'Your session expired. Sign in again to continue.'));
+    if (!session || session.expiresAt <= Date.now()) return Promise.reject(new ApiError(401, 'UNAUTHORIZED', 'Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại để tiếp tục.'));
     return requestApi<T>(path, init, { ...options, token: session.accessToken });
   };
   return {
@@ -24,7 +24,7 @@ export function createEvaluationApi(options: { fetcher?: typeof fetch; baseUrl?:
       if (dates.to) query.set('to', dates.to);
       // A non-list body is a contract mismatch: surface it as an error state instead of crashing the history view.
       return request<PerformancePoint[]>(`/api/horses/${id}/performance${query.size ? `?${query}` : ''}`, { signal }).then((rows) => {
-        if (!Array.isArray(rows)) throw new ApiError(200, 'INVALID_RESPONSE', 'Performance history does not match the approved contract. Reload to retry.');
+        if (!Array.isArray(rows)) throw new ApiError(200, 'INVALID_RESPONSE', 'Dữ liệu lịch sử thành tích không hợp lệ. Hãy tải lại để thử lại.');
         return rows;
       });
     },

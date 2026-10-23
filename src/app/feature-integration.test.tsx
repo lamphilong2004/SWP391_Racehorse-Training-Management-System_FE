@@ -38,9 +38,9 @@ function mount(role: RoleCode, path: string, signedIn = true) {
 }
 
 const allowed = [
-  ['HEAD_TRAINER', paths.program, 'Create Training Program', '/api/horses'],
-  ['TRAINER', paths.evaluation, 'Session Evaluation · SES-42', '/api/training-sessions/42/result'],
-  ['VETERINARIAN', paths.medical, 'Medical Cases', '/api/medical/cases'],
+  ['HEAD_TRAINER', paths.program, 'Tạo chương trình huấn luyện', '/api/horses'],
+  ['TRAINER', paths.evaluation, 'Đánh giá buổi tập · SES-42', '/api/training-sessions/42/result'],
+  ['VETERINARIAN', paths.medical, 'Ca y tế', '/api/medical/cases'],
 ] as const;
 
 describe('dev + CORE-022 + CORE-033 + clean CORE-036 / production routes', () => {
@@ -50,11 +50,11 @@ describe('dev + CORE-022 + CORE-033 + clean CORE-036 / production routes', () =>
   it.each(allowed)('restores %s into %s with the shared API base/session', async (role, path, heading, endpoint) => {
     const { router, fetcher } = mount(role, path);
     expect(await screen.findByRole('heading', { name: heading })).toBeInTheDocument();
-    if (role === 'HEAD_TRAINER') await screen.findByRole('radio', { name: /^Select Thunder\ Bolt \(/ });
+    if (role === 'HEAD_TRAINER') await screen.findByRole('radio', { name: /^Chọn Thunder Bolt \(/ });
     if (role === 'VETERINARIAN') await screen.findByText('Fixture lameness');
     if (role === 'TRAINER') {
-      fireEvent.click(screen.getByRole('tab', { name: 'Evaluation & Recommendation' }));
-      expect(screen.getByRole('button', { name: 'Save Evaluation' })).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('tab', { name: 'Đánh giá & khuyến nghị' }));
+      expect(screen.getByRole('button', { name: 'Lưu đánh giá' })).toBeInTheDocument();
     }
     expect(router.state.location.pathname).toBe(path);
     expect(fetcher.mock.calls.some(([url]) => new URL(String(url)).pathname === endpoint)).toBe(true);
@@ -67,11 +67,11 @@ describe('dev + CORE-022 + CORE-033 + clean CORE-036 / production routes', () =>
 
   it.each(allowed)('returns %s to the requested %s after login', async (role, path, heading) => {
     const { router, fetcher } = mount(role, path, false);
-    expect(await screen.findByRole('heading', { name: 'Sign in to Racehorse Ops' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Đăng nhập Racehorse Ops' })).toBeInTheDocument();
     expect(fetcher).not.toHaveBeenCalled();
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'fixture@example.test' } });
-    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'test-fixture-only' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Sign In' }));
+    fireEvent.change(screen.getByLabelText('Mật khẩu'), { target: { value: 'test-fixture-only' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }));
     expect(await screen.findByRole('heading', { name: heading })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe(path);
     expect(fetcher.mock.calls.filter(([url]) => String(url).endsWith('/api/auth/login'))).toHaveLength(1);
@@ -86,7 +86,7 @@ describe('dev + CORE-022 + CORE-033 + clean CORE-036 / production routes', () =>
     ['GROOM', paths.evaluation], ['HORSE_OWNER', paths.evaluation],
   ] as const)('blocks %s at %s before any feature request', async (role, path) => {
     const { fetcher } = mount(role, path);
-    expect(await screen.findByText('Access denied')).toBeInTheDocument();
+    expect(await screen.findByText('Không có quyền truy cập')).toBeInTheDocument();
     expect(fetcher.mock.calls.map(([input]) => new URL(String(input)).pathname)).toEqual(['/api/auth/me']);
     expect(authSession.read()?.accessToken).toBe('integration-fixture-jwt');
   });

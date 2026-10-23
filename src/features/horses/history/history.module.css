@@ -36,3 +36,13 @@
 
 .section { gap:16px; }
 .identityGrid { justify-content:start; }
+
+.title, .sectionTitle { font-family: var(--font-family-headline); letter-spacing: -.02em; }
+.chip { border: 1px solid var(--color-border-default); }
+.sectionTitle::before { background: var(--color-brand-secondary); }
+@media(max-width:767px) {
+  .identityGrid, .profileFacts { grid-template-columns: minmax(0,1fr); }
+  .tree { flex-wrap: wrap; align-items: flex-start; }
+  .ancestors { flex: 1 1 180px; }
+  .pagination { justify-content: flex-start; }
+}

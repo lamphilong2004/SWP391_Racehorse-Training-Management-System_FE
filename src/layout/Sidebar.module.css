@@ -9,6 +9,7 @@
   background: var(--color-brand-navy, var(--color-bg-surface));
   border-right: 1px solid var(--color-border-default);
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .brand {
@@ -69,6 +70,14 @@
   color: var(--color-sidebar-text, var(--color-text-primary));
   text-decoration: none;
   white-space: nowrap;
+  min-width: 0;
+}
+
+/* Long labels (e.g. 'Horse Training Programs') ellipsize instead of widening the sidebar. */
+.item > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .item:hover {
@@ -94,6 +103,26 @@
 .item:focus-visible { outline: 2px solid var(--color-sidebar-text-active, var(--color-border-focus)); outline-offset: -2px; }
 
 /* Design System v2 §E: below 1024px the sidebar is a drawer opened from the Header menu button. */
+:global([data-ui-v3]) .sidebar {
+  box-shadow: var(--elev-1);
+}
+:global([data-ui-v3]) .brandName {
+  font-family: var(--font-family-headline);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+:global([data-ui-v3]) .brandIcon {
+  color: var(--color-brand-secondary);
+}
+:global([data-ui-v3]) .active {
+  background: var(--color-brand-primary);
+  border-left-color: var(--color-brand-secondary);
+  color: #ffffff;
+}
+:global([data-ui-v3]) .active .itemIcon {
+  color: #ffffff;
+}
+
 @media (max-width: 1023px) {
   .sidebar {
     position: fixed;

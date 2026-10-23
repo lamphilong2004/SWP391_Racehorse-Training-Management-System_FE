@@ -16,8 +16,8 @@ it('preserves legacy busy attributes and supports a named icon action and danger
   expect(screen.getByRole('button', { name: 'Close panel' })).toBeEnabled(); expect(screen.getByRole('button', { name: 'Discard' })).toBeEnabled();
 });
 it('adds a shared scope without changing the document theme or child semantics', () => {
-  render(<DesignSystemScope><ResponsiveGrid><Stack><h2>Region</h2></Stack></ResponsiveGrid></DesignSystemScope>);
-  expect(screen.getByRole('heading', { name: 'Region' }).closest('[data-design-system]')).toHaveAttribute('data-design-system', 'v2');
+  render(<DesignSystemScope><ResponsiveGrid><Stack><h2>Vùng</h2></Stack></ResponsiveGrid></DesignSystemScope>);
+  expect(screen.getByRole('heading', { name: 'Vùng' }).closest('[data-design-system]')).toHaveAttribute('data-design-system', 'v2');
   expect(document.documentElement).not.toHaveAttribute('data-design-system');
 });
 it('bounds skeleton shape dimensions and exposes one labelled busy region', () => {
@@ -28,16 +28,16 @@ it('bounds skeleton shape dimensions and exposes one labelled busy region', () =
 });
 it('deduplicates feedback IDs, renders text safely and only dismisses through the owner', async () => {
   const dismiss = vi.fn();
-  render(<ToastRegion items={[{ id: 'a', message: '<b>Text</b>' }, { id: 'a', message: 'Duplicate' }, { id: 'b', message: 'Request failed', tone: 'error' }]} onDismiss={dismiss} />);
-  expect(screen.getAllByRole('status')).toHaveLength(1); expect(screen.getByRole('alert')).toHaveTextContent('Request failed');
-  expect(screen.queryByText('Duplicate')).not.toBeInTheDocument(); expect(screen.getByText('<b>Text</b>').querySelector('b')).toBeNull();
-  await userEvent.click(screen.getByRole('button', { name: 'Dismiss <b>Text</b>' })); expect(dismiss).toHaveBeenCalledWith('a');
+  render(<ToastRegion items={[{ id: 'a', message: '<b>Text</b>' }, { id: 'a', message: 'Sao chép' }, { id: 'b', message: 'Yêu cầu thất bại', tone: 'error' }]} onDismiss={dismiss} />);
+  expect(screen.getAllByRole('status')).toHaveLength(1); expect(screen.getByRole('alert')).toHaveTextContent('Yêu cầu thất bại');
+  expect(screen.queryByText('Sao chép')).not.toBeInTheDocument(); expect(screen.getByText('<b>Text</b>').querySelector('b')).toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: 'Ẩn <b>Text</b>' })); expect(dismiss).toHaveBeenCalledWith('a');
 });
 it.each([Modal, Drawer])('keeps an opted-in dirty overlay open on Escape and close button', async Component => {
   const close = vi.fn();
   const { rerender } = render(<Component open onClose={close} title="Editing" dismissible={false}><input aria-label="Draft" defaultValue="Retained" /></Component>);
   fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }));
-  await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Đóng' }));
   expect(close).not.toHaveBeenCalled(); expect(screen.getByRole('textbox', { name: 'Draft' })).toHaveValue('Retained');
   rerender(<Component open onClose={close} title="Editing"><input aria-label="Draft" defaultValue="Retained" /></Component>);
   fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true })); expect(close).toHaveBeenCalledOnce();

@@ -144,3 +144,7 @@
   line-height: 16px;
   color: var(--color-text-secondary);
 }
+
+:global([data-ui-v3]) .title { font-family: var(--font-family-headline); }
+:global([data-ui-v3]) .header, :global([data-ui-v3]) .legend { flex-wrap: wrap; }
+:global([data-ui-v3]) .plot { min-width: 0; }

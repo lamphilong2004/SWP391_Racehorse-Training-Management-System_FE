@@ -10,8 +10,8 @@ it('assigns the chosen Groom once and reports a server refusal without claiming 
   const api = { groomCandidates: vi.fn().mockResolvedValue([{ id: 7, fullName: 'Assigned Groom' }]), assignGroom } as unknown as ReturnType<typeof createSessionApi>;
   render(<GroomAssignment api={api} session={session} onSaved={saved} />);
   await screen.findByRole('option', { name: 'Assigned Groom' });
-  fireEvent.change(screen.getByLabelText('Assign Groom'), { target: { value: '7' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Assign & notify Groom' }));
+  fireEvent.change(screen.getByLabelText('Phân công Groom'), { target: { value: '7' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Phân công & thông báo Groom' }));
   expect(await screen.findByText('Assignment changed; reload.')).toBeInTheDocument();
   expect(assignGroom).toHaveBeenCalledExactlyOnceWith(42, 7);
   expect(saved).not.toHaveBeenCalled();
@@ -22,8 +22,8 @@ it('offers only lower intensities and confirms reload only after the real API su
   const api = { reduceIntensity } as unknown as ReturnType<typeof createSessionApi>;
   render(<ReduceIntensity api={api} session={session} onSaved={saved} />);
   expect(screen.queryByRole('option', { name: /^HIGH$/ })).not.toBeInTheDocument();
-  fireEvent.change(screen.getByLabelText('Lower session intensity'), { target: { value: 'LOW' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Reduce intensity' }));
+  fireEvent.change(screen.getByLabelText('Giảm cường độ buổi tập'), { target: { value: 'LOW' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Giảm cường độ' }));
   await waitFor(() => expect(saved).toHaveBeenCalledOnce());
   expect(reduceIntensity).toHaveBeenCalledExactlyOnceWith(42, 'LOW');
 });

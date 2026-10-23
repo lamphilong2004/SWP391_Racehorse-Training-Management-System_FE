@@ -3,9 +3,9 @@ import { useAuth } from '../../shared/auth/AuthProvider';
 import { ApiError } from '../../shared/auth/authApi';
 import { createRiderApi, type RiderApi } from './api';
 import type { RiderResult, RiderSession } from './types';
-export const errorMessage = (error: unknown) => error instanceof Error ? error.message : 'The request could not be completed.';
-export const when = (value: string) => new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
-export const value = (number: number | null | undefined, unit: string) => number === null || number === undefined ? 'Not measured' : `${number.toLocaleString()} ${unit}`;
+export const errorMessage = (error: unknown) => error instanceof Error ? error.message : 'Không thực hiện được yêu cầu.';
+export const when = (value: string) => new Date(value).toLocaleString('vi-VN', { dateStyle: 'medium', timeStyle: 'short' });
+export const value = (number: number | null | undefined, unit: string) => number === null || number === undefined ? 'Chưa đo' : `${number.toLocaleString('vi-VN')} ${unit}`;
 export function useRiderApi(supplied?: RiderApi) {
   const { handleApiError } = useAuth();
   return useMemo(() => supplied ?? createRiderApi({ handleApiError }), [supplied, handleApiError]);
@@ -23,12 +23,12 @@ export function useRiderSession(id: number, api: RiderApi, poll = false) {
     let active = true;
     api.session(id).then((data) => {
       if (!active) return;
-      if (data.id !== id) throw new ApiError(200, 'INVALID_RESPONSE', 'The server returned a different ride.');
+      if (data.id !== id) throw new ApiError(200, 'INVALID_RESPONSE', 'Máy chủ trả về một lượt cưỡi khác.');
       setSession(data); setSyncedAt(new Date().toISOString()); setError(undefined); setSnapshotVersion((version) => version + 1);
     }).catch((cause: unknown) => { if (active && !handleApiError(cause)) setError(cause); });
     api.result(id).then((data) => {
       if (!active) return;
-      if (data.session.id !== id) throw new ApiError(200, 'INVALID_RESPONSE', 'The server returned a different result.');
+      if (data.session.id !== id) throw new ApiError(200, 'INVALID_RESPONSE', 'Máy chủ trả về một kết quả khác.');
       setResult(data); setResultError(undefined);
     }).catch((cause: unknown) => { if (active && !handleApiError(cause)) { setResult(undefined); setResultError(cause); } });
     return () => { active = false; };

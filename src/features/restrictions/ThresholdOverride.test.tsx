@@ -11,20 +11,20 @@ const override = { ...globalThreshold, thresholdValue: 185.25, scope: 'HORSE_OVE
 const change = (label: string, value: string) => fireEvent.change(screen.getByLabelText(label, { exact: false }), { target: { value } });
 beforeEach(() => { state.roles = ['VETERINARIAN']; state.request.mockReset().mockResolvedValue([globalThreshold]); });
 async function open() {
-  render(<ThresholdOverride horseId={7} />); fireEvent.click(await screen.findByRole('button', { name: 'Threshold Override' }));
-  return screen.findByRole('dialog', { name: 'Threshold Override · Horse 7' });
+  render(<ThresholdOverride horseId={7} />); fireEvent.click(await screen.findByRole('button', { name: 'Ngưỡng riêng' }));
+  return screen.findByRole('dialog', { name: 'Ngưỡng riêng · Ngựa 7' });
 }
 it('requires valid input and confirmation before PUT, then reloads only after a confirmed response', async () => {
   let saved = false;
   state.request.mockImplementation(async (_path: string, init?: RequestInit) => init?.method === 'PUT' ? (saved = true, override) : [saved ? override : globalThreshold]);
-  await open(); expect(screen.getByRole('button', { name: 'Review override' })).toBeDisabled();
-  change('Override threshold', '0'); change('Effective from', '2026-10-20T08:00');
-  expect(screen.getByRole('button', { name: 'Review override' })).toBeDisabled();
-  change('Override threshold', '185.25'); change('Override reason', 'Per-horse clinical plan');
-  fireEvent.click(screen.getByRole('button', { name: 'Review override' }));
-  expect(await screen.findByRole('dialog', { name: 'Confirm threshold override' })).toBeInTheDocument();
+  await open(); expect(screen.getByRole('button', { name: 'Xem lại ngưỡng riêng' })).toBeDisabled();
+  change('Ngưỡng riêng (bpm)', '0'); change('Hiệu lực từ', '2026-10-20T08:00');
+  expect(screen.getByRole('button', { name: 'Xem lại ngưỡng riêng' })).toBeDisabled();
+  change('Ngưỡng riêng (bpm)', '185.25'); change('Lý do đặt ngưỡng riêng', 'Per-horse clinical plan');
+  fireEvent.click(screen.getByRole('button', { name: 'Xem lại ngưỡng riêng' }));
+  expect(await screen.findByRole('dialog', { name: 'Xác nhận đặt ngưỡng riêng' })).toBeInTheDocument();
   expect(state.request.mock.calls.some(([, init]) => init?.method === 'PUT')).toBe(false);
-  fireEvent.click(screen.getByRole('button', { name: 'Confirm override' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Xác nhận ngưỡng riêng' }));
   await waitFor(() => expect(state.request).toHaveBeenCalledWith('/api/horses/7/medical-thresholds', { method: 'PUT', body: JSON.stringify({ metricType: 'HEART_RATE', thresholdValue: 185.25, effectiveFrom: new Date('2026-10-20T08:00').toISOString(), reason: 'Per-horse clinical plan' }) }));
   expect(await screen.findByText('185.25 bpm · HORSE_OVERRIDE')).toBeInTheDocument();
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -32,36 +32,36 @@ it('requires valid input and confirmation before PUT, then reloads only after a 
 it('ends an existing override through confirmed POST /end and never assumes a global value', async () => {
   let ended = false;
   state.request.mockImplementation(async (_path: string, init?: RequestInit) => init?.method === 'POST' ? (ended = true, { ...override, effectiveTo: '2026-10-20T01:00:00Z' }) : [ended ? globalThreshold : override]);
-  await open(); change('End override at', '2026-10-18T08:00');
-  expect(screen.getByRole('button', { name: 'Review end override' })).toBeDisabled();
-  change('End override at', '2026-10-20T08:00'); fireEvent.click(screen.getByRole('button', { name: 'Review end override' }));
+  await open(); change('Kết thúc ngưỡng riêng lúc', '2026-10-18T08:00');
+  expect(screen.getByRole('button', { name: 'Xem lại việc kết thúc' })).toBeDisabled();
+  change('Kết thúc ngưỡng riêng lúc', '2026-10-20T08:00'); fireEvent.click(screen.getByRole('button', { name: 'Xem lại việc kết thúc' }));
   expect(state.request.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(false);
-  fireEvent.click(screen.getByRole('button', { name: 'Confirm end override' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Xác nhận kết thúc' }));
   await waitFor(() => expect(state.request).toHaveBeenCalledWith('/api/horses/7/medical-thresholds/end', { method: 'POST', body: JSON.stringify({ effectiveTo: new Date('2026-10-20T08:00').toISOString() }) }));
   expect(await screen.findByText('175.5 bpm · GLOBAL')).toBeInTheDocument();
 });
 it('keeps a failed write unconfirmed and retains the draft for retry', async () => {
   state.request.mockImplementation(async (_path: string, init?: RequestInit) => { if (init?.method === 'PUT') throw new ApiError(409, 'CONFLICT', 'Effective interval overlaps'); return [globalThreshold]; });
-  await open(); change('Override threshold', '185.25'); change('Effective from', '2026-10-20T08:00');
-  fireEvent.click(screen.getByRole('button', { name: 'Review override' })); fireEvent.click(screen.getByRole('button', { name: 'Confirm override' }));
+  await open(); change('Ngưỡng riêng (bpm)', '185.25'); change('Hiệu lực từ', '2026-10-20T08:00');
+  fireEvent.click(screen.getByRole('button', { name: 'Xem lại ngưỡng riêng' })); fireEvent.click(screen.getByRole('button', { name: 'Xác nhận ngưỡng riêng' }));
   expect(await screen.findByText('Effective interval overlaps')).toBeInTheDocument();
-  expect(screen.queryByText('Threshold request confirmed')).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'Back to edit' })); expect(screen.getByLabelText('Override threshold (bpm)')).toHaveValue(185.25);
+  expect(screen.queryByText('Đã xác nhận yêu cầu ngưỡng')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Quay lại chỉnh sửa' })); expect(screen.getByLabelText('Ngưỡng riêng (bpm)')).toHaveValue(185.25);
 });
 it('does not write when confirmation is cancelled and does not enable END for a global threshold', async () => {
-  const dialog = await open(); expect(within(dialog).getByRole('button', { name: 'Review end override' })).toBeDisabled();
-  change('Override threshold', '185.25'); change('Effective from', '2026-10-20T08:00'); fireEvent.click(screen.getByRole('button', { name: 'Review override' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+  const dialog = await open(); expect(within(dialog).getByRole('button', { name: 'Xem lại việc kết thúc' })).toBeDisabled();
+  change('Ngưỡng riêng (bpm)', '185.25'); change('Hiệu lực từ', '2026-10-20T08:00'); fireEvent.click(screen.getByRole('button', { name: 'Xem lại ngưỡng riêng' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Hủy' }));
   expect(state.request.mock.calls.some(([, init]) => init?.method)).toBe(false);
 });
 it.each(['HEAD_TRAINER', 'TRAINER', 'CLUB_MANAGER', 'GROOM', 'HORSE_OWNER', 'WORK_RIDER'])('does not render or request threshold management for %s', (role) => {
   state.roles = [role]; render(<ThresholdOverride horseId={7} />);
-  expect(screen.queryByRole('button', { name: 'Threshold Override' })).not.toBeInTheDocument(); expect(state.request).not.toHaveBeenCalled();
+  expect(screen.queryByRole('button', { name: 'Ngưỡng riêng' })).not.toBeInTheDocument(); expect(state.request).not.toHaveBeenCalled();
 });
 it('keeps missing or malformed effective values unavailable without a hardcoded threshold', async () => {
   state.request.mockResolvedValue({ thresholdValue: 180 }); render(<ThresholdOverride horseId={7} />);
-  expect(await screen.findByText('Effective threshold was not confirmed by the server. Reload before changing it.')).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Threshold Override' })).toBeDisabled();
+  expect(await screen.findByText('Máy chủ chưa xác nhận ngưỡng đang áp dụng. Hãy tải lại trước khi thay đổi.')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Ngưỡng riêng' })).toBeDisabled();
 });
 it('bounds precision and serializes only approved threshold fields', async () => {
   expect(['0', '-1', '99999.999', '100000', 'Infinity', ''].some(validThreshold)).toBe(false);

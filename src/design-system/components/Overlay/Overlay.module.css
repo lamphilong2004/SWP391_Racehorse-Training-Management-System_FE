@@ -117,3 +117,13 @@
   padding: 0 var(--space-xl);
   border-top: 1px solid var(--color-border-default);
 }
+
+:global([data-ui-v3]) .title { font-family: var(--font-family-headline); letter-spacing: -.02em; }
+:global([data-ui-v3]) .surface { border: 1px solid var(--color-border-default); }
+:global([data-ui-v3]) .modal::backdrop,
+:global([data-ui-v3]) .drawer::backdrop { background: rgb(11 19 43 / 40%); }
+@media (max-width: 767px) {
+  :global([data-ui-v3]) .header { height: auto; min-height: 64px; padding-block: var(--space-md); }
+  :global([data-ui-v3]) .footer { height: auto; min-height: 72px; flex-wrap: wrap; padding-block: var(--space-md); }
+  :global([data-ui-v3]) .close { min-width: 44px; min-height: 44px; }
+}

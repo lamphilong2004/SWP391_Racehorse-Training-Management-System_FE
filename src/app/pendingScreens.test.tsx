@@ -21,8 +21,8 @@ const request = vi.hoisted(() => vi.fn(async (path: string) => {
 vi.mock('../features/main-flows/api', async (load) => ({ ...await load<object>(), useFlowRequest: () => request }));
 
 const pending = [
-  ['/admin/users', 'CLUB_MANAGER', 'Staff & Users'],
-  ['/admin/roles', 'CLUB_MANAGER', 'Roles & Permissions'],
+  ['/admin/users', 'CLUB_MANAGER', 'Nhân sự & người dùng'],
+  ['/admin/roles', 'CLUB_MANAGER', 'Vai trò & quyền hạn'],
 ] as const;
 
 function mount(path: string) {
@@ -44,22 +44,22 @@ it.each(pending)('mounts its API-backed required screen at %s', async (path, rol
   expect(await screen.findByRole('heading', { name: title })).toBeInTheDocument();
   expect((await screen.findAllByRole('table')).length).toBe(path === '/admin/users' ? 1 : 2);
   expect(request).toHaveBeenCalledWith(expect.stringContaining(path === '/admin/users' ? '/api/admin/users?' : '/api/admin/roles'), expect.objectContaining({ signal: expect.any(AbortSignal) }));
-  expect(screen.queryByText('This screen is not available in this build.')).not.toBeInTheDocument();
+  expect(screen.queryByText('Màn hình này chưa có trong phiên bản hiện tại.')).not.toBeInTheDocument();
 });
 
 it.each(pending)('keeps role boundaries on the unavailable route %s', async (path) => {
   auth.user.roles = ['GROOM'];
   mount(path);
-  expect(await screen.findByText('Your account does not have permission to access this page.')).toBeInTheDocument();
+  expect(await screen.findByText('Tài khoản của bạn không có quyền truy cập trang này.')).toBeInTheDocument();
   expect(request.mock.calls.every(([path]) => path === '/api/notifications/unread-count')).toBe(true);
 });
 
 it.each(ROLE_CODES)('allows %s to reach the API-backed notification center from the header', async (role) => {
   auth.user.roles = [role];
   mount('/dashboard');
-  fireEvent.click(await screen.findByRole('button', { name: /^Notifications(?:, checking unread count)?$/ }));
-  const drawer = await screen.findByRole('dialog', { name: 'Notifications' });
-  expect(await within(drawer).findByRole('heading', { name: 'Notifications', level: 2 })).toBeInTheDocument();
-  expect(await within(drawer).findByText('No matching notifications')).toBeInTheDocument();
+  fireEvent.click(await screen.findByRole('button', { name: /^Thông báo(?:, đang kiểm tra số chưa đọc)?$/ }));
+  const drawer = await screen.findByRole('dialog', { name: 'Thông báo' });
+  expect(await within(drawer).findByRole('heading', { name: 'Thông báo', level: 2 })).toBeInTheDocument();
+  expect(await within(drawer).findByText('Không có thông báo phù hợp')).toBeInTheDocument();
   expect(request).toHaveBeenCalledWith('/api/notifications/unread-count');
 });

@@ -20,8 +20,8 @@ function AuditResults({ query, pageSearch, role }: { query: AuditQuery; pageSear
   const [revision, setRevision] = useState(0);
   const load = useCallback((context: Parameters<typeof service.audit>[1]) => service.audit(query, context), [service, query]);
   const resource = useManagementResource(load, revision);
-  if (resource.status === 'loading') return <LoadingState label="Loading audit records…" />;
-  if (resource.status === 'error') return <ErrorState title={resource.forbidden ? 'Access denied' : 'Audit log unavailable'} description={resource.message} onRetry={resource.forbidden ? undefined : () => setRevision((value) => value + 1)} />;
+  if (resource.status === 'loading') return <LoadingState label="Đang tải nhật ký…" />;
+  if (resource.status === 'error') return <ErrorState title={resource.forbidden ? 'Không có quyền truy cập' : 'Không tải được nhật ký hệ thống'} description={resource.message} onRetry={resource.forbidden ? undefined : () => setRevision((value) => value + 1)} />;
   const data = resource.data;
   const search = pageSearch.trim().toLocaleLowerCase();
   const entries = data.items.filter((entry) => (!role || entry.actorRole === role) && (!search || [entry.actor?.fullName, entry.actor?.userCode, entry.actor?.id, entry.action, entry.targetType, entry.targetId, entry.id].some((value) => value != null && String(value).toLocaleLowerCase().includes(search))));
@@ -33,16 +33,16 @@ function AuditResults({ query, pageSearch, role }: { query: AuditQuery; pageSear
   const start = data.items.length ? data.page * data.size + 1 : 0;
   const end = data.items.length ? data.page * data.size + data.items.length : 0;
   return <Card className={styles.auditCard}>
-    <AuditTable entries={entries} emptyTitle={data.totalItems === 0 ? 'No audit records match these filters' : 'No records on this page match'} />
+    <AuditTable entries={entries} emptyTitle={data.totalItems === 0 ? 'Không có bản ghi nhật ký phù hợp bộ lọc' : 'Không có bản ghi phù hợp trên trang này'} />
     <footer className={styles.pagination}>
-      <p aria-live="polite">{search || role ? `${entries.length} visible on this page · ` : ''}Showing {start}–{end} of {data.totalItems} records</p>
+      <p aria-live="polite">{search || role ? `${entries.length} bản ghi trên trang này · ` : ''}Đang hiển thị {start}–{end} trên {data.totalItems} bản ghi</p>
       <div className={styles.actions}>
-        <SelectField className={styles.pageSize} label="Records per page" value={String(query.size)} options={[...new Set([10, 20, 50, 100, query.size])].sort((a, b) => a - b).map((size) => ({ value: String(size), label: String(size) }))} onChange={(event) => { const next = new URLSearchParams(params); next.set('size', event.target.value); next.set('page', '0'); setParams(next); }} />
-        <Button variant="secondary" size="sm" onClick={() => setRevision((value) => value + 1)}>Refresh records</Button>
-        {data.items.length === 0 && data.page > 0 && <Button variant="secondary" size="sm" onClick={() => navigatePage(0)}>First page</Button>}
-        <Button variant="secondary" size="sm" disabled={data.page <= 0} onClick={() => navigatePage(data.page - 1)}>Previous</Button>
-        <span>{data.page > 0 && data.page >= data.totalPages ? 'This page is no longer available.' : `Page ${data.page + 1} of ${Math.max(1, data.totalPages)}`}</span>
-        <Button variant="secondary" size="sm" disabled={data.page + 1 >= data.totalPages} onClick={() => navigatePage(data.page + 1)}>Next</Button>
+        <SelectField className={styles.pageSize} label="Số bản ghi mỗi trang" value={String(query.size)} options={[...new Set([10, 20, 50, 100, query.size])].sort((a, b) => a - b).map((size) => ({ value: String(size), label: String(size) }))} onChange={(event) => { const next = new URLSearchParams(params); next.set('size', event.target.value); next.set('page', '0'); setParams(next); }} />
+        <Button variant="secondary" size="sm" onClick={() => setRevision((value) => value + 1)}>Làm mới</Button>
+        {data.items.length === 0 && data.page > 0 && <Button variant="secondary" size="sm" onClick={() => navigatePage(0)}>Trang đầu</Button>}
+        <Button variant="secondary" size="sm" disabled={data.page <= 0} onClick={() => navigatePage(data.page - 1)}>Trước</Button>
+        <span>{data.page > 0 && data.page >= data.totalPages ? 'Trang này không còn tồn tại.' : `Trang ${data.page + 1}/${Math.max(1, data.totalPages)}`}</span>
+        <Button variant="secondary" size="sm" disabled={data.page + 1 >= data.totalPages} onClick={() => navigatePage(data.page + 1)}>Sau</Button>
       </div>
     </footer>
   </Card>;
@@ -73,36 +73,36 @@ function AuditContent({ query }: { query: AuditQuery }) {
   };
   const field = (key: keyof typeof filters, value: string) => setFilters((current) => ({ ...current, [key]: value }));
   const reset = () => { setFilters(filtersFromQuery({ page: 0, size: 20 })); setErrors({}); setPageSearch(''); setRole(''); setDatesOpen(false); setParams({}); };
-  return <AppShell user={{ fullName: user!.fullName, role: 'CLUB_MANAGER' }} breadcrumb={[{ label: 'Administration' }, { label: 'Audit Log' }]} searchPlaceholder="Search audit log…">
+  return <AppShell user={{ fullName: user!.fullName, role: 'CLUB_MANAGER' }} breadcrumb={[{ label: 'Quản trị' }, { label: 'Nhật ký hệ thống' }]} searchPlaceholder="Tìm trong nhật ký…">
     <div className={styles.page}>
-      <Link to={ROUTES.dashboard} className={styles.back}>← Dashboard</Link>
-      <header className={styles.heading}><div><h1 className="text-h1">Audit Log <span className={styles.readOnly}>Read-only</span></h1><p className={styles.subtitle}>Who did what, and when · written automatically by the system · newest first</p></div></header>
-      {businessDataMode() === 'sample' && <p className={styles.note}>SAMPLE_SNAPSHOT rows describe the current shared sample graph. They are not backend audit events or an approved action vocabulary.</p>}
-      <AlertBanner type="info" title="Audit records are historical — they cannot be created, edited or deleted">
-        Records remain available for deactivated accounts. Entries are written automatically when people act in the system. Passwords, hashes, tokens and secrets must never be included in audit records.
+      <Link to={ROUTES.dashboard} className={styles.back}>← Tổng quan</Link>
+      <header className={styles.heading}><div><h1 className="text-h1">Nhật ký hệ thống <span className={styles.readOnly}>Read-only</span></h1><p className={styles.subtitle}>Ai đã làm gì và khi nào · hệ thống tự ghi · mới nhất trước</p></div></header>
+      {businessDataMode() === 'sample' && <p className={styles.note}>Các dòng SAMPLE_SNAPSHOT mô tả dữ liệu mẫu hiện tại, không phải nhật ký thật của hệ thống.</p>}
+      <AlertBanner type="info" title="Nhật ký là dữ liệu lịch sử — không thể tạo, sửa hay xóa">
+        Bản ghi vẫn còn với tài khoản đã vô hiệu hóa. Hệ thống tự ghi khi người dùng thao tác. Nhật ký không bao giờ chứa mật khẩu, mã băm, token hay thông tin bí mật.
       </AlertBanner>
         <form className={styles.filters} onSubmit={apply} noValidate>
-          <TextField className={`${styles.compactField} ${styles.searchField}`} label="Search this page" title="Search actor, action or ID on the current page only" type="search" placeholder="Search actor, action or ID…" value={pageSearch} onChange={(event) => setPageSearch(event.target.value)} />
-          <TextField className={`${styles.compactField} ${styles.actorField}`} label="Actor ID" title="Actor user ID · all records" inputMode="numeric" placeholder="Actor ID: All" value={filters.actor} error={errors.actor} onChange={(event) => field('actor', event.target.value)} />
-          <SelectField className={`${styles.compactField} ${styles.roleField}`} label="Role on this page" title="Role filter applies to the current page only" placeholder="Role: All · page" value={role} options={ROLE_CODES.map((value) => ({ value, label: ROLE_LABELS[value] }))} onChange={(event) => setRole(event.target.value)} />
-          <TextField className={`${styles.compactField} ${styles.codeField}`} label="Action" title="Exact action code · all records" placeholder="Action: All" maxLength={100} value={filters.action} error={errors.action} onChange={(event) => field('action', event.target.value)} />
-          <TextField className={`${styles.compactField} ${styles.codeField}`} label="Entity type" title="Exact entity type · all records" placeholder="Entity: All" maxLength={50} value={filters.targetType} error={errors.targetType} onChange={(event) => field('targetType', event.target.value)} />
+          <TextField className={`${styles.compactField} ${styles.searchField}`} label="Tìm trên trang này" title="Tìm người thực hiện, thao tác hoặc mã — chỉ trên trang hiện tại" type="search" placeholder="Tìm người thực hiện, thao tác hoặc mã…" value={pageSearch} onChange={(event) => setPageSearch(event.target.value)} />
+          <TextField className={`${styles.compactField} ${styles.actorField}`} label="Mã người thực hiện" title="Mã người thực hiện · mọi bản ghi" inputMode="numeric" placeholder="Người thực hiện: tất cả" value={filters.actor} error={errors.actor} onChange={(event) => field('actor', event.target.value)} />
+          <SelectField className={`${styles.compactField} ${styles.roleField}`} label="Vai trò trên trang này" title="Lọc vai trò chỉ áp dụng cho trang hiện tại" placeholder="Vai trò: tất cả · trang" value={role} options={ROLE_CODES.map((value) => ({ value, label: ROLE_LABELS[value] }))} onChange={(event) => setRole(event.target.value)} />
+          <TextField className={`${styles.compactField} ${styles.codeField}`} label="Thao tác" title="Mã thao tác chính xác · mọi bản ghi" placeholder="Thao tác: tất cả" maxLength={100} value={filters.action} error={errors.action} onChange={(event) => field('action', event.target.value)} />
+          <TextField className={`${styles.compactField} ${styles.codeField}`} label="Loại đối tượng" title="Loại đối tượng chính xác · mọi bản ghi" placeholder="Đối tượng: tất cả" maxLength={50} value={filters.targetType} error={errors.targetType} onChange={(event) => field('targetType', event.target.value)} />
           <details className={styles.dateFilter} open={datesOpen} onToggle={(event) => setDatesOpen(event.currentTarget.open)} onKeyDown={(event) => { if (event.key === 'Escape') { setDatesOpen(false); event.currentTarget.querySelector('summary')?.focus(); } }}>
-            <summary>Date: {filters.from || filters.to ? `${filters.from.slice(0, 10) || 'Any start'} – ${filters.to.slice(0, 10) || 'Any end'}` : 'All'}</summary>
+            <summary>Ngày: {filters.from || filters.to ? `${filters.from.slice(0, 10) || 'Không giới hạn đầu'} – ${filters.to.slice(0, 10) || 'Không giới hạn cuối'}` : 'Tất cả'}</summary>
             <div className={styles.datePopover}>
-              <TextField label="From (local time)" type="datetime-local" value={filters.from} error={errors.from} onInput={(event) => field('from', event.currentTarget.value)} onChange={(event) => field('from', event.target.value)} />
-              <TextField label="To (local time)" type="datetime-local" value={filters.to} error={errors.to} onInput={(event) => field('to', event.currentTarget.value)} onChange={(event) => field('to', event.target.value)} />
-              <p className={styles.note}>Enter local time. The selected range is sent as UTC when you apply filters.</p>
-              <Button variant="secondary" size="sm" onClick={() => setDatesOpen(false)}>Close date filter</Button>
+              <TextField label="Từ (giờ địa phương)" type="datetime-local" value={filters.from} error={errors.from} onInput={(event) => field('from', event.currentTarget.value)} onChange={(event) => field('from', event.target.value)} />
+              <TextField label="Đến (giờ địa phương)" type="datetime-local" value={filters.to} error={errors.to} onInput={(event) => field('to', event.currentTarget.value)} onChange={(event) => field('to', event.target.value)} />
+              <p className={styles.note}>Nhập theo giờ địa phương. Hệ thống tự đổi sang UTC khi áp dụng bộ lọc.</p>
+              <Button variant="secondary" size="sm" onClick={() => setDatesOpen(false)}>Đóng bộ lọc ngày</Button>
             </div>
           </details>
-          <div className={styles.filterActions}><Button type="submit" size="sm">Apply filters</Button><Button variant="secondary" type="button" size="sm" onClick={reset}>Reset filters</Button></div>
-          <p className={styles.filterNote}>Actor, action, entity and date filters search all records. Search and role filter the current page only. Dates are entered in your local time and sent as UTC.</p>
+          <div className={styles.filterActions}><Button type="submit" size="sm">Áp dụng bộ lọc</Button><Button variant="secondary" type="button" size="sm" onClick={reset}>Xóa bộ lọc</Button></div>
+          <p className={styles.filterNote}>Bộ lọc người thực hiện, thao tác, đối tượng và ngày tìm trên mọi bản ghi. Ô tìm kiếm và lọc vai trò chỉ áp dụng cho trang hiện tại. Ngày nhập theo giờ địa phương và được gửi dưới dạng UTC.</p>
         </form>
-      {(errors.page || queryErrors.page) && <ErrorState title="Invalid page" description={errors.page ?? queryErrors.page} />}
-      {(errors.size || queryErrors.size) && <ErrorState title="Invalid page size" description={errors.size ?? queryErrors.size} />}
+      {(errors.page || queryErrors.page) && <ErrorState title="Trang không hợp lệ" description={errors.page ?? queryErrors.page} />}
+      {(errors.size || queryErrors.size) && <ErrorState title="Số bản ghi mỗi trang không hợp lệ" description={errors.size ?? queryErrors.size} />}
       {!Object.keys(queryErrors).length && <AuditResults query={query} pageSearch={pageSearch} role={role} />}
-      <p className={styles.note}>The audited action vocabulary is maintained by the backend (CORE-051). This viewer does not create or modify records.</p>
+      <p className={styles.note}>Danh sách thao tác do hệ thống máy chủ quản lý. Màn hình này không tạo hay sửa bản ghi.</p>
     </div>
   </AppShell>;
 }

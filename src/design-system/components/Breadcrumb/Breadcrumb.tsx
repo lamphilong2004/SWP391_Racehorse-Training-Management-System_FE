@@ -18,7 +18,7 @@ export interface BreadcrumbProps {
 /** Figma Breadcrumb (71:123): Caption, chevron-right 14px, current item in text/primary. */
 export function Breadcrumb({ items, className }: BreadcrumbProps) {
   return (
-    <nav aria-label="Breadcrumb" className={cx(styles.breadcrumb, className)}>
+    <nav aria-label="Đường dẫn trang" className={cx(styles.breadcrumb, className)}>
       {items.map((item, index) => {
         const isLast = index === items.length - 1;
         return (

@@ -11,10 +11,10 @@ import styles from './ValidationNotice.module.css';
 export type ValidationCategory = 'a' | 'b' | 'c' | 'd';
 
 const CATEGORY: Record<ValidationCategory, { label: string; icon: IconName }> = {
-  a: { label: 'Category A · Medical hard block', icon: 'shield-alert' },
-  b: { label: 'Category B · Operational hard block', icon: 'calendar-x' },
-  c: { label: 'Category C · Warning / caution', icon: 'alert-triangle' },
-  d: { label: 'Category D · Not recommended', icon: 'target' },
+  a: { label: 'Loại A · Chặn bắt buộc do y tế', icon: 'shield-alert' },
+  b: { label: 'Loại B · Chặn bắt buộc do vận hành', icon: 'calendar-x' },
+  c: { label: 'Loại C · Cảnh báo / thận trọng', icon: 'alert-triangle' },
+  d: { label: 'Loại D · Không khuyến nghị', icon: 'target' },
 };
 
 export interface ValidationNoticeProps {
@@ -53,7 +53,7 @@ export function ValidationNotice({ category, title, children, meta, lockNote, ac
             <>
               <span className={styles.lockPill}>
                 <Icon name="lock" size={14} />
-                <span>Cannot override</span>
+                <span>Không thể bỏ qua</span>
               </span>
               {lockNote && <span className={styles.meta}>{lockNote}</span>}
             </>

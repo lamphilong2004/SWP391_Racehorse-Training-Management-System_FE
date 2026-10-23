@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { useLocation, useNavigate } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { AlertBanner } from '../design-system/components/AlertBanner/AlertBanner';
 import { Button } from '../design-system/components/Button/Button';
 import { Checkbox } from '../design-system/components/Checkbox/Checkbox';
@@ -8,6 +8,7 @@ import { TextField } from '../design-system/components/TextField/TextField';
 import { ApiError } from '../shared/auth/authApi';
 import { useAuth } from '../shared/auth/AuthProvider';
 import styles from './LoginPage.module.css';
+import { ROUTES } from '../app/routePaths';
 
 interface LoginLocationState {
   from?: { pathname?: string };
@@ -44,7 +45,7 @@ export function LoginPage() {
         }
         setFormError(error.message);
       } else {
-        setFormError('Could not sign in. Try again.');
+        setFormError('Không đăng nhập được. Hãy thử lại.');
       }
     } finally {
       setSubmitting(false);
@@ -52,7 +53,7 @@ export function LoginPage() {
   }
 
   return (
-    <main className={styles.page}>
+    <main className={styles.page} data-ui-v3>
       <section className={styles.photoPanel} aria-label="Racehorse Ops">
         <img className={styles.photo} src="/assets/login-horse.jpeg" alt="" />
         <div className={styles.photoFade} />
@@ -64,24 +65,24 @@ export function LoginPage() {
         </div>
         <div className={styles.tagline}>
           <h2 className="text-landing-display-m">
-            Precision in <em>every stride.</em>
+            Chính xác trong <em>từng sải bước.</em>
           </h2>
-          <p className="text-body-l">Training, health and daily care — one system for the whole stable.</p>
+          <p className="text-body-l">Huấn luyện, sức khỏe và chăm sóc hằng ngày — một hệ thống cho cả trại ngựa.</p>
         </div>
       </section>
 
       <section className={styles.formPanel} aria-labelledby="login-title">
-        <a className={styles.backLink} href="/" aria-label="Back to overview">
-          ←&nbsp; Back to overview
+        <a className={styles.backLink} href="/" aria-label="Quay lại trang giới thiệu">
+          ←&nbsp; Quay lại trang giới thiệu
         </a>
         <div className={styles.formContent}>
           <header className={styles.heading}>
-            <h1 id="login-title" className="text-landing-display-m">Sign in to Racehorse Ops</h1>
-            <p className="text-body-l">Use the account issued by your Club Manager.</p>
+            <h1 id="login-title" className="text-landing-display-m">Đăng nhập Racehorse Ops</h1>
+            <p className="text-body-l">Dùng tài khoản do Club Manager cấp.</p>
           </header>
 
           {auth.message && <AlertBanner type="info" title={auth.message} />}
-          {formError && <AlertBanner type="danger" title="Sign-in failed">{formError}</AlertBanner>}
+          {formError && <AlertBanner type="danger" title="Đăng nhập thất bại">{formError}</AlertBanner>}
 
           <form className={styles.form} onSubmit={submit}>
             <TextField
@@ -97,7 +98,7 @@ export function LoginPage() {
             />
             <div className={styles.passwordField}>
               <TextField
-                label="Password"
+                label="Mật khẩu"
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="current-password"
                 maxLength={64}
@@ -111,29 +112,29 @@ export function LoginPage() {
                 type="button"
                 className={styles.passwordToggle}
                 onClick={() => setShowPassword((visible) => !visible)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                 aria-pressed={showPassword}
               >
                 <Icon name="eye" size={20} />
               </button>
             </div>
             <div className={styles.formOptions}>
-              <Checkbox label="Remember me" checked={remember} onChange={(event) => setRemember(event.currentTarget.checked)} />
-              <button type="button" className={styles.forgotLink} onClick={() => setFormError('Password reset is not available in this login flow yet. Contact your Club Manager.')}>Forgot password?</button>
+              <Checkbox label="Ghi nhớ đăng nhập" checked={remember} onChange={(event) => setRemember(event.currentTarget.checked)} />
+              <Link className={styles.forgotLink} to={ROUTES.forgotPassword}>Quên mật khẩu?</Link>
             </div>
             <Button type="submit" size="lg" disabled={submitting} className={styles.submitButton}>
-              {submitting ? 'Signing in…' : 'Sign In'}
+              {submitting ? 'Đang đăng nhập…' : 'Đăng nhập'}
             </Button>
           </form>
 
           <div className={styles.noSignup}>
             <Icon name="lock" size={18} className={styles.lockIcon} />
-            <p>No public sign-up. Accounts and roles are created by your Club Manager.</p>
+            <p>Không có đăng ký công khai. Tài khoản và vai trò do Club Manager tạo.</p>
           </div>
         </div>
 
         <div className={styles.footer}>
-          <p>© 2026 Racehorse Ops · Web application</p>
+          <p>© 2026 Racehorse Ops · Ứng dụng web</p>
         </div>
       </section>
     </main>

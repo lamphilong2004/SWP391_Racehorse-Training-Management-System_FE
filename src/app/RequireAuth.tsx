@@ -10,16 +10,16 @@ export function RequireAuth({ children, allowedRoles }: { children: React.ReactN
   const location = useLocation();
   const navigate = useNavigate();
 
-  if (auth.status === 'loading') return <p role="status">Restoring your session…</p>;
+  if (auth.status === 'loading') return <p role="status">Đang khôi phục phiên đăng nhập…</p>;
   if (auth.status === 'anonymous') {
     return <Navigate to={ROUTES.login} replace state={{ from: location }} />;
   }
   if (auth.status === 'error') {
     return (
       <main className="auth-problem">
-        <ErrorState title="Workspace unavailable" description={auth.message ?? undefined} onRetry={() => void auth.restore()} />
+        <ErrorState title="Không mở được không gian làm việc" description={auth.message ?? undefined} onRetry={() => void auth.restore()} />
         <Button variant="secondary" onClick={() => void auth.logout()}>
-          Sign out
+          Đăng xuất
         </Button>
       </main>
     );
@@ -27,8 +27,8 @@ export function RequireAuth({ children, allowedRoles }: { children: React.ReactN
   if (allowedRoles && !auth.user?.roles.some((role) => allowedRoles.includes(role))) {
     return (
       <main className="auth-problem">
-        <ErrorState title="Access denied" description="Your account does not have permission to access this page." />
-        <Button variant="secondary" onClick={() => navigate(ROUTES.dashboard)}>Back to workspace</Button>
+        <ErrorState title="Không có quyền truy cập" description="Tài khoản của bạn không có quyền truy cập trang này." />
+        <Button variant="secondary" onClick={() => navigate(ROUTES.dashboard)}>Quay lại không gian làm việc</Button>
       </main>
     );
   }
@@ -38,7 +38,7 @@ export function RequireAuth({ children, allowedRoles }: { children: React.ReactN
 export function PublicOnly({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
   const location = useLocation();
-  if (auth.status === 'loading') return <p role="status">Restoring your session…</p>;
+  if (auth.status === 'loading') return <p role="status">Đang khôi phục phiên đăng nhập…</p>;
   if (auth.status === 'authenticated') {
     const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
     return <Navigate to={from?.startsWith('/') ? from : ROUTES.dashboard} replace />;

@@ -10,7 +10,7 @@ export function programFieldErrors(error: unknown): ProgramValidationIssue[] {
 }
 
 export function programErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : 'The request could not be completed. Try again.';
+  return error instanceof Error ? error.message : 'Không thực hiện được yêu cầu. Hãy thử lại.';
 }
 
 export function stepForField(field: string): number {

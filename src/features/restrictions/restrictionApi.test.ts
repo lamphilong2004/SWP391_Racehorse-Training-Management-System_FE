@@ -16,5 +16,5 @@ it('ends at the last contract page and surfaces invalid metadata instead of sile
   expect(await createRestrictionApi(request).find(12)).toBeNull();
   expect(request).toHaveBeenCalledTimes(1);
   request.mockResolvedValue({ items: [], totalPages: 2 });
-  await expect(createRestrictionApi(request).find(12)).rejects.toThrow('Restriction pagination is unavailable');
+  await expect(createRestrictionApi(request).find(12)).rejects.toThrow('Không phân trang được danh sách hạn chế. Hãy tải lại trước khi sửa quy tắc.');
 });
