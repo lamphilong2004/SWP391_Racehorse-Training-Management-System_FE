@@ -75,11 +75,11 @@ function UserEditor({ initial }: { initial: UserDetail | null }) {
     catch (failure) { setError(errorMessage(failure)); } finally { inFlight.current = false; setBusy(false); }
   }
   return <><UnsavedChangesGuard dirty={!saved && (dirty || busy)} /><form onSubmit={(e) => { void submit(e); }} className={styles.stack}>
-    <div className={styles.columns}><div className={styles.stack}><Card title="Hồ sơ"><div className={styles.filters}>
+    <div className={styles.columns}><div className={styles.stack}><Card title="Hồ sơ"><div className={styles.formFields}>
       <TextField label="Họ và tên" required maxLength={150} value={name} disabled={busy} onChange={(e) => setName(e.target.value)} /><TextField label="Email" type="email" required maxLength={254} value={email} disabled={busy} onChange={(e) => setEmail(e.target.value)} />
     </div><p className={styles.muted}>{initial ? `Không thể thay đổi mã người dùng ${initial.userCode}.` : 'Mã người dùng được cấp tự động. Trạng thái ban đầu là Đang hoạt động.'}</p></Card>
     <Card title="Vai trò"><RadioGroup label="Vai trò trong hệ thống" required value={role} disabled={busy} options={roleOptions} onChange={(value) => changeRole(value as RoleCode)} helperText="Đổi vai trò sẽ đổi quyền truy cập; dữ liệu lịch sử vẫn được giữ. Không có vai trò tùy chỉnh." /></Card>
-    {staff && <Card title="Kinh nghiệm & kỹ năng"><div className={styles.stack}><div className={styles.filters}>
+    {staff && <Card title="Kinh nghiệm & kỹ năng"><div className={styles.stack}><div className={styles.formFields}>
       <TextField label="Kinh nghiệm (năm)" type="number" min={0} max={32767} step={1} inputMode="numeric" value={years} error={yearsError} disabled={busy} onChange={(e) => setYears(e.target.value)} />
       <TextField label="Cấp độ kinh nghiệm" maxLength={50} value={level} disabled={busy} onChange={(e) => setLevel(e.target.value)} helperText="Nhập tự do, ví dụ: Lâu năm." />
     </div>{kind ? <SkillPicker kind={kind} value={skillIds} disabled={busy} onChange={setSkillIds} /> : <p className={styles.muted}>Kỹ năng chỉ áp dụng cho Trainer (chuyên môn) và Work Rider (kỹ năng cưỡi).</p>}

@@ -61,6 +61,17 @@ function mount(path = '/horses', options: { role?: RoleCode; anonymous?: boolean
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); });
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); localStorage.clear(); sessionStorage.clear(); });
 
+it('presents an activation instant as local date/time while preserving the server instant', async () => {
+  const instant = '2026-10-23T23:45:00.000Z';
+  mount('/horses/81', { store: [{ ...horse(), lifecycle: 'ACTIVE', activatedAt: instant }] });
+  await screen.findByRole('heading', { name: 'Fixture Draft' });
+  const time = document.querySelector(`time[datetime="${instant}"]`);
+  expect(time).toBeInTheDocument();
+  expect(time).toHaveAttribute('title', instant);
+  expect(time).toHaveTextContent(/\d{2}\/\d{2}\/2026 · \d{2}:\d{2}/);
+  expect(screen.queryByText(instant)).not.toBeInTheDocument();
+});
+
 it('enters Horse register from workspace menu, creates a DRAFT then lists/details/refreshes through HTTP fixtures', async () => {
   const state = mount('/dashboard', { store: [] });
   await userEvent.click(await screen.findByRole('link', { name: 'Ngựa' }));
