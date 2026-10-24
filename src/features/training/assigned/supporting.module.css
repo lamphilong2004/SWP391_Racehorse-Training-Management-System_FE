@@ -3,11 +3,12 @@
 .header, .actions, .filters { display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); flex-wrap: wrap; }
 .filters { justify-content: flex-start; padding-bottom: var(--space-lg); }
 .filters > :first-child { flex: 1; min-width: 200px; }
-/* Figma 95:400: search and the three selects share one toolbar row; design-system fields default to width 100%. */
-.filters { align-items: flex-end; flex-wrap: nowrap; }
+/* Wrap against the available content width, including the sidebar/card gutters and reset action. */
+.filters { align-items: flex-end; flex-wrap: wrap; }
 .filters > * { width: auto; flex: 0 0 168px; min-width: 0; }
 .filters > :first-child { flex: 1 1 240px; }
 .filters > .count { flex: 0 0 auto; padding-bottom: 10px; }
+.filters > button { flex: 0 0 auto; }
 .title { margin: 0 0 var(--space-sm); font-size: 24px; line-height: 32px; }
 .muted { color: var(--color-text-secondary); }
 .caption { color: var(--color-text-secondary); font-size: 12px; line-height: 16px; }

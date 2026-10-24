@@ -180,6 +180,10 @@ describe('CORE-022 UI + production router + real transport with HTTP fixtures (n
     expect(screen.getByRole('button', { name: 'Quay lại' })).toBeDisabled();
     finish(new Response(JSON.stringify({ success: true, data: createdProgram }), { status: 201 }));
     await screen.findByText('Mã chương trình: 1001');
+    const activationTime = document.querySelector(`time[datetime="${createdProgram.activatedAt}"]`);
+    expect(activationTime).toBeInTheDocument();
+    expect(activationTime).toHaveTextContent(/\d{2}\/\d{2}\/2026 · \d{2}:\d{2}/);
+    expect(screen.queryByText(createdProgram.activatedAt)).not.toBeInTheDocument();
     expect(screen.queryByRole('form')).not.toBeInTheDocument(); expect(posts()).toHaveLength(1);
   });
 

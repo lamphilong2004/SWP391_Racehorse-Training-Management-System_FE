@@ -8,6 +8,7 @@ import type { ProgramValidationIssue } from './programDraft';
 import styles from './ProgramCreationPage.module.css';
 import { sexLabel } from '../horses/shared/options';
 import { viLabel } from '../../shared/viLabels';
+import { dateTime } from '../evaluation/models';
 
 export function HorseSummary({ flow }: { flow: ProgramCreationFlow }) {
   const horse = flow.horse;
@@ -147,7 +148,7 @@ export function ProgramResult({ flow, reload, reloading, readError }: { flow: Pr
       <StatusBadge family="program" status={program.status} /><KeyValue label="Ngựa" value={`${program.horse.name} · ${program.horse.horseCode}`} />
       <KeyValue label="Thời gian" value={`${program.periodStart} — ${program.periodEnd}`} /><KeyValue label="Phiên bản mẫu" value={`v${program.sourceTemplateVersion}`} />
       <KeyValue label="Trainer" value={program.currentTrainer?.fullName ?? 'Không có trong dữ liệu trả về'} />
-      <KeyValue label="Kích hoạt lúc" value={program.activatedAt} />
+      <KeyValue label="Kích hoạt lúc" value={<time dateTime={program.activatedAt} title={program.activatedAt}>{dateTime(program.activatedAt)}</time>} />
       {program.phases.map((phase) => <p key={phase.id}>{phase.phaseOrder}. {phase.name} · {phase.startDate} — {phase.endDate}</p>)}
       <Button type="button" variant="secondary" disabled={reloading} onClick={reload}>{reloading ? 'Đang tải lại…' : 'Tải lại chương trình đã lưu'}</Button>
       {readError && <AlertBanner type="danger" title="Không đọc lại được">{readError}</AlertBanner>}
