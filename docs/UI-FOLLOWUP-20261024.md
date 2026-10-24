@@ -23,10 +23,10 @@ Local evidence: _gate-monitor/enterprise-v4/ui-followup-before.json, ui-followup
 
 ## Checks
 
--90/90 focused tests PASS across six actual test files: Horse application, staff UserPages, ProgramCreationPage, AuthProvider, assigned/supporting and evaluation/dateFormat.
--New assertions verify activation uses readable local date/time without losing the server instant. Existing validation and authorization assertions remain intact.
--Lint, TypeScript, production build, production bundle guard,16/16 policy checks and diff check PASS.
--No repeated full suite; prior main full990/990 remains historical evidence, not a full-suite claim for this follow-up.
+- 90/90 focused tests PASS across six actual test files: Horse application, staff UserPages, ProgramCreationPage, AuthProvider, assigned/supporting and evaluation/dateFormat.
+- New assertions verify activation uses readable local date/time without losing the server instant. Existing validation and authorization assertions remain intact.
+- Lint, TypeScript, production build, production bundle guard, 16/16 policy checks and diff check PASS.
+- No repeated full suite; prior main full 990/990 remains historical evidence, not a full-suite claim for this follow-up.
 
 ## Limits and runtime
 
