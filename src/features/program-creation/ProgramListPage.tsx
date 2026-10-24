@@ -27,6 +27,7 @@ export function ProgramListPage() {
       <SelectField label="Trạng thái" value={status} options={[{ value: '', label: 'Tất cả' }, ...['ACTIVE', 'PAUSED', 'COMPLETED'].map((value) => ({ value, label: viLabel(value) }))]} onChange={(event) => { setStatus(event.target.value as ProgramStatus | ''); changePage(0); }} />
       <SelectField label="Trainer · trang hiện tại" value={trainer} options={[{ value: '', label: 'Tất cả' }, ...trainers.map((item) => ({ value: String(item.id), label: item.fullName }))]} onChange={(event) => setTrainer(event.target.value)} />
       <SelectField label="Ngựa · trang hiện tại" value={horse} options={[{ value: '', label: 'Tất cả' }, ...horses.map((item) => ({ value: String(item.id), label: item.name }))]} onChange={(event) => setHorse(event.target.value)} />
+      <Button type="button" variant="tertiary" disabled={!search && !status && !trainer && !horse && page === 0} onClick={() => { setSearch(''); setStatus(''); changePage(0); }}>Xóa bộ lọc</Button>
     </div>
       <p className="text-caption">Lọc trạng thái áp dụng cho mọi chương trình. Ô tìm kiếm, Trainer và Ngựa chỉ lọc trang hiện tại.</p>
       {resource.pending && <LoadingState label="Đang tải chương trình huấn luyện…" />}
@@ -41,7 +42,7 @@ export function ProgramListPage() {
         { key: 'period', header: 'Thời gian', render: (item) => `${item.periodStart} → ${item.periodEnd}` },
         { key: 'status', header: 'Trạng thái', render: (item) => <StatusBadge family="program" status={item.status} /> },
         { key: 'detail', header: 'Chi tiết', render: (item) => <ButtonLink to={`/training/programs/${item.id}`} aria-label={`Xem ${item.name}`}>Xem</ButtonLink> },
-      ]} /></div><div className={styles.row}><span>{rows.length} hiển thị trên trang này · {data.totalItems} chương trình phù hợp bộ lọc</span><Button variant="secondary" disabled={page === 0} onClick={() => changePage(page - 1)}>Chương trình trước</Button><span>Trang {page + 1}/{Math.max(1, data.totalPages)}</span><Button variant="secondary" disabled={page + 1 >= data.totalPages} onClick={() => changePage(page + 1)}>Chương trình tiếp</Button></div></>}
+      ]} /></div><div className={styles.row}><span>{rows.length} hiển thị trên trang này · {data.totalItems} chương trình phù hợp bộ lọc máy chủ</span><Button variant="secondary" disabled={page === 0} onClick={() => changePage(page - 1)}>Chương trình trước</Button><span>Trang {page + 1}/{Math.max(1, data.totalPages)}</span><Button variant="secondary" disabled={page + 1 >= data.totalPages} onClick={() => changePage(page + 1)}>Chương trình tiếp</Button></div></>}
     </div></Card>
     <AlertBanner type="info" title="Tóm tắt chương trình">Danh sách chưa có mục tiêu, tiến độ và số liệu tóm tắt. Hãy mở từng chương trình để xem chi tiết.</AlertBanner>
     <p className="text-caption">Khả năng tập luyện do Veterinarian đặt, tách biệt với trạng thái chương trình.</p>

@@ -1,0 +1,233 @@
+{
+  "baseline": "985808c",
+  "tableInstances": 25,
+  "modules": 19,
+  "caveat": "Filters-in-module is a discovery signal, not proof of per-table functionality. Fixed comparison, phase and role catalog tables do not require arbitrary filters.",
+  "tables": [
+    {
+      "file": "src/features/administration/UserPages.tsx",
+      "line": 27,
+      "component": "DataTable",
+      "caption": "\"Nhân sự và người dùng\"",
+      "filtersInModule": true,
+      "visualSystem": "SHARED_V4",
+      "verification": "SOURCE_INVENTORY_ONLY"
+    },
+    {
+      "file": "src/features/administration/UserPages.tsx",
+      "line": 111,
+      "component": "DataTable",
+      "caption": "\"Ma trận quyền các chức năng cốt lõi đã duyệt (Figma 290:3537)\"",
+      "filtersInModule": true,
+      "visualSystem": "SHARED_V4",
+      "verification": "SOURCE_INVENTORY_ONLY"
+    },
+    {
+      "file": "src/features/administration/UserPages.tsx",
+      "line": 115,
+      "component": "DataTable",
+      "caption": "\"Vai trò và phạm vi dữ liệu của hệ thống\"",
+      "filtersInModule": true,
+      "visualSystem": "SHARED_V4",
+      "verification": "SOURCE_INVENTORY_ONLY"
+    },
+    {
+      "file": "src/features/evaluation/PerformanceHistory.tsx",
+      "line": 52,
+      "component": "DataTable",
+      "caption": "\"Lịch sử buổi tập, mới nhất trước\"",
+      "filtersInModule": true,
+      "visualSystem": "SHARED_V4",
+      "verification": "SOURCE_INVENTORY_ONLY"
+    },
+    {
+      "file": "src/features/evaluation/SessionEvaluationPage.tsx",
+      "line": 133,
+      "component": "DataTable",
+      "caption": "\"Số đo của buổi tập\"",
+      "filtersInModule": false,
+      "visualSystem": "SHARED_V4",
+      "verification": "SOURCE_INVENTORY_ONLY"
+    },
+    {
+      "file": "src/features/evaluation/SessionEvaluationPage.tsx",
+      "line": 152,
+      "component": "DataTable",
+      "caption": "\"Số liệu kế hoạch so với thực tế của buổi tập\"",
+      "filtersInModule": false,
+      "visualSystem": "SHARED_V4",
+      "verification": "SOURCE_INVENTORY_ONLY"
+    },
+    {
+      "file": "src/features/evaluation/SessionEvaluationPage.tsx",
+      "line": 154,
+      "component": "DataTable",
+      "caption": "\"Bài tập theo kế hoạch, đơn vị gốc\"",
+      "filtersInModule": false,
+      "visualSystem": "SHARED_V4",
+      "verification": "SOURCE_INVENTORY_ONLY"
+    },
+    {
+      "file": "src/features/horses/HorsePages.tsx",
+      "line": 48,
+      "component": "DataTable",
+      "caption": "\"Danh sách ngựa\"",
+      "filtersInModule": true,
+      "visualSystem": "SHARED_V4",
+      "verification": "SOURCE_INVENTORY_ONLY"
+    },
+    {
+      "file": "src/features/management/AuditTable.tsx",
+      "line": 16,
+      "component": "DataTable",
+      "caption": "{caption}",
+      "filtersInModule": false,
+      "visualSystem": "SHARED_V4",
+      "verification": "SOURCE_INVENTORY_ONLY"
+    },
+    {
+      "file": "src/features/medical/Incidents.tsx",
+      "line": 78,
+      "component": "DataTable",
+      "caption": "\"Sự cố\"",
+      "filtersInModule": true,
+      "visualSystem": "SHARED_V4",
+      "verification": "SOURCE_INVENTORY_ONLY"
+    },
+    {
+      "file": "src/features/medical/pages.tsx",
+      "line": 105,
+      "component": "DataTable",
+      "caption": "\"Ca y tế\"",
+      "filtersInModule": true,
+      "visualSystem": "SHARED_V4",
+      "verification": "SOURCE_INVENTORY_ONLY"
+    },
+    {
+      "file": "src/features/program-creation/AdjustmentRequestsPage.tsx",
+      "line": 35,
+      "component": "DataTable",
+      "caption": "\"Yêu cầu điều chỉnh chương trình, mới nhất trước\"",
+      "filtersInModule": true,
+      "visualSystem": "SHARED_V4",
+      "verification": "SOURCE_INVENTORY_ONLY"
+    },
+    {
+      "file": "src/features/program-creation/ProgramCreationPage.tsx",
+      "line": 108,
+      "component": "DataTable",
+      "caption": "\"Chọn một ngựa đang hoạt động\"",
+      "filtersInModule": true,
+      "visualSystem": "SHARED_V4",
+      "verification": "SOURCE_INVENTORY_ONLY"
+    },
+    {
+      "file": "src/features/program-creation/ProgramDetailPage.tsx",
+      "line": 63,
+      "component": "DataTable",
+      "caption": "\"Tiến độ chương trình từ hệ thống\"",
+      "filtersInModule": false,
+      "visualSystem": "SHARED_V4",
+      "verification": "SOURCE_INVENTORY_ONLY"
+    },
+    {
+      "file": "src/features/program-creation/ProgramDetailPage.tsx",
+      "line": 68,
+      "component": "DataTable",
+      "caption": "\"Lịch sử chương trình từ hệ thống\"",
+      "filtersInModule": false,
+      "visualSystem": "SHARED_V4",
+      "verification": "SOURCE_INVENTORY_ONLY"
+    },
+    {
+      "file": "src/features/program-creation/ProgramListPage.tsx",
+      "line": 35,
+      "component": "DataTable",
+      "caption": "\"Chương trình huấn luyện ngựa\"",
+      "filtersInModule": true,
+      "visualSystem": "SHARED_V4",
+      "verification": "SOURCE_INVENTORY_ONLY"
+    },
+    {
+      "file": "src/features/program-creation/ProgramSteps.tsx",
+      "line": 74,
+      "component": "table",
+      "caption": "Ordered wizard phase inputs",
+      "filtersInModule": true,
+      "visualSystem": "SHARED_V4",
+      "verification": "SOURCE_INVENTORY_ONLY"
+    },
+    {
+      "file": "src/features/registration/RegistrationReviewPage.tsx",
+      "line": 70,
+      "component": "DataTable",
+      "caption": "\"Yêu cầu đăng ký\"",
+      "filtersInModule": true,
+      "visualSystem": "SHARED_V4",
+      "verification": "SOURCE_INVENTORY_ONLY"
+    },
+    {
+      "file": "src/features/restrictions/RestrictionsPage.tsx",
+      "line": 26,
+      "component": "DataTable",
+      "caption": "\"Hạn chế của ngựa\"",
+      "filtersInModule": true,
+      "visualSystem": "SHARED_V4",
+      "verification": "SOURCE_INVENTORY_ONLY"
+    },
+    {
+      "file": "src/features/rider/lists.tsx",
+      "line": 83,
+      "component": "DataTable",
+      "caption": "\"Lịch hôm nay\"",
+      "filtersInModule": true,
+      "visualSystem": "SHARED_V4",
+      "verification": "SOURCE_INVENTORY_ONLY"
+    },
+    {
+      "file": "src/features/rider/tables.tsx",
+      "line": 76,
+      "component": "DataTable",
+      "caption": "{caption}",
+      "filtersInModule": true,
+      "visualSystem": "SHARED_V4",
+      "verification": "SOURCE_INVENTORY_ONLY"
+    },
+    {
+      "file": "src/features/rider/tables.tsx",
+      "line": 150,
+      "component": "DataTable",
+      "caption": "\"Lịch sử cưỡi\"",
+      "filtersInModule": true,
+      "visualSystem": "SHARED_V4",
+      "verification": "SOURCE_INVENTORY_ONLY"
+    },
+    {
+      "file": "src/features/trainer-session/SessionDetailPage.tsx",
+      "line": 26,
+      "component": "DataTable",
+      "caption": "\"Kế hoạch bài tập của buổi\"",
+      "filtersInModule": false,
+      "visualSystem": "SHARED_V4",
+      "verification": "SOURCE_INVENTORY_ONLY"
+    },
+    {
+      "file": "src/features/trainer-session/TrainerDashboardPage.tsx",
+      "line": 27,
+      "component": "DataTable",
+      "caption": "\"Buổi tập được giao hôm nay\"",
+      "filtersInModule": true,
+      "visualSystem": "SHARED_V4",
+      "verification": "SOURCE_INVENTORY_ONLY"
+    },
+    {
+      "file": "src/features/training/assigned/AssignedProgramsPage.tsx",
+      "line": 32,
+      "component": "DataTable",
+      "caption": "\"Chương trình được giao cho tôi\"",
+      "filtersInModule": true,
+      "visualSystem": "SHARED_V4",
+      "verification": "SOURCE_INVENTORY_ONLY"
+    }
+  ]
+}

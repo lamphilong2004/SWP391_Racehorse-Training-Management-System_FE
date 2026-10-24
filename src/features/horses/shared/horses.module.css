@@ -5,6 +5,12 @@
 .page { display: flex; flex-direction: column; gap: var(--space-xl); }
 .table { overflow-x: auto; }
 .profilePhoto { width: 160px; height: 140px; object-fit: cover; display: grid; place-items: center; background: var(--color-bg-subtle); border-radius: var(--radius-md); flex-shrink: 0; }
+.horseIdentity { display: grid; gap: 5px; color: var(--color-brand-primary); text-decoration: none; min-width: 140px; }
+.horseIdentity:hover strong { color: var(--color-primary-700); text-decoration: underline; text-underline-offset: 3px; }
+.horseIdentity strong { font-family: var(--font-family-headline); font-size: 14px; }
+.horseIdentity span { color: var(--color-text-secondary); font-size: 12px; font-weight: 400; letter-spacing: .02em; }
+.horseFacts { display: grid; gap: 6px; justify-items: start; }
+.horseFacts small { color: var(--color-text-secondary); font-size: 12px; line-height: 18px; }
 
 .back {
   align-self: flex-start;

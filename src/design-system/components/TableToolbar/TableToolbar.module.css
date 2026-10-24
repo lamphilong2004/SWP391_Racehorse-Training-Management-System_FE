@@ -1,0 +1,7 @@
+.toolbar { display: grid; gap: 12px; padding: 20px; border: 1px solid var(--color-border-default); border-radius: var(--card-radius); background: var(--color-bg-surface); min-width: 0; box-shadow: var(--elev-1); }
+.fields { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: end; min-width: 0; }
+.fields > :not(button) { flex: 1 1 180px; min-width: 0; }
+.fields > button { flex: 0 1 auto; min-height: var(--control-height-md); }
+.summary { color: var(--color-text-secondary); font-size: 12px; line-height: 18px; }
+.summary strong { color: var(--color-text-primary); font-weight: 600; font-variant-numeric: tabular-nums; }
+@media (max-width: 600px) { .toolbar { padding: 16px; } .fields > :not(button) { flex-basis: 100%; } }

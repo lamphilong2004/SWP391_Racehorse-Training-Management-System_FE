@@ -115,12 +115,13 @@
   color: var(--color-brand-secondary);
 }
 :global([data-ui-v3]) .active {
-  background: var(--color-brand-primary);
+  background: var(--color-sidebar-active);
   border-left-color: var(--color-brand-secondary);
-  color: #ffffff;
+  color: var(--color-primary-700);
+  font-weight: 700;
 }
 :global([data-ui-v3]) .active .itemIcon {
-  color: #ffffff;
+  color: var(--color-primary-600);
 }
 
 @media (max-width: 1023px) {

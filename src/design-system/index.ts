@@ -26,6 +26,7 @@ export { Tabs, type TabsProps, type TabItem } from './components/Tabs/Tabs';
 export { Breadcrumb, type BreadcrumbProps, type BreadcrumbItem } from './components/Breadcrumb/Breadcrumb';
 export { WizardStepper, type WizardStepperProps } from './components/WizardStepper/WizardStepper';
 export { DataTable, type DataTableProps, type DataTableColumn } from './components/DataTable/DataTable';
+export { TableToolbar, type TableToolbarProps } from './components/TableToolbar/TableToolbar';
 export { EmptyState, type EmptyStateProps } from './components/EmptyState/EmptyState';
 export { Modal, type ModalProps } from './components/Overlay/Modal';
 export { Drawer, type DrawerProps } from './components/Overlay/Drawer';

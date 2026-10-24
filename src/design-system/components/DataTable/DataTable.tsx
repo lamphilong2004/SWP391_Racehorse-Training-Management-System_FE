@@ -45,6 +45,7 @@ export function DataTable<T>({
   };
 
   return (
+    <div className={styles.scroll} role="region" aria-label={caption ?? 'Bảng dữ liệu'} tabIndex={0}>
     <table className={cx(styles.table, className)}>
       {caption && <caption className="visually-hidden">{caption}</caption>}
       <thead>
@@ -92,5 +93,6 @@ export function DataTable<T>({
         )}
       </tbody>
     </table>
+    </div>
   );
 }

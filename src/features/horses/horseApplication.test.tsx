@@ -184,3 +184,21 @@ it('guards a dirty Register Horse form, keeps input on Continue editing and focu
   await userEvent.click(await screen.findByRole('button', { name: 'Hủy thay đổi' }));
   await waitFor(() => expect(router.state.location.pathname).toBe('/horses'));
 });
+
+it('clears registry filters via the API adapter and keeps DRAFT distinct from availability', async () => {
+  const { requests } = mount('/horses');
+  await screen.findByRole('link', { name: /Fixture Draft/ });
+  expect(screen.getByLabelText('Chưa kích hoạt · chưa đủ điều kiện vận hành')).toHaveTextContent('Chờ kích hoạt');
+  expect(screen.getByText(/Ngựa Nháp vẫn chờ kích hoạt dù khả năng tập luyện là Sẵn sàng/)).toBeInTheDocument();
+  fireEvent.change(screen.getByRole('searchbox', { name: 'Tìm ngựa' }), { target: { value: 'River' } });
+  fireEvent.change(screen.getByLabelText('Vòng đời'), { target: { value: 'DRAFT' } });
+  await userEvent.click(screen.getByRole('button', { name: 'Áp dụng bộ lọc' }));
+  await waitFor(() => expect(requests.some(r => r.path.includes('q=River') && r.path.includes('lifecycle=DRAFT'))).toBe(true));
+  await userEvent.click(screen.getByRole('button', { name: 'Xóa bộ lọc' }));
+  await waitFor(() => {
+    const path = requests.filter(r => r.path.startsWith('/api/horses?')).at(-1)!.path;
+    expect(new URL(path, 'http://fixture.test').searchParams.get('q') ?? '').toBe('');
+    expect(new URL(path, 'http://fixture.test').searchParams.get('page')).toBe('0');
+  });
+  expect(screen.getByRole('searchbox', { name: 'Tìm ngựa' })).toHaveValue('');
+});

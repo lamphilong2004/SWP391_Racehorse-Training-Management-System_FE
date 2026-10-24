@@ -1,5 +1,5 @@
 import { useCallback, useId, useMemo, useRef, useState } from 'react';
-import { ButtonLink, AlertBanner, Button, Card, Checkbox, Drawer, EmptyState, ErrorState, KeyValue, LoadingState, Modal, SelectField, TextAreaField, TextField, UnsavedChangesGuard } from '../../design-system';
+import { ButtonLink, AlertBanner, Button, Card, Checkbox, Drawer, EmptyState, ErrorState, KeyValue, LoadingState, Modal, SelectField, TableToolbar, TextAreaField, TextField, UnsavedChangesGuard } from '../../design-system';
 import { errorMessage, useFlowRequest } from '../main-flows/api';
 import { FlowShell } from '../main-flows/FlowShell';
 import { useResource } from '../main-flows/useResource';
@@ -18,11 +18,11 @@ export function TemplateLibraryPage() {
   const resource = useResource(load);
   return <FlowShell title="Mẫu chương trình" description="Các chiến lược huấn luyện dùng lại được. Lưu phiên bản mới không làm thay đổi chương trình của ngựa đang có." section="Huấn luyện" role="HEAD_TRAINER" actions={<Button onClick={() => setEditor('new')}>Tạo mẫu</Button>}>
     {notice && <AlertBanner type="success" title={notice} />}
-    <Card><form className={styles.row} onSubmit={(event) => { event.preventDefault(); setPage(0); setSearch(query); }}>
+    <TableToolbar label="Bộ lọc thư viện mẫu" scope="server" resultCount={resource.pending ? undefined : resource.data?.totalItems} hasFilters={Boolean(query || search || status !== 'ACTIVE')} onClear={() => { setQuery(''); setSearch(''); setStatus('ACTIVE'); setPage(0); }} onSubmit={(event) => { event.preventDefault(); setPage(0); setSearch(query); }}>
       <TextField label="Tìm mẫu chương trình" type="search" maxLength={100} value={query} onChange={(event) => setQuery(event.target.value)} />
       <SelectField label="Trạng thái mẫu" value={status} options={[{ value: 'ACTIVE', label: 'Đang hoạt động' }, { value: 'ARCHIVED', label: 'Đã lưu trữ' }]} onChange={(event) => { setStatus(event.target.value); setPage(0); }} />
       <Button type="submit" variant="secondary">Tìm kiếm</Button><ButtonLink to="/training/programs">Chương trình huấn luyện ngựa</ButtonLink>
-    </form></Card>
+    </TableToolbar>
     {resource.pending && <LoadingState label="Đang tải thư viện mẫu chương trình…" />}
     {resource.error && <ErrorState title="Không tải được thư viện mẫu" description={resource.error} onRetry={resource.reload} />}
     {resource.data && <>{resource.data.items.length === 0 ? <EmptyState title="Không tìm thấy mẫu nào" description="Hãy tạo mẫu mới hoặc đổi bộ lọc." /> : <div className={styles.fields}>{resource.data.items.map((template) => <Card key={template.id} title={template.name}><div className={styles.stack}>

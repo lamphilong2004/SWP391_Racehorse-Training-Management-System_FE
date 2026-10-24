@@ -12,6 +12,14 @@
 .default {
   border: 1px solid var(--color-border-default);
 }
+:global([data-ui-v3]) .default {
+  border-top: 3px solid var(--color-brand-secondary);
+  background: linear-gradient(120deg, var(--color-primary-50), var(--color-bg-surface) 65%);
+}
+:global([data-ui-v3]) .default:nth-child(3n + 2) { border-top-color: var(--color-accent-sky); background: linear-gradient(120deg, var(--color-accent-sky-surface), var(--color-bg-surface) 65%); }
+:global([data-ui-v3]) .default:nth-child(3n) { border-top-color: var(--color-accent-violet); background: linear-gradient(120deg, var(--color-accent-violet-surface), var(--color-bg-surface) 65%); }
+.card { min-width: 0; }
+.value { overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
 
 .realtime {
   border-left: 4px solid;

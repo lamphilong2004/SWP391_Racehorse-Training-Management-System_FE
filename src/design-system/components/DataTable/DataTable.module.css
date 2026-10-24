@@ -1,7 +1,10 @@
+.scroll { min-width: 0; max-width: 100%; overflow-x: auto; border-radius: var(--radius-md); scrollbar-gutter: stable; }
+.scroll:focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 2px; }
 .table {
   width: 100%;
   border-collapse: collapse;
   background: var(--color-bg-surface);
+  table-layout: auto;
 }
 
 .headerRow {
@@ -31,7 +34,7 @@
 }
 
 .row:hover {
-  background: var(--color-bg-subtle);
+  background: var(--color-accent-sky-surface, var(--color-bg-subtle));
 }
 
 .selected,
@@ -55,10 +58,10 @@
 }
 
 :global([data-ui-v3]) .headerCell {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.04em;
-  text-transform: uppercase;
+  color: var(--color-brand-primary);
 }
 :global([data-ui-v3]) .cell {
   padding-top: 12px;
@@ -75,8 +78,12 @@
    word or badge; otherwise text overflows into the next column. */
 .table td > *,
 .table td > * > * {
-  min-width: min-content;
+  min-width: 0;
 }
+.cell { overflow-wrap: anywhere; min-width: 90px; max-width: 360px; }
+.headerCell { padding-block: 12px; }
+.table .nowrap { overflow-wrap: normal; }
+.nowrap a { white-space: nowrap; }
 
 .nowrap {
   white-space: nowrap;

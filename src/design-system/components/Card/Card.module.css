@@ -40,5 +40,8 @@
   background: var(--color-border-default);
 }
 
-:global([data-ui-v3]) .title { font-family: var(--font-family-headline); letter-spacing: -.02em; }
+:global([data-ui-v3]) .title { font-family: var(--font-family-headline); letter-spacing: -.02em; border-left: 3px solid var(--color-brand-secondary); padding-left: 10px; }
 :global([data-ui-v3]) .header { flex-wrap: wrap; }
+.card { min-width: 0; }
+.title { overflow-wrap: anywhere; }
+@media (max-width: 600px) { .card { padding: 16px; } }
