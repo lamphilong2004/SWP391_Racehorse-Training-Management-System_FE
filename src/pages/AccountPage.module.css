@@ -1,0 +1,11 @@
+/* Form rows align labels/controls at the top, independently of helper/error text. */
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-lg);
+  align-items: start;
+}
+.fields > * { min-width: 0; }
+@media (max-width: 640px) {
+  .fields { grid-template-columns: minmax(0, 1fr); }
+}

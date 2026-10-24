@@ -9,6 +9,7 @@ import { errorMessage, useFlowRequest } from '../features/main-flows/api';
 import { useResource } from '../features/main-flows/useResource';
 import type { UserDetail } from '../features/administration/accountApi';
 import styles from '../features/administration/Administration.module.css';
+import accountStyles from './AccountPage.module.css';
 import { viLabel } from '../shared/viLabels';
 
 /** Shared account entry from every feature header; identity always comes from canonical backend auth. */
@@ -54,12 +55,12 @@ function AccountForm({ profile }: { profile: UserDetail }) {
     {error && <AlertBanner type="danger" title="Cập nhật tài khoản thất bại">{error}</AlertBanner>}{message && <AlertBanner type="success" title={message} />}
     <div className={styles.columns}><div className={styles.stack}>
       <Card title="Hồ sơ"><form onSubmit={(e) => { void save(e, false); }} className={styles.stack}>
-        <div className={styles.filters}><TextField label="Họ và tên" required maxLength={150} value={name} disabled={busy} onChange={(e) => setName(e.target.value)} /><TextField label="Email" type="email" value={profile.email} readOnly helperText="Muốn đổi email cần liên hệ Club Manager." /></div>
+        <div className={accountStyles.fields}><TextField label="Họ và tên" required maxLength={150} value={name} disabled={busy} onChange={(e) => setName(e.target.value)} /><TextField label="Email" type="email" value={profile.email} readOnly helperText="Muốn đổi email cần liên hệ Club Manager." /></div>
         <Button type="submit" variant="secondary" disabled={busy || name === savedName}>Lưu hồ sơ</Button>
       </form></Card>
       <Card title="Đổi mật khẩu"><form onSubmit={(e) => { void save(e, true); }} className={styles.stack}>
         <TextField label="Mật khẩu hiện tại" type="password" autoComplete="current-password" required value={currentPassword} disabled={busy} onChange={(e) => setCurrentPassword(e.target.value)} />
-        <div className={styles.filters}><TextField label="Mật khẩu mới" type="password" autoComplete="new-password" minLength={8} maxLength={64} required value={newPassword} disabled={busy} onChange={(e) => setNewPassword(e.target.value)} /><TextField label="Nhập lại mật khẩu mới" type="password" autoComplete="new-password" required value={confirmPassword} disabled={busy} onChange={(e) => setConfirmPassword(e.target.value)} /></div>
+        <div className={accountStyles.fields}><TextField label="Mật khẩu mới" type="password" autoComplete="new-password" minLength={8} maxLength={64} required value={newPassword} disabled={busy} onChange={(e) => setNewPassword(e.target.value)} /><TextField label="Nhập lại mật khẩu mới" type="password" autoComplete="new-password" required value={confirmPassword} disabled={busy} onChange={(e) => setConfirmPassword(e.target.value)} /></div>
         <Button type="submit" disabled={busy}>{busy ? 'Đang lưu…' : 'Đổi mật khẩu'}</Button>
         <p>Khôi phục mật khẩu chưa dùng được trên môi trường chính thức: cần có dịch vụ email được duyệt.</p>
       </form></Card>
