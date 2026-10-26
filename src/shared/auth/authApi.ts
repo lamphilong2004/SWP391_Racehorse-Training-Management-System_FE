@@ -131,6 +131,24 @@ export async function requestApi<T>(path: string, init: RequestInit = {}, option
   return envelope.data as T;
 }
 
+/**
+ * Authenticated binary GET (a stored horse photo file). Photo URLs come from the Backend storage adapter and are
+ * either absolute or relative to the same base URL as the JSON API; protected files need the JWT, so plain <img src>
+ * cannot load them.
+ */
+export async function requestApiBlob(url: string, token: string, fetcher: typeof fetch = fetch): Promise<Blob> {
+  if (isTestIdentityToken(token)) throw new ApiError(503, 'SERVER_UNAVAILABLE', 'Đăng nhập thử không tải được tệp từ máy chủ.');
+  const target = /^https?:\/\//i.test(url) ? url : `${API_BASE_URL.replace(/\/$/, '')}${url}`;
+  let response: Response;
+  try {
+    response = await fetcher(target, { headers: { Authorization: `Bearer ${token}` } });
+  } catch {
+    throw new ApiError(0, 'NETWORK_ERROR', 'Không kết nối được máy chủ để tải tệp.');
+  }
+  if (!response.ok) throw new ApiError(response.status, response.status === 404 ? 'NOT_FOUND' : 'INTERNAL_ERROR', 'Không tải được tệp.');
+  return response.blob();
+}
+
 export interface AuthApi {
   login(request: LoginRequest): Promise<LoginResponse>;
   currentUser(token: string, onUnauthorized: () => void): Promise<CurrentUser>;

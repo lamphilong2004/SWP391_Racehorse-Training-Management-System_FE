@@ -7,15 +7,18 @@ import type { CreateProgramRequest, Intensity, ProgramPhaseInput } from './progr
 import type { ProgramValidationIssue } from './programDraft';
 import styles from './ProgramCreationPage.module.css';
 import { sexLabel } from '../horses/shared/options';
+import { formatDate } from '../horses/shared/format';
 import { viLabel } from '../../shared/viLabels';
+import { useHorsePhoto } from '../../shared/horsePhotos';
 import { dateTime } from '../evaluation/models';
 
 export function HorseSummary({ flow }: { flow: ProgramCreationFlow }) {
   const horse = flow.horse;
+  const photoSrc = useHorsePhoto(horse?.id);
   return horse ? <Card title="Ngựa đã chọn"><HorseCard className={styles.horseSummary} name={horse.name} meta={`${horse.horseCode}${horse.breed ? ` · ${horse.breed}` : ''}`}
-    availability={horse.trainingAvailability} facts={[
-      { label: 'Vòng đời', value: horse.lifecycle }, { label: 'Giới tính', value: sexLabel(horse.sex) ?? 'Chưa cung cấp' },
-      { label: 'Ngày sinh', value: horse.foaledDate ?? 'Chưa cung cấp' },
+    availability={horse.trainingAvailability} photoSrc={photoSrc} facts={[
+      { label: 'Vòng đời', value: viLabel(horse.lifecycle) }, { label: 'Giới tính', value: sexLabel(horse.sex) ?? 'Chưa cung cấp' },
+      { label: 'Ngày sinh', value: horse.foaledDate ? formatDate(horse.foaledDate) : 'Chưa cung cấp' },
     ]} /></Card> : <Card title="Ngựa đã chọn"><p>Chọn một ngựa để xem thông tin.</p></Card>;
 }
 

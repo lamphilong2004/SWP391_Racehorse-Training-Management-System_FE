@@ -38,6 +38,7 @@ export {
 } from './components/ValidationNotice/ValidationNotice';
 export { ChartContainer, type ChartContainerProps, type ChartThreshold } from './components/ChartContainer/ChartContainer';
 export { HorseCard, type HorseCardProps, type HorseCardFact } from './components/HorseCard/HorseCard';
+export { HorseAvatar, type HorseAvatarProps } from './components/HorseAvatar/HorseAvatar';
 export { CandidateCard, type CandidateCardProps, type CandidateFact } from './components/CandidateCard/CandidateCard';
 export {
   PhotoAttachmentTile,
