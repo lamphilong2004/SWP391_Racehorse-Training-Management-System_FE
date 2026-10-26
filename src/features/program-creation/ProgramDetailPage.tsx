@@ -7,6 +7,7 @@ import { FlowShell } from '../main-flows/FlowShell';
 import { idOf, useFlowRequest } from '../main-flows/api';
 import { useResource } from '../main-flows/useResource';
 import { createProgramDetailApi, type ProgramHistoryEntry, type ProgramProgress } from './programDetailApi';
+import { auditActionLabel } from '../../shared/auditLabels';
 import { HeadTrainerProgramActions, TrainerAdjustmentAction } from './ProgramActions';
 import styles from '../main-flows/flow.module.css';
 import { viLabel } from '../../shared/viLabels';
@@ -66,7 +67,7 @@ function ProgramReadTab({ tab, programId }: { tab: string; programId: number }) 
       { key: 'interrupted', header: 'Bị gián đoạn', render: (item) => item.interrupted }, { key: 'distance', header: 'Quãng đường (hệ thống)', render: (item) => metric(item.totalDistanceM, 'm') },
       { key: 'evaluation', header: 'Đánh giá gần nhất', render: (item) => item.lastEvaluationLabel ?? 'Chưa cung cấp' },
     ]} /></div> : <div className={styles.table}><DataTable<ProgramHistoryEntry> caption="Lịch sử chương trình từ hệ thống" rows={resource.data as ProgramHistoryEntry[]} rowKey={(item) => `${item.occurredAt}-${item.entryType}-${item.summary}`} empty={<EmptyState title="Chưa có lịch sử chương trình" />} columns={[
-      { key: 'time', header: 'Thời gian', nowrap: true, render: (item) => dateTime(item.occurredAt) }, { key: 'type', header: 'Sự kiện', render: (item) => item.entryType },
+      { key: 'time', header: 'Thời gian', nowrap: true, render: (item) => dateTime(item.occurredAt) }, { key: 'type', header: 'Sự kiện', render: (item) => <span title={item.entryType}>{auditActionLabel(item.entryType)}</span> },
       { key: 'actor', header: 'Người thực hiện', render: (item) => item.actor?.fullName ?? 'Chưa cung cấp' }, { key: 'summary', header: 'Tóm tắt', render: (item) => item.summary },
     ]} /></div>)}
   </Card>;

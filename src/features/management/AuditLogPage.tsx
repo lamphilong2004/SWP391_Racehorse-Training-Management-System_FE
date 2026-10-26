@@ -6,6 +6,7 @@ import { AppShell } from '../../layout/AppShell';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { ROLE_CODES, ROLE_LABELS } from '../../shared/auth/roles';
 import { AuditTable } from './AuditTable';
+import { auditActionOptions, auditTargetOptions } from '../../shared/auditLabels';
 import { auditSearchParams, filtersFromQuery, queryFromFilters, readAuditQuery, validateAuditQuery, type AuditFilterErrors } from './auditQuery';
 import { ManagementAccess } from './ManagementAccess';
 import { ManagementContext } from './ManagementProvider';
@@ -76,17 +77,17 @@ function AuditContent({ query }: { query: AuditQuery }) {
   return <AppShell user={{ fullName: user!.fullName, role: 'CLUB_MANAGER' }} breadcrumb={[{ label: 'Quản trị' }, { label: 'Nhật ký hệ thống' }]} searchPlaceholder="Tìm trong nhật ký…">
     <div className={styles.page}>
       <Link to={ROUTES.dashboard} className={styles.back}>← Tổng quan</Link>
-      <header className={styles.heading}><div><h1 className="text-h1">Nhật ký hệ thống <span className={styles.readOnly}>Read-only</span></h1><p className={styles.subtitle}>Ai đã làm gì và khi nào · hệ thống tự ghi · mới nhất trước</p></div></header>
+      <header className={styles.heading}><div><h1 className="text-h1">Nhật ký hệ thống <span className={styles.readOnly}>Chỉ xem</span></h1><p className={styles.subtitle}>Ai đã làm gì và khi nào · hệ thống tự ghi · mới nhất trước</p></div></header>
       {businessDataMode() === 'sample' && <p className={styles.note}>Các dòng SAMPLE_SNAPSHOT mô tả dữ liệu mẫu hiện tại, không phải nhật ký thật của hệ thống.</p>}
       <AlertBanner type="info" title="Nhật ký là dữ liệu lịch sử — không thể tạo, sửa hay xóa">
         Bản ghi vẫn còn với tài khoản đã vô hiệu hóa. Hệ thống tự ghi khi người dùng thao tác. Nhật ký không bao giờ chứa mật khẩu, mã băm, token hay thông tin bí mật.
       </AlertBanner>
         <form className={styles.filters} onSubmit={apply} noValidate>
-          <TextField className={`${styles.compactField} ${styles.searchField}`} label="Tìm trên trang này" title="Tìm người thực hiện, thao tác hoặc mã — chỉ trên trang hiện tại" type="search" placeholder="Tìm người thực hiện, thao tác hoặc mã…" value={pageSearch} onChange={(event) => setPageSearch(event.target.value)} />
+          <TextField className={`${styles.compactField} ${styles.searchField}`} label="Tìm trên trang này" title="Tìm người thực hiện, thao tác hoặc mã — chỉ trên trang hiện tại" type="search" placeholder="Tìm trên trang này…" value={pageSearch} onChange={(event) => setPageSearch(event.target.value)} />
           <TextField className={`${styles.compactField} ${styles.actorField}`} label="Mã người thực hiện" title="Mã người thực hiện · mọi bản ghi" inputMode="numeric" placeholder="Người thực hiện: tất cả" value={filters.actor} error={errors.actor} onChange={(event) => field('actor', event.target.value)} />
           <SelectField className={`${styles.compactField} ${styles.roleField}`} label="Vai trò trên trang này" title="Lọc vai trò chỉ áp dụng cho trang hiện tại" placeholder="Vai trò: tất cả · trang" value={role} options={ROLE_CODES.map((value) => ({ value, label: ROLE_LABELS[value] }))} onChange={(event) => setRole(event.target.value)} />
-          <TextField className={`${styles.compactField} ${styles.codeField}`} label="Thao tác" title="Mã thao tác chính xác · mọi bản ghi" placeholder="Thao tác: tất cả" maxLength={100} value={filters.action} error={errors.action} onChange={(event) => field('action', event.target.value)} />
-          <TextField className={`${styles.compactField} ${styles.codeField}`} label="Loại đối tượng" title="Loại đối tượng chính xác · mọi bản ghi" placeholder="Đối tượng: tất cả" maxLength={50} value={filters.targetType} error={errors.targetType} onChange={(event) => field('targetType', event.target.value)} />
+          <SelectField className={`${styles.compactField} ${styles.codeField}`} label="Thao tác" title="Thao tác · mọi bản ghi" placeholder="Thao tác: tất cả" value={filters.action} error={errors.action} options={auditActionOptions(filters.action)} onChange={(event) => field('action', event.target.value)} />
+          <SelectField className={`${styles.compactField} ${styles.codeField}`} label="Loại đối tượng" title="Loại đối tượng · mọi bản ghi" placeholder="Đối tượng: tất cả" value={filters.targetType} error={errors.targetType} options={auditTargetOptions(filters.targetType)} onChange={(event) => field('targetType', event.target.value)} />
           <details className={styles.dateFilter} open={datesOpen} onToggle={(event) => setDatesOpen(event.currentTarget.open)} onKeyDown={(event) => { if (event.key === 'Escape') { setDatesOpen(false); event.currentTarget.querySelector('summary')?.focus(); } }}>
             <summary>Ngày: {filters.from || filters.to ? `${filters.from.slice(0, 10) || 'Không giới hạn đầu'} – ${filters.to.slice(0, 10) || 'Không giới hạn cuối'}` : 'Tất cả'}</summary>
             <div className={styles.datePopover}>
