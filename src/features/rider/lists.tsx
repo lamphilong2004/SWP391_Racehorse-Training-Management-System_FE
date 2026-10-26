@@ -70,7 +70,7 @@ function Dashboard({ api }: { api: RiderApi }) {
             <div className={styles.smallStack}><h2 className={styles.rideTitle}>{next.horse.name} · {next.horse.horseCode}</h2><p className={styles.muted}>{next.focus || next.sessionCode} · {next.phaseName}</p>
               <div className={styles.badges}><StatusBadge family="session" status={next.status} />{next.trainingAvailability && <StatusBadge family="availability" status={next.trainingAvailability} />}</div>
               <div className={styles.facts}><KeyValue label="Mặt sân · thời lượng" value={`${next.surface ?? 'Chưa có mặt sân'} · ${duration(next)}`} /><KeyValue label="Trainer" value={next.trainer?.fullName ?? 'Chưa cung cấp'} /></div></div></div>
-          {!next.blocked && preCheck(next) === 'ALL_NORMAL'
+          {!next.blocked && preCheck(next) === 'ALL_NORMAL' && Date.parse(next.scheduledStart) <= now
             ? <AlertBanner type="success" title="Sẵn sàng">Kiểm tra trước buổi tập đạt{next.preSessionCheck ? ` at ${clock(next.preSessionCheck.performedAt)}` : ''}.</AlertBanner>
             : <AlertBanner type="warning" title="Chờ điều kiện bắt đầu">{next.blockedMessage || (preCheck(next) === 'ABNORMAL' ? 'Kiểm tra trước buổi tập phát hiện bất thường. Không được bắt đầu buổi tập.'
               : preCheck(next) === 'ALL_NORMAL' && Date.parse(next.scheduledStart) > now ? `Kiểm tra trước buổi tập đạt. Có thể bắt đầu lúc ${clock(next.scheduledStart)}.` : 'Đang chờ kiểm tra trước buổi tập.')}</AlertBanner>}

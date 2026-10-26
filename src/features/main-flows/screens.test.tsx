@@ -58,6 +58,13 @@ it('schedules one session through all four steps using the approved draft/recomm
   await screen.findByRole('option', { name: 'Walk' }); change('Thêm bài tập', '8');
   fireEvent.click(screen.getByRole('button', { name: 'Tiếp: Work Rider' }));
   fireEvent.click(await screen.findByRole('button', { name: 'Chọn Test Rider' }));
+  expect(screen.getByRole('button', { name: 'Bỏ chọn Test Rider' })).toHaveAttribute('aria-pressed', 'true');
+  fireEvent.click(screen.getByRole('button', { name: 'Bỏ chọn Test Rider' }));
+  expect(screen.getByRole('button', { name: 'Chọn Test Rider' })).toHaveAttribute('aria-pressed', 'false');
+  fireEvent.click(screen.getByRole('button', { name: 'Tiếp: Xem lại' }));
+  expect(await screen.findByText('Chọn một Work Rider đủ điều kiện.')).toBeInTheDocument();
+  expect(posts).toBe(0);
+  fireEvent.click(screen.getByRole('button', { name: 'Chọn Test Rider' }));
   fireEvent.click(screen.getByRole('button', { name: 'Tiếp: Xem lại' }));
   fireEvent.click(await screen.findByRole('button', { name: 'Lưu & thông báo' }));
   expect(await screen.findByRole('heading', { name: 'Saved session detail' })).toBeInTheDocument(); expect(posts).toBe(1);

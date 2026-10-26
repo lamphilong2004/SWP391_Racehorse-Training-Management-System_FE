@@ -27,6 +27,8 @@ afterEach(() => { vi.unstubAllEnvs(); });
 it('renders assigned Groom sessions and navigation without optional care modules', async () => {
   mount(api(), '/groom/today');
   expect(await screen.findByRole('link', { name: 'Bắt đầu kiểm tra trước buổi tập' })).toHaveAttribute('href', '/training/my-sessions/40/pre-check');
+  expect(screen.getByText(/Mã buổi: SES-0040/)).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Thunder Bolt · TB-001' })).toBeInTheDocument();
   expect(screen.getByRole('link', { name: 'Xem công việc điều trị' })).toHaveAttribute('href', '/medical/my-tasks');
   expect(screen.queryByText('Chăm sóc phòng ngừa')).not.toBeInTheDocument();
 });

@@ -50,6 +50,20 @@ async function signIn() { await userEvent.click(await screen.findByRole('button'
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); });
 afterEach(() => { vi.unstubAllGlobals(); localStorage.clear(); sessionStorage.clear(); });
 
+it('opens real TRAINING_PROGRAM targets and formats dates without crashing the center', async () => {
+  vi.stubGlobal('fetch', vi.fn<typeof fetch>(async (url) => pathOf(url).endsWith('/unread-count') ? ok({ unread: 1 }) : ok({
+    items: [{ ...notice, targetType: 'TRAINING_PROGRAM', targetId: 42, title: 'Training program assigned',
+      message: 'You have been assigned to Foundation.', createdAt: '2026-10-22T01:00:00Z' }],
+    page: 0, size: 20, totalItems: 1, totalPages: 1,
+  })));
+  mount({ ...first, roles: ['TRAINER'] }); await signIn();
+  await userEvent.click(await screen.findByRole('link', { name: 'Open center fixture' }));
+  expect(await screen.findByRole('link', { name: /^Mở$/ })).toHaveAttribute('href', '/training/programs/42');
+  expect(screen.getByText('Bạn được giao phụ trách Foundation.')).toBeInTheDocument();
+  expect(screen.getByText(/^22\/10\/2026 ·/)).toBeInTheDocument();
+  expect(screen.queryByText('2026-10-22T01:00:00Z')).not.toBeInTheDocument();
+});
+
 it.each(ROLE_CODES)('loads the real unread endpoint for %s without trusting an AppShell prop', async (role) => {
   const fetcher = vi.fn<typeof fetch>(async () => ok({ unread: 3 })); vi.stubGlobal('fetch', fetcher);
   mount({ ...first, roles: [role] });

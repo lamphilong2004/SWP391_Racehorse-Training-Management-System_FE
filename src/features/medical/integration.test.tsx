@@ -185,3 +185,29 @@ it('does not show case closure success when the backend returns 409', async () =
   expect(await screen.findByText('Linked incident remains unresolved')).toBeInTheDocument();
   expect(screen.getByText('Đóng ca 9?')).toBeInTheDocument();
 });
+
+it('filters only the loaded case page and resets both search and status without a business mutation', async () => {
+  authSession.save('jwt', 3600, false);
+  const fetcher = vi.fn(async (url: string, init?: RequestInit) => {
+    if (url.endsWith('/api/auth/me')) return ok(vet);
+    if (url.includes('/api/medical/cases?')) return ok(page([
+      medicalCase, { ...medicalCase, id: 10, status: 'CLOSED', reason: 'Recovery observation' },
+    ]));
+    throw new Error(`Unexpected request: ${url} ${init?.method}`);
+  });
+  vi.stubGlobal('fetch', fetcher);
+  mount('/medical');
+  await screen.findByRole('link', { name: 'Ca #9' });
+  fireEvent.change(screen.getByLabelText('Trạng thái trên trang'), { target: { value: 'CLOSED' } });
+  expect(screen.queryByRole('link', { name: 'Ca #9' })).not.toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Ca #10' })).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Tìm trên trang hiện tại'), { target: { value: 'Lameness' } });
+  expect(screen.getByText('Không có ca phù hợp bộ lọc')).toBeInTheDocument();
+  expect(screen.getByText('Chỉ lọc dữ liệu trên trang đang tải')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Xóa bộ lọc' }));
+  expect(screen.getByRole('link', { name: 'Ca #9' })).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Ca #10' })).toBeInTheDocument();
+  expect(screen.getByLabelText('Trạng thái trên trang')).toHaveValue('');
+  expect(screen.getByLabelText('Tìm trên trang hiện tại')).toHaveValue('');
+  expect(fetcher.mock.calls.every(([, init]) => !init?.method || init.method === 'GET')).toBe(true);
+});

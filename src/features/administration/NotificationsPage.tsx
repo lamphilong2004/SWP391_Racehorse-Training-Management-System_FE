@@ -10,6 +10,7 @@ import { useResource } from '../main-flows/useResource';
 import type { Page } from './accountApi';
 import styles from './Administration.module.css';
 import { serverText } from '../../shared/serverText';
+import { dateTime } from '../evaluation/models';
 
 const CATEGORY_LABELS: Record<string, string> = { ALERTS: 'Cảnh báo', MEDICAL: 'Y tế', SCHEDULE: 'Lịch' };
 interface Notice { id: number; category: 'ALERTS' | 'MEDICAL' | 'SCHEDULE'; notificationType: string; title: string; message: string; readAt: string | null; targetType: string | null; targetId: number | null; isSimulated: boolean; createdAt: string }
@@ -26,7 +27,7 @@ function destination(notice: Notice, roles: RoleCode[]): string | undefined {
   if (notice.targetType === 'INCIDENT' && !roles.includes('HORSE_OWNER')) return `/incidents/${id}`;
   if (notice.targetType === 'MEDICAL_CASE' && roles.some((r) => ['VETERINARIAN', 'TRAINER', 'HEAD_TRAINER', 'CLUB_MANAGER'].includes(r))) return `/medical/cases/${id}`;
   if (notice.targetType === 'CARE_TASK' && roles.includes('GROOM')) return '/care/tasks';
-  if (notice.targetType === 'HORSE_TRAINING_PROGRAM' && roles.some((r) => ['HEAD_TRAINER', 'TRAINER'].includes(r))) return `/training/programs/${id}`;
+  if (['HORSE_TRAINING_PROGRAM', 'TRAINING_PROGRAM'].includes(notice.targetType ?? '') && roles.some((r) => ['HEAD_TRAINER', 'TRAINER'].includes(r))) return `/training/programs/${id}`;
   return undefined;
 }
 export function NotificationsPage() {
@@ -65,8 +66,8 @@ function NotificationContent({ role, roles, compact = false }: { role: RoleCode;
     {error && <AlertBanner type="danger" title="Cập nhật thông báo thất bại">{error}</AlertBanner>}
     {resource.pending && <LoadingState label="Đang tải thông báo…" />}{resource.error && <ErrorState title="Không tải được thông báo" description={resource.error} onRetry={resource.reload} />}
     {resource.data && <><Card>{resource.data.items.length === 0 && <EmptyState title="Không có thông báo phù hợp" />}
-      {resource.data.items.map((notice) => { const target = destination(notice, roles); return <div key={notice.id} className={styles.row}>
-        <NotificationItem title={serverText(notice.title)} body={serverText(notice.message)} context={`${CATEGORY_LABELS[notice.category] ?? notice.category}${notice.isSimulated ? ' · DỮ LIỆU MÔ PHỎNG' : ''}`} time={new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(notice.createdAt))} read={notice.readAt !== null} />
+      {resource.data.items.map((notice) => { const target = destination(notice, roles); return <div key={notice.id} className={styles.notice}>
+        <NotificationItem title={serverText(notice.title)} body={serverText(notice.message)} context={`${CATEGORY_LABELS[notice.category] ?? notice.category}${notice.isSimulated ? ' · DỮ LIỆU MÔ PHỎNG' : ''}`} time={dateTime(notice.createdAt)} read={Boolean(notice.readAt)} />
         <div className={styles.actions}>{!notice.readAt && <Button variant="secondary" size="sm" disabled={busy} onClick={() => { void mark(notice.id); }}>Đánh dấu đã đọc</Button>}{target && <Link to={target}>Mở</Link>}</div>
       </div>; })}</Card><div className={styles.actions}><Button variant="secondary" disabled={page === 0} onClick={() => setPage(page - 1)}>Trước</Button><span>Trang {page + 1} · {resource.data.totalItems} thông báo</span><Button variant="secondary" disabled={page + 1 >= resource.data.totalPages} onClick={() => setPage(page + 1)}>Sau</Button></div></>}
     </div>;
