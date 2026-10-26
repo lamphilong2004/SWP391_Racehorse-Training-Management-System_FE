@@ -6,6 +6,7 @@ import type { ActivationItem, ActivationStatus, HorseDetail } from '../api/types
 import { ageInYears, formatDate } from '../shared/format';
 import { sexLabel } from '../shared/options';
 import { useBreadcrumb } from '../shared/HorseManagementLayout';
+import { HorsePhotoAvatar } from '../shared/HorsePhoto';
 import shared from '../shared/horses.module.css';
 import styles from './PendingActivationPage.module.css';
 import { serverText } from '../../../shared/serverText';
@@ -137,6 +138,7 @@ function PendingHorseCard({ status, horse, onViewRegister }: PendingHorse & { on
     <Card>
       <div className={styles.horseBody}>
         <div className={styles.horseHeader}>
+          <HorsePhotoAvatar horseId={horse.id} name={horse.name} size="md" />
           <div className={styles.horseName}>
             <h2 className={styles.horseTitle}>{`${horse.name} · ${horse.horseCode}`}</h2>
             <p className={styles.horseMeta}>{meta}</p>

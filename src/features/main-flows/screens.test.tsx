@@ -74,7 +74,7 @@ it('shows restriction reason without exposing an editor to Trainers', async () =
   state.request.mockImplementation(async (path: string) => path.startsWith('/api/horses?') ? { items: [horse] } : { horseId: 7, availability: 'LIMITED', reason: 'Walk only', exerciseRules: [{ ruleType: 'ALLOWED', exerciseTypeNote: 'Walk' }] });
   render(<MemoryRouter initialEntries={['/medical/restrictions?horseId=7']}><RestrictionsPage /></MemoryRouter>);
   await waitFor(() => expect(screen.getByText('Walk only')).toBeInTheDocument());
-  expect(screen.getByText('Read-only')).toBeInTheDocument(); expect(screen.queryByRole('button', { name: 'Lưu khả năng tập luyện' })).not.toBeInTheDocument();
+  expect(screen.getByText('Chỉ xem')).toBeInTheDocument(); expect(screen.queryByRole('button', { name: 'Lưu khả năng tập luyện' })).not.toBeInTheDocument();
 });
 it('preserves existing restriction rules when neither read response includes them', async () => {
   state.request.mockImplementation(async (path: string) => {

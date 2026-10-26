@@ -227,10 +227,10 @@ describe('CORE-052 audit viewer', () => {
     await screen.findByRole('table');
     fireEvent.change(screen.getByLabelText('Mã người thực hiện'), { target: { value: '12' } });
     fireEvent.change(screen.getByLabelText('Thao tác'), { target: { value: 'REGISTRATION_APPROVED' } });
-    fireEvent.change(screen.getByLabelText('Loại đối tượng'), { target: { value: 'REGISTRATION' } });
+    fireEvent.change(screen.getByLabelText('Loại đối tượng'), { target: { value: 'REGISTRATION_REQUEST' } });
     fireEvent.change(screen.getByLabelText('Từ (giờ địa phương)'), { target: { value: '2026-10-01T09:30' } });
     await userEvent.click(screen.getByRole('button', { name: 'Áp dụng bộ lọc' }));
-    await waitFor(() => expect(service.audit).toHaveBeenLastCalledWith(expect.objectContaining({ actor: 12, action: 'REGISTRATION_APPROVED', targetType: 'REGISTRATION', from: new Date('2026-10-01T09:30').toISOString(), page: 0 }), expect.objectContaining({ token: 'test-only-session' })));
+    await waitFor(() => expect(service.audit).toHaveBeenLastCalledWith(expect.objectContaining({ actor: 12, action: 'REGISTRATION_APPROVED', targetType: 'REGISTRATION_REQUEST', from: new Date('2026-10-01T09:30').toISOString(), page: 0 }), expect.objectContaining({ token: 'test-only-session' })));
     expect(new URLSearchParams(router.state.location.search).get('actor')).toBe('12');
   });
 

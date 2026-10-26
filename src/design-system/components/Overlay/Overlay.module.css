@@ -118,7 +118,7 @@
   border-top: 1px solid var(--color-border-default);
 }
 
-:global([data-ui-v3]) .title { font-family: var(--font-family-headline); letter-spacing: -.02em; }
+:global([data-ui-v3]) .title { font-family: var(--font-family-headline); letter-spacing: 0; }
 :global([data-ui-v3]) .surface { border: 1px solid var(--color-border-default); }
 :global([data-ui-v3]) .modal::backdrop,
 :global([data-ui-v3]) .drawer::backdrop { background: rgb(11 19 43 / 40%); }

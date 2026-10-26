@@ -180,7 +180,7 @@ function PedigreeOwnershipPageContent() {
       </div>
 
       {location.state?.photoUploadFailed && (
-        <AlertBanner type="warning" title="Một số ảnh chưa được tải lên">Đã lưu ngựa. Hãy thêm lại ảnh từ hồ sơ ngựa.</AlertBanner>
+        <AlertBanner type="warning" title="Ảnh đại diện chưa được tải lên">Đã lưu ngựa. Hãy tải lại ảnh ở mục Ảnh đại diện trong hồ sơ ngựa.</AlertBanner>
       )}
       {formError && <AlertBanner type="danger" title="Chưa lưu thay đổi">{formError}</AlertBanner>}
       {unavailable.length > 0 && <AlertBanner type="warning" title="Không tải được dữ liệu thiết lập ngựa">

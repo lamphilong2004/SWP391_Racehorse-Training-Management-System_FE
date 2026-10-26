@@ -14,6 +14,8 @@ export default defineConfig(({ mode, command }) => {
     proxy: env.VITE_API_PROXY_TARGET ? {
       '/api': { target: env.VITE_API_PROXY_TARGET, changeOrigin: true },
       '/ws': { target: env.VITE_API_PROXY_TARGET, changeOrigin: true, ws: true },
+      // Stored horse photos (Backend local storage adapter, JWT-protected files outside /api).
+      '/local-media': { target: env.VITE_API_PROXY_TARGET, changeOrigin: true },
     } : undefined,
   },
   test: {

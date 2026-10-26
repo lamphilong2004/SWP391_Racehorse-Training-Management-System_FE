@@ -81,8 +81,12 @@ body:has(dialog[open]) { overflow: hidden; }
 }
 :where([data-ui-v3], [data-app-shell]:has([data-ui-v3])) :is(h1, h2, h3, h4, .text-display, .text-h1, .text-h2, .text-h3, .text-metric, .text-metric-l) {
   font-family: var(--font-family-headline);
-  letter-spacing: -0.02em;
+  /* Vietnamese stacked diacritics collide under tight tracking; display sizes keep a light optical tightening only. */
+  letter-spacing: 0;
 }
+:where([data-ui-v3], [data-app-shell]:has([data-ui-v3])) :is(h1, .text-display, .text-h1, .text-metric-l) { letter-spacing: -0.005em; }
+/* Headings focused by script (tabIndex -1) announce context; they are not controls, so no focus ring. */
+:where([data-ui-v3], [data-app-shell]:has([data-ui-v3])) :is(h1, h2, h3)[tabindex='-1']:focus { outline: none; }
 /* Inline text links without their own class: navy, semibold, quiet underline (Stitch reference). */
 :where([data-ui-v3], [data-app-shell]:has([data-ui-v3])) a:not([class]) {
   color: var(--color-brand-primary);

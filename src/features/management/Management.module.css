@@ -35,7 +35,7 @@
 .bar span[data-tone='LOCKED'] { background: var(--color-danger-600); }
 .stats { display: flex; flex-direction: column; gap: var(--space-md); margin: 0; font-size: 14px; line-height: 20px; }
 .stats > div { display: flex; justify-content: space-between; gap: var(--space-lg); }
-.stats dt { color: var(--color-text-secondary); text-transform: capitalize; }
+.stats dt { color: var(--color-text-secondary); }
 .stats dd { margin: 0; font-weight: 600; }
 .legend { display: flex; gap: var(--space-lg); flex-wrap: wrap; margin: 0; }
 .legend > div { display: flex; align-items: center; gap: var(--space-sm); }
@@ -47,16 +47,17 @@
 .tableScroll td { overflow-wrap: anywhere; max-width: 300px; }
 .secondary { display: block; margin-top: 0; font-size: 12px; color: var(--color-text-secondary); }
 .code { font-size: 12px; font-weight: 500; }
-.readOnly { display: inline-flex; align-items: center; color: var(--color-text-secondary); background: var(--color-bg-subtle); padding: var(--space-xs) var(--space-sm); font-size: 11px; line-height: 16px; font-weight: 600; border-radius: var(--radius-sm); text-transform: uppercase; }
+.auditTable td small { font-size: 11px; letter-spacing: 0.01em; }
+.readOnly { display: inline-flex; align-items: center; color: var(--color-text-secondary); background: var(--color-bg-subtle); padding: var(--space-xs) var(--space-sm); font-size: 11px; line-height: 16px; font-weight: 600; border-radius: var(--radius-sm); text-transform: uppercase; font-family: var(--font-family); letter-spacing: 0.06em; vertical-align: middle; }
 .back { font-size: 14px; color: var(--color-primary-600); align-self: flex-start; text-decoration: none; }
 .filters { display: flex; flex-wrap: wrap; gap: var(--space-sm); align-items: start; }
-.compactField { flex: 1 1 108px; width: auto; min-width: 0; }
+.compactField { flex: 1 1 170px; width: auto; min-width: 0; }
 .compactField > label, .pageSize > label { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .compactField input, .compactField select, .compactField > div { height: var(--space-2xl); font-size: 13px; }
 .searchField { flex: 2 1 200px; }
-.actorField { flex: 0 1 100px; }
-.roleField { flex: 0 1 162px; }
-.dateFilter { position: relative; flex: 0 1 160px; min-width: 100px; }
+.actorField { flex: 0 1 190px; }
+.roleField { flex: 0 1 220px; }
+.dateFilter { position: relative; flex: 0 1 200px; min-width: 160px; }
 .dateFilter summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-xs); padding: 0 var(--space-sm); min-height: var(--space-2xl); border: 1px solid var(--color-border-default); border-radius: var(--radius-md); background: var(--color-bg-surface); font-size: 13px; cursor: pointer; }
 .dateFilter summary::after { content: '▾'; color: var(--color-text-secondary); }
 .dateFilter summary::-webkit-details-marker { display: none; }
@@ -66,7 +67,7 @@
 .auditCard { padding: 0; gap: 0; overflow: hidden; box-shadow: none; }
 .auditTable { table-layout: fixed; }
 .auditTable thead tr { height: 36px; }
-.auditTable th { font-size: 11px; text-transform: uppercase; font-weight: 400; padding: var(--space-sm) var(--space-md); }
+.auditTable th { font-size: 12px; font-weight: 600; color: var(--color-brand-primary); padding: var(--space-sm) var(--space-md); }
 .auditTable tbody tr { height: auto; }
 .auditTable td { vertical-align: top; padding: 10px var(--space-md); font-size: 13px; line-height: 18px; }
 .auditTable td strong { font-weight: 500; }
@@ -77,7 +78,7 @@
 @media (max-width: 1100px) { .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } .twoColumns, .threeColumns, .auditAndShortcuts { grid-template-columns: 1fr; } }
 @media (max-width: 640px) { .metrics { grid-template-columns: minmax(0, 1fr); } .recentList li { grid-template-columns: 1fr; gap: var(--space-xs); } }
 
-.heading h1, .number { font-family: var(--font-family-headline); font-weight: 700; letter-spacing: -.025em; }
+.heading h1, .number { font-family: var(--font-family-headline); font-weight: 700; letter-spacing: -0.005em; }
 .metrics > *, .twoColumns > *, .threeColumns > *, .auditAndShortcuts > * { min-width: 0; }
 .linkButton { font-weight: 600; box-shadow: var(--elev-1); }
 .datePopover { max-width: calc(100vw - 48px); border-radius: var(--card-radius); }

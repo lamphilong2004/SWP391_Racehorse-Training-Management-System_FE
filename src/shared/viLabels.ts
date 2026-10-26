@@ -25,6 +25,10 @@ const LABELS: Record<string, string> = {
   REPORTED: 'Mới báo', UNDER_REVIEW: 'Đang xem xét', RESOLVED: 'Đã xử lý',
   PENDING: 'Chờ duyệt', APPROVED: 'Đã duyệt', REJECTED: 'Từ chối', PENDING_APPROVAL: 'Chờ duyệt',
   ALLOWED: 'Được phép', PROHIBITED: 'Bị cấm', ALL_NORMAL: 'Tất cả bình thường', ABNORMAL: 'Bất thường',
+  // gait / exercise type
+  WALK: 'Đi bộ', TROT: 'Nước kiệu', CANTER: 'Nước đại chậm', GALLOP: 'Phi nước đại',
+  // role data scope (Roles & permissions catalogue)
+  ROLE_LEVEL: 'Theo vai trò · toàn câu lạc bộ', ROW_LEVEL_OWN: 'Chỉ ngựa mình sở hữu', ASSIGNMENT_SCOPED: 'Theo phân công',
   // stored English option values (horse sex, rider feedback)
   Colt: 'Ngựa đực non', Filly: 'Ngựa cái non', Stallion: 'Ngựa đực giống', Mare: 'Ngựa cái', Gelding: 'Ngựa thiến',
   MALE: 'Đực', FEMALE: 'Cái', Male: 'Đực', Female: 'Cái',

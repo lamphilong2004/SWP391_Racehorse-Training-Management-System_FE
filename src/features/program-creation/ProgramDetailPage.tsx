@@ -7,9 +7,11 @@ import { FlowShell } from '../main-flows/FlowShell';
 import { idOf, useFlowRequest } from '../main-flows/api';
 import { useResource } from '../main-flows/useResource';
 import { createProgramDetailApi, type ProgramHistoryEntry, type ProgramProgress } from './programDetailApi';
+import { auditActionLabel } from '../../shared/auditLabels';
 import { HeadTrainerProgramActions, TrainerAdjustmentAction } from './ProgramActions';
 import styles from '../main-flows/flow.module.css';
 import { viLabel } from '../../shared/viLabels';
+import { formatDate } from '../horses/shared/format';
 
 /** SCR-TRAIN-002/022: read-only Overview, Progress and History. Row scope remains enforced by Backend. */
 export function ProgramDetailPage() {
@@ -34,7 +36,7 @@ function ProgramDetailContent({ rawId }: { rawId?: string }) {
     {program.error && <ErrorState title="Không tải được chương trình" description={program.error} onRetry={program.reload} />}
     {data && <><Card><div className={styles.factGrid}>
       <KeyValue label="Chương trình" value={data.name} /><KeyValue label="Trạng thái chương trình" value={<StatusBadge family="program" status={data.status} />} />
-      <KeyValue label="Trainer phụ trách" value={data.currentTrainer?.fullName ?? 'Chưa cung cấp'} /><KeyValue label="Thời gian" value={`${data.periodStart} → ${data.periodEnd}`} />
+      <KeyValue label="Trainer phụ trách" value={data.currentTrainer?.fullName ?? 'Chưa cung cấp'} /><KeyValue label="Thời gian" value={`${formatDate(data.periodStart)} → ${formatDate(data.periodEnd)}`} />
       <KeyValue label="Giai đoạn hiện tại" value={data.currentPhaseName ?? 'Chưa cung cấp'} /><KeyValue label="Khả năng tập luyện" value={data.trainingAvailability ? <StatusBadge family="availability" status={data.trainingAvailability} /> : 'Chưa cung cấp'} />
       <KeyValue label="Mẫu gốc" value={data.sourceTemplateName ?? data.sourceTemplateCode ?? `Mẫu ${data.sourceTemplateId}`} />
       <KeyValue label="Phiên bản mẫu" value={`v${data.sourceTemplateVersion}`} /><KeyValue label="Kích hoạt" value={dateTime(data.activatedAt)} />
@@ -44,7 +46,7 @@ function ProgramDetailContent({ rawId }: { rawId?: string }) {
       <section role="tabpanel" id={`program-detail-panel-${tab}`} aria-labelledby={`program-detail-tab-${tab}`}>
         {tab === 'overview' ? <div className={styles.columns}><div className={styles.stack}><Card title="Tóm tắt chương trình"><div className={styles.fields}><KeyValue label="Mục tiêu chính" value={data.goals ?? 'Chưa cung cấp'} /><KeyValue label="Chỉ số mục tiêu" value={data.targetMetrics ?? 'Chưa cung cấp'} /><KeyValue label="Tiến độ chung" value="Chưa cung cấp; không tự suy ra phần trăm" /></div></Card>
           <Card title="Dòng thời gian các giai đoạn"><div className={styles.stack}>{[...data.phases].sort((a, b) => a.phaseOrder - b.phaseOrder).map((phase) => <Card key={phase.id} title={`${phase.phaseOrder}. ${phase.name}`}><div className={styles.fields}>
-            <KeyValue label="Mục tiêu" value={phase.objective ?? 'Chưa cung cấp'} /><KeyValue label="Thời gian giai đoạn" value={`${phase.startDate} → ${phase.endDate}`} />
+            <KeyValue label="Mục tiêu" value={phase.objective ?? 'Chưa cung cấp'} /><KeyValue label="Thời gian giai đoạn" value={`${formatDate(phase.startDate)} → ${formatDate(phase.endDate)}`} />
             <KeyValue label="Khối lượng" value={phase.workload ?? 'Chưa cung cấp'} /><KeyValue label="Khoảng cường độ" value={`${viLabel(phase.intensityMin, 'Chưa cung cấp')} → ${viLabel(phase.intensityMax, 'Chưa cung cấp')}`} />
           </div></Card>)}{data.phases.length === 0 && <EmptyState title="Chưa có giai đoạn huấn luyện" />}</div></Card>
         </div><div className={styles.stack}><Card title="Ghi chú của Head Trainer"><p>{data.notes ?? 'Chưa cung cấp'}</p></Card><AlertBanner type="info" title="Chiến lược chương trình">Mẫu gốc đã chọn không bao giờ thay đổi. Trainer đề xuất thay đổi chiến lược; Head Trainer quyết định và quản lý trạng thái chương trình cùng việc phân công Trainer.</AlertBanner></div></div>
@@ -66,7 +68,7 @@ function ProgramReadTab({ tab, programId }: { tab: string; programId: number }) 
       { key: 'interrupted', header: 'Bị gián đoạn', render: (item) => item.interrupted }, { key: 'distance', header: 'Quãng đường (hệ thống)', render: (item) => metric(item.totalDistanceM, 'm') },
       { key: 'evaluation', header: 'Đánh giá gần nhất', render: (item) => item.lastEvaluationLabel ?? 'Chưa cung cấp' },
     ]} /></div> : <div className={styles.table}><DataTable<ProgramHistoryEntry> caption="Lịch sử chương trình từ hệ thống" rows={resource.data as ProgramHistoryEntry[]} rowKey={(item) => `${item.occurredAt}-${item.entryType}-${item.summary}`} empty={<EmptyState title="Chưa có lịch sử chương trình" />} columns={[
-      { key: 'time', header: 'Thời gian', nowrap: true, render: (item) => dateTime(item.occurredAt) }, { key: 'type', header: 'Sự kiện', render: (item) => item.entryType },
+      { key: 'time', header: 'Thời gian', nowrap: true, render: (item) => dateTime(item.occurredAt) }, { key: 'type', header: 'Sự kiện', render: (item) => <span title={item.entryType}>{auditActionLabel(item.entryType)}</span> },
       { key: 'actor', header: 'Người thực hiện', render: (item) => item.actor?.fullName ?? 'Chưa cung cấp' }, { key: 'summary', header: 'Tóm tắt', render: (item) => item.summary },
     ]} /></div>)}
   </Card>;

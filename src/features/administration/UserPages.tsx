@@ -9,6 +9,7 @@ import { useResource } from '../main-flows/useResource';
 import { accountApi, type SkillKind, type UserDetail, type UserInput } from './accountApi';
 import styles from './Administration.module.css';
 import { CORE_ROLE_MATRIX } from './approvedRoleMatrix';
+import { viLabel } from '../../shared/viLabels';
 
 const roleOptions = ROLE_CODES.map((value) => ({ value, label: ROLE_LABELS[value] }));
 const time = (value: string | null) => value ? new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) : 'Chưa bao giờ';
@@ -25,7 +26,7 @@ export function UserListPage() {
     </TableToolbar>
     {resource.pending && <LoadingState label="Đang tải tài khoản…" />}{resource.error && <ErrorState title="Không tải được danh sách tài khoản" description={resource.error} onRetry={resource.reload} />}
     {resource.data && <><Card><div className={styles.scroll}><DataTable rows={resource.data.items} rowKey={(u) => u.id} caption="Nhân sự và người dùng" empty={<EmptyState title="Không có tài khoản phù hợp" />} columns={[
-      { key: 'name', header: 'Họ tên', render: (u) => u.fullName }, { key: 'code', header: 'Mã người dùng', render: (u) => u.userCode },
+      { key: 'name', header: 'Họ tên', render: (u) => u.fullName }, { key: 'code', header: 'Mã người dùng', nowrap: true, render: (u) => u.userCode },
       { key: 'email', header: 'Email', render: (u) => u.email }, { key: 'role', header: 'Vai trò', render: (u) => u.roles.map((r) => ROLE_LABELS[r]).join(', ') },
       { key: 'status', header: 'Trạng thái', render: (u) => <StatusBadge family="account" status={u.accountStatus} /> },
       { key: 'login', header: 'Lần đăng nhập cuối', render: (u) => time(u.lastLoginAt) }, { key: 'edit', header: 'Thao tác', render: (u) => <ButtonLink size="sm" variant="secondary" to={`/admin/users/${u.id}/edit`} aria-label={`Sửa ${u.fullName}`}>Sửa</ButtonLink> },
@@ -109,10 +110,10 @@ export function RolesPage() {
     {resource.data && <div className={styles.stack}>
       <AlertBanner type="info" title="Bảng quyền đã duyệt (chỉ xem)">V xem · C tạo · E sửa · D vô hiệu hóa/xóa mềm · X thực hiện. Phạm vi phân công và sở hữu vẫn do hệ thống máy chủ kiểm soát. Các phân hệ hoãn lại không được liệt kê.</AlertBanner>
       <Card><div className={styles.scroll}><DataTable rows={[...CORE_ROLE_MATRIX]} rowKey={(r) => r.id} caption="Ma trận quyền các chức năng cốt lõi đã duyệt (Figma 290:3537)" columns={[
-        { key: 'feature', header: 'Chức năng', render: (r) => `${r.feature} · ${r.id}` },
-        ...ROLE_CODES.map((r, index) => ({ key: r, header: ROLE_LABELS[r], render: (row: (typeof CORE_ROLE_MATRIX)[number]) => row.access[index] })),
+        { key: 'feature', header: 'Chức năng', width: 240, render: (r) => <><strong>{r.feature}</strong><p className="text-caption">{r.id}</p></> },
+        ...ROLE_CODES.map((r, index) => ({ key: r, header: ROLE_LABELS[r], width: 128, render: (row: (typeof CORE_ROLE_MATRIX)[number]) => row.access[index] })),
       ]} /></div></Card>
-      <Card title="Danh mục vai trò hiện tại của hệ thống"><DataTable rows={resource.data} rowKey={(r) => r.roleCode} caption="Vai trò và phạm vi dữ liệu của hệ thống" columns={[{ key: 'role', header: 'Vai trò', render: (r) => r.displayName }, { key: 'scope', header: 'Phạm vi', render: (r) => r.scoping }]} /></Card>
+      <Card title="Danh mục vai trò hiện tại của hệ thống"><DataTable rows={resource.data} rowKey={(r) => r.roleCode} caption="Vai trò và phạm vi dữ liệu của hệ thống" columns={[{ key: 'role', header: 'Vai trò', render: (r) => ROLE_LABELS[r.roleCode as RoleCode] ?? r.displayName }, { key: 'scope', header: 'Phạm vi dữ liệu', render: (r) => viLabel(r.scoping) }]} /></Card>
     </div>}
   </FlowShell>;
 }

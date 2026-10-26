@@ -193,7 +193,7 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
     <Tabs label="Các mục của ca y tế" idPrefix="case" value={panel} onChange={setPanel} items={[
       { value: 'record', label: 'Hồ sơ' }, { value: 'examination', label: 'Khám' },
       { value: 'injury', label: 'Chấn thương' }, { value: 'treatment', label: 'Điều trị' },
-      { value: 'recovery', label: 'Re-examination' },
+      { value: 'recovery', label: 'Tái khám' },
     ]} />
     <div role="tabpanel" id="case-panel-record" aria-labelledby="case-tab-record" hidden={panel !== 'record'} className="medical-stack">
       <Card title="Thể trạng hiện tại"><KeyValue label="Chẩn đoán gần nhất" value={latest(item.examinations)?.diagnosis ?? (item.examinations.length ? 'Chưa có chẩn đoán' : 'Đang chờ khám')} />
@@ -244,13 +244,13 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
         <KeyValue label="Điều trị và thuốc" value={item.treatmentPlan.treatmentMedicationInstructions} />
         <KeyValue label="Nghỉ ngơi" value={item.treatmentPlan.restInstructions ?? '—'} />
         <KeyValue label="Chăm sóc" value={item.treatmentPlan.careInstructions ?? '—'} />
-        <KeyValue label="Re-examination" value={item.treatmentPlan.reexaminationDate ?? 'Chưa lên lịch'} />
+        <KeyValue label="Ngày tái khám" value={item.treatmentPlan.reexaminationDate ?? 'Chưa lên lịch'} />
       </div> : <EmptyState title="Chưa có phác đồ điều trị" />}
         {!closed && <ButtonLink to={casePath(item.id) + '/treatment-plan'}>Mở trình soạn phác đồ điều trị</ButtonLink>}</Card>
       <CaseTasks caseId={item.id} />
     </div>
     <div role="tabpanel" id="case-panel-recovery" aria-labelledby="case-tab-recovery" hidden={panel !== 'recovery'} className="medical-stack">
-      <Card title="Re-examinations"><History count={item.reexaminations.length} empty="Chưa có lần tái khám">{item.reexaminations.map((exam) =>
+      <Card title="Các lần tái khám"><History count={item.reexaminations.length} empty="Chưa có lần tái khám">{item.reexaminations.map((exam) =>
         <li key={exam.id}>{viLabel(exam.recoveryStatus)}<p>{exam.findings}</p><small>{dateTime(exam.examinedAt)}</small></li>)}</History>
         {!closed && <MedicalForm submitLabel="Lưu lần tái khám" fields={[
           { name: 'recoveryStatus', label: 'Tình trạng hồi phục', options: ['NOT_RECOVERED', 'IMPROVING', 'RECOVERED'], required: true },

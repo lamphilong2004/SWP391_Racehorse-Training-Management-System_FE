@@ -71,7 +71,7 @@ function HorseSummary({ id, service }: { id: number; service: SummaryService }) 
   const open = cases.data?.filter((c) => c.horseId === id && c.status === 'OPEN');
   return <>
     <PageHeader title={`Tóm tắt y tế · ${horse.data.name}`} description={subtitle}
-      actions={<span className="medical-read-only"><Icon name="eye" size={14} /> READ-ONLY</span>} />
+      actions={<span className="medical-read-only"><Icon name="eye" size={14} /> Chỉ xem</span>} />
     <div className="medical-summary-columns">
       <Card title="Tình trạng y tế liên quan huấn luyện" className="medical-summary-status">
         <dl>

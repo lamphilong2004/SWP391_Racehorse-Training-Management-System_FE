@@ -1,5 +1,6 @@
 /**
- * Vietnamese display text for fixed English strings the Backend returns (activation checklist, horse timeline).
+ * Vietnamese display text for fixed English strings the Backend returns (activation checklist, horse timeline,
+ * notifications, audit summaries).
  * The Backend is unchanged; any text not listed here is shown exactly as the server sent it.
  */
 const TEXT: Record<string, string> = {
@@ -39,8 +40,35 @@ const TEXT: Record<string, string> = {
   'Program adjustment request decided': 'Đề xuất điều chỉnh đã được quyết định',
   'Training program assigned': 'Được giao chương trình huấn luyện',
   'Training session assigned': 'Được giao buổi tập',
+  // audit_log.safe_summary (GET /api/admin/audit-log, management recent activity)
+  'User logged out.': 'Người dùng đã đăng xuất.',
+  'Account change.': 'Thay đổi tài khoản.',
+  'Approved role assigned.': 'Đã gán vai trò được duyệt.',
+  'Registration approved.': 'Đã duyệt yêu cầu đăng ký.',
+  'Registration rejected.': 'Đã từ chối yêu cầu đăng ký.',
+  'Training program created.': 'Đã tạo chương trình huấn luyện.',
+  'Training session scheduled.': 'Đã lên lịch buổi tập.',
+  'Trainer assigned.': 'Đã phân công Trainer.',
+  'Trainer assignment changed.': 'Đã đổi Trainer phụ trách.',
+  'Explicit Groom assignment updated.': 'Đã cập nhật Groom được phân công kiểm tra.',
+  'Scheduled session details changed.': 'Đã đổi thông tin buổi tập đã lên lịch.',
+  'Scheduled session exercises replaced.': 'Đã thay danh sách bài tập của buổi.',
+  'Session started after server-side gates passed.': 'Buổi tập bắt đầu sau khi qua mọi điều kiện kiểm tra.',
+  'Session resumed after medical gate passed.': 'Buổi tập tiếp tục sau khi qua kiểm tra y tế.',
+  'Trainer acknowledged Work Rider warnings.': 'Trainer đã xác nhận cảnh báo về Work Rider.',
+  'Recommended non-blocking readiness review acknowledged.': 'Đã ghi nhận đánh giá sẵn sàng (khuyến nghị, không bắt buộc).',
+  'Template archived.': 'Đã lưu trữ mẫu chương trình.',
+  // horse photo upload (POST /api/horses/{id}/photos)
+  'Upload a valid JPEG, PNG, or WebP image no larger than 5 MiB.': 'Hãy tải ảnh JPEG, PNG hoặc WebP hợp lệ, tối đa 5 MB.',
 };
-/** Notification messages are built by the Backend from fixed templates with ids/codes inside. */
+/** DEC-005 adjustment request types as they appear inside audit summaries. */
+const ADJUSTMENT: Record<string, string> = {
+  PHASE_WORKLOAD_INTENSITY: 'khối lượng / cường độ giai đoạn', PHASE_TIMELINE: 'thời gian giai đoạn', PHASE_OBJECTIVE: 'mục tiêu giai đoạn',
+  PHASE_STRUCTURE: 'cấu trúc giai đoạn', TOTAL_DURATION: 'tổng thời gian chương trình', PRIMARY_GOAL: 'mục tiêu chính',
+  SOURCE_TEMPLATE: 'mẫu gốc', OTHER_STRUCTURAL: 'thay đổi cấu trúc khác',
+};
+const adjustment = (type: string) => ADJUSTMENT[type] ?? type;
+/** Notification messages and audit summaries are built by the Backend from fixed templates with ids/codes inside. */
 const PATTERNS: [RegExp, (...groups: string[]) => string][] = [
   [/^Pre-session check assigned for session (\S+)\.$/, (code) => `Bạn được giao kiểm tra trước buổi tập ${code}.`],
   [/^Incident (\S+) was reported for session (\S+)\.$/, (incident, session) => `Sự cố ${incident} đã được báo cho buổi tập ${session}.`],
@@ -49,6 +77,9 @@ const PATTERNS: [RegExp, (...groups: string[]) => string][] = [
   [/^Your adjustment request for program (\S+) was (APPROVED|REJECTED)\.$/, (id, status) => `Đề xuất điều chỉnh chương trình ${id} của bạn đã ${status === 'APPROVED' ? 'được duyệt' : 'bị từ chối'}.`],
   [/^Session (\S+) has been assigned to you\.$/, (code) => `Bạn được giao buổi tập ${code}.`],
   [/^You have been assigned to (.+)\.$/, (name) => `Bạn được giao phụ trách ${name}.`],
+  [/^Template version (\d+) (created|saved)\.$/, (n, verb) => `Đã ${verb === 'created' ? 'tạo' : 'lưu'} phiên bản mẫu ${n}.`],
+  [/^Adjustment requested: (\S+)\.$/, (type) => `Đã gửi đề xuất điều chỉnh: ${adjustment(type)}.`],
+  [/^Adjustment request (approved|rejected): (\S+)\.$/, (status, type) => `Đề xuất điều chỉnh ${adjustment(type)} đã ${status === 'approved' ? 'được duyệt' : 'bị từ chối'}.`],
 ];
 
 export function serverText(text: string | null | undefined): string {

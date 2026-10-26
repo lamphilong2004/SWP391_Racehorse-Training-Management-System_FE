@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { Icon } from '../../icons/Icon';
 import { cx } from '../../utils/cx';
+import { HorseAvatar } from '../HorseAvatar/HorseAvatar';
 import { KeyValue } from '../KeyValue/KeyValue';
 import { StatusBadge } from '../StatusBadge/StatusBadge';
 import type { StatusOf } from '../StatusBadge/statusRegistry';
@@ -18,21 +18,22 @@ export interface HorseCardProps {
   availability: StatusOf<'availability'>;
   /** Key-value facts under the divider (Weight, Next session, …). */
   facts?: HorseCardFact[];
+  /** Horse photo URL; without one the default horse artwork fills the photo area. */
+  photoSrc?: string | null;
   /** Footer action, typically a tertiary "View profile" Button. */
   action?: ReactNode;
   className?: string;
 }
 
 /**
- * Figma Horse Card (75:360): 280 wide; neutral photo placeholder until a photo source is approved;
+ * Figma Horse Card (75:360): 280 wide; newest horse photo or the default horse artwork;
  * Training Availability always shown as icon + text.
  */
-export function HorseCard({ name, meta, availability, facts = [], action, className }: HorseCardProps) {
+export function HorseCard({ name, meta, availability, facts = [], photoSrc, action, className }: HorseCardProps) {
   return (
     <article className={cx(styles.card, className)}>
       <div className={styles.photo}>
-        <Icon name="horseshoe" size={40} />
-        <span className={styles.noPhoto}>Chưa có ảnh</span>
+        <HorseAvatar size="xl" src={photoSrc} name={name} labelDefault />
       </div>
       <div className={styles.body}>
         <h3 className={styles.name}>{name}</h3>

@@ -16,7 +16,7 @@ it('selects a horse, persists its deep link and renders the read-only authorized
   fireEvent.change(await screen.findByLabelText('Ngựa'), { target: { value: '14' } });
   expect(await screen.findByRole('heading', { name: 'Tóm tắt y tế · Storm' })).toBeInTheDocument();
   expect(await screen.findByText('Ca 9')).toBeInTheDocument();
-  expect(screen.getByText('READ-ONLY')).toBeInTheDocument();
+  expect(screen.getByText('Chỉ xem')).toBeInTheDocument();
   expect(screen.getAllByText('Walking only')).toHaveLength(2);
   expect(screen.queryByRole('button', { name: /save|approve|activate/i })).not.toBeInTheDocument();
   expect(screen.getAllByText('Không có trong bản tóm tắt này')).toHaveLength(2);

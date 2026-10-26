@@ -10,6 +10,7 @@ import { ApiError } from '../../shared/auth/authApi';
 import { OwnerContext } from './OwnerProvider';
 import type { OwnerHorse } from './ownerModel';
 import styles from './owner.module.css';
+import { sexLabel } from '../horses/shared/options';
 
 const tabs = [{ value: 'profile', label: 'Hồ sơ & phả hệ' }, { value: 'health', label: 'Sức khỏe & mức sẵn sàng' }, { value: 'training', label: 'Huấn luyện & thành tích' }];
 const healthLabels = { FIT: 'Khỏe mạnh', MONITORING: 'Đang theo dõi', INJURED: 'Đang được thú y chăm sóc', QUARANTINED: 'Đang được thú y chăm sóc' };
@@ -23,7 +24,7 @@ function age(born: string | null, unit = 'tuổi') {
   const years = now.getUTCFullYear() - birth.getUTCFullYear() - Number(now.getUTCMonth() < birth.getUTCMonth() || (now.getUTCMonth() === birth.getUTCMonth() && now.getUTCDate() < birth.getUTCDate()));
   return years >= 0 ? `${years} ${unit}` : null;
 }
-const meta = (horse: OwnerHorse) => [horse.code, horse.breed, age(horse.born), horse.sex && horse.sex.charAt(0) + horse.sex.slice(1).toLowerCase()].filter(Boolean).join(' · ');
+const meta = (horse: OwnerHorse) => [horse.code, horse.breed, age(horse.born), sexLabel(horse.sex)].filter(Boolean).join(' · ');
 
 export function OwnerPage() { return <RequireAuth><OwnerAccess /></RequireAuth>; }
 function OwnerAccess() {
@@ -87,7 +88,7 @@ function Facts({ children }: { children: ReactNode }) { return <div className={s
 function Fact({ label, value }: { label: string; value: ReactNode }) { return <KeyValue className={styles.fact} label={label} value={value ?? missing} />; }
 function Section({ title, children }: { title: string; children: ReactNode }) { return <Card className={styles.section}><h2>{title}</h2>{children}</Card>; }
 function Profile({ horse }: { horse: OwnerHorse }) {
-  return <div className={styles.columns}><div className={styles.stack}><Section title="Hồ sơ"><Facts><Fact label="Tên đăng ký" value={horse.name} /><Fact label="Mã ngựa" value={horse.code} /><Fact label="Giống ngựa" value={horse.breed} /><Fact label="Giới tính" value={horse.sex && horse.sex.charAt(0) + horse.sex.slice(1).toLowerCase()} /><Fact label="Ngày sinh" value={[calendar(horse.born), age(horse.born, 'tuổi')].filter(Boolean).join(' · ')} /><Fact label="Quốc gia xuất xứ" value={horse.country} /><Fact label="Chuồng" value={horse.stable ? `${horse.stable}${horse.stableSince ? ` (từ ${calendar(horse.stableSince)})` : ''}` : missing} /></Facts></Section>
+  return <div className={styles.columns}><div className={styles.stack}><Section title="Hồ sơ"><Facts><Fact label="Tên đăng ký" value={horse.name} /><Fact label="Mã ngựa" value={horse.code} /><Fact label="Giống ngựa" value={horse.breed} /><Fact label="Giới tính" value={sexLabel(horse.sex)} /><Fact label="Ngày sinh" value={[calendar(horse.born), age(horse.born, 'tuổi')].filter(Boolean).join(' · ')} /><Fact label="Quốc gia xuất xứ" value={horse.country} /><Fact label="Chuồng" value={horse.stable ? `${horse.stable}${horse.stableSince ? ` (từ ${calendar(horse.stableSince)})` : ''}` : missing} /></Facts></Section>
     <Section title="Phả hệ"><div className={styles.pedigree}><div className={styles.ancestor}><small>Ngựa</small><strong>{horse.name}</strong></div><div className={styles.stack}><div className={styles.ancestor}><small>Ngựa cha</small><strong>{horse.sire ?? missing}</strong></div><div className={styles.ancestor}><small>Ngựa mẹ</small><strong>{horse.dam ?? missing}</strong></div></div><div className={styles.stack}>{['Ông nội', 'Bà nội', 'Ông ngoại', 'Bà ngoại'].map((label) => <div className={`${styles.ancestor} ${styles.unknownAncestor}`} key={label}><small>{label}</small><span>{missing}</span></div>)}</div></div></Section></div>
     <aside className={styles.stack}><Section title="Quyền sở hữu"><p className={styles.ownershipStatement}>{horse.name} đã được liên kết với tài khoản của bạn.</p><p className={styles.caption}>Hồ sơ sở hữu do Club Manager quản lý. Liên hệ câu lạc bộ nếu thấy thông tin chưa đúng.</p></Section><AlertBanner className={styles.note} title="Cổng này chỉ để xem. Hồ sơ ngựa, sức khỏe và huấn luyện do nhân viên câu lạc bộ quản lý." /></aside></div>;
 }

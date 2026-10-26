@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { flushSync } from 'react-dom';
 import { useNavigate, useParams } from 'react-router';
-import { AlertBanner, Button, Card, StatusBadge, ErrorState, Icon, PhotoAttachmentTile, SelectField, TextField, DesignSystemScope, UnsavedChangesGuard, focusFirstInvalid } from '../../../design-system';
+import { AlertBanner, Button, Card, StatusBadge, ErrorState, Icon, SelectField, TextField, DesignSystemScope, UnsavedChangesGuard, focusFirstInvalid } from '../../../design-system';
+import { forgetHorsePhoto, useHorsePhoto } from '../../../shared/horsePhotos';
+import { HorsePhotoPicker } from '../shared/HorsePhoto';
 import { ApiRequestError } from '../api/horsesApi';
 import { useHorsesApi } from '../api/HorsesApiContext';
 import { useBreadcrumb } from '../shared/HorseManagementLayout';
@@ -18,14 +20,9 @@ const REQUIRED_MESSAGE: Record<string, string> = {
   sex: 'Chọn giới tính.', breed: 'Chọn giống ngựa.',
 };
 
-interface PendingPhoto {
-  file: File;
-  previewUrl?: string;
-}
-
 /**
  * SCR-HORSE-003 Register Horse (Figma 282:2377) — Flow 1 step 1.1. Creates the horse in DRAFT (BR-02) through
- * POST /api/horses, then uploads the selected photos (POST /api/horses/{id}/photos, dev storage — Q-18) and continues
+ * POST /api/horses, then uploads the optional profile photo (POST /api/horses/{id}/photos, dev storage — Q-18) and continues
  * to step 2 (/horses/:id/edit). Health Status and Training Availability are never set here.
  */
 /** Design System v2 scope for this CORE-013 screen; the shared horse layout stays owner-neutral. */
@@ -50,9 +47,9 @@ function RegisterHorsePageContent() {
   const [customSex, setCustomSex] = useState(false), [customBreed, setCustomBreed] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const [formError, setFormError] = useState<string>();
-  const [photos, setPhotos] = useState<PendingPhoto[]>([]);
+  const [photo, setPhoto] = useState<File | null>(null);
+  const currentPhoto = useHorsePhoto(editing ? editId : null);
   const [saving, setSaving] = useState(false);
-  const fileInput = useRef<HTMLInputElement>(null);
   const pending = useRef(false);
   useEffect(() => {
     if (!editing) return;
@@ -61,30 +58,9 @@ function RegisterHorsePageContent() {
     return () => { active = false; };
   }, [api, editId, editing, loadAttempt]);
 
-  const photosRef = useRef<PendingPhoto[]>([]);
-  useEffect(() => {
-    photosRef.current = photos;
-  }, [photos]);
-  useEffect(() => () => photosRef.current.forEach((p) => p.previewUrl && URL.revokeObjectURL(p.previewUrl)), []);
-
-  const removePhoto = (index: number) => {
-    const removed = photos[index];
-    if (removed?.previewUrl) URL.revokeObjectURL(removed.previewUrl);
-    setPhotos((all) => all.filter((_, j) => j !== index));
-  };
-
   const set = (field: Field) => (value: string) => {
     setValues((v) => ({ ...v, [field]: value }));
     setErrors((e) => ({ ...e, [field]: undefined }));
-  };
-
-  const addPhotos = (files: FileList | null) => {
-    if (!files) return;
-    const next = Array.from(files).map((file) => ({
-      file,
-      previewUrl: typeof URL.createObjectURL === 'function' ? URL.createObjectURL(file) : undefined,
-    }));
-    setPhotos((p) => [...p, ...next]);
   };
 
   const submit = async (event: FormEvent) => {
@@ -106,9 +82,10 @@ function RegisterHorsePageContent() {
       };
       const horse = editing ? await api.updateHorse(editId, input) : await api.createHorse(input);
       let photoFailed = false;
-      for (const photo of photos) {
+      if (photo) {
         try {
-          await api.uploadPhoto(horse.id, photo.file);
+          await api.uploadPhoto(horse.id, photo);
+          forgetHorsePhoto(horse.id);
         } catch {
           photoFailed = true;
         }
@@ -132,7 +109,7 @@ function RegisterHorsePageContent() {
     }
   };
 
-  const dirty = !saved && (photos.length > 0 || (Object.keys(EMPTY) as Field[]).some((field) => values[field] !== baseline[field]));
+  const dirty = !saved && (photo !== null || (Object.keys(EMPTY) as Field[]).some((field) => values[field] !== baseline[field]));
 
   return (
     <form ref={form} className={styles.page} onSubmit={submit} noValidate>
@@ -184,17 +161,9 @@ function RegisterHorsePageContent() {
 
           <Card>
             <div className={styles.cardBody}>
-              <h2 className={styles.cardTitle}>Ảnh</h2>
-              <p className={styles.cardHelp}>Dùng trên hồ sơ ngựa và để nhận dạng.</p>
-              <div className={styles.photoTiles}>
-                {photos.map((p, i) => (
-                  <PhotoAttachmentTile state="attached" key={`${p.file.name}-${i}`} fileName={p.file.name}
-                    onRemove={() => removePhoto(i)} />
-                ))}
-                <PhotoAttachmentTile state="empty" onAdd={() => fileInput.current?.click()} />
-              </div>
-              <input ref={fileInput} className={styles.hiddenInput} type="file" accept="image/jpeg,image/png,image/webp" multiple
-                aria-label="Thêm ảnh" onChange={(e) => { addPhotos(e.target.files); e.target.value = ''; }} />
+              <h2 className={styles.cardTitle}>Ảnh đại diện</h2>
+              <p className={styles.cardHelp}>Hiển thị ở đầu dòng trong danh sách ngựa và trên hồ sơ để nhận dạng nhanh.</p>
+              <HorsePhotoPicker currentSrc={currentPhoto} file={photo} onChange={setPhoto} disabled={saving} />
             </div>
           </Card>
         </div>
