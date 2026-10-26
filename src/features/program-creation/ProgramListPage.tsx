@@ -7,6 +7,7 @@ import type { AssignedProgram, ProgramStatus } from '../training/assigned/suppor
 import { useProgramCreationApi } from './programTransport';
 import styles from '../main-flows/flow.module.css';
 import { viLabel } from '../../shared/viLabels';
+import { formatDate } from '../horses/shared/format';
 
 /** CORE-022 / SCR-TRAIN-001 (77:317). List reads only; the existing wizard owns creation. */
 export function ProgramListPage() {
@@ -22,7 +23,7 @@ export function ProgramListPage() {
   function changePage(next: number) { setPage(next); setTrainer(''); setHorse(''); }
   return <FlowShell title="Chương trình huấn luyện ngựa" description="Chương trình riêng cho từng ngựa — mỗi chương trình tạo từ một mẫu dùng chung và tùy chỉnh cho một con ngựa." section="Huấn luyện" role="HEAD_TRAINER" actions={<ButtonLink variant="primary" to={ROUTES.trainingProgramCreate}>+ Tạo chương trình huấn luyện</ButtonLink>}>
     <div className={styles.metrics}>{['Chương trình đang hoạt động', 'Cần chú ý', 'Sắp kết thúc', 'Trainer còn trống'].map((label) => <MetricCard key={label} label={label} value="Chưa cung cấp" unavailable caption="Hệ thống chưa cung cấp số liệu này" />)}</div>
-    <Card><div className={styles.stack}><div className={styles.row}>
+    <Card><div className={styles.stack}><div className={styles.filters}>
       <TextField label="Tìm ngựa hoặc chương trình" placeholder="Tìm trên trang hiện tại…" value={search} onChange={(event) => setSearch(event.target.value)} />
       <SelectField label="Trạng thái" value={status} options={[{ value: '', label: 'Tất cả' }, ...['ACTIVE', 'PAUSED', 'COMPLETED'].map((value) => ({ value, label: viLabel(value) }))]} onChange={(event) => { setStatus(event.target.value as ProgramStatus | ''); changePage(0); }} />
       <SelectField label="Trainer · trang hiện tại" value={trainer} options={[{ value: '', label: 'Tất cả' }, ...trainers.map((item) => ({ value: String(item.id), label: item.fullName }))]} onChange={(event) => setTrainer(event.target.value)} />
@@ -35,11 +36,11 @@ export function ProgramListPage() {
       {data && <><div className={styles.table}><DataTable<AssignedProgram> caption="Chương trình huấn luyện ngựa" rows={rows} rowKey={(item) => item.id} empty={<EmptyState title="Không có chương trình phù hợp" description="Đổi bộ lọc hoặc tạo chương trình huấn luyện mới." />} columns={[
         { key: 'horse', header: 'Ngựa', render: (item) => <><strong>{item.horse.name}</strong><p className="text-caption">{item.horse.horseCode}</p>{item.trainingAvailability && <StatusBadge family="availability" status={item.trainingAvailability} />}</> },
         { key: 'program', header: 'Chương trình', render: (item) => <>{item.name}<p className="text-caption">Mẫu chương trình {item.sourceTemplateId} · v{item.sourceTemplateVersion}</p></> },
-        { key: 'goal', header: 'Mục tiêu', render: () => 'Chưa cung cấp' },
+        { key: 'goal', header: 'Mục tiêu', nowrap: true, render: () => <span className="text-caption">Chưa cung cấp</span> },
         { key: 'trainer', header: 'Trainer', render: (item) => item.currentTrainer?.fullName ?? 'Chưa cung cấp' },
         { key: 'phase', header: 'Giai đoạn hiện tại', render: (item) => item.currentPhaseName ?? 'Chưa cung cấp' },
-        { key: 'progress', header: 'Tiến độ', render: () => 'Chưa cung cấp' },
-        { key: 'period', header: 'Thời gian', render: (item) => `${item.periodStart} → ${item.periodEnd}` },
+        { key: 'progress', header: 'Tiến độ', nowrap: true, render: () => <span className="text-caption">Chưa cung cấp</span> },
+        { key: 'period', header: 'Thời gian', nowrap: true, render: (item) => `${formatDate(item.periodStart)} → ${formatDate(item.periodEnd)}` },
         { key: 'status', header: 'Trạng thái', render: (item) => <StatusBadge family="program" status={item.status} /> },
         { key: 'detail', header: 'Chi tiết', render: (item) => <ButtonLink to={`/training/programs/${item.id}`} aria-label={`Xem ${item.name}`}>Xem</ButtonLink> },
       ]} /></div><div className={styles.row}><span>{rows.length} hiển thị trên trang này · {data.totalItems} chương trình phù hợp bộ lọc máy chủ</span><Button variant="secondary" disabled={page === 0} onClick={() => changePage(page - 1)}>Chương trình trước</Button><span>Trang {page + 1}/{Math.max(1, data.totalPages)}</span><Button variant="secondary" disabled={page + 1 >= data.totalPages} onClick={() => changePage(page + 1)}>Chương trình tiếp</Button></div></>}

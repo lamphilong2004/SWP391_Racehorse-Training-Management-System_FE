@@ -47,7 +47,7 @@ function GroomToday({ api }: { api: PrecheckApi }) {
   const retry = () => { setSessions(null); setError(undefined); setAttempt((value) => value + 1); };
   return <div className={styles.stack}>
     <div className={styles.header}><div><h1 className={styles.heading}>{greeting()}, {user?.fullName}</h1><p className={styles.muted}>Các buổi kiểm tra trước buổi tập, công việc điều trị và sự cố của bạn</p></div><ButtonLink to="/incidents">Xem sự cố</ButtonLink></div>
-    <TextField label="Ngày tập" type="date" value={date} onChange={(event) => { setSessions(null); setError(undefined); setDate(event.target.value); }} />
+    <TextField className={styles.dateField} label="Ngày tập" type="date" value={date} onChange={(event) => { setSessions(null); setError(undefined); setDate(event.target.value); }} />
     <div className={styles.metrics}><MetricCard label="Kiểm tra trước buổi tập" value={sessions ? String(sessions.length) : '—'} /><MetricCard label="Công việc điều trị chưa xong" value={summary.tasks === undefined ? '—' : String(summary.tasks)} /><MetricCard label="Sự cố tôi đã báo" value={summary.incidents === undefined ? '—' : String(summary.incidents)} /></div>
     {summary.unavailable && <AlertBanner type="warning" title="Một số tóm tắt không tải được">Mở màn hình điều trị hoặc sự cố để thử lại. Kiểm tra trước buổi tập vẫn dùng được.</AlertBanner>}
     <div className={styles.columns}><Card title="Kiểm tra trước buổi tập">
