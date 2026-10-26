@@ -32,7 +32,7 @@
 @media (max-width: 1279px) { .actionGrid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 767px) { .welcome { align-items: flex-start; flex-wrap: wrap; gap: var(--space-lg); } .access { margin-left: 0; } .actionGrid, .metrics { grid-template-columns: minmax(0,1fr); } .heading > a { width: 100%; } .identity > a { margin-left: 0; } }
 
-.heading h1 { font: 700 28px/36px var(--font-family-headline); letter-spacing: -.025em; }
+.heading h1 { font: 700 28px/36px var(--font-family-headline); letter-spacing: -0.005em; }
 .welcome { border-left-color: var(--color-brand-secondary); box-shadow: var(--elev-1); }
 .welcome, .actionGrid > *, .metrics > * { min-width: 0; }
 .actionCard { border-radius: var(--card-radius); }

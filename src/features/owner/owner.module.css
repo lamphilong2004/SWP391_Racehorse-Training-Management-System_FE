@@ -62,7 +62,7 @@
 .searchResult { display: flex; align-items: center; gap: 12px; }
 @media(max-width:1300px) { .columns { grid-template-columns: minmax(0,1fr) 320px; } .fact { grid-template-columns: 120px minmax(0,1fr); } .session { grid-template-columns: 80px minmax(0,1fr) auto; } .session > span:last-child { grid-column: 2 / 4; justify-self: start; } }
 
-.page h1 { font: 700 28px/36px var(--font-family-headline); letter-spacing: -.025em; }
+.page h1 { font: 700 28px/36px var(--font-family-headline); letter-spacing: -0.005em; }
 .horseCard { box-shadow: var(--elev-1); }
 .horseGrid > *, .columns > * { min-width: 0; }
 .viewLink { font-weight: 600; box-shadow: var(--elev-1); }

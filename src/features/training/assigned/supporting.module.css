@@ -45,7 +45,7 @@
 .header > * { min-width: 0; }
 .notice { white-space: normal; }
 
-.title { font-family: var(--font-family-headline); font-weight: 700; letter-spacing: -.025em; }
+.title { font-family: var(--font-family-headline); font-weight: 700; letter-spacing: -0.005em; }
 .filters { padding: var(--space-lg); border: 1px solid var(--color-border-default); border-radius: var(--card-radius); background: var(--color-bg-surface); }
 .tableWrap { border-radius: var(--radius-md); }
 .primaryLink { font-weight: 600; box-shadow: var(--elev-1); }

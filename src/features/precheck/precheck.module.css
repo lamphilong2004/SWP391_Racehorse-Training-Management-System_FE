@@ -1,4 +1,5 @@
 .stack { display: grid; gap: var(--space-xl); }
+.dateField { max-width: 240px; }
 .header, .actions { display: flex; align-items: center; justify-content: space-between; gap: var(--space-lg); flex-wrap: wrap; }
 .heading { margin: 0 0 var(--space-sm); font-size: 24px; }
 .muted { color: var(--color-text-secondary); }
@@ -29,7 +30,7 @@
   .checkRow [role="radiogroup"] > label { min-height: 44px; flex: 1; }
 }
 
-.heading { font-family: var(--font-family-headline); font-weight: 700; letter-spacing: -.025em; }
+.heading { font-family: var(--font-family-headline); font-weight: 700; letter-spacing: -0.005em; }
 .stack, .columns > *, .metrics > * { min-width: 0; }
 .session { padding: var(--space-lg); border: 1px solid var(--color-border-default); border-radius: var(--card-radius); background: var(--color-bg-surface); box-shadow: var(--elev-1); }
 .checkRow { border-bottom: 1px solid var(--color-border-default); padding-block: var(--space-lg); }

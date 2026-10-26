@@ -80,7 +80,9 @@
 .table td > * > * {
   min-width: 0;
 }
-.cell { overflow-wrap: anywhere; min-width: 90px; max-width: 360px; }
+.cell { overflow-wrap: break-word; word-break: normal; min-width: 90px; max-width: 360px; }
+/* Actions keep their label on one line; the table scrolls inside its region instead of breaking "Sửa" into letters. */
+.cell :is(button, a[class], [role='button']) { white-space: nowrap; }
 .headerCell { padding-block: 12px; }
 .table .nowrap { overflow-wrap: normal; }
 .nowrap a { white-space: nowrap; }

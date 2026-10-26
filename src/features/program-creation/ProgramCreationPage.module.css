@@ -27,10 +27,10 @@
 /* V3 wizard, program detail, versioned templates and decision forms. */
 .page, .stack, .columns > *, .fields > *, .candidates > * { min-width: 0; }
 .heading, .footer, .row { flex-wrap: wrap; }
-.heading h1 { font: 700 28px/36px var(--font-family-headline); letter-spacing: -.025em; }
+.heading h1 { font: 700 28px/36px var(--font-family-headline); letter-spacing: -0.005em; }
 .context, .choice { box-shadow: var(--elev-1); }
 .selected { box-shadow: inset 0 0 0 1px var(--color-primary-600); }
-.table th { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+.table th { font-size: 12px; font-weight: 600; letter-spacing: 0.02em; color: var(--color-brand-primary); }
 .table td { padding-block: var(--space-lg); }
 @media (max-width: 767px) {
   .fields, .candidates, .profileFacts { grid-template-columns: minmax(0, 1fr); }
