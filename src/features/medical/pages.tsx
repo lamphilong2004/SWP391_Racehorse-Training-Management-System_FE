@@ -1,3 +1,4 @@
+import { boxLabel } from '../../shared/stableBox';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { ActionBar, AlertBanner, ButtonLink, Button, Card, DataTable, EmptyState, KeyValue, MetricCard, StatusBadge, TableToolbar, SelectField, TextField, Tabs } from '../../design-system';
@@ -36,7 +37,7 @@ function HorseName({ horseId }: { horseId: number }) {
 function HorseHeading({ horseId, title, description }: { horseId: number; title: string; description: string }) {
   const { service } = useMedicalRuntime();
   const { data, error } = useResource(useCallback(() => service.getHorse(horseId), [service, horseId]));
-  return <><PageHeader title={`${title} · ${data?.name ?? `Ngựa ${horseId}`}`} description={data ? `${data.horseCode}${data.currentBoxCode ? ` · Ô ${data.currentBoxCode}` : ''} · ${description}` : description}
+  return <><PageHeader title={`${title} · ${data?.name ?? `Ngựa ${horseId}`}`} description={data ? `${data.horseCode}${data.currentBoxCode ? ` · ${boxLabel(data.currentBoxCode)}` : ''} · ${description}` : description}
     actions={data && <div className="medical-actions">{data.healthStatus && <StatusBadge family="health" status={data.healthStatus} />}<StatusBadge family="availability" status={data.trainingAvailability} /></div>} />
     {error && <p className="text-caption">Không tải được thông tin nhận dạng ngựa.</p>}</>;
 }
@@ -154,7 +155,7 @@ export function HerdHealthPage() {
       </div>
       {cases.error && <div className="medical-actions"><p className="text-caption">Không tải được tóm tắt ca y tế.</p><Button variant="secondary" onClick={cases.reload}>Tải lại tóm tắt ca</Button></div>}
       {!visible.length ? <EmptyState title="Không có ngựa phù hợp bộ lọc" /> : <div className="medical-grid medical-herd-grid">{visible.map((horse) => <Card key={horse.id} className="medical-herd-horse">
-        <h3 className="text-h3">{horse.name}</h3><p className="text-caption">{horse.horseCode}{horse.currentBoxCode ? ` · Ô ${horse.currentBoxCode}` : ''}</p>
+        <h3 className="text-h3">{horse.name}</h3><p className="text-caption">{horse.horseCode}{horse.currentBoxCode ? ` · ${boxLabel(horse.currentBoxCode)}` : ''}</p>
         <div className="medical-actions">{horse.healthStatus ? <StatusBadge family="health" status={horse.healthStatus} /> : <span className="text-caption">{horse.healthStatus === null ? 'Chưa đánh giá' : 'Không có tình trạng sức khỏe'}</span>}<StatusBadge family="availability" status={horse.trainingAvailability} /></div>
         {cases.data ? cases.data.filter((item) => item.horseId === horse.id && item.status === 'OPEN').length ? cases.data.filter((item) => item.horseId === horse.id && item.status === 'OPEN').map((item) => <div key={item.id} className="medical-case-preview">
           <p>Ca đang mở · {item.reason ?? `Ca ${item.id}`}</p><p className="text-caption">{item.treatmentPlan?.reexaminationDate ? `Tái khám ${item.treatmentPlan.reexaminationDate}` : 'Chưa hẹn tái khám'}</p><Link to={casePath(item.id)}>Mở ca →</Link>

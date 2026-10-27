@@ -78,7 +78,7 @@ it('uses the approved non-clinical HorseDetail weight and identity projection wi
   const result = await value.getHorse(14); expect(result.latestWeight?.weightKg).toBe(512); expect(result).not.toHaveProperty('diagnosis');
   const view = service(); vi.mocked(view.getHorse).mockResolvedValue(result); mount(view);
   await screen.findByRole('heading', { name: 'Tóm tắt y tế · Storm' });
-  expect(screen.getByText(/ST-014 · Thoroughbred · \d+ tuổi · Ngựa đực non · North Yard, Ô B-03/)).toBeInTheDocument();
+  expect(screen.getByText(/ST-014 · Thoroughbred · \d+ tuổi · Ngựa đực non · North Yard, Chuồng B-03/)).toBeInTheDocument();
   expect(screen.getByText('30 thg 9, 2026')).toHaveAttribute('dateTime', '2026-09-30T00:00:00Z');
   expect(screen.queryByText('Do not copy clinical details')).not.toBeInTheDocument();
 });

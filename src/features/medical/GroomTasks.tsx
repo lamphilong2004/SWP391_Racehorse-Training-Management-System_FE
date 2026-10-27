@@ -1,3 +1,4 @@
+import { boxLabel } from '../../shared/stableBox';
 import { ROUTES } from '../../app/routePaths';
 import { UiPreviewNotice } from './UiPreviewNotice';
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
@@ -97,7 +98,7 @@ export function GroomTasks({ service }: { service: GroomService }) {
     <div className="medical-grid medical-treatment-layout"><div className="medical-stack">
       {!state.tasks ? state.error ? <><AlertBanner type="danger" title={state.error} /><Button onClick={reload}>Thử lại</Button></> : <p role="status">Đang tải công việc điều trị được giao…</p> :
         !filtered.length ? <EmptyState title="Không có công việc nào với bộ lọc này" /> :
-          [...new Set(filtered.map((t) => t.horseId))].map((horseId) => <Card key={horseId} className="medical-groom-panel" title={names[horseId] ? `${names[horseId].name} · ${names[horseId].horseCode}${names[horseId].currentBoxCode ? ` · Ô ${names[horseId].currentBoxCode}` : ''}` : `Ngựa ${horseId}`}>
+          [...new Set(filtered.map((t) => t.horseId))].map((horseId) => <Card key={horseId} className="medical-groom-panel" title={names[horseId] ? `${names[horseId].name} · ${names[horseId].horseCode}${names[horseId].currentBoxCode ? ` · ${boxLabel(names[horseId].currentBoxCode)}` : ''}` : `Ngựa ${horseId}`}>
             {names[horseId] && <div className="medical-actions">{names[horseId].healthStatus && <StatusBadge family="health" status={names[horseId].healthStatus} />}<StatusBadge family="availability" status={names[horseId].trainingAvailability} /></div>}
             <div className="medical-stack">{filtered.filter((t) => t.horseId === horseId).map((task) => <article key={task.id} className="medical-groom-task">
               <div className="medical-groom-task-row">

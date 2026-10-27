@@ -134,7 +134,7 @@ it('preserves deliberately edited/cleared setup fields when supporting APIs reco
 it('shows FREE/OCCUPIED boxes without fabricating an assignment when its API is missing', async () => {
   const { requests } = mount('/horses/81/edit'); await screen.findByText('Không tải được dữ liệu thiết lập ngựa');
   await userEvent.click(screen.getByRole('button', { name: 'Xếp ô chuồng' }));
-  expect(await screen.findByText('B-02')).toBeInTheDocument();
+  expect(await screen.findByText('Chuồng B-02')).toBeInTheDocument();
   expect(screen.getByText('Đang có ngựa')).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: /B-02/ })).not.toBeInTheDocument();
   await userEvent.click(screen.getByRole('button', { name: /B-01/ }));

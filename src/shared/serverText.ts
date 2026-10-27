@@ -51,6 +51,9 @@ const TEXT: Record<string, string> = {
   'scheduledStart must be in the future. Choose a later time or reschedule the session.': 'Giờ bắt đầu phải ở tương lai. Hãy chọn thời điểm muộn hơn.',
   'periodStart must be today or later in Asia/Ho_Chi_Minh.': 'Ngày bắt đầu chương trình phải từ hôm nay trở đi (giờ Việt Nam).',
   'Unknown strength code.': 'Mã thế mạnh không hợp lệ.',
+  'The horse is INJURED or QUARANTINED; the Veterinarian must re-examine it before a training program is created.': 'Ngựa đang chấn thương hoặc cách ly; Veterinarian cần tái khám trước khi lập chương trình huấn luyện.',
+  'The horse is INJURED; the Veterinarian must re-examine it before training.': 'Ngựa đang chấn thương; Veterinarian cần tái khám trước khi tập.',
+  'The horse is QUARANTINED; the Veterinarian must re-examine it before training.': 'Ngựa đang cách ly; Veterinarian cần tái khám trước khi tập.',
   'The horse already has an ACTIVE or PAUSED program in this period. Complete it or choose later dates.': 'Ngựa đã có chương trình đang hoạt động hoặc tạm dừng trong khoảng thời gian này. Hãy hoàn tất chương trình đó hoặc chọn ngày muộn hơn.',
   // notification titles
   'Pre-session check assigned': 'Được giao kiểm tra trước buổi tập',

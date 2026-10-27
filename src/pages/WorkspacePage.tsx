@@ -1,3 +1,4 @@
+import { boxLabel } from '../shared/stableBox';
 import { useCallback } from 'react';
 import { AppShell } from '../layout/AppShell';
 import { Button, ButtonLink, Card, DataTable, EmptyState, ErrorState, Icon, LoadingState, MetricCard, StatusBadge, type IconName } from '../design-system';
@@ -116,7 +117,7 @@ function VeterinaryArrivals() {
     {data && <><div className={styles.metrics}><MetricCard label="Ngựa nháp" value={String(data.totalItems)} caption="Trong danh sách câu lạc bộ" /><MetricCard label="Hiển thị ở đây" value={String(data.items.length)} caption="Sáu hồ sơ nháp mới nhất" /></div>
       <Card><div className={styles.table} role="region" aria-label="Ngựa mới đến" tabIndex={0}><DataTable<HorseDetail> caption="Ngựa mới đến" rows={data.items} rowKey={(horse) => horse.id} empty={<EmptyState title="Không có ngựa nháp" description="Ngựa mới đăng ký sẽ hiện ở đây khi Club Manager lưu." />} columns={[
         { key: 'horse', header: 'Ngựa', render: (horse) => <div className={styles.horseName}><strong>{horse.name}</strong><span>{horse.horseCode}</span></div> },
-        { key: 'box', header: 'Chuồng', render: (horse) => horse.currentBoxCode ?? 'Chưa phân công' },
+        { key: 'box', header: 'Chuồng', render: (horse) => boxLabel(horse.currentBoxCode) ?? 'Chưa phân công' },
         { key: 'status', header: 'Trạng thái', render: (horse) => <StatusBadge family="lifecycle" status={horse.lifecycle} /> },
         { key: 'health', header: 'Sức khỏe', render: (horse) => horse.healthStatus ? <StatusBadge family="health" status={horse.healthStatus} /> : 'Chưa ghi nhận' },
         { key: 'actions', header: 'Thao tác', render: (horse) => <div className={styles.rowActions}><ButtonLink size="sm" to={`/horses/${horse.id}`}>Xem hồ sơ</ButtonLink>{!horse.healthStatus && <ButtonLink size="sm" to={`/horses/${horse.id}/baseline`}>Ghi khám ban đầu</ButtonLink>}</div> },

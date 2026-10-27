@@ -1,3 +1,4 @@
+import { boxLabel } from '../../shared/stableBox';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 import { ButtonLink, AlertBanner, Button, Card, ErrorState, Icon, LoadingState, StatusBadge, TextAreaField, TextField } from '../../design-system';
@@ -40,7 +41,7 @@ function BaselineContent({ rawId }: { rawId?: string }) {
     } catch (cause) { setError(errorMessage(cause)); }
     finally { pending.current = false; setSaving(false); }
   }
-  return <FlowShell title={`Khám sức khỏe ban đầu${data ? ` · ${data.name}` : ''}`} description={data ? `${data.horseCode} · ${data.breed ?? 'Chưa ghi giống'} · ${data.currentBoxCode ?? 'Chưa xếp ô chuồng'} · tiếp nhận (đăng ký ngựa)` : 'Khám ban đầu của Veterinarian'} section="Ngựa" role="VETERINARIAN" actions={data && <StatusBadge family="lifecycle" status={data.lifecycle} />}>
+  return <FlowShell title={`Khám sức khỏe ban đầu${data ? ` · ${data.name}` : ''}`} description={data ? `${data.horseCode} · ${data.breed ?? 'Chưa ghi giống'} · ${boxLabel(data.currentBoxCode) ?? 'Chưa xếp ô chuồng'} · tiếp nhận (đăng ký ngựa)` : 'Khám ban đầu của Veterinarian'} section="Ngựa" role="VETERINARIAN" actions={data && <StatusBadge family="lifecycle" status={data.lifecycle} />}>
     {horse.pending && <LoadingState label="Đang tải thông tin ngựa…" />}
     {horse.error && <ErrorState title="Không tải được thông tin ngựa" description={horse.error} onRetry={horse.reload} />}
     {error && <AlertBanner type="danger" title="Chưa lưu được kết quả khám ban đầu">{error}</AlertBanner>}

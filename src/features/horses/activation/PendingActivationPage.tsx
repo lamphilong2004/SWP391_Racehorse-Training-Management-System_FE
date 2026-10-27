@@ -1,3 +1,4 @@
+import { boxLabel } from '../../../shared/stableBox';
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { AlertBanner, Button, Card, EmptyState, ErrorState, StatusBadge, Icon, LoadingState, type IconName, DesignSystemScope } from '../../../design-system';
@@ -22,7 +23,7 @@ const ITEMS: Record<ActivationItem, { label: string; who: 'Club Manager' | 'Vete
   OWNER: { label: 'Quyền sở hữu', who: 'Club Manager', sub: () => 'Club Manager · Horse Owner' },
   FREE_STABLE_BOX: {
     label: 'Đã xếp ô chuồng', who: 'Club Manager',
-    sub: (h) => (h.currentBoxCode ? `Club Manager · ${h.currentBoxCode} (ô trống)` : 'Club Manager · một ô chuồng trống'),
+    sub: (h) => (h.currentBoxCode ? `Club Manager · ${boxLabel(h.currentBoxCode)}` : 'Club Manager · một ô chuồng trống'),
   },
   VETERINARIAN_BASELINE: { label: 'Khám sức khỏe ban đầu', who: 'Veterinarian', sub: () => 'Veterinarian · cân nặng, thể trạng, tình trạng sức khỏe ban đầu' },
 };
@@ -79,7 +80,7 @@ function PendingActivationPageContent() {
       </div>
 
       {completed && completed.horse.currentBoxCode && missingItems(completed.status).every((item) => item === 'VETERINARIAN_BASELINE') && (
-        <AlertBanner type="success" title={`Đã xếp ô chuồng ${completed.horse.currentBoxCode} cho ${completed.horse.name}`}>
+        <AlertBanner type="success" title={`Đã xếp ${boxLabel(completed.horse.currentBoxCode)} cho ${completed.horse.name}`}>
           {missingItems(completed.status).length === 1 && missingItems(completed.status)[0] === 'VETERINARIAN_BASELINE'
             ? 'Đã ghi phả hệ, chủ ngựa và ô chuồng. Yêu cầu còn lại là khám sức khỏe ban đầu của Veterinarian.'
             : 'Đã ghi phả hệ, chủ ngựa và ô chuồng.'}
@@ -127,7 +128,7 @@ function PendingHorseCard({ status, horse, onViewRegister }: PendingHorse & { on
   const age = ageInYears(horse.foaledDate);
   const owner = horse.currentOwnerships[0]?.owner.fullName;
   const meta = [horse.breed, sexLabel(horse.sex), age !== null ? `${age} tuổi` : null,
-    owner ? `Chủ ngựa ${owner}` : null, horse.currentBoxCode ? `Ô chuồng ${horse.currentBoxCode}` : null,
+    owner ? `Chủ ngựa ${owner}` : null, horse.currentBoxCode ? `${boxLabel(horse.currentBoxCode)}` : null,
     `đăng ký ${formatDate(horse.createdAt)}`].filter(Boolean).join(' · ');
   const missing = missingItems(status);
   const onlyBaseline = missing.length === 1 && missing[0] === 'VETERINARIAN_BASELINE';

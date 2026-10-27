@@ -30,7 +30,7 @@ it('keeps the working Horse API grid when the separate clinical aggregate is una
   render(<MemoryRouter><MedicalProvider value={{ actor: { id: 7, fullName: 'Vet', email: 'vet@example.test', userCode: 'V7', accountStatus: 'ACTIVE', roles: ['VETERINARIAN'] }, service: createMedicalService('session', undefined, { baseUrl: '', fetcher }) }}><HerdHealthPage /></MedicalProvider></MemoryRouter>);
   expect(await screen.findByText('Storm')).toBeInTheDocument();
   expect(await screen.findByText('Clinical overview unavailable')).toBeInTheDocument();
-  expect(screen.getByText('ST-014 · Ô B-03')).toBeInTheDocument();
+  expect(screen.getByText('ST-014 · Chuồng B-03')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Khỏe · 0' }));
   expect(await screen.findByText('Không có ngựa phù hợp bộ lọc')).toBeInTheDocument();
   expect(screen.queryByText('Storm')).not.toBeInTheDocument();

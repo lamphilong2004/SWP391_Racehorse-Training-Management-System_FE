@@ -25,6 +25,7 @@ export interface HorseSelection extends HorseRef {
   foaledDate?: string | null;
   strengths?: string[];
   currentProgramName?: string | null;
+  healthStatus?: string | null;
   lastTrainingAt?: string | null;
 }
 

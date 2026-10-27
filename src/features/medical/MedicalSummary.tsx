@@ -1,3 +1,4 @@
+import { boxLabel, yardLabel } from '../../shared/stableBox';
 import { UiPreviewNotice } from './UiPreviewNotice';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router';
@@ -67,7 +68,7 @@ function HorseSummary({ id, service }: { id: number; service: SummaryService }) 
   let age = birth ? today.getFullYear() - birth[0] : null;
   if (age !== null && birth && (today.getMonth() + 1 < birth[1] || (today.getMonth() + 1 === birth[1] && today.getDate() < birth[2]))) age--;
   const subtitle = [horse.data.horseCode, horse.data.breed, age !== null && age >= 0 ? `${age} tuổi` : undefined, sexLabel(horse.data.sex),
-    [horse.data.yard, horse.data.currentBoxCode ? `Ô ${horse.data.currentBoxCode}` : undefined].filter(Boolean).join(', ')].filter(Boolean).join(' · ');
+    [yardLabel(horse.data.yard), horse.data.currentBoxCode ? `${boxLabel(horse.data.currentBoxCode)}` : undefined].filter(Boolean).join(', ')].filter(Boolean).join(' · ');
   const open = cases.data?.filter((c) => c.horseId === id && c.status === 'OPEN');
   return <>
     <PageHeader title={`Tóm tắt y tế · ${horse.data.name}`} description={subtitle}
