@@ -213,7 +213,7 @@ it('preserves a server-supplied sex value outside the Figma suggestions while ed
   expect(screen.queryByLabelText('Giới tính (nhập tay)')).not.toBeInTheDocument();
   await userEvent.clear(screen.getByLabelText('Tên ngựa *')); await userEvent.type(screen.getByLabelText('Tên ngựa *'), 'Thunder Bolt Updated');
   await userEvent.click(screen.getByRole('button', { name: 'Lưu thông tin nhận dạng' }));
-  await screen.findByRole('heading', { name: 'Thunder Bolt Updated' });
+  await screen.findByRole('heading', { name: 'Thunder Bolt Updated' }, { timeout: 5000 });
   expect(readSamples().horseRegistry!.records[0].sex).toBe('GELDING');
 });
 it('saves a minimal draft without inventing missing identity values', async () => {

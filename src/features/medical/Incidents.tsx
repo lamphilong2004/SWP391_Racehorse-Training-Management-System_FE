@@ -1,6 +1,7 @@
+import { boxLabel } from '../../shared/stableBox';
 import { UiPreviewNotice } from './UiPreviewNotice';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { AlertBanner, ButtonLink, Button, Card, DataTable, EmptyState, ErrorState, KeyValue, LoadingState, SelectField, StatusBadge, TableToolbar, TextField } from '../../design-system';
 import { AppShell } from '../../layout/AppShell';
 import { PageHeader } from '../../layout/PageHeader';
@@ -31,6 +32,9 @@ export function IncidentAccess({ detail = false }: { detail?: boolean }) {
   const role = actor?.roles.find((r) => allowed.includes(r));
   const service = useMemo(() => token && actor ? createIncidentService(token, actor, auth.handleApiError) : null, [token, actor, auth.handleApiError]);
   const horse = useMemo(() => token ? (id: number) => readHorseIdentity(token, id, auth.handleApiError) : undefined, [token, auth.handleApiError]);
+  // BR-35: a Groom may report what they observe at the stable for any ACTIVE horse that is in a box today.
+  const stableHorses = useMemo(() => token ? () => requestApi<{ items: { id: number; name: string; horseCode: string; currentBoxCode: string | null }[] }>('/api/horses?lifecycle=ACTIVE&size=100', { method: 'GET' }, { token })
+    .then((page) => page.items.filter((item) => item.currentBoxCode).map((item) => ({ id: item.id, label: `${item.name} · ${item.horseCode} · ${boxLabel(item.currentBoxCode)}` }))) : undefined, [token]);
   // Only the Club Manager may read the staff directory (GET /api/admin/users/{id}); other roles see the reporter id.
   const manager = actor?.roles.includes('CLUB_MANAGER') ?? false;
   const reporter = useMemo<UserReader | undefined>(() => {
@@ -48,7 +52,7 @@ export function IncidentAccess({ detail = false }: { detail?: boolean }) {
   return <AppShell user={{ fullName: actor.fullName, role }} breadcrumb={[{ label: 'Sự cố', to: MEDICAL_ROUTES.incidents }]}>
     <UiPreviewNotice />
     <div className="medical-stack" key={`${actor.id}:${auth.expiresAt}`}>
-      {detail ? <IncidentDetailPage service={service} role={role} actorId={actor.id} horse={horse} reporter={reporter} /> : <IncidentListPage service={service} role={role} actorId={actor.id} horse={horse} reporter={reporter} />}
+      {detail ? <IncidentDetailPage service={service} role={role} actorId={actor.id} horse={horse} reporter={reporter} /> : <IncidentListPage service={service} role={role} actorId={actor.id} horse={horse} reporter={reporter} stableHorses={stableHorses} />}
     </div>
   </AppShell>;
 }
@@ -60,9 +64,12 @@ function useIncidentRead<T>(load: () => Promise<T>) {
 function State({ error, reload }: { error?: string; reload: () => void }) { return error ? <ErrorState title="Không tải được sự cố" description={error} onRetry={reload} /> : <LoadingState label="Đang tải sự cố…" />; }
 type HorseReader = (id: number) => ReturnType<typeof readHorseIdentity>;
 type UserReader = (id: number) => Promise<string>;
-export function IncidentListPage({ service, role, actorId, horse, reporter }: { service: IncidentService; role: RoleCode; actorId: number; horse?: HorseReader; reporter?: UserReader }) {
+export function IncidentListPage({ service, role, actorId, horse, reporter, stableHorses }: { service: IncidentService; role: RoleCode; actorId: number; horse?: HorseReader; reporter?: UserReader; stableHorses?: () => Promise<{ id: number; label: string }[]> }) {
   const [page, setPage] = useState(0), [query, setQuery] = useState(''), [status, setStatus] = useState(''), [horseFilter, setHorseFilter] = useState('');
-  const [report, setReport] = useState(false), [success, setSuccess] = useState('');
+  const [params] = useSearchParams();
+  const [report, setReport] = useState(role === 'GROOM' && params.get('report') === '1'), [success, setSuccess] = useState('');
+  const [stable, setStable] = useState<{ id: number; label: string }[]>();
+  useEffect(() => { let active = true; if (stableHorses && !stable) stableHorses().then((items) => { if (active) setStable(items); }, () => { if (active) setStable([]); }); return () => { active = false; }; }, [stableHorses, stable]);
   const load = useCallback(() => service.list(page), [service, page]);
   const state = useIncidentRead(load);
   const horses = [...new Set(state.data?.items.map((item) => item.horseId) ?? [])];
@@ -72,8 +79,8 @@ export function IncidentListPage({ service, role, actorId, horse, reporter }: { 
     <PageHeader title="Sự cố" description={role === 'GROOM' ? 'Sự cố bạn đã báo' : 'Báo cáo sự cố'} actions={role === 'GROOM' ? <Button onClick={() => setReport(true)}>Báo cáo sự cố</Button> : undefined} />
     {success && <AlertBanner type="success" title={success}>Đã ghi nhận báo cáo. Chỉ Veterinarian được thay đổi trạng thái xử lý.</AlertBanner>}
     <TableToolbar label="Bộ lọc sự cố" scope="page" resultCount={state.data ? rows.length : undefined} hasFilters={Boolean(query || status || horseFilter)} onClear={() => { setQuery(''); setStatus(''); setHorseFilter(''); }}><TextField label="Tìm trên trang hiện tại" placeholder="Tìm mã sự cố hoặc mã ngựa…" value={query} onChange={(event) => setQuery(event.target.value)} />
-      <SelectField label="Ngựa (trang hiện tại)" value={horseFilter} placeholder="Tất cả ngựa" options={horses.map((id) => ({ value: String(id), label: `Ngựa ${id}` }))} onChange={(event) => setHorseFilter(event.target.value)} />
-      <SelectField label="Trạng thái (trang hiện tại)" value={status} placeholder="Tất cả trạng thái" options={['REPORTED', 'UNDER_REVIEW', 'RESOLVED'].map((value) => ({ value, label: value.replace('_', ' ') }))} onChange={(event) => setStatus(event.target.value)} />
+      <SelectField label="Ngựa (trang hiện tại)" value={horseFilter} placeholder="Tất cả ngựa" options={horses.map((id) => ({ value: String(id), label: stable?.find((item) => item.id === id)?.label.split(' · ').slice(0, 2).join(' · ') ?? `Ngựa ${id}` }))} onChange={(event) => setHorseFilter(event.target.value)} />
+      <SelectField label="Trạng thái (trang hiện tại)" value={status} placeholder="Tất cả trạng thái" options={['REPORTED', 'UNDER_REVIEW', 'RESOLVED'].map((value) => ({ value, label: viLabel(value) }))} onChange={(event) => setStatus(event.target.value)} />
     </TableToolbar>
     <Card title="Danh sách sự cố">{!state.data ? <State error={state.error} reload={state.reload} /> : <div className="medical-stack"><DataTable caption="Sự cố" rows={rows} rowKey={(item) => item.id} empty={<EmptyState title="Không có sự cố" description="Không có báo cáo phù hợp với trang và bộ lọc này." />} columns={[
       { key: 'code', header: 'SỰ CỐ', render: (item) => <Link to={incidentPath(item.id)}>{item.incidentCode}</Link> },
@@ -85,7 +92,7 @@ export function IncidentListPage({ service, role, actorId, horse, reporter }: { 
       { key: 'reviewer', header: 'NGƯỜI XEM XÉT', render: () => 'Không có' },
     ]} /><div className="medical-actions"><Button variant="secondary" disabled={!page} onClick={() => setPage(page - 1)}>Trước</Button><span>Trang {page + 1} · {state.data.totalElements} báo cáo</span><Button variant="secondary" disabled={(page + 1) * state.data.size >= state.data.totalElements} onClick={() => setPage(page + 1)}>Sau</Button></div></div>}</Card>
     <p className="text-caption">Bộ lọc áp dụng cho trang hiện tại. Chỉ Veterinarian được chuyển trạng thái sự cố.</p>
-    {report && <IncidentReportModal open source={{ kind: 'groom' }} horses={horses.map((id) => ({ id, label: `Ngựa ${id}` }))} onClose={() => setReport(false)} onSubmit={submit} />}
+    {report && <IncidentReportModal open source={{ kind: 'groom', contextLabel: 'Quan sát tại chuồng (ngoài buổi tập)' }} horses={stable ?? horses.map((id) => ({ id, label: `Ngựa ${id}` }))} onClose={() => setReport(false)} onSubmit={submit} />}
   </div>;
 }
 function IncidentHorse({ horseId, read }: { horseId: number; read?: HorseReader }) {
