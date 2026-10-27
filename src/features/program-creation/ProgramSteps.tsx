@@ -15,7 +15,7 @@ export function HorseSummary({ flow }: { flow: ProgramCreationFlow }) {
   const horse = flow.horse;
   return horse ? <Card title="Ngựa đã chọn"><HorseCard className={styles.horseSummary} name={horse.name} meta={`${horse.horseCode}${horse.breed ? ` · ${horse.breed}` : ''}`}
     availability={horse.trainingAvailability} facts={[
-      { label: 'Vòng đời', value: horse.lifecycle }, { label: 'Giới tính', value: sexLabel(horse.sex) ?? 'Chưa cung cấp' },
+      { label: 'Vòng đời', value: viLabel(horse.lifecycle) }, { label: 'Giới tính', value: sexLabel(horse.sex) ?? 'Chưa cung cấp' },
       { label: 'Ngày sinh', value: horse.foaledDate ?? 'Chưa cung cấp' },
       { label: 'Thế mạnh (Club Manager khai báo)', value: strengthSummary(horse.strengths) },
     ]} /></Card> : <Card title="Ngựa đã chọn"><p>Chọn một ngựa để xem thông tin.</p></Card>;
@@ -97,7 +97,7 @@ export function DraftSteps({ step, flow, issues, update, edit }: {
     {trainers?.candidates.length ? <div className={styles.candidates}>{trainers.candidates.map((candidate) => <CandidateCard key={candidate.user.id}
       name={candidate.user.fullName} subtitle={`Trainer${candidate.experienceLevel ? ` · ${candidate.experienceLevel}` : ''}`} tags={candidate.skills}
       className={draft.trainer.trainerUserId === candidate.user.id ? styles.selected : undefined}
-      facts={[{ label: 'Mức phù hợp', value: candidate.label.replaceAll('_', ' ') }, { label: 'Lý do', value: candidate.reasons.join(' · ') || 'Chưa cung cấp' },
+      facts={[{ label: 'Mức phù hợp', value: viLabel(candidate.label) }, { label: 'Lý do', value: candidate.reasons.join(' · ') || 'Chưa cung cấp' },
         ...(candidate.warnings.length ? [{ label: 'Cảnh báo', value: candidate.warnings.join(' · ') }] : []),
         ...(candidate.hardBlock ? [{ label: 'Không có', value: candidate.hardBlock }] : [])]}
       actions={<Button type="button" variant="secondary" aria-pressed={draft.trainer.trainerUserId === candidate.user.id} disabled={Boolean(candidate.hardBlock)} onClick={() => update({ trainer: { ...draft.trainer, trainerUserId: candidate.user.id, warningsAcknowledged: false, reason: '' } })}>

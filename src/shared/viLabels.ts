@@ -4,6 +4,7 @@
  */
 const LABELS: Record<string, string> = {
   // lifecycle / account / program / generic status
+  RECOMMENDED: 'Được gợi ý', SUITABLE: 'Phù hợp', SUITABLE_WITH_CAUTION: 'Phù hợp — cần lưu ý', NOT_RECOMMENDED: 'Không khuyến nghị',
   DRAFT: 'Nháp', ACTIVE: 'Đang hoạt động', INACTIVE: 'Ngừng hoạt động', PAUSED: 'Tạm dừng', COMPLETED: 'Hoàn thành',
   // training availability
   AVAILABLE: 'Sẵn sàng', LIMITED: 'Hạn chế', LOCKED: 'Khóa',
