@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { AlertBanner, Button, SelectField, TextAreaField, TextField } from '../../design-system';
+import { ActionBar, AlertBanner, Button, SelectField, TextAreaField, TextField } from '../../design-system';
 import { medicalErrorMessage } from './errors';
 import { validDate } from './groomService';
 import { viLabel } from '../../shared/viLabels';
@@ -45,9 +45,9 @@ export function MedicalForm({ fields, initial = {}, submitLabel, onSave, onCance
       <TextField label={field.label} aria-label={field.label} required={field.required} maxLength={field.maxLength} type={field.type ?? 'text'} min={field.type === 'number' ? 1 : undefined} step={field.type === 'number' ? 1 : undefined} value={values[field.name] ?? ''} error={errors[field.name]} disabled={pending} onChange={(event) => change(field.name, event.target.value)} />}</div>)}</div>
     {result.error && <AlertBanner type="danger" title={result.error} />}
     {result.success && <AlertBanner type="success" title={result.success} />}
-    <div className="medical-actions">
-      <Button type="submit" disabled={pending}>{pending ? 'Đang lưu…' : submitLabel}</Button>
+    <ActionBar>
       {onCancel && <Button type="button" variant="secondary" disabled={pending} onClick={onCancel}>Hủy</Button>}
-    </div>
+      <Button type="submit" disabled={pending}>{pending ? 'Đang lưu…' : submitLabel}</Button>
+    </ActionBar>
   </form>;
 }

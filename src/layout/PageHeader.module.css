@@ -1,12 +1,12 @@
 .row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-md);
 }
 
 .title {
   display: flex;
-  flex: 1;
+  flex: 1 1 320px;
   flex-direction: column;
   gap: var(--space-xs);
   min-width: 0;
@@ -14,7 +14,7 @@
 
 .heading {
   font-size: 24px;
-  line-height: normal;
+  line-height: 1.35;
   font-weight: 600;
   color: var(--color-text-primary);
 }
@@ -29,7 +29,10 @@
   display: flex;
   align-items: center;
   gap: var(--space-md);
-  flex-shrink: 0;
+  flex: 0 1 auto;
+  justify-content: flex-end;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .heading { font-family: var(--font-family-headline); font-weight: 700; letter-spacing: -.025em; overflow-wrap: anywhere; }
@@ -37,4 +40,5 @@
 .description { max-width: 76ch; line-height: 1.6; }
 .row { flex-wrap: wrap; }
 .actions { flex-wrap: wrap; }
+.actions > :is(button, a), .actions > div > :is(button, a) { max-width: 100%; height: auto; min-height: var(--control-height-md); padding-block: var(--space-sm); white-space: normal; }
 @media (max-width: 767px) { .title { flex-basis: 100%; } .actions { max-width: 100%; } }

@@ -7,6 +7,7 @@ export interface TemplateInput {
   recommendedDistanceUseCase?: string | null; recommendedDuration?: string | null;
   workloadIntensityGuidance?: string | null; preferredSurfaces?: string | null; recoveryGuidance?: string | null;
   requiredSkillIds: number[];
+  strengthFocus: string[];
   phases: { phaseOrder: number; name: string; objective?: string | null; recommendedDuration?: string | null; intensityGuidance?: string | null }[];
 }
 export function templateInput(version?: TemplateVersion): TemplateInput {
@@ -15,6 +16,7 @@ export function templateInput(version?: TemplateVersion): TemplateInput {
     recommendedDistanceUseCase: version?.recommendedDistanceUseCase, recommendedDuration: version?.recommendedDuration,
     workloadIntensityGuidance: version?.workloadIntensityGuidance, preferredSurfaces: version?.preferredSurfaces,
     recoveryGuidance: version?.recoveryGuidance, requiredSkillIds: version?.requiredSkills.map((skill) => idOf(skill.id)) ?? [],
+    strengthFocus: version?.strengthFocus ?? [],
     phases: version?.phases.map((phase) => ({ phaseOrder: phase.phaseOrder, name: phase.name, objective: phase.objective, recommendedDuration: phase.recommendedDuration, intensityGuidance: phase.intensityGuidance })) ?? [{ phaseOrder: 1, name: '' }],
   };
 }

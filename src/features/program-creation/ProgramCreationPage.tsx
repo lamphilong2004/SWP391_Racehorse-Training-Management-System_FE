@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { AlertBanner, Button, Card, DataTable, EmptyState, ErrorState, Icon, SelectField, StatusBadge, TextField, WizardStepper } from '../../design-system';
+import { ActionBar, AlertBanner, Button, Card, DataTable, EmptyState, ErrorState, Icon, SelectField, StatusBadge, TextField, WizardStepper } from '../../design-system';
 import { AppShell } from '../../layout/AppShell';
 import { ROUTES } from '../../app/routePaths';
 import { useAuth } from '../../shared/auth/AuthProvider';
@@ -149,9 +149,9 @@ export function ProgramCreationPage() {
             </div></div>}
             {step >= 3 && <DraftSteps step={step} flow={flow} issues={allIssues} update={update} edit={edit} />}
           </fieldset>
-          <div className={styles.footer}><Button type="button" variant="secondary" disabled={step === 0 || busy} onClick={() => edit(step - 1)}>Quay lại</Button>
+          <ActionBar leading={<span>Bước {step + 1} / 7</span>}><Button type="button" variant="secondary" disabled={step === 0 || busy} onClick={() => edit(step - 1)}>Quay lại</Button>
             <Button type="submit" disabled={Boolean(flow.pending)}>{busy ? 'Đang tạo chương trình…' : step === 6 ? 'Tạo và kích hoạt chương trình' : 'Tiếp tục'}</Button>
-          </div>
+          </ActionBar>
         </form>
       </>}
     </div>

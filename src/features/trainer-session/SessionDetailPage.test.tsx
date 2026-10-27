@@ -64,3 +64,13 @@ it('keeps a reload failure visible and offers no start or assignment control to 
   expect(screen.queryByText('Tất cả bình thường')).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Bắt đầu buổi tập' })).not.toBeInTheDocument();
 });
+
+it('guides a completed session to results and evaluation without offering assignment or start', async () => {
+  request.mockResolvedValue({ ...missing, status: 'COMPLETED', blocked: false, blockedReasons: [] });
+  mount();
+  expect(await screen.findByText('1. Xem kết quả đã ghi và so sánh kế hoạch với thực tế.')).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Mở đánh giá của Trainer' })).toHaveAttribute('href', '/training/sessions/6/evaluation');
+  expect(screen.queryByText('1. Trainer phân công Groom cho đúng mã buổi tập.')).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Phân công & thông báo Groom' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Bắt đầu buổi tập' })).not.toBeInTheDocument();
+});

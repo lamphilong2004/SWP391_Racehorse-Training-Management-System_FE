@@ -55,3 +55,7 @@ Before a screen adoption PR, verify its v1 neighbors are unchanged, authorized A
 Final isolated Chromium checks cover1440x900,1280x800,1024x768,768x1024 and375x812. The shared grid has3/3/2/2/1 columns, with no horizontal document overflow; modal/drawer and unsaved-confirmation actions fit. Keyboard focus, dirty overlays, toast suppression, tab arrows/Home and reduced-motion skeleton/spinner were exercised without mocks or Backend requests. Legacy gallery retains its v1 root/background and has no v2 scope. A real selector-precedence issue found in this check was fixed inside v2: its keyboard outline now outranks the legacy field focus reset. No assertion or security control was weakened.
 
 This is component-foundation coverage, not complete-device or WCAG certification of every feature screen. The existing AppShell remains desktop-first. Existing dev-router `HydrateFallback` warnings were observed; no page error was observed in the final isolated browser run. Existing feature screens have not been visually migrated to v2.
+
+### Later shared action layout
+
+The 27 October action-placement extension adds `ActionBar` and consolidates `FlowShell` on the existing `PageHeader`. Usage, adopted screens and current evidence are in [UX-ACTION-PATTERNS.md](UX-ACTION-PATTERNS.md). The historical verification above describes the original foundation revision, not the current product palette or full screen coverage.

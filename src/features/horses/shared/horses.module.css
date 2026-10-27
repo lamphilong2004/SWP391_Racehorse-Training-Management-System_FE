@@ -132,3 +132,10 @@
 
 /* Status badges under the horse name stay compact pills, not equal-width action columns. */
 .titleBlock .row > * { flex: 0 0 auto; }
+
+/* Declared strengths (V20261027_01) */
+.strengthFieldset { border: 0; margin: 0; min-width: 0; }
+.strengthFieldset legend { padding: 0; }
+.strengthGroups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg); }
+.strengthGroup { display: flex; flex-direction: column; gap: var(--space-sm); }
+.strengthGroupTitle { font: 600 14px/17px var(--font-family); color: var(--color-text-primary); margin: 0; }

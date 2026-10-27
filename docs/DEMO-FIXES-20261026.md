@@ -37,3 +37,7 @@ Date and time inputs in session creation have independent controlled state; the 
 - The presentation database contains deliberately documented simulated operational scenarios. The runtime reads their real SQL rows; it does not fall back to sample fixtures.
 - The original unspecified evaluation/medical load failure remains unconfirmed for other IDs or another database. Case 1 and evaluation 1/3 work in this environment. No broader Backend fix or successful medical transition is claimed.
 - Local screenshots and sanitized diagnostics are retained outside the repository under `_gate-monitor/enterprise-v4`. Secret-bearing/private API payloads remain outside Git. Independent review and main merge are still required.
+
+## Follow-up — 27 October 2026
+
+The subsequent action-layout and shared UX changes are recorded in [UX-ACTION-PATTERNS.md](UX-ACTION-PATTERNS.md). Its environment and verification section supersedes the historical port/process information above. The current Racehorse FE uses port 5214 because an unrelated application owns 5173. No unrelated process was stopped.

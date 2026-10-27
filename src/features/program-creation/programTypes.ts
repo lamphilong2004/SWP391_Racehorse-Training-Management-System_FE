@@ -23,6 +23,7 @@ export interface HorseSelection extends HorseRef {
   breed?: string | null;
   sex?: string | null;
   foaledDate?: string | null;
+  strengths?: string[];
 }
 
 export interface UserRef {
@@ -65,6 +66,8 @@ export interface TemplateVersion {
   workloadIntensityGuidance?: string | null;
   preferredSurfaces?: string | null;
   recoveryGuidance?: string | null;
+  /** Strength codes this template develops; used only for labelled recommendations. */
+  strengthFocus?: string[];
 }
 
 export interface TemplateDetail {

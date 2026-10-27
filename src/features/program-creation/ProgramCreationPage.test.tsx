@@ -56,8 +56,8 @@ async function review(actor: Actor) {
 const submit = () => screen.getByRole('button', { name: 'Tạo và kích hoạt chương trình' });
 
 describe('CORE-022 UI + production router + real transport with HTTP fixtures (not live BE)', () => {
-  beforeEach(() => { localStorage.clear(); sessionStorage.clear(); });
-  afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+  beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-10-20T03:00Z')); localStorage.clear(); sessionStorage.clear(); });
+  afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.useRealTimers(); });
 
   it('lets Head Trainer enter from workspace, complete all steps, send a pinned DTO and read the saved result', async () => {
     const { actor, router, posts, fetchMock } = setup({ path: '/dashboard' });

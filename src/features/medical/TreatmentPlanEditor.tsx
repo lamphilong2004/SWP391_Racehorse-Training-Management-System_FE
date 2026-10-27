@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { AlertBanner, Button, Card, TextAreaField, TextField } from '../../design-system';
+import { ActionBar, AlertBanner, Button, Card, TextAreaField, TextField } from '../../design-system';
 import type { GroomTaskInstruction, TreatmentPlanRequest } from './models';
 import { medicalErrorMessage } from './errors';
 import { validDate } from './groomService';
@@ -70,9 +70,9 @@ export function TreatmentPlanEditor({ initial, onSave, onCancel, openedAt, retai
       <Button type="button" variant="secondary" onClick={() => setPlan({ ...plan, groomTasks: [...tasks, { assignedGroomUserId: 0, instruction: '', taskDate: '' }] })}>Thêm công việc cho Groom</Button>
     </fieldset></Card>
     {error && <AlertBanner type="danger" title={error} />}
-    <div className="medical-actions">
+    <ActionBar>
       {onCancel && <Button type="button" variant="secondary" disabled={saving} onClick={onCancel}>Hủy</Button>}
       <Button type="submit" disabled={saving}>{saving ? 'Đang lưu…' : 'Lưu phác đồ điều trị'}</Button>
-    </div>
+    </ActionBar>
   </form>;
 }

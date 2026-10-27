@@ -10,6 +10,7 @@ import { ApiError } from '../../shared/auth/authApi';
 import { collectAssignedTasks, createGroomService, type GroomService, type GroomTreatmentTask } from './groomService';
 import type { HorseIdentity } from './horseRead';
 import './medical.css';
+import { useClubToday } from '../../shared/useClubToday';
 
 function groomError(error: unknown) {
   if (error instanceof ApiError) {
@@ -63,7 +64,7 @@ export function GroomTasks({ service }: { service: GroomService }) {
   }, [state.tasks, service]);
   const reload = useCallback(() => { setState({}); setRevision((v) => v + 1); }, []);
   // Date-only taskDate is a calendar day; do not shift it by interpreting it as a UTC timestamp.
-  const now = new Date(), today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const today = useClubToday();
   const tasks = useMemo(() => state.tasks ?? [], [state.tasks]);
   const filtered = tasks.filter((t) => (!horse || t.horseId === Number(horse)) &&
     (filter === 'completed' ? t.status === 'COMPLETED' : filter === 'upcoming' ? t.status === 'PENDING' && t.taskDate > today : filter === 'all' ? true : t.taskDate === today));

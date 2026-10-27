@@ -7,6 +7,7 @@ import type { TemplateDetail } from './programTypes';
 import { createTemplateLibraryApi, templateInput, type TemplateInput } from './templateLibraryApi';
 import styles from '../main-flows/flow.module.css';
 import { viLabel } from '../../shared/viLabels';
+import { STRENGTH_GROUPS, sortStrengths, strengthSummary } from '../horses/shared/options';
 
 type Api = ReturnType<typeof createTemplateLibraryApi>;
 /** Figma Program Template Library 120:5086: filter, card grid, detail drawer, versioned editor. */
@@ -53,7 +54,7 @@ function TemplateDrawer({ id, api, onClose, onEdit, onChanged }: { id: number; a
   </>}>
     {resource.pending && <LoadingState label="Đang tải mẫu…" />}{resource.error && <ErrorState title="Không tải được mẫu" description={resource.error} onRetry={resource.reload} />}
     {data && <div className={styles.stack}><SelectField label="Phiên bản mẫu" value={String(data.version.versionNo)} options={data.versions.map((item) => ({ value: String(item.versionNo), label: `Phiên bản ${item.versionNo}` }))} onChange={(event) => setVersion(Number(event.target.value))} />
-      <KeyValue label="Mục tiêu" value={data.version.goals ?? 'Chưa cung cấp'} /><KeyValue label="Hồ sơ ngựa phù hợp" value={data.version.suitableHorseProfile ?? 'Chưa cung cấp'} /><KeyValue label="Thời lượng khuyến nghị" value={data.version.recommendedDuration ?? 'Chưa cung cấp'} /><KeyValue label="Mặt sân ưu tiên" value={data.version.preferredSurfaces ?? 'Chưa cung cấp'} /><KeyValue label="Hướng dẫn hồi phục" value={data.version.recoveryGuidance ?? 'Chưa cung cấp'} />
+      <KeyValue label="Mục tiêu" value={data.version.goals ?? 'Chưa cung cấp'} /><KeyValue label="Hồ sơ ngựa phù hợp" value={data.version.suitableHorseProfile ?? 'Chưa cung cấp'} /><KeyValue label="Thời lượng khuyến nghị" value={data.version.recommendedDuration ?? 'Chưa cung cấp'} /><KeyValue label="Mặt sân ưu tiên" value={data.version.preferredSurfaces ?? 'Chưa cung cấp'} /><KeyValue label="Trọng tâm thế mạnh" value={data.version.strengthFocus?.length ? strengthSummary(data.version.strengthFocus) : 'Không gắn thế mạnh'} /><KeyValue label="Hướng dẫn hồi phục" value={data.version.recoveryGuidance ?? 'Chưa cung cấp'} />
       <h3>Cấu trúc giai đoạn</h3>{data.version.phases.map((phase) => <Card key={phase.id} title={`${phase.phaseOrder}. ${phase.name}`}><p>{phase.objective}</p><p>{phase.recommendedDuration} · {phase.intensityGuidance}</p></Card>)}
       <p>Kỹ năng Trainer cần có: {data.version.requiredSkills.map((skill) => skill.name).join(', ') || 'Không yêu cầu'}</p>
     </div>}
@@ -75,11 +76,11 @@ function TemplateEditor({ api, initial, onClose, onSaved }: { api: Api; initial?
   const fields = [
     ['goals', 'Mục tiêu', 2000], ['suitableHorseProfile', 'Hồ sơ ngựa phù hợp', 1000], ['recommendedDistanceUseCase', 'Hướng dẫn quãng đường / mục đích', 500], ['recommendedDuration', 'Thời lượng khuyến nghị', 100], ['workloadIntensityGuidance', 'Hướng dẫn khối lượng & cường độ', 1000], ['preferredSurfaces', 'Mặt sân ưu tiên', 500], ['recoveryGuidance', 'Hướng dẫn hồi phục', 1000],
   ] as const;
-  const set = (key: keyof Omit<TemplateInput, 'phases' | 'requiredSkillIds'>, value: string) => setInput((previous) => ({ ...previous, [key]: value }));
+  const set = (key: keyof Omit<TemplateInput, 'phases' | 'requiredSkillIds' | 'strengthFocus'>, value: string) => setInput((previous) => ({ ...previous, [key]: value }));
   async function save() {
     if (pending.current) return;
     pending.current = true; setBusy(true); setError('');
-    try { const body = { ...input, name: input.name.trim(), phases: input.phases.map((phase, index) => ({ ...phase, phaseOrder: index + 1, name: phase.name.trim() })) };
+    try { const body = { ...input, name: input.name.trim(), strengthFocus: sortStrengths(input.strengthFocus), phases: input.phases.map((phase, index) => ({ ...phase, phaseOrder: index + 1, name: phase.name.trim() })) };
       const result = initial ? await api.version(initial.template.id, body) : await api.create(body); onSaved(result); }
     catch (failure) { setError(errorMessage(failure)); }
     finally { pending.current = false; setBusy(false); }
@@ -95,6 +96,12 @@ function TemplateEditor({ api, initial, onClose, onSaved }: { api: Api; initial?
         {skills.map((skill) => <Checkbox key={skill.id} label={skill.name} checked={input.requiredSkillIds.includes(skill.id)} onChange={(event) => setInput((previous) => ({ ...previous, requiredSkillIds: event.target.checked ? [...previous.requiredSkillIds, skill.id] : previous.requiredSkillIds.filter((id) => id !== skill.id) }))} />)}
         {!specializations.pending && !specializations.error && skills.length === 0 && <EmptyState title="Danh mục chưa có chuyên môn Trainer nào" description="Hãy thêm chuyên môn Trainer trong phần quản lý người dùng trước khi dùng tính năng ghép phù hợp." />}
         {input.requiredSkillIds.length === 0 && <p>Chưa chọn chuyên môn. Mẫu này sẽ không có gợi ý Trainer theo chuyên môn.</p>}
+      </fieldset>
+      <fieldset disabled={busy} className={styles.stack}><legend>Trọng tâm thế mạnh</legend>
+        <p>Ngựa có thế mạnh Club Manager khai báo trùng với trọng tâm này sẽ được gợi ý mẫu kèm lý do. Không chọn nếu mẫu dùng chung.</p>
+        {STRENGTH_GROUPS.map((group) => <div key={group.title} role="group" aria-label={`Trọng tâm — ${group.title}`} className={styles.stack}><strong>{group.title}</strong>
+          {group.options.map((option) => <Checkbox key={option.value} label={option.label} checked={input.strengthFocus.includes(option.value)} onChange={(event) => setInput((previous) => ({ ...previous, strengthFocus: event.target.checked ? [...previous.strengthFocus.filter((code) => code !== option.value), option.value] : previous.strengthFocus.filter((code) => code !== option.value) }))} />)}
+        </div>)}
       </fieldset>
       <h3>Cấu trúc giai đoạn</h3>{input.phases.map((phase, index) => <Card key={index} title={`Giai đoạn ${index + 1}`}><div className={styles.stack}>
         <TextField label={`Giai đoạn ${index + 1} — tên`} required maxLength={150} value={phase.name} disabled={busy} onChange={(event) => setInput((previous) => ({ ...previous, phases: previous.phases.map((item, i) => i === index ? { ...item, name: event.target.value } : item) }))} />

@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
-import { ButtonLink, AlertBanner, Button, CandidateCard, Card, Checkbox, EmptyState, ErrorState, KeyValue, LoadingState, SelectField, StatusBadge, TextAreaField, TextField, WizardStepper } from '../../design-system';
+import { ActionBar, ButtonLink, AlertBanner, Button, CandidateCard, Card, Checkbox, EmptyState, ErrorState, KeyValue, LoadingState, SelectField, StatusBadge, TextAreaField, TextField, WizardStepper } from '../../design-system';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import type { CandidateList, Intensity } from '../program-creation/programTypes';
 import { FlowShell } from '../main-flows/FlowShell';
@@ -9,6 +9,7 @@ import { useResource } from '../main-flows/useResource';
 import { blocksSession, createSessionApi, type CreateSessionInput, type SessionDraft, type SessionExerciseInput, type Suitability } from './sessionApi';
 import styles from '../main-flows/flow.module.css';
 import { viLabel } from '../../shared/viLabels';
+import { clubDate, parseClubDateTime, sessionPeriodError } from '../../shared/clubCalendar';
 
 const INTENSITIES: Intensity[] = ['LOW', 'MEDIUM', 'MEDIUM_HIGH', 'HIGH'];
 const STEPS = ['Thông tin buổi tập', 'Bài tập', 'Work Rider', 'Xem lại'];
@@ -35,13 +36,16 @@ export function CreateSessionPage() {
   const resetValidation = () => { setCheck(undefined); setRiders(undefined); setRiderId(0); setAcknowledged(false); setError(''); };
   const patchExercise = (index: number, patch: Partial<SessionExerciseInput>) => { resetValidation(); setExercises(exercises.map((item, i) => i === index ? { ...item, ...patch } : item)); };
   function draft(): SessionDraft {
-    const start = new Date(when); if (!Number.isFinite(start.getTime())) throw new Error('Chọn ngày và giờ bắt đầu buổi tập.');
+    const start = parseClubDateTime(when); if (!start) throw new Error('Chọn ngày và giờ bắt đầu buổi tập.');
     if (!phase || !program.data || program.data.status !== 'ACTIVE') throw new Error('Chọn một chương trình đang hoạt động được giao và một giai đoạn.');
     const localDate = when.slice(0, 10);
     if (localDate < phase.startDate || localDate > phase.endDate) throw new Error('Lên lịch buổi tập trong thời gian của giai đoạn đã duyệt.');
     if (duration && (!Number.isFinite(Number(duration)) || Number(duration) <= 0)) throw new Error('Thời lượng dự kiến phải lớn hơn 0.');
+    const end = duration ? new Date(start.getTime() + Number(duration) * 60000) : undefined;
+    const periodError = sessionPeriodError(start, end, phase, program.data);
+    if (periodError) throw new Error(periodError);
     if (intensity && ((phase.intensityMin && INTENSITIES.indexOf(intensity) < INTENSITIES.indexOf(phase.intensityMin)) || (phase.intensityMax && INTENSITIES.indexOf(intensity) > INTENSITIES.indexOf(phase.intensityMax)))) throw new Error('Chọn cường độ trong khoảng của giai đoạn đã duyệt.');
-    return { horseProgramPhaseId: phase.id, scheduledStart: start.toISOString(), scheduledEnd: duration ? new Date(start.getTime() + Number(duration) * 60000).toISOString() : undefined,
+    return { horseProgramPhaseId: phase.id, scheduledStart: start.toISOString(), scheduledEnd: end?.toISOString(),
       intensity: intensity || undefined, exercises, workRiderUserId: riderId || undefined };
   }
   async function advance() {
@@ -74,7 +78,7 @@ export function CreateSessionPage() {
         {programs.error && <ErrorState title="Không tải được chương trình được giao" description={programs.error} onRetry={programs.reload} />}{program.pending && programId && <LoadingState label="Đang tải chương trình…" />}{program.error && <ErrorState title="Không tải được chương trình" description={program.error} onRetry={program.reload} />}
         <div className={styles.sessionFields}><SelectField label="Chương trình" required value={programId} options={[{ value: '', label: 'Chọn chương trình được giao' }, ...(programs.data?.items.filter((item) => item.status === 'ACTIVE').map((item) => ({ value: String(item.id), label: `${item.horse.name} · ${item.name}` })) ?? [])]} onChange={(event) => { setProgramId(event.target.value); setPhaseId(''); setExercises([]); resetValidation(); }} />
           <SelectField label="Giai đoạn" required value={phaseId} options={[{ value: '', label: 'Chọn giai đoạn' }, ...(program.data?.phases.map((item) => ({ value: String(item.id), label: item.name })) ?? [])]} onChange={(event) => { setPhaseId(event.target.value); resetValidation(); }} />
-          <TextField label="Ngựa · kế thừa" value={program.data?.horse.name ?? ''} readOnly /><TextField label="Ngày" type="date" required value={date} onChange={(event) => { setDate(event.target.value); resetValidation(); }} /><TextField label="Giờ bắt đầu" type="time" required value={time} onChange={(event) => { setTime(event.target.value); resetValidation(); }} />
+          <TextField label="Ngựa · kế thừa" value={program.data?.horse.name ?? ''} readOnly /><TextField label="Ngày" type="date" required min={[clubDate(), phase?.startDate ?? ''].sort().at(-1)} max={phase?.endDate} value={date} onChange={(event) => { setDate(event.target.value); resetValidation(); }} /><TextField label="Giờ bắt đầu" type="time" required helperText="Giờ Việt Nam. Chọn thời điểm ở tương lai." value={time} onChange={(event) => { setTime(event.target.value); resetValidation(); }} />
           <TextField label="Thời lượng dự kiến (phút)" type="number" min="1" value={duration} onChange={(event) => { setDuration(event.target.value); resetValidation(); }} /><TextField label="Mặt sân tập" maxLength={50} value={surface} onChange={(event) => setSurface(event.target.value)} />
           <TextField label="Trọng tâm buổi tập" maxLength={200} value={focus} onChange={(event) => setFocus(event.target.value)} /><TextField label="Trainer · kế thừa" readOnly value={user?.fullName ?? ''} />
           <SelectField label="Cường độ buổi tập" value={intensity} options={[{ value: '', label: 'Chưa xác định' }, ...INTENSITIES.map((value) => ({ value, label: viLabel(value) }))]} onChange={(event) => { setIntensity(event.target.value as Intensity); resetValidation(); }} /></div>
@@ -85,7 +89,7 @@ export function CreateSessionPage() {
       </div></Card><Card title="Các loại kiểm tra"><div className={styles.stack}><p>Phù hợp — tiếp tục bình thường.</p><p>Thận trọng — xác nhận và nêu lý do khi được yêu cầu.</p><p>Không khuyến nghị — chỉ giữ lại khi có lý do.</p><p>Chặn bắt buộc do y tế — phải xóa hoặc thay. Trùng lịch sẽ chặn việc chọn người cưỡi.</p><p className="text-caption">Hệ thống kiểm tra mức phù hợp trước khi bạn tiếp tục và khi lưu.</p></div></Card></div>}
       {step === 2 && <Card title="Chọn Work Rider"><div className={styles.factGrid}>{riders?.candidates.map((candidate) => <CandidateCard key={candidate.user.id} className={riderId === candidate.user.id ? styles.selected : undefined} name={candidate.user.fullName} subtitle={candidate.experienceLevel ?? candidate.label.replaceAll('_', ' ')} tags={candidate.skills ?? []} facts={[...candidate.reasons.map((value) => ({ label: 'Mức phù hợp', value })), ...candidate.warnings.map((value) => ({ label: 'Cảnh báo', value })), ...(candidate.hardBlock ? [{ label: 'Chặn bắt buộc', value: candidate.hardBlock }] : [])]} actions={<Button type="button" disabled={!!candidate.hardBlock} variant={riderId === candidate.user.id ? 'primary' : 'secondary'} aria-pressed={riderId === candidate.user.id} aria-label={`${riderId === candidate.user.id ? 'Bỏ chọn' : 'Chọn'} ${candidate.user.fullName}`} onClick={() => toggleRider(candidate.user.id)}>{riderId === candidate.user.id ? 'Bỏ chọn người cưỡi' : 'Chọn người cưỡi'}</Button>} />)}</div>{!riders?.candidates.length && <EmptyState title="Không có người cưỡi đủ điều kiện" description={riders?.emptyReason ?? 'Hãy đổi lịch hoặc thử lại khi có gợi ý người cưỡi.'} />}{rider && rider.warnings.length > 0 && <Checkbox label="Tôi đã đọc các cảnh báo về người cưỡi này" checked={acknowledged} onChange={(event) => setAcknowledged(event.target.checked)} />}</Card>}
       {step === 3 && <div className={styles.columns}><Card title="Xem lại buổi tập"><div className={styles.stack}><KeyValue label="Buổi tập" value={`${program.data?.horse.name} · ${program.data?.name} · ${phase?.name}`} /><KeyValue label="Giờ bắt đầu dự kiến" value={when} /><KeyValue label="Thời lượng dự kiến" value={duration ? `${duration} phút` : 'Chưa xác định'} /><KeyValue label="Work Rider" value={rider?.user.fullName ?? 'Chưa chọn'} /><KeyValue label="Cường độ / mặt sân / trọng tâm" value={[intensity, surface, focus].filter(Boolean).join(' · ') || 'Chưa xác định'} /><KeyValue label="Bài tập" value={exercises.map((item) => catalog.data?.find((exercise) => exercise.id === item.exerciseDefinitionId)?.name ?? `Bài tập ${item.exerciseDefinitionId}`).join(', ')} /><AlertBanner type="info" title="Chương trình không bị thay đổi">Lên lịch buổi tập không thay đổi chiến lược chương trình huấn luyện hay mẫu gốc.</AlertBanner></div></Card><div className={styles.stack}><Card title="Y tế & khả năng tập luyện">{check && <StatusBadge family="availability" status={check.trainingAvailability} />}<p>Khả năng tập luyện được kiểm tra lại trước khi buổi tập bắt đầu.</p></Card><Card title="Khi Lưu & thông báo"><StatusBadge family="session" status="SCHEDULED" /><p>Hệ thống tạo buổi tập và thông báo cho Work Rider được phân công. Chưa có gì được lên lịch trước khi lưu.</p></Card></div></div>}
-      <div className={styles.footer}><Button type="button" variant="secondary" disabled={step === 0} onClick={() => setStep(step - 1)}>Quay lại</Button><span className="text-caption">Chưa có gì được lên lịch cho đến khi bấm Lưu & thông báo ở Bước 4.</span><Button type="submit">{busy ? 'Đang kiểm tra…' : step === 3 ? 'Lưu & thông báo' : `Tiếp: ${STEPS[step + 1]}`}</Button></div>
+      <ActionBar leading={<span>Chưa có gì được lên lịch cho đến khi bấm Lưu & thông báo ở Bước 4.</span>}><Button type="button" variant="secondary" disabled={step === 0} onClick={() => setStep(step - 1)}>Quay lại</Button><Button type="submit">{busy ? 'Đang kiểm tra…' : step === 3 ? 'Lưu & thông báo' : `Tiếp: ${STEPS[step + 1]}`}</Button></ActionBar>
     </fieldset></form>
   </FlowShell>;
 }
