@@ -134,8 +134,23 @@
 .titleBlock .row > * { flex: 0 0 auto; }
 
 /* Declared strengths (V20261027_01) */
-.strengthFieldset { border: 0; margin: 0; min-width: 0; }
+.strengthFieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .strengthFieldset legend { padding: 0; }
 .strengthGroups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg); }
 .strengthGroup { display: flex; flex-direction: column; gap: var(--space-sm); }
 .strengthGroupTitle { font: 600 14px/17px var(--font-family); color: var(--color-text-primary); margin: 0; }
+.strengthChips { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+.strengthChip { position: relative; display: inline-flex; }
+.strengthChip input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.strengthChip span {
+  display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 14px;
+  border: 1px solid var(--color-border-strong); border-radius: var(--radius-full);
+  background: var(--color-bg-surface); color: var(--color-text-primary);
+  font: 500 13px/1 var(--font-family);
+  transition: background-color var(--motion-fast) var(--motion-ease), border-color var(--motion-fast) var(--motion-ease);
+}
+.strengthChip:hover span { border-color: var(--color-primary-600); }
+.strengthChip input:checked + span { background: var(--color-primary-50); border-color: var(--color-primary-600); color: var(--color-primary-700); font-weight: 600; }
+.strengthChip input:checked + span::before { content: '✓'; font-size: 12px; }
+.strengthChip input:focus-visible + span { box-shadow: var(--elev-focus); }
+.strengthChip input:disabled + span { opacity: .55; }

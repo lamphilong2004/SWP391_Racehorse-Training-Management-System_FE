@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { flushSync } from 'react-dom';
 import { useNavigate, useParams } from 'react-router';
-import { AlertBanner, Button, Card, Checkbox, StatusBadge, ErrorState, Icon, PhotoAttachmentTile, SelectField, TextField, DesignSystemScope, UnsavedChangesGuard, focusFirstInvalid } from '../../../design-system';
+import { AlertBanner, Button, Card, StatusBadge, ErrorState, Icon, PhotoAttachmentTile, SelectField, TextField, DesignSystemScope, UnsavedChangesGuard, focusFirstInvalid } from '../../../design-system';
 import { ApiRequestError } from '../api/horsesApi';
 import { useHorsesApi } from '../api/HorsesApiContext';
 import { useBreadcrumb } from '../shared/HorseManagementLayout';
@@ -196,10 +196,15 @@ function RegisterHorsePageContent() {
                   <div key={group.title} role="group" aria-label={group.title} className={styles.strengthGroup}>
                     <h3 className={styles.strengthGroupTitle}>{group.title}</h3>
                     <p className={styles.cardHelp}>{group.help}</p>
-                    {group.options.map((option) => (
-                      <Checkbox key={option.value} label={option.label} checked={strengths.includes(option.value)}
-                        onChange={(event) => toggleStrength(option.value, event.target.checked)} />
-                    ))}
+                    <div className={styles.strengthChips}>
+                      {group.options.map((option) => (
+                        <label key={option.value} className={styles.strengthChip}>
+                          <input type="checkbox" checked={strengths.includes(option.value)}
+                            onChange={(event) => toggleStrength(option.value, event.target.checked)} />
+                          <span>{option.label}</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>

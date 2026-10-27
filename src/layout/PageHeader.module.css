@@ -42,3 +42,7 @@
 .actions { flex-wrap: wrap; }
 .actions > :is(button, a), .actions > div > :is(button, a) { max-width: 100%; height: auto; min-height: var(--control-height-md); padding-block: var(--space-sm); white-space: normal; }
 @media (max-width: 767px) { .title { flex-basis: 100%; } .actions { max-width: 100%; } }
+
+/* 2026-10-27 polish: room above the title when a banner precedes the header. */
+:global([data-ui-v3]) .row { padding-top: var(--space-xs); padding-bottom: var(--space-lg); }
+:global([data-ui-v3]) .heading { font-size: 26px; color: var(--color-brand-primary); }
