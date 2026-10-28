@@ -8,7 +8,7 @@
 .table table { width: 100%; border-collapse: collapse; }
 .table th, .table td { padding: var(--space-md); text-align: left; border-bottom: 1px solid var(--color-border-default); vertical-align: top; }
 .table th { background: var(--color-bg-subtle); color: var(--color-text-secondary); }
-.horseChoice { display: flex; align-items: center; gap: var(--space-sm); cursor: pointer; }
+.horseChoice { display: flex; align-items: center; gap: var(--space-sm); cursor: pointer; min-width: 220px; }
 .horseChoice small { display: block; margin-top: var(--space-xs); }
 .horseChoice input { accent-color: var(--color-primary-600); }
 .horseSummary { width: 100%; max-width: none; }

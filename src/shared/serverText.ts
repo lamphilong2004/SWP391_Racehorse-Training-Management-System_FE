@@ -51,6 +51,8 @@ const TEXT: Record<string, string> = {
   'scheduledStart must be in the future. Choose a later time or reschedule the session.': 'Giờ bắt đầu phải ở tương lai. Hãy chọn thời điểm muộn hơn.',
   'periodStart must be today or later in Asia/Ho_Chi_Minh.': 'Ngày bắt đầu chương trình phải từ hôm nay trở đi (giờ Việt Nam).',
   'Unknown strength code.': 'Mã thế mạnh không hợp lệ.',
+  'examinedAt cannot be in the future.': 'Ngày giờ khám không được ở tương lai.',
+  'examinedAt cannot be before the horse was registered.': 'Ngày giờ khám không được trước ngày đăng ký ngựa.',
   'Use 8–64 characters, a letter and a digit, at most 72 UTF-8 bytes, and not your email.': 'Mật khẩu 8–64 ký tự, có chữ và số, không trùng email.',
   'Passwords must match.': 'Mật khẩu nhập lại chưa khớp.',
   'A user with this email already exists.': 'Email này đã có tài khoản.',

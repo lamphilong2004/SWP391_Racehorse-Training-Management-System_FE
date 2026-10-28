@@ -1,3 +1,4 @@
+import { clubDateTime, parseClubDateTime } from '../../shared/clubCalendar';
 import { useRef, useState } from 'react';
 import { ActionBar, AlertBanner, Button, SelectField, TextAreaField, TextField } from '../../design-system';
 import { medicalErrorMessage } from './errors';
@@ -29,6 +30,11 @@ export function MedicalForm({ fields, initial = {}, submitLabel, onSave, onCance
       if (field.maxLength && value.length > field.maxLength) validation[field.name] = `${field.label} tối đa ${field.maxLength} ký tự`;
       if (field.type === 'number' && value && (!Number.isSafeInteger(Number(value)) || Number(value) < 1)) validation[field.name] = 'Nhập mã số dương';
       if (field.type === 'date' && value && !validDate(value)) validation[field.name] = 'Nhập ngày hợp lệ';
+      if (field.type === 'datetime-local' && value) {
+        const at = parseClubDateTime(value);
+        if (!at) validation[field.name] = 'Nhập ngày giờ hợp lệ';
+        else if (at.getTime() > Date.now() + 60_000) validation[field.name] = 'Không chọn thời điểm trong tương lai';
+      }
       if (field.options && value && !field.options.includes(value)) validation[field.name] = 'Chọn một lựa chọn hợp lệ';
     });
     setErrors(validation); setResult({});
@@ -42,7 +48,7 @@ export function MedicalForm({ fields, initial = {}, submitLabel, onSave, onCance
     <div className="medical-form-fields">{fields.map((field) => <div key={field.name} className={field.type === 'textarea' ? 'medical-form-wide' : undefined}>{field.options ?
       <SelectField label={field.label} aria-label={field.label} required={field.required} options={field.options.map((value) => ({ value, label: viLabel(value) }))} placeholder="Chọn…" value={values[field.name] ?? ''} error={errors[field.name]} disabled={pending} onChange={(event) => change(field.name, event.target.value)} /> :
       field.type === 'textarea' ? <TextAreaField label={field.label} aria-label={field.label} required={field.required} maxLength={field.maxLength} value={values[field.name] ?? ''} error={errors[field.name]} disabled={pending} onChange={(event) => change(field.name, event.target.value)} /> :
-      <TextField label={field.label} aria-label={field.label} required={field.required} maxLength={field.maxLength} type={field.type ?? 'text'} min={field.type === 'number' ? 1 : undefined} step={field.type === 'number' ? 1 : undefined} value={values[field.name] ?? ''} error={errors[field.name]} disabled={pending} onChange={(event) => change(field.name, event.target.value)} />}</div>)}</div>
+      <TextField label={field.label} aria-label={field.label} required={field.required} maxLength={field.maxLength} type={field.type ?? 'text'} max={field.type === 'datetime-local' ? clubDateTime() : undefined} min={field.type === 'number' ? 1 : undefined} step={field.type === 'number' ? 1 : undefined} value={values[field.name] ?? ''} error={errors[field.name]} disabled={pending} onChange={(event) => change(field.name, event.target.value)} />}</div>)}</div>
     {result.error && <AlertBanner type="danger" title={result.error} />}
     {result.success && <AlertBanner type="success" title={result.success} />}
     <ActionBar>
