@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { ApiError, requestApi } from '../../shared/auth/authApi';
 import { authSession } from '../../shared/auth/authSession';
+import { serverText } from '../../shared/serverText';
 
 export type FlowRequest = <T>(path: string, init?: RequestInit) => Promise<T>;
 export function idOf(value: string | number | undefined): number {
@@ -20,7 +21,7 @@ export function useFlowRequest(): FlowRequest {
   }, [handleApiError]);
 }
 export function errorMessage(error: unknown): string {
-  if (error instanceof ApiError) return [error.message, ...error.details.map((detail) => detail.message)].join(' ');
+  if (error instanceof ApiError) return [...new Set([error.message, ...error.details.map((detail) => detail.message)])].map(serverText).join(' ');
   return error instanceof Error ? error.message : 'Máy chủ không xử lý được yêu cầu này.';
 }
 export function jsonBody(method: string, body: unknown): RequestInit {

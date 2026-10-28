@@ -1,4 +1,4 @@
-import type { HTMLAttributes } from 'react';
+import type { HTMLAttributes, ReactNode } from 'react';
 import { cx } from '../../utils/cx';
 import styles from './Foundation.module.css';
 
@@ -12,4 +12,14 @@ export function Stack({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
 /** Three columns desktop, two tablet, one narrow web; children keep their own semantics. */
 export function ResponsiveGrid({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return <div {...props} className={cx(styles.grid, className)} />;
+}
+
+/** Context/back action on the left; secondary then primary actions on the right.
+ * Keeps native form and link semantics; never changes submission or permissions.
+ */
+export function ActionBar({ leading, children, className, ...props }: HTMLAttributes<HTMLDivElement> & { leading?: ReactNode }) {
+  return <div {...props} className={cx(styles.actionBar, className)}>
+    {leading && <div className={styles.actionContext}>{leading}</div>}
+    <div className={styles.actionGroup}>{children}</div>
+  </div>;
 }

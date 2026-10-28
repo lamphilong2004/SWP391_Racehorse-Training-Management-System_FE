@@ -31,8 +31,19 @@ it('denies Groom before any rider request', () => {
 it('requires normal precheck, server gates and scheduled time; no early start', async () => {
   const future = { ...base, scheduledStart: '2100-01-01T01:00:00Z', preCheckResult: null, blocked: true, blockedReasons: ['PRE_CHECK_MISSING'] };
   expect(startBlocks(future)).toEqual(expect.arrayContaining(['Không được bắt đầu sớm. Trainer cần đổi lịch nếu cần.', 'Kết quả kiểm tra trước buổi tập của Groom phải là Tất cả bình thường.']));
+  expect(startBlocks(future)).toContain('Groom chưa lưu kiểm tra trước buổi tập cho đúng buổi này.');
+  expect(startBlocks(future)).not.toContain('PRE_CHECK_MISSING');
   const client = api(future); mount(client, '/rider/assignments/50');
   expect(await screen.findByRole('button', { name: 'Sẵn sàng bắt đầu' })).toBeDisabled(); expect(client.start).not.toHaveBeenCalled();
+});
+it('does not label a future ride ready merely because its Groom check passed', async () => {
+  const client = api({ ...base, scheduledStart: '2100-01-01T01:00:00Z' });
+  mount(client, '/rider');
+  expect(await screen.findByText(/Kiểm tra trước buổi tập đạt\. Có thể bắt đầu lúc/)).toBeInTheDocument();
+  expect(within(screen.getByRole('alert')).getByText('Chờ điều kiện bắt đầu')).toBeInTheDocument();
+  expect(within(screen.getByRole('alert')).queryByText('Sẵn sàng', { exact: true })).not.toBeInTheDocument();
+  expect(screen.getByText('Sẵn sàng', { exact: true })).toBeInTheDocument(); // Availability is separate from permission to start now.
+  expect(client.start).not.toHaveBeenCalled();
 });
 it('requires six readiness confirmations and starts once on the dedicated endpoint', async () => {
   const client = api(); const router = mount(client, '/rider/assignments/50/start');

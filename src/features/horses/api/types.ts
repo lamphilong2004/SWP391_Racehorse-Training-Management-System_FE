@@ -53,6 +53,8 @@ export interface HorseIdentityRequest {
   foaledDate: string | null;
   countryOfOrigin: string | null;
   registrationNo: string | null;
+  /** Declared strength codes; omitted keeps the current declaration, [] clears it. */
+  strengths?: string[];
 }
 
 export interface HorseDetail {
@@ -70,6 +72,8 @@ export interface HorseDetail {
   countryOfOrigin: string | null;
   registrationNo: string | null;
   activatedAt: string | null;
+  /** Declared by Club Manager; not a Head Trainer confirmation. */
+  strengths?: string[];
   pedigree: Pedigree;
   currentOwnerships: Ownership[];
   currentAssignment: StableAssignment | null;

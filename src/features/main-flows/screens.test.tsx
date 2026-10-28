@@ -9,7 +9,8 @@ const state = vi.hoisted(() => ({ request: vi.fn(), user: { id: 2, fullName: 'Te
 vi.mock('../../shared/auth/AuthProvider', () => ({ useAuth: () => ({ user: state.user }) }));
 vi.mock('./api', async (original) => ({ ...await original<typeof import('./api')>(), useFlowRequest: () => state.request }));
 const horse = { id: 7, horseCode: 'RD-015', name: 'Test Horse', lifecycle: 'DRAFT', trainingAvailability: 'AVAILABLE', breed: 'Thoroughbred' };
-beforeEach(() => { state.request.mockReset(); state.user.roles = ['VETERINARIAN']; });
+beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-10-20T03:00Z')); state.request.mockReset(); state.user.roles = ['VETERINARIAN']; });
+afterEach(() => vi.useRealTimers());
 const change = (label: string, value: string) => fireEvent.change(screen.getByLabelText(label, { exact: false }), { target: { value } });
 
 it('reads completed Groom checks from the approved nested preSessionCheck response', async () => {
@@ -40,7 +41,7 @@ it('keeps a failed baseline draft for retry and confirms only a real save respon
 });
 it('schedules one session through all four steps using the approved draft/recommendation/create operations', async () => {
   state.user.roles = ['TRAINER']; let posts = 0;
-  const program = { id: 10, horse, name: 'Test program', status: 'ACTIVE', phases: [{ id: 31, name: 'Foundation', startDate: '2026-11-01', endDate: '2026-11-30' }] };
+  const program = { id: 10, horse, name: 'Test program', status: 'ACTIVE', periodStart: '2026-11-01', periodEnd: '2026-11-30', phases: [{ id: 31, name: 'Foundation', startDate: '2026-11-01', endDate: '2026-11-30' }] };
   state.request.mockImplementation(async (path: string, init?: RequestInit) => {
     if (path.startsWith('/api/training-programs?')) return { items: [program] };
     if (path === '/api/training-programs/10') return program;
@@ -58,6 +59,13 @@ it('schedules one session through all four steps using the approved draft/recomm
   await screen.findByRole('option', { name: 'Walk' }); change('Thêm bài tập', '8');
   fireEvent.click(screen.getByRole('button', { name: 'Tiếp: Work Rider' }));
   fireEvent.click(await screen.findByRole('button', { name: 'Chọn Test Rider' }));
+  expect(screen.getByRole('button', { name: 'Bỏ chọn Test Rider' })).toHaveAttribute('aria-pressed', 'true');
+  fireEvent.click(screen.getByRole('button', { name: 'Bỏ chọn Test Rider' }));
+  expect(screen.getByRole('button', { name: 'Chọn Test Rider' })).toHaveAttribute('aria-pressed', 'false');
+  fireEvent.click(screen.getByRole('button', { name: 'Tiếp: Xem lại' }));
+  expect(await screen.findByText('Chọn một Work Rider đủ điều kiện.')).toBeInTheDocument();
+  expect(posts).toBe(0);
+  fireEvent.click(screen.getByRole('button', { name: 'Chọn Test Rider' }));
   fireEvent.click(screen.getByRole('button', { name: 'Tiếp: Xem lại' }));
   fireEvent.click(await screen.findByRole('button', { name: 'Lưu & thông báo' }));
   expect(await screen.findByRole('heading', { name: 'Saved session detail' })).toBeInTheDocument(); expect(posts).toBe(1);

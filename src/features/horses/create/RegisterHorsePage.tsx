@@ -5,7 +5,7 @@ import { AlertBanner, Button, Card, StatusBadge, ErrorState, Icon, PhotoAttachme
 import { ApiRequestError } from '../api/horsesApi';
 import { useHorsesApi } from '../api/HorsesApiContext';
 import { useBreadcrumb } from '../shared/HorseManagementLayout';
-import { BREED_OPTIONS, SEX_OPTIONS, sexLabel } from '../shared/options';
+import { BREED_OPTIONS, SEX_OPTIONS, STRENGTH_GROUPS, sexLabel, sortStrengths } from '../shared/options';
 import styles from '../shared/horses.module.css';
 
 type Field = 'name' | 'horseCode' | 'foaledDate' | 'sex' | 'breed' | 'countryOfOrigin' | 'registrationNo';
@@ -45,6 +45,7 @@ function RegisterHorsePageContent() {
   const [values, setValues] = useState<Values>(EMPTY);
   // Loaded identity in edit mode; the form is dirty only when the user changed it (memory-only, never stored).
   const [baseline, setBaseline] = useState<Values>(EMPTY);
+  const [strengths, setStrengths] = useState<string[]>([]), [baselineStrengths, setBaselineStrengths] = useState<string[]>([]);
   const [saved, setSaved] = useState(false);
   const form = useRef<HTMLFormElement>(null);
   const [customSex, setCustomSex] = useState(false), [customBreed, setCustomBreed] = useState(false);
@@ -57,7 +58,7 @@ function RegisterHorsePageContent() {
   useEffect(() => {
     if (!editing) return;
     let active = true;
-    api.getHorse(editId).then((horse) => { if (active) { const loaded = { name: horse.name, horseCode: horse.horseCode, foaledDate: horse.foaledDate ?? '', sex: horse.sex ?? '', breed: horse.breed ?? '', countryOfOrigin: horse.countryOfOrigin ?? '', registrationNo: horse.registrationNo ?? '' }; setValues(loaded); setBaseline(loaded); setCustomSex(false); setCustomBreed(Boolean(horse.breed && !BREED_OPTIONS.some((option) => option.value === horse.breed))); setLoading(false); } }, (error: unknown) => { if (active) { setFormError(error instanceof Error ? error.message : 'Không tải được thông tin ngựa.'); } });
+    api.getHorse(editId).then((horse) => { if (active) { const loaded = { name: horse.name, horseCode: horse.horseCode, foaledDate: horse.foaledDate ?? '', sex: horse.sex ?? '', breed: horse.breed ?? '', countryOfOrigin: horse.countryOfOrigin ?? '', registrationNo: horse.registrationNo ?? '' }; setValues(loaded); setBaseline(loaded); const declared = sortStrengths(horse.strengths ?? []); setStrengths(declared); setBaselineStrengths(declared); setCustomSex(false); setCustomBreed(Boolean(horse.breed && !BREED_OPTIONS.some((option) => option.value === horse.breed))); setLoading(false); } }, (error: unknown) => { if (active) { setFormError(error instanceof Error ? error.message : 'Không tải được thông tin ngựa.'); } });
     return () => { active = false; };
   }, [api, editId, editing, loadAttempt]);
 
@@ -103,6 +104,7 @@ function RegisterHorsePageContent() {
       const input = {
         horseCode: values.horseCode.trim(), name: values.name.trim(), breed: values.breed.trim() || null, sex: values.sex.trim() || null,
         foaledDate: values.foaledDate || null, countryOfOrigin: values.countryOfOrigin.trim() || null, registrationNo: values.registrationNo.trim() || null,
+        strengths: sortStrengths(strengths),
       };
       const horse = editing ? await api.updateHorse(editId, input) : await api.createHorse(input);
       let photoFailed = false;
@@ -132,7 +134,10 @@ function RegisterHorsePageContent() {
     }
   };
 
-  const dirty = !saved && (photos.length > 0 || (Object.keys(EMPTY) as Field[]).some((field) => values[field] !== baseline[field]));
+  const dirty = !saved && (photos.length > 0 || (Object.keys(EMPTY) as Field[]).some((field) => values[field] !== baseline[field])
+    || sortStrengths(strengths).join() !== baselineStrengths.join());
+  const toggleStrength = (code: string, checked: boolean) =>
+    setStrengths((current) => checked ? [...current.filter((value) => value !== code), code] : current.filter((value) => value !== code));
 
   return (
     <form ref={form} className={styles.page} onSubmit={submit} noValidate>
@@ -180,6 +185,30 @@ function RegisterHorsePageContent() {
                 value={values.registrationNo} onChange={(e) => set('registrationNo')(e.target.value)} maxLength={50}
                 error={errors.registrationNo} helperText="Phải là duy nhất — hệ thống kiểm tra khi bạn lưu." />
             </div>
+          </Card>
+
+          <Card>
+            <fieldset className={[styles.cardBody, styles.strengthFieldset].join(' ')} disabled={loading}>
+              <legend className={styles.cardTitle}>Thế mạnh (Club Manager khai báo)</legend>
+              <p className={styles.cardHelp}>Không bắt buộc. Để trống nếu chưa rõ. Head Trainer dùng thông tin này khi chọn mẫu chương trình; đây không phải đánh giá đã xác nhận và không suy ra từ phả hệ.</p>
+              <div className={styles.strengthGroups}>
+                {STRENGTH_GROUPS.map((group) => (
+                  <div key={group.title} role="group" aria-label={group.title} className={styles.strengthGroup}>
+                    <h3 className={styles.strengthGroupTitle}>{group.title}</h3>
+                    <p className={styles.cardHelp}>{group.help}</p>
+                    <div className={styles.strengthChips}>
+                      {group.options.map((option) => (
+                        <label key={option.value} className={styles.strengthChip}>
+                          <input type="checkbox" checked={strengths.includes(option.value)}
+                            onChange={(event) => toggleStrength(option.value, event.target.checked)} />
+                          <span>{option.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </fieldset>
           </Card>
 
           <Card>

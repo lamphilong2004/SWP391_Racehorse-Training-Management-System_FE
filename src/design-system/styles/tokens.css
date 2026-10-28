@@ -153,7 +153,7 @@
   --color-accent-amber: #d97706;
   --color-accent-rose: #e11d48;
   --color-link: #0369a1;
-  --color-bg-page: var(--color-brand-neutral);
+  --color-bg-page: #f3f5f9;
   --color-bg-surface: #ffffff;
   --color-bg-subtle: #f1f5f9;
   --color-text-primary: #191c1e;
@@ -162,11 +162,19 @@
   --color-border-default: #e2e8f0;
   --color-border-strong: #c6c6ce;
   --color-border-focus: #047857;
-  --color-brand-navy: #ffffff;
-  --color-brand-navy-hover: #f2f4f6;
-  --color-sidebar-text: #45464d;
-  --color-sidebar-text-active: #0b132b;
-  --color-sidebar-active: #ecfdf5;
+  /* 2026-10-27 polish: navy navigation rail carries the brand; content stays light for dense data. */
+  --color-brand-navy: #0b132b;
+  --color-brand-navy-hover: #17213d;
+  --color-sidebar-text: #c3cad8;
+  --color-sidebar-muted: #7f8aa3;
+  --color-sidebar-text-active: #ffffff;
+  --color-sidebar-active: rgb(16 185 129 / 16%);
+  --color-sidebar-accent: #34d399;
+  --color-info-50: #f0f9ff;
+  --color-info-600: #0369a1;
+  --color-table-header: #f8fafc;
+  --color-row-hover: #f6f8fb;
+  --color-primary-800: #064e3b;
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;

@@ -1,6 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router';
-import { AlertBanner, Button, ButtonLink, Card, Drawer, EmptyState, ErrorState, LoadingState, NotificationItem, SelectField } from '../../design-system';
+import { ActionBar, AlertBanner, Button, ButtonLink, Card, Drawer, EmptyState, ErrorState, LoadingState, NotificationItem, SelectField } from '../../design-system';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import type { RoleCode } from '../../shared/auth/roles';
 import { FlowShell } from '../main-flows/FlowShell';
@@ -10,6 +9,7 @@ import { useResource } from '../main-flows/useResource';
 import type { Page } from './accountApi';
 import styles from './Administration.module.css';
 import { serverText } from '../../shared/serverText';
+import { dateTime } from '../evaluation/models';
 
 const CATEGORY_LABELS: Record<string, string> = { ALERTS: 'Cảnh báo', MEDICAL: 'Y tế', SCHEDULE: 'Lịch' };
 interface Notice { id: number; category: 'ALERTS' | 'MEDICAL' | 'SCHEDULE'; notificationType: string; title: string; message: string; readAt: string | null; targetType: string | null; targetId: number | null; isSimulated: boolean; createdAt: string }
@@ -26,7 +26,7 @@ function destination(notice: Notice, roles: RoleCode[]): string | undefined {
   if (notice.targetType === 'INCIDENT' && !roles.includes('HORSE_OWNER')) return `/incidents/${id}`;
   if (notice.targetType === 'MEDICAL_CASE' && roles.some((r) => ['VETERINARIAN', 'TRAINER', 'HEAD_TRAINER', 'CLUB_MANAGER'].includes(r))) return `/medical/cases/${id}`;
   if (notice.targetType === 'CARE_TASK' && roles.includes('GROOM')) return '/care/tasks';
-  if (notice.targetType === 'HORSE_TRAINING_PROGRAM' && roles.some((r) => ['HEAD_TRAINER', 'TRAINER'].includes(r))) return `/training/programs/${id}`;
+  if (['HORSE_TRAINING_PROGRAM', 'TRAINING_PROGRAM'].includes(notice.targetType ?? '') && roles.some((r) => ['HEAD_TRAINER', 'TRAINER'].includes(r))) return `/training/programs/${id}`;
   return undefined;
 }
 export function NotificationsPage() {
@@ -56,18 +56,18 @@ function NotificationContent({ role, roles, compact = false }: { role: RoleCode;
     try { if (!notifications) throw new Error('Đăng nhập lại để xem thông báo.'); await notifications.markRead(id); }
     catch (failure) { setError(errorMessage(failure)); } finally { inFlight.current = false; setBusy(false); }
   }
-  const content = <div className={styles.stack}><Button variant="secondary" disabled={busy || !notifications?.unreadCount} onClick={() => { void mark(); }}>Đánh dấu tất cả đã đọc</Button><div className={styles.filters}>
+  const content = <div className={styles.stack}><div className={styles.filters}>
       <SelectField label="Trạng thái đọc" value={read} options={[{ value: '', label: 'Tất cả' }, { value: 'false', label: 'Chưa đọc' }, { value: 'true', label: 'Đã đọc' }]} onChange={(e) => { setRead(e.target.value); setPage(0); }} />
       <SelectField label="Loại" value={category} options={[{ value: '', label: 'Tất cả loại' }, { value: 'ALERTS', label: 'Cảnh báo' }, { value: 'MEDICAL', label: 'Y tế' }, { value: 'SCHEDULE', label: 'Lịch' }]} onChange={(e) => { setCategory(e.target.value); setPage(0); }} />
-      {notifications?.unreadCount !== undefined && <span>{notifications.unreadCount} chưa đọc</span>}
     </div>
+    <ActionBar leading={notifications?.unreadCount !== undefined ? <span>{notifications.unreadCount} chưa đọc</span> : undefined}><Button variant="secondary" disabled={busy || !notifications?.unreadCount} onClick={() => { void mark(); }}>Đánh dấu tất cả đã đọc</Button></ActionBar>
     {notifications?.error && <ErrorState title="Không lấy được số thông báo chưa đọc" description={notifications.error} onRetry={() => { void notifications.refresh(); }} />}
     {error && <AlertBanner type="danger" title="Cập nhật thông báo thất bại">{error}</AlertBanner>}
     {resource.pending && <LoadingState label="Đang tải thông báo…" />}{resource.error && <ErrorState title="Không tải được thông báo" description={resource.error} onRetry={resource.reload} />}
     {resource.data && <><Card>{resource.data.items.length === 0 && <EmptyState title="Không có thông báo phù hợp" />}
-      {resource.data.items.map((notice) => { const target = destination(notice, roles); return <div key={notice.id} className={styles.row}>
-        <NotificationItem title={serverText(notice.title)} body={serverText(notice.message)} context={`${CATEGORY_LABELS[notice.category] ?? notice.category}${notice.isSimulated ? ' · DỮ LIỆU MÔ PHỎNG' : ''}`} time={new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(notice.createdAt))} read={notice.readAt !== null} />
-        <div className={styles.actions}>{!notice.readAt && <Button variant="secondary" size="sm" disabled={busy} onClick={() => { void mark(notice.id); }}>Đánh dấu đã đọc</Button>}{target && <Link to={target}>Mở</Link>}</div>
+      {resource.data.items.map((notice) => { const target = destination(notice, roles); return <div key={notice.id} className={styles.notice}>
+        <NotificationItem title={serverText(notice.title)} body={serverText(notice.message)} context={`${CATEGORY_LABELS[notice.category] ?? notice.category}${notice.isSimulated ? ' · DỮ LIỆU MÔ PHỎNG' : ''}`} time={dateTime(notice.createdAt)} read={Boolean(notice.readAt)} />
+        <div className={styles.actions}>{!notice.readAt && <Button variant="tertiary" size="sm" disabled={busy} onClick={() => { void mark(notice.id); }}>Đánh dấu đã đọc</Button>}{target && <ButtonLink size="sm" to={target}>Mở</ButtonLink>}</div>
       </div>; })}</Card><div className={styles.actions}><Button variant="secondary" disabled={page === 0} onClick={() => setPage(page - 1)}>Trước</Button><span>Trang {page + 1} · {resource.data.totalItems} thông báo</span><Button variant="secondary" disabled={page + 1 >= resource.data.totalPages} onClick={() => setPage(page + 1)}>Sau</Button></div></>}
     </div>;
   return compact ? content : <FlowShell title="Thông báo" section="Không gian làm việc" role={role} description="Thông báo trong ứng dụng của tài khoản bạn. Mở thông báo không làm thay đổi dữ liệu nghiệp vụ hay quyền hạn.">{content}</FlowShell>;

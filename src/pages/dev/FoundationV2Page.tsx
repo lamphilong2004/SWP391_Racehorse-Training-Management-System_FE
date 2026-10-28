@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { Button, Card, DataTable, DesignSystemScope, Drawer, EmptyState, ErrorState, Icon, Modal, ResponsiveGrid, Skeleton, Stack, StatusBadge, Tabs, TextAreaField, TextField, ToastRegion, UnsavedChangesGuard, type ToastMessage } from '../../design-system';
+import { ActionBar, Button, Card, DataTable, DesignSystemScope, Drawer, EmptyState, ErrorState, Icon, Modal, ResponsiveGrid, Skeleton, Stack, StatusBadge, Tabs, TextAreaField, TextField, ToastRegion, UnsavedChangesGuard, type ToastMessage } from '../../design-system';
 import styles from './FoundationV2Page.module.css';
 
 /** Component review only. DEV-only route, no sample business store, Auth API or save action. */
@@ -18,6 +18,12 @@ export function FoundationV2Page() {
     <Tabs label="Foundation review" idPrefix="v2-review" items={[{ value: 'components', label: 'Components' }, { value: 'states', label: 'Data states' }]} value={tab} onChange={setTab} />
     <div role="tabpanel" id={`v2-review-panel-${tab}`} aria-labelledby={`v2-review-tab-${tab}`}>
       {tab === 'components' ? <Stack>
+        <Card title="Bố cục thao tác — chỉ kiểm tra component">
+          <p>Nội dung và trường nhập ở phía trên. Hủy ở bên trái nút chính; thông tin hỗ trợ tách khỏi nhóm nút.</p>
+          <ActionBar leading={<span>Không gửi API hoặc lưu dữ liệu trong trang kiểm tra này.</span>}>
+            <Button variant="secondary">Hủy</Button><Button disabled>Lưu thay đổi</Button>
+          </ActionBar>
+        </Card>
         <ResponsiveGrid>
           <Card title="Actions"><Stack><Button>Primary</Button><Button variant="secondary">Secondary</Button><Button variant="tertiary">Tertiary</Button><Button variant="danger">Danger</Button><Button loading>Pending operation</Button><Button disabled>Disabled</Button><Button variant="icon" aria-label="Review icon"><Icon name="eye" /></Button></Stack></Card>
           <Card title="Form resilience"><Stack><TextField label="Review input" value={text} onChange={e => setText(e.target.value)} helperText="Memory only. Leaving with text requires confirmation." />

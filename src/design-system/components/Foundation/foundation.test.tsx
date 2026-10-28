@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Button, DesignSystemScope, Drawer, Modal, ResponsiveGrid, Skeleton, Stack, ToastRegion } from '../../index';
+import { ActionBar, Button, DesignSystemScope, Drawer, Modal, ResponsiveGrid, Skeleton, Stack, ToastRegion } from '../../index';
 
 it('keeps a controlled pending button disabled, named and unable to submit twice', async () => {
   const click = vi.fn();
@@ -19,6 +19,19 @@ it('adds a shared scope without changing the document theme or child semantics',
   render(<DesignSystemScope><ResponsiveGrid><Stack><h2>Vùng</h2></Stack></ResponsiveGrid></DesignSystemScope>);
   expect(screen.getByRole('heading', { name: 'Vùng' }).closest('[data-design-system]')).toHaveAttribute('data-design-system', 'v2');
   expect(document.documentElement).not.toHaveAttribute('data-design-system');
+});
+it('preserves keyboard order, cancel semantics and native submit in a form action bar', async () => {
+  const save = vi.fn(), cancel = vi.fn();
+  render(<form onSubmit={(event) => { event.preventDefault(); save(); }}>
+    <ActionBar leading={<span>Chưa lưu thay đổi</span>}>
+      <Button type="button" variant="secondary" onClick={cancel}>Hủy</Button>
+      <Button type="submit">Lưu</Button>
+    </ActionBar>
+  </form>);
+  await userEvent.tab(); expect(screen.getByRole('button', { name: 'Hủy' })).toHaveFocus();
+  await userEvent.keyboard('{Enter}'); expect(cancel).toHaveBeenCalledOnce(); expect(save).not.toHaveBeenCalled();
+  await userEvent.tab(); expect(screen.getByRole('button', { name: 'Lưu' })).toHaveFocus();
+  await userEvent.keyboard('{Enter}'); expect(save).toHaveBeenCalledOnce();
 });
 it('bounds skeleton shape dimensions and exposes one labelled busy region', () => {
   const { rerender } = render(<Skeleton label="Loading cards" lines={1000} />);

@@ -4,6 +4,8 @@
  */
 const LABELS: Record<string, string> = {
   // lifecycle / account / program / generic status
+  JUNIOR: 'Mới vào nghề', INTERMEDIATE: 'Trung bình', SENIOR: 'Nhiều kinh nghiệm', EXPERT: 'Chuyên gia',
+  RECOMMENDED: 'Được gợi ý', SUITABLE: 'Phù hợp', SUITABLE_WITH_CAUTION: 'Phù hợp — cần lưu ý', NOT_RECOMMENDED: 'Không khuyến nghị',
   DRAFT: 'Nháp', ACTIVE: 'Đang hoạt động', INACTIVE: 'Ngừng hoạt động', PAUSED: 'Tạm dừng', COMPLETED: 'Hoàn thành',
   // training availability
   AVAILABLE: 'Sẵn sàng', LIMITED: 'Hạn chế', LOCKED: 'Khóa',
@@ -11,6 +13,11 @@ const LABELS: Record<string, string> = {
   FIT: 'Khỏe', MONITORING: 'Theo dõi', INJURED: 'Chấn thương', QUARANTINED: 'Cách ly',
   // session
   SCHEDULED: 'Đã lên lịch', IN_PROGRESS: 'Đang tập', INTERRUPTED: 'Gián đoạn', BLOCKED: 'Bị chặn',
+  PRE_CHECK_MISSING: 'Groom chưa lưu kiểm tra trước buổi tập cho đúng buổi này.',
+  PRE_CHECK_ABNORMAL: 'Kiểm tra trước buổi tập có bất thường; chưa được bắt đầu.',
+  AVAILABILITY_LOCKED: 'Veterinarian đã khóa khả năng tập luyện của ngựa.',
+  PROGRAM_NOT_ACTIVE: 'Chương trình huấn luyện chưa ở trạng thái hoạt động.',
+  EXERCISE_MEDICAL_BLOCK: 'Bài tập đang bị hạn chế y tế chặn.',
   // intensity
   LOW: 'Thấp', MEDIUM: 'Trung bình', MEDIUM_HIGH: 'Trung bình cao', HIGH: 'Cao',
   // severity / realtime

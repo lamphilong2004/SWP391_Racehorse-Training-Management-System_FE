@@ -1,3 +1,4 @@
+import { boxLabel } from '../../shared/stableBox';
 import { ROUTES } from '../../app/routePaths';
 import { UiPreviewNotice } from './UiPreviewNotice';
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
@@ -10,6 +11,7 @@ import { ApiError } from '../../shared/auth/authApi';
 import { collectAssignedTasks, createGroomService, type GroomService, type GroomTreatmentTask } from './groomService';
 import type { HorseIdentity } from './horseRead';
 import './medical.css';
+import { useClubToday } from '../../shared/useClubToday';
 
 function groomError(error: unknown) {
   if (error instanceof ApiError) {
@@ -63,7 +65,7 @@ export function GroomTasks({ service }: { service: GroomService }) {
   }, [state.tasks, service]);
   const reload = useCallback(() => { setState({}); setRevision((v) => v + 1); }, []);
   // Date-only taskDate is a calendar day; do not shift it by interpreting it as a UTC timestamp.
-  const now = new Date(), today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const today = useClubToday();
   const tasks = useMemo(() => state.tasks ?? [], [state.tasks]);
   const filtered = tasks.filter((t) => (!horse || t.horseId === Number(horse)) &&
     (filter === 'completed' ? t.status === 'COMPLETED' : filter === 'upcoming' ? t.status === 'PENDING' && t.taskDate > today : filter === 'all' ? true : t.taskDate === today));
@@ -96,7 +98,7 @@ export function GroomTasks({ service }: { service: GroomService }) {
     <div className="medical-grid medical-treatment-layout"><div className="medical-stack">
       {!state.tasks ? state.error ? <><AlertBanner type="danger" title={state.error} /><Button onClick={reload}>Thử lại</Button></> : <p role="status">Đang tải công việc điều trị được giao…</p> :
         !filtered.length ? <EmptyState title="Không có công việc nào với bộ lọc này" /> :
-          [...new Set(filtered.map((t) => t.horseId))].map((horseId) => <Card key={horseId} className="medical-groom-panel" title={names[horseId] ? `${names[horseId].name} · ${names[horseId].horseCode}${names[horseId].currentBoxCode ? ` · Ô ${names[horseId].currentBoxCode}` : ''}` : `Ngựa ${horseId}`}>
+          [...new Set(filtered.map((t) => t.horseId))].map((horseId) => <Card key={horseId} className="medical-groom-panel" title={names[horseId] ? `${names[horseId].name} · ${names[horseId].horseCode}${names[horseId].currentBoxCode ? ` · ${boxLabel(names[horseId].currentBoxCode)}` : ''}` : `Ngựa ${horseId}`}>
             {names[horseId] && <div className="medical-actions">{names[horseId].healthStatus && <StatusBadge family="health" status={names[horseId].healthStatus} />}<StatusBadge family="availability" status={names[horseId].trainingAvailability} /></div>}
             <div className="medical-stack">{filtered.filter((t) => t.horseId === horseId).map((task) => <article key={task.id} className="medical-groom-task">
               <div className="medical-groom-task-row">

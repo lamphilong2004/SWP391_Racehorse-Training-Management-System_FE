@@ -95,3 +95,15 @@
 .spinner { position: absolute; width: 18px; height: 18px; border: 2px solid currentColor; border-right-color: transparent; border-radius: var(--radius-full); animation: pending .8s linear infinite; }
 @keyframes pending { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .button { transition: none; } .spinner { animation: none; } }
+
+/* 2026-10-27 polish: one focus ring, a pressed state, and darker hovers instead of opacity. */
+.button:focus-visible { outline: none; box-shadow: var(--elev-focus); }
+.button:active:not(:disabled) { transform: translateY(1px); }
+:global([data-ui-v3]) .primary:hover:not(:disabled) { background: var(--color-primary-700); }
+:global([data-ui-v3]) .primary:active:not(:disabled) { background: var(--color-primary-800, var(--color-primary-700)); }
+:global([data-ui-v3]) .primary:disabled, :global([data-ui-v3]) .destructive:disabled { background: #e2e8f0; color: #94a3b8; box-shadow: none; }
+:global([data-ui-v3]) .secondary { border-color: var(--color-border-strong); box-shadow: 0 1px 2px rgb(11 19 43 / 5%); }
+:global([data-ui-v3]) .secondary:hover:not(:disabled) { background: var(--color-bg-subtle); border-color: #94a3b8; }
+:global([data-ui-v3]) .tertiary { color: var(--color-primary-700); }
+:global([data-ui-v3]) .destructive:hover:not(:disabled) { opacity: 1; background: #991b1b; }
+:global([data-ui-v3]) .destructive:focus-visible { box-shadow: 0 0 0 3px rgb(185 28 28 / 25%); }

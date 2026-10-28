@@ -45,3 +45,7 @@
 .card { min-width: 0; }
 .title { overflow-wrap: anywhere; }
 @media (max-width: 600px) { .card { padding: 16px; } }
+
+/* 2026-10-27 polish: crisper card edge; the title accent bar stays (UI v3 approval). */
+:global([data-ui-v3]) .card { border-color: #e4e9f0; box-shadow: 0 1px 2px rgb(11 19 43 / 4%), 0 1px 12px rgb(11 19 43 / 3%); }
+:global([data-ui-v3]) .title { font-size: 15px; font-weight: 700; color: var(--color-brand-primary); }

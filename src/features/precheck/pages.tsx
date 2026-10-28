@@ -10,8 +10,8 @@ import { CHECK_ITEMS, type CheckKey, type Checklist, type PrecheckSession, type 
 import styles from './precheck.module.css';
 import { greeting } from '../../shared/greeting';
 import { viLabel } from '../../shared/viLabels';
+import { useClubToday } from '../../shared/useClubToday';
 
-function localDay() { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`; }
 function when(value: string) { return new Date(value).toLocaleString('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }); }
 function message(error: unknown) { return error instanceof Error ? error.message : 'Không tải được dữ liệu yêu cầu.'; }
 function GroomShell({ children }: { children: ReactNode }) {
@@ -23,19 +23,22 @@ function GroomShell({ children }: { children: ReactNode }) {
 export function GroomTodayPage({ api: suppliedApi }: { api?: PrecheckApi }) {
   const auth = useAuth();
   const api = useMemo(() => suppliedApi ?? createPrecheckApi({ handleApiError: auth.handleApiError }), [suppliedApi, auth.handleApiError]);
-  return <GroomShell><GroomToday api={api} /></GroomShell>;
+  return <GroomShell><GroomToday key={auth.user?.id} api={api} /></GroomShell>;
 }
 
 function GroomToday({ api }: { api: PrecheckApi }) {
   const { handleApiError, user } = useAuth();
-  const [date, setDate] = useState(localDay);
+  const today = useClubToday();
+  const [selectedDate, setDate] = useState<string>();
+  const date = selectedDate ?? today;
   const [attempt, setAttempt] = useState(0);
-  const [sessions, setSessions] = useState<PrecheckSession[] | null>(null);
-  const [error, setError] = useState<unknown>();
+  const [result, setResult] = useState<{ date: string; sessions?: PrecheckSession[]; error?: unknown }>();
+  const sessions = result?.date === date ? result.sessions : undefined;
+  const error = result?.date === date ? result.error : undefined;
   const [summary, setSummary] = useState<{ tasks?: number; incidents?: number; unavailable?: boolean }>({});
   useEffect(() => {
     let active = true;
-    api.sessions(date).then((items) => { if (active) setSessions(items); }).catch((cause: unknown) => { if (active && !handleApiError(cause)) setError(cause); });
+    if (date) api.sessions(date).then((items) => { if (active) setResult({ date, sessions: items }); }).catch((cause: unknown) => { if (active && !handleApiError(cause)) setResult({ date, error: cause }); });
     Promise.allSettled([api.treatmentTasks(), api.incidents()]).then(([tasks, incidents]) => {
       if (!active) return;
       if (tasks.status === 'rejected') handleApiError(tasks.reason);
@@ -44,15 +47,15 @@ function GroomToday({ api }: { api: PrecheckApi }) {
     });
     return () => { active = false; };
   }, [api, date, attempt, handleApiError]);
-  const retry = () => { setSessions(null); setError(undefined); setAttempt((value) => value + 1); };
+  const retry = () => { setResult(undefined); setAttempt((value) => value + 1); };
   return <div className={styles.stack}>
-    <div className={styles.header}><div><h1 className={styles.heading}>{greeting()}, {user?.fullName}</h1><p className={styles.muted}>Các buổi kiểm tra trước buổi tập, công việc điều trị và sự cố của bạn</p></div><ButtonLink to="/incidents">Xem sự cố</ButtonLink></div>
-    <TextField label="Ngày tập" type="date" value={date} onChange={(event) => { setSessions(null); setError(undefined); setDate(event.target.value); }} />
+    <div className={styles.header}><div><h1 className={styles.heading}>{greeting()}, {user?.fullName}</h1><p className={styles.muted}>Các buổi kiểm tra trước buổi tập, công việc điều trị và sự cố của bạn</p></div><div className={styles.actions}><ButtonLink to="/incidents">Xem sự cố</ButtonLink><ButtonLink variant="primary" to="/incidents?report=1">Báo bất thường tại chuồng</ButtonLink></div></div>
+    <div className={styles.header}><TextField label="Ngày tập" type="date" value={date} onChange={(event) => { setResult(undefined); setDate(event.target.value || undefined); }} /><Button variant="secondary" onClick={() => { setDate(undefined); retry(); }}>Hôm nay (giờ Việt Nam)</Button></div>
     <div className={styles.metrics}><MetricCard label="Kiểm tra trước buổi tập" value={sessions ? String(sessions.length) : '—'} /><MetricCard label="Công việc điều trị chưa xong" value={summary.tasks === undefined ? '—' : String(summary.tasks)} /><MetricCard label="Sự cố tôi đã báo" value={summary.incidents === undefined ? '—' : String(summary.incidents)} /></div>
     {summary.unavailable && <AlertBanner type="warning" title="Một số tóm tắt không tải được">Mở màn hình điều trị hoặc sự cố để thử lại. Kiểm tra trước buổi tập vẫn dùng được.</AlertBanner>}
     <div className={styles.columns}><Card title="Kiểm tra trước buổi tập">
       {error ? <ErrorState title={error instanceof ApiError && error.status === 403 ? 'Không có quyền truy cập' : 'Không tải được buổi tập của bạn'} description={message(error)} onRetry={retry} /> : !sessions ? <LoadingState label="Đang tải buổi tập được giao…" /> : sessions.length === 0 ? <EmptyState title="Không có buổi kiểm tra nào được giao" description="Bạn không có buổi tập nào trong ngày này." /> : [...sessions].sort((a, b) => a.scheduledStart.localeCompare(b.scheduledStart)).map((session) => <article key={session.id} className={styles.session}>
-        <div className={styles.sessionInfo}><h3>{session.horse.name} · {session.horse.horseCode}</h3><p>{when(session.scheduledStart)} · {session.focus || session.phaseName}</p><p className={styles.muted}>Work Rider {session.workRider.fullName}{session.trainer ? ` · Trainer ${session.trainer.fullName}` : ''}</p><StatusBadge family="session" status={session.status} /> <span>{session.preCheckResult ? session.preCheckResult === 'ALL_NORMAL' ? 'Kiểm tra đạt' : 'Bất thường — chặn bắt đầu' : 'Chưa kiểm tra'}</span></div>
+        <div className={styles.sessionInfo}><h3>{session.horse.name} · {session.horse.horseCode}</h3><p>Mã buổi: {session.sessionCode} · {when(session.scheduledStart)} · {session.focus || session.phaseName}</p><p className={styles.muted}>Work Rider {session.workRider.fullName}{session.trainer ? ` · Trainer ${session.trainer.fullName}` : ''}</p><StatusBadge family="session" status={session.status} /> <span>{session.preCheckResult ? session.preCheckResult === 'ALL_NORMAL' ? 'Kiểm tra đạt' : 'Bất thường — chặn bắt đầu' : 'Chưa kiểm tra'}</span></div>
         <ButtonLink variant="primary" to={`/training/my-sessions/${session.id}/pre-check`}>{session.preCheckResult ? 'Xem kiểm tra trước buổi tập' : 'Bắt đầu kiểm tra trước buổi tập'}</ButtonLink>
       </article>)}
       <p className={styles.muted}>Chỉ ghi lại quan sát. Nếu có gì bất thường, buổi tập vẫn giữ lịch và bị chặn cho đến khi được xem xét.</p>
@@ -96,7 +99,7 @@ function PrecheckContent({ id, api }: { id: number; api: PrecheckApi }) {
   const reload = () => { setSession(undefined); setError(undefined); setAttempt((value) => value + 1); };
   const abnormal = CHECK_ITEMS.some(({ key }) => draft[key]?.result === 'ABNORMAL');
   const locked = busy || Boolean(check) || conflict || session?.status !== 'SCHEDULED';
-  const startGate = check ? 'Tải lại buổi tập để xác nhận các điều kiện bắt đầu còn lại.' : session?.blocked ? session.blockedMessage || session.blockedReasons.join(', ') || 'Bị chặn' : 'Không có điểm chặn';
+  const startGate = check ? 'Tải lại buổi tập để xác nhận các điều kiện bắt đầu còn lại.' : session?.blocked ? session.blockedMessage || session.blockedReasons.map((reason) => viLabel(reason)).join(', ') || 'Bị chặn' : 'Không có điểm chặn';
   async function save() {
     if (pending.current || check || conflict) return;
     if (CHECK_ITEMS.some(({ key }) => !draft[key]?.result)) {

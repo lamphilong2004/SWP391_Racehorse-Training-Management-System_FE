@@ -1,5 +1,5 @@
 import { beforeEach, afterEach, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { buildRoutes } from '../../app/router';
@@ -213,7 +213,7 @@ it('preserves a server-supplied sex value outside the Figma suggestions while ed
   expect(screen.queryByLabelText('Giới tính (nhập tay)')).not.toBeInTheDocument();
   await userEvent.clear(screen.getByLabelText('Tên ngựa *')); await userEvent.type(screen.getByLabelText('Tên ngựa *'), 'Thunder Bolt Updated');
   await userEvent.click(screen.getByRole('button', { name: 'Lưu thông tin nhận dạng' }));
-  await screen.findByRole('heading', { name: 'Thunder Bolt Updated' });
+  await screen.findByRole('heading', { name: 'Thunder Bolt Updated' }, { timeout: 5000 });
   expect(readSamples().horseRegistry!.records[0].sex).toBe('GELDING');
 });
 it('saves a minimal draft without inventing missing identity values', async () => {
@@ -253,4 +253,19 @@ it.each(['GROOM', 'WORK_RIDER'] as const)('provides shared header account logout
   fireEvent.click(screen.getByRole('button', { name: 'Đăng xuất' }));
   expect(await screen.findByRole('heading', { name: 'Đăng nhập Racehorse Ops' })).toBeInTheDocument();
   expect(authSession.read()).toBeNull(); expect(getBusinessActor()).toBeNull();
+});
+it('declares optional racing strengths on registration and shows them on the profile', async () => {
+  const router = open('/horses/new'); await screen.findByRole('heading', { name: 'Thêm ngựa' });
+  fireEvent.change(screen.getByLabelText('Tên ngựa *'), { target: { value: 'Quick Step' } });
+  fireEvent.change(screen.getByLabelText('Mã ngựa *'), { target: { value: 'STR-010' } });
+  const distance = screen.getByRole('group', { name: 'Cự ly sở trường' });
+  await userEvent.click(within(screen.getByRole('group', { name: 'Thể chất' })).getByLabelText('Tốc độ'));
+  await userEvent.click(within(distance).getByLabelText('Nước rút'));
+  await userEvent.click(within(distance).getByLabelText('Đường dài'));
+  await userEvent.click(within(distance).getByLabelText('Đường dài'));
+  fireEvent.click(screen.getByRole('button', { name: 'Lưu nháp & tiếp tục' }));
+  await screen.findByRole('heading', { name: 'Phả hệ & quyền sở hữu · Quick Step' });
+  expect(readSamples().horseRegistry!.records.find((horse) => horse.horseCode === 'STR-010')?.strengths).toEqual(['SPRINT', 'SPEED']);
+  await router.navigate(`/horses/${router.state.location.pathname.split('/')[2]}`);
+  expect(await screen.findByText('Nước rút · Tốc độ')).toBeInTheDocument();
 });

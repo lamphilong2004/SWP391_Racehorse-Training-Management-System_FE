@@ -1,6 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { copyTemplateForHorse, validateProgramCreation } from './programDraft';
 import { candidate, template, validRequest } from './__tests__/fixtures';
+beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-10-20T03:00Z')); });
+afterEach(() => vi.useRealTimers());
 
 describe('CORE-022 horse-specific program draft', () => {
   it('copies the selected immutable version and preserves phase lineage without guessing dates or intensity enums', () => {
@@ -19,6 +21,13 @@ describe('CORE-022 horse-specific program draft', () => {
 
   it('accepts the completed contract payload including acknowledged candidate warnings', () => {
     expect(validateProgramCreation(validRequest(), candidate)).toEqual([]);
+  });
+
+  it('rejects yesterday at Vietnam midnight but accepts today and a future program', () => {
+    const input = validRequest();
+    expect(validateProgramCreation(input, candidate, new Date('2026-11-01T16:59:59Z'))).toEqual([]);
+    expect(validateProgramCreation(input, candidate, new Date('2026-11-01T17:00:00Z'))).toContainEqual(expect.objectContaining({ field: 'periodStart' }));
+    expect(validateProgramCreation(input, candidate, new Date('2026-01-01T00:00:00Z'))).toEqual([]);
   });
 
   it('reports missing selections, required values and schema text limits by field', () => {

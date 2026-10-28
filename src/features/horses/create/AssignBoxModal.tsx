@@ -1,3 +1,4 @@
+import { boxLabel, boxRow, yardLabel } from '../../../shared/stableBox';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AlertBanner, Button, EmptyState, ErrorState, Icon, LoadingState, Modal, SelectField, StableBoxTile } from '../../../design-system';
 import { ApiRequestError } from '../api/horsesApi';
@@ -55,7 +56,7 @@ export function AssignBoxModal({ open, horse, onClose, onAssigned }: AssignBoxMo
   const rows = useMemo(() => {
     const groups = new Map<string, StableBox[]>();
     for (const box of [...inYard].sort((a, b) => a.boxCode.localeCompare(b.boxCode, undefined, { numeric: true }))) {
-      const row = box.boxCode.includes('-') ? box.boxCode.split('-')[0] : '';
+      const row = boxRow(box.boxCode);
       groups.set(row, [...(groups.get(row) ?? []), box]);
     }
     return [...groups.entries()];
@@ -99,7 +100,7 @@ export function AssignBoxModal({ open, horse, onClose, onAssigned }: AssignBoxMo
               {yards.length > 0 && (
                 <div className={styles.yard}>
                   <SelectField label="Khu chuồng" value={yard} onChange={(e) => { setYard(e.target.value); setSelectedId(undefined); }}
-                    options={yards.map((y) => ({ value: y, label: y }))} />
+                    options={yards.map((y) => ({ value: y, label: yardLabel(y) ?? y }))} />
                 </div>
               )}
               <span className={styles.spacer} />
@@ -110,7 +111,7 @@ export function AssignBoxModal({ open, horse, onClose, onAssigned }: AssignBoxMo
                 {row && <h3 className={styles.rowLabel}>Dãy {row}</h3>}
                 <div className={styles.tiles}>
                   {list.map((box) => (
-                    <StableBoxTile key={box.id} boxId={box.boxCode} horseName={box.currentHorse?.name}
+                    <StableBoxTile key={box.id} boxId={boxLabel(box.boxCode) ?? box.boxCode} horseName={box.currentHorse?.name}
                       state={box.status === 'OCCUPIED' ? 'occupied' : box.id === selectedId ? 'selected' : 'free'}
                       onSelect={() => box.status === 'FREE' && setSelectedId(box.id)} />
                   ))}
@@ -120,7 +121,7 @@ export function AssignBoxModal({ open, horse, onClose, onAssigned }: AssignBoxMo
             <div className={[shared.note, shared.notePrimary, shared.noteStrong].join(' ')} role="status">
               <Icon name="check-circle" size={16} />
               <span>
-                {selected ? `Đã chọn ${selected.boxCode} — còn trống. ` : 'Chọn một ô trống. '}
+                {selected ? `Đã chọn ${boxLabel(selected.boxCode)} — còn trống. ` : 'Chọn một ô trống. '}
                 Không thể chọn ô đã có ngựa; mỗi ô chỉ chứa một con ngựa.
               </span>
             </div>

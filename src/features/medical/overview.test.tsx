@@ -26,7 +26,7 @@ it('enriches Groom groups using only horse IDs returned by the authorized task e
   const fetcher = vi.fn(async (url: RequestInfo | URL) => String(url).includes('/api/groom/treatment-tasks?') ?
     ok({ items: [{ id: 1, horseId: 14, assignedGroomUserId: 6, instruction: 'Cold compress', taskDate: today, status: 'PENDING' }], page: 0, size: 100, totalElements: 1 }) : ok(horse));
   render(<GroomTasks service={createGroomService('session', 6, undefined, { baseUrl: '', fetcher })} />);
-  expect(await screen.findByRole('heading', { name: 'Storm · ST-014 · Ô B-03' })).toBeInTheDocument();
+  expect(await screen.findByRole('heading', { name: 'Storm · ST-014 · Chuồng B-03' })).toBeInTheDocument();
   expect(screen.getByText('Theo dõi')).toBeInTheDocument();
   expect(screen.getByText('Hạn chế')).toBeInTheDocument();
   expect(fetcher.mock.calls.map(([url]) => url)).toEqual(['/api/groom/treatment-tasks?page=0&size=100', '/api/horses/14']);

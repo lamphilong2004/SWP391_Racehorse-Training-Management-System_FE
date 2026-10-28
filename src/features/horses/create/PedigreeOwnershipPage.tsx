@@ -1,3 +1,4 @@
+import { boxLabel, yardLabel } from '../../../shared/stableBox';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { flushSync } from 'react-dom';
 import { useLocation, useNavigate, useParams } from 'react-router';
@@ -227,7 +228,7 @@ function PedigreeOwnershipPageContent() {
               <p className={styles.cardHelp}>Bắt buộc trước khi kích hoạt. Chỉ xếp được ô còn trống.</p>
               <div className={styles.boxRow}>
                 <div className={styles.boxValue}>
-                  <span className={styles.boxValueMain}>{current ? `Ô ${current.boxCode}${current.yard ? ` · ${current.yard}` : ''}` : 'Chưa xếp ô chuồng'}</span>
+                  <span className={styles.boxValueMain}>{current ? `${boxLabel(current.boxCode)}${current.yard ? ` · ${yardLabel(current.yard)}` : ''}` : 'Chưa xếp ô chuồng'}</span>
                   <span className={styles.boxValueSub}>
                     {previous === undefined ? 'Không tải được lịch sử ô chuồng' : previous === 0 ? (current ? `Xếp ngày ${formatDate(current.effectiveFrom)}` : 'Lịch sử ô chuồng: chưa có — ngựa mới đến')
                       : `Lịch sử ô chuồng: ${previous} ô trước đây`}

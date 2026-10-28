@@ -6,10 +6,10 @@ import type { Intensity } from '../program-creation/programTypes';
 import { blocksSession, type createSessionApi, type SessionExerciseInput, type TrainingSession } from './sessionApi';
 import styles from '../main-flows/flow.module.css';
 import { viLabel } from '../../shared/viLabels';
+import { clubDate, clubDateTime, parseClubDateTime, sessionPeriodError } from '../../shared/clubCalendar';
 
 const INTENSITIES: Intensity[] = ['LOW', 'MEDIUM', 'MEDIUM_HIGH', 'HIGH'];
-const pad = (value: number) => String(value).padStart(2, '0');
-const local = (iso: string) => { const date = new Date(iso); return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`; };
+const local = (iso: string) => clubDateTime(new Date(iso));
 type Api = ReturnType<typeof createSessionApi>;
 
 /**
@@ -46,16 +46,18 @@ function DetailsForm({ session, busy, save }: { session: TrainingSession; busy: 
   const [date = '', time = ''] = when.split('T');
   async function submit(event: FormEvent) {
     event.preventDefault(); setError('');
-    const start = new Date(when);
-    if (!Number.isFinite(start.getTime())) { setError('Chọn ngày và giờ bắt đầu buổi tập.'); return; }
+    const start = parseClubDateTime(when);
+    if (!start) { setError('Chọn ngày và giờ bắt đầu buổi tập.'); return; }
     if (duration && (!Number.isFinite(Number(duration)) || Number(duration) <= 0)) { setError('Thời lượng dự kiến phải lớn hơn 0.'); return; }
+    const periodError = sessionPeriodError(start);
+    if (periodError) { setError(periodError); return; }
     await save({ scheduledStart: start.toISOString(), scheduledEnd: duration ? new Date(start.getTime() + Number(duration) * 60000).toISOString() : undefined,
       surface: surface.trim() || undefined, focus: focus.trim() || undefined, intensity: (intensity || undefined) as Intensity | undefined }, setError);
   }
   return <Card title="Lịch & thông tin"><form className={styles.stack} onSubmit={(event) => void submit(event)} noValidate aria-busy={busy}><fieldset disabled={busy} className={styles.fieldset}><div className={styles.stack}>
     <div className={styles.fields}>
-      <TextField label="Ngày" type="date" required value={date} onChange={(event) => setWhen(`${event.target.value}T${time}`)} />
-      <TextField label="Giờ bắt đầu" type="time" required value={time} onChange={(event) => setWhen(`${date}T${event.target.value}`)} />
+      <TextField label="Ngày" type="date" required min={clubDate()} value={date} onChange={(event) => setWhen(`${event.target.value}T${time}`)} />
+      <TextField label="Giờ bắt đầu" type="time" required helperText="Giờ Việt Nam. Chọn thời điểm ở tương lai." value={time} onChange={(event) => setWhen(`${date}T${event.target.value}`)} />
       <TextField label="Thời lượng dự kiến (phút)" type="number" min="1" value={duration} onChange={(event) => setDuration(event.target.value)} />
       <SelectField label="Cường độ buổi tập" value={intensity} options={[{ value: '', label: 'Giữ nguyên' }, ...INTENSITIES.map((value) => ({ value, label: viLabel(value) }))]} onChange={(event) => setIntensity(event.target.value)} />
       <TextField label="Mặt sân tập" maxLength={50} value={surface} onChange={(event) => setSurface(event.target.value)} />

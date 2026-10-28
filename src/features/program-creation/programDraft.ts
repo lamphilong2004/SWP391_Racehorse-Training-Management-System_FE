@@ -1,4 +1,5 @@
 import type { CreateProgramRequest, ProgramPhaseInput, TemplateDetail, TrainerCandidate } from './programTypes';
+import { clubDate } from '../../shared/clubCalendar';
 
 export interface ProgramValidationIssue {
   field: string;
@@ -32,7 +33,7 @@ function validDate(value: string): boolean {
   return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
 }
 
-export function validateProgramCreation(input: CreateProgramRequest, candidate?: TrainerCandidate): ProgramValidationIssue[] {
+export function validateProgramCreation(input: CreateProgramRequest, candidate?: TrainerCandidate, now = new Date()): ProgramValidationIssue[] {
   const issues: ProgramValidationIssue[] = [];
   const add = (field: string, message: string) => issues.push({ field, message });
   const text = (field: string, value: string | null | undefined, max: number, required = false) => {
@@ -51,6 +52,9 @@ export function validateProgramCreation(input: CreateProgramRequest, candidate?:
   text('notes', input.notes, 2000);
   date('periodStart', input.periodStart);
   date('periodEnd', input.periodEnd);
+  if (validDate(input.periodStart) && input.periodStart < clubDate(now)) {
+    add('periodStart', 'Chương trình phải bắt đầu từ hôm nay trở đi, tính theo giờ Việt Nam.');
+  }
   if (validDate(input.periodStart) && validDate(input.periodEnd) && input.periodEnd < input.periodStart) {
     add('periodEnd', 'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.');
   }

@@ -6,6 +6,8 @@ const session = { id: 42, sessionCode: 'TS-42', status: 'SCHEDULED', horseProgra
   intensity: 'MEDIUM', surface: 'Sand', focus: 'Base', workRider: { id: 9, fullName: 'Rider' }, trainingAvailability: 'AVAILABLE',
   exercises: [{ id: 1, exerciseDefinitionId: 3, exerciseOrder: 1, exerciseName: 'Walk', distanceM: 1200, durationMin: 20 }] } as unknown as TrainingSession;
 const clean = { trainingAvailability: 'AVAILABLE', sessionBlocked: false, exercises: [{ exerciseOrder: 1, exerciseDefinitionId: 3, category: null, messages: [] }], sessionIssues: [] };
+beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-10-22T01:00:00Z')); });
+afterEach(() => vi.useRealTimers());
 function setup(overrides: Partial<Record<string, ReturnType<typeof vi.fn>>> = {}) {
   const api = { exercises: vi.fn().mockResolvedValue([{ id: 3, name: 'Walk' }, { id: 4, name: 'Canter' }]), update: vi.fn().mockResolvedValue(session),
     replaceExercises: vi.fn().mockResolvedValue(session), suitability: vi.fn().mockResolvedValue(clean), ...overrides } as unknown as ReturnType<typeof createSessionApi>;
@@ -32,6 +34,16 @@ it('checks suitability before replacing exercises and stops on a medical hard bl
   fireEvent.click(screen.getByRole('button', { name: 'Kiểm tra & lưu bài tập' }));
   expect(await screen.findByText('Prohibited by restriction.')).toBeInTheDocument();
   expect(api.replaceExercises).not.toHaveBeenCalled();
+});
+
+it('keeps the draft and sends no update when the selected start time has already passed', async () => {
+  const { api, saved } = setup();
+  vi.setSystemTime(new Date('2026-10-24T01:00:00Z'));
+  fireEvent.click(screen.getByRole('button', { name: 'Lưu thông tin' }));
+  expect(await screen.findByText(/Giờ bắt đầu phải ở tương lai/)).toBeInTheDocument();
+  expect(api.update).not.toHaveBeenCalled();
+  expect(saved).not.toHaveBeenCalled();
+  expect(screen.getByLabelText('Mặt sân tập')).toHaveValue('Sand');
 });
 
 it('replaces the exercise plan in order after a clean check', async () => {

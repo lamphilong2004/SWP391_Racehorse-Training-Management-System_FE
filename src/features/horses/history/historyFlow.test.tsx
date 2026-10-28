@@ -30,7 +30,7 @@ describe('CORE-017 existing Horse Profile extended with history and readiness', 
     expect(screen.getByRole('heading', { name: 'Cây phả hệ' })).toBeInTheDocument(); expect(screen.getByRole('heading', { name: 'Lịch sử sở hữu' })).toBeInTheDocument();
     expect(screen.getAllByText('Chủ hiện tại')).toHaveLength(2);
     expect(screen.getByText(/sinh .* · Chủ ngựa /)).toBeInTheDocument();
-    expect(screen.getByText(/North Yard · A-12 \(từ/)).toHaveTextContent(readSamples().horseRegistry!.records[0].currentAssignment!.effectiveFrom);
+    expect(screen.getByText(/North Yard · Chuồng A-12 \(từ/)).toHaveTextContent(readSamples().horseRegistry!.records[0].currentAssignment!.effectiveFrom);
     expect(screen.getByRole('heading', { name: 'Lịch sử xếp chuồng' })).toBeInTheDocument(); expect(screen.getByText('Chưa có sự kiện nào')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('link', { name: '← Quay lại hồ sơ ngựa' })); await screen.findByRole('heading', { name: 'Đánh giá sẵn sàng của Head Trainer' });
     const tab = screen.getByRole('tab', { name: 'Tổng quan' }); tab.focus(); await userEvent.keyboard('{End}');

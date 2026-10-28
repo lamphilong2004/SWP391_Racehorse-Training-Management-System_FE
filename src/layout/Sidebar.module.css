@@ -140,3 +140,16 @@
     transition: transform var(--motion-panel, 0ms) var(--motion-ease-out, ease-out);
   }
 }
+
+/* 2026-10-27 polish: navy rail. Text and icons use the light sidebar tokens; the active item keeps an emerald bar. */
+:global([data-ui-v3]) .sidebar { border-right-color: var(--color-brand-navy); box-shadow: none; padding-top: 22px; }
+:global([data-ui-v3]) .brandName { color: #ffffff; }
+:global([data-ui-v3]) .brandIcon { color: var(--color-sidebar-accent); }
+:global([data-ui-v3]) .workspace, :global([data-ui-v3]) .heading { color: var(--color-sidebar-muted); }
+:global([data-ui-v3]) .item { height: 40px; color: var(--color-sidebar-text); transition: background-color var(--motion-fast) var(--motion-ease), color var(--motion-fast) var(--motion-ease); }
+:global([data-ui-v3]) .item:hover { color: #ffffff; }
+:global([data-ui-v3]) .itemIcon { color: var(--color-sidebar-muted); }
+:global([data-ui-v3]) .item:hover .itemIcon { color: var(--color-sidebar-text); }
+:global([data-ui-v3]) .active, :global([data-ui-v3]) .active:hover { color: #ffffff; font-weight: 600; border-left-color: var(--color-sidebar-accent); }
+:global([data-ui-v3]) .active .itemIcon { color: var(--color-sidebar-accent); }
+:global([data-ui-v3]) .item:focus-visible { outline-color: var(--color-sidebar-accent); }

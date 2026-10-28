@@ -6,16 +6,18 @@ import type { ProgramCreationFlow } from './useProgramCreation';
 import type { CreateProgramRequest, Intensity, ProgramPhaseInput } from './programTypes';
 import type { ProgramValidationIssue } from './programDraft';
 import styles from './ProgramCreationPage.module.css';
-import { sexLabel } from '../horses/shared/options';
+import { sexLabel, strengthSummary } from '../horses/shared/options';
 import { viLabel } from '../../shared/viLabels';
 import { dateTime } from '../evaluation/models';
+import { clubDate } from '../../shared/clubCalendar';
 
 export function HorseSummary({ flow }: { flow: ProgramCreationFlow }) {
   const horse = flow.horse;
   return horse ? <Card title="Ngựa đã chọn"><HorseCard className={styles.horseSummary} name={horse.name} meta={`${horse.horseCode}${horse.breed ? ` · ${horse.breed}` : ''}`}
     availability={horse.trainingAvailability} facts={[
-      { label: 'Vòng đời', value: horse.lifecycle }, { label: 'Giới tính', value: sexLabel(horse.sex) ?? 'Chưa cung cấp' },
+      { label: 'Vòng đời', value: viLabel(horse.lifecycle) }, { label: 'Giới tính', value: sexLabel(horse.sex) ?? 'Chưa cung cấp' },
       { label: 'Ngày sinh', value: horse.foaledDate ?? 'Chưa cung cấp' },
+      { label: 'Thế mạnh (Club Manager khai báo)', value: strengthSummary(horse.strengths) },
     ]} /></Card> : <Card title="Ngựa đã chọn"><p>Chọn một ngựa để xem thông tin.</p></Card>;
 }
 
@@ -43,8 +45,8 @@ export function DraftSteps({ step, flow, issues, update, edit }: {
         <TextField label="Tên chương trình" required maxLength={150} value={draft.name} error={error('name')} onChange={(event) => update({ name: event.target.value })} />
         <TextAreaField label="Mục tiêu huấn luyện" maxLength={2000} value={draft.goals ?? ''} error={error('goals')} onChange={(event) => update({ goals: event.target.value })} />
         <div className={styles.fields}>
-          <TextField label="Ngày bắt đầu chương trình" type="date" required value={draft.periodStart} error={error('periodStart')} onChange={(event) => update({ periodStart: event.target.value })} />
-          <TextField label="Ngày kết thúc chương trình" type="date" required value={draft.periodEnd} error={error('periodEnd')} onChange={(event) => update({ periodEnd: event.target.value })} />
+          <TextField label="Ngày bắt đầu chương trình" type="date" required min={clubDate()} helperText="Từ hôm nay trở đi, theo giờ Việt Nam." value={draft.periodStart} error={error('periodStart')} onChange={(event) => update({ periodStart: event.target.value })} />
+          <TextField label="Ngày kết thúc chương trình" type="date" required min={draft.periodStart || clubDate()} value={draft.periodEnd} error={error('periodEnd')} onChange={(event) => update({ periodEnd: event.target.value })} />
         </div>
         <TextAreaField label="Chỉ số mục tiêu" maxLength={1000} value={draft.targetMetrics ?? ''} error={error('targetMetrics')} onChange={(event) => update({ targetMetrics: event.target.value })} />
         <TextAreaField label="Ghi chú" maxLength={2000} value={draft.notes ?? ''} error={error('notes')} onChange={(event) => update({ notes: event.target.value })} />
@@ -57,8 +59,8 @@ export function DraftSteps({ step, flow, issues, update, edit }: {
           <div className={styles.fields}>
             <TextField label={`${label} order`} type="number" min={1} step={1} required value={phase.phaseOrder} error={error(`${prefix}.phaseOrder`)} onChange={(event) => phaseUpdate(index, { phaseOrder: Number(event.target.value) })} />
             <TextField label={`${label} — tên`} required maxLength={150} value={phase.name} error={error(`${prefix}.name`)} onChange={(event) => phaseUpdate(index, { name: event.target.value })} />
-            <TextField label={`${label} — ngày bắt đầu`} type="date" required value={phase.startDate} error={error(`${prefix}.startDate`)} onChange={(event) => phaseUpdate(index, { startDate: event.target.value })} />
-            <TextField label={`${label} — ngày kết thúc`} type="date" required value={phase.endDate} error={error(`${prefix}.endDate`)} onChange={(event) => phaseUpdate(index, { endDate: event.target.value })} />
+            <TextField label={`${label} — ngày bắt đầu`} type="date" required min={draft.periodStart || clubDate()} max={draft.periodEnd || undefined} value={phase.startDate} error={error(`${prefix}.startDate`)} onChange={(event) => phaseUpdate(index, { startDate: event.target.value })} />
+            <TextField label={`${label} — ngày kết thúc`} type="date" required min={phase.startDate || draft.periodStart || clubDate()} max={draft.periodEnd || undefined} value={phase.endDate} error={error(`${prefix}.endDate`)} onChange={(event) => phaseUpdate(index, { endDate: event.target.value })} />
           </div>
           <TextAreaField label={`${label} — mục tiêu`} maxLength={1000} value={phase.objective ?? ''} error={error(`${prefix}.objective`)} onChange={(event) => phaseUpdate(index, { objective: event.target.value })} />
         </div></Card>;
@@ -95,7 +97,7 @@ export function DraftSteps({ step, flow, issues, update, edit }: {
     {trainers?.candidates.length ? <div className={styles.candidates}>{trainers.candidates.map((candidate) => <CandidateCard key={candidate.user.id}
       name={candidate.user.fullName} subtitle={`Trainer${candidate.experienceLevel ? ` · ${candidate.experienceLevel}` : ''}`} tags={candidate.skills}
       className={draft.trainer.trainerUserId === candidate.user.id ? styles.selected : undefined}
-      facts={[{ label: 'Mức phù hợp', value: candidate.label.replaceAll('_', ' ') }, { label: 'Lý do', value: candidate.reasons.join(' · ') || 'Chưa cung cấp' },
+      facts={[{ label: 'Mức phù hợp', value: viLabel(candidate.label) }, { label: 'Lý do', value: candidate.reasons.join(' · ') || 'Chưa cung cấp' },
         ...(candidate.warnings.length ? [{ label: 'Cảnh báo', value: candidate.warnings.join(' · ') }] : []),
         ...(candidate.hardBlock ? [{ label: 'Không có', value: candidate.hardBlock }] : [])]}
       actions={<Button type="button" variant="secondary" aria-pressed={draft.trainer.trainerUserId === candidate.user.id} disabled={Boolean(candidate.hardBlock)} onClick={() => update({ trainer: { ...draft.trainer, trainerUserId: candidate.user.id, warningsAcknowledged: false, reason: '' } })}>

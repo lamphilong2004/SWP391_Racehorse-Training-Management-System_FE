@@ -1,4 +1,5 @@
 import type { SessionDetail, SessionResultView, UserRef } from '../evaluation/models';
+import { viLabel } from '../../shared/viLabels';
 export interface RiderSession extends SessionDetail {
   blocked: boolean; blockedReasons: string[]; blockedMessage?: string | null;
   trainingAvailability?: 'AVAILABLE' | 'LIMITED' | 'LOCKED';
@@ -18,7 +19,7 @@ export interface IssueInput { incidentType: 'OFF_FEED' | 'COLIC_SIGNS' | 'FEVER'
 export interface IssueResult { incidentId: number; incidentCode: string; sessionStatus: RiderSession['status'] }
 export const isTerminal = (status: RiderSession['status']) => status === 'COMPLETED' || status === 'INTERRUPTED';
 export function startBlocks(session: RiderSession, now = Date.now()): string[] {
-  const reasons = [...(session.blockedReasons ?? [])];
+  const reasons = (session.blockedReasons ?? []).map((reason) => viLabel(reason));
   if (session.status !== 'SCHEDULED') reasons.push('Chỉ buổi tập đã lên lịch mới bắt đầu được.');
   if ((session.preSessionCheck?.overallResult ?? session.preCheckResult) !== 'ALL_NORMAL') reasons.push('Kết quả kiểm tra trước buổi tập của Groom phải là Tất cả bình thường.');
   if (session.trainingAvailability === 'LOCKED') reasons.push('Veterinarian đã khóa tập luyện.');

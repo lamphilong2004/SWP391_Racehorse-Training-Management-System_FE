@@ -1,9 +1,11 @@
 import { act, renderHook } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ProgramCreationApi } from './programApi';
 import { useProgramCreation } from './useProgramCreation';
 import { candidate, createdProgram, template, validRequest } from './__tests__/fixtures';
 import type { HorseSelection, TemplateDetail } from './programTypes';
+beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-10-20T03:00Z')); });
+afterEach(() => vi.useRealTimers());
 
 const horse: HorseSelection = { id: 7, horseCode: 'TB-001', name: 'Thunder Bolt', lifecycle: 'ACTIVE', trainingAvailability: 'AVAILABLE' };
 

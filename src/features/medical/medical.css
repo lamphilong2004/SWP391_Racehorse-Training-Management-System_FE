@@ -1,6 +1,11 @@
 ﻿.medical-stack { display: flex; flex-direction: column; gap: var(--space-xl); min-width: 0; }
 .medical-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-xl); align-items: start; }
 .medical-form { display: flex; flex-direction: column; gap: var(--space-lg); }
+.medical-form-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg); align-items: start; }
+.medical-form-fields > * { min-width: 0; }
+.medical-form-wide { grid-column: 1 / -1; }
+.medical-form > .medical-actions { padding-top: var(--space-md); border-top: 1px solid var(--color-border-default); }
+@media (max-width: 767px) { .medical-form-fields { grid-template-columns: minmax(0, 1fr); } }
 .medical-groom-filters { display: flex; justify-content: space-between; align-items: end; gap: var(--space-lg); flex-wrap: wrap; }
 .medical-groom-filters > :first-child { flex: 1; }
 .medical-groom-filters > :last-child { width: 220px; }
@@ -17,6 +22,12 @@
 .medical-slot { display: inline-flex; align-items: center; gap: 4px; background: var(--color-bg-subtle); border-radius: var(--radius-full); padding: 2px 8px; font-size: 12px; }
 .medical-instruction { display: flex; align-items: start; gap: 8px; background: var(--color-bg-subtle); padding: 10px 12px; border-radius: 6px; font-size: 13px; overflow-wrap: anywhere; }
 .medical-actions { display: flex; flex-wrap: wrap; gap: var(--space-md); align-items: center; }
+.medical-close-panel { border-left: 3px solid var(--color-accent-amber, #d97706); }
+.medical-close-panel > p { max-width: 100ch; color: var(--color-text-secondary); line-height: 1.65; }
+.medical-case-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg); align-items: start; }
+.medical-case-facts > * { min-width: 0; margin: 0; }
+.medical-case-facts > :nth-child(2) { grid-column: 1 / -1; grid-row: 3; padding-top: var(--space-md); border-top: 1px solid var(--color-border-default); }
+@media (max-width: 600px) { .medical-case-facts { grid-template-columns: minmax(0, 1fr); } .medical-case-facts > :nth-child(2) { grid-row: auto; } }
 .medical-table { overflow-x: auto; }
 .medical-history { display: flex; flex-direction: column; gap: var(--space-md); padding: 0; list-style: none; }
 .medical-history li { border-bottom: 1px solid var(--color-border-default); padding-bottom: var(--space-md); overflow-wrap: anywhere; }

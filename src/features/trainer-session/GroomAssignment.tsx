@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import { AlertBanner, Button, ErrorState, SelectField } from '../../design-system';
+import { ActionBar, AlertBanner, Button, ErrorState, SelectField } from '../../design-system';
 import { errorMessage } from '../main-flows/api';
 import { useResource } from '../main-flows/useResource';
 import type { createSessionApi, TrainingSession } from './sessionApi';
@@ -23,6 +23,6 @@ export function GroomAssignment({ api, session, onSaved }: { api: ReturnType<typ
     <SelectField label="Phân công Groom" placeholder="Chọn một Groom đang hoạt động" value={selected} disabled={busy || candidates.pending}
       options={(Array.isArray(candidates.data) ? candidates.data : []).map((groom) => ({ value: String(groom.id), label: groom.fullName }))}
       onChange={(event) => setSelected(event.target.value)} />
-    <Button disabled={busy || !selected} onClick={() => void save()}>Phân công & thông báo Groom</Button>
+    <ActionBar><Button disabled={busy || !selected} onClick={() => void save()}>Phân công & thông báo Groom</Button></ActionBar>
   </>;
 }
