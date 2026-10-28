@@ -80,7 +80,9 @@
 .table td > * > * {
   min-width: 0;
 }
-.cell { overflow-wrap: anywhere; min-width: 90px; max-width: 360px; }
+/* break-word (not anywhere): a column never shrinks below its longest word, so auto layout cannot crush a
+   column to one character per line. Browsers ignore min-width on table cells, so it is not relied on. */
+.cell { overflow-wrap: break-word; max-width: 360px; }
 .headerCell { padding-block: 12px; }
 .table .nowrap { overflow-wrap: normal; }
 .nowrap a { white-space: nowrap; }

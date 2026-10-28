@@ -1,3 +1,4 @@
+import { clubDateTime, parseClubDateTime } from '../../shared/clubCalendar';
 import { boxLabel } from '../../shared/stableBox';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
@@ -211,13 +212,14 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
     <div role="tabpanel" id="case-panel-examination" aria-labelledby="case-tab-examination" hidden={panel !== 'examination'} className="medical-stack">
       <Card title="Các lần khám"><History count={item.examinations.length} empty="Chưa có lần khám nào">{item.examinations.map((exam) =>
         <li key={exam.id}><strong>{dateTime(exam.examinedAt)}</strong><p>{exam.symptoms}</p><p>{exam.diagnosis || 'Chưa có chẩn đoán'} · {exam.severity || 'Chưa đặt mức độ'}</p></li>)}</History>
-        {!closed && <MedicalForm submitLabel="Lưu lần khám" fields={[
+        {!closed && <MedicalForm submitLabel="Lưu lần khám" initial={{ examinedAt: clubDateTime() }} fields={[
+          { name: 'examinedAt', label: 'Ngày giờ khám', type: 'datetime-local', required: true },
           { name: 'symptoms', label: 'Triệu chứng và phát hiện', type: 'textarea', required: true },
           { name: 'diagnosis', label: 'Chẩn đoán', type: 'textarea', maxLength: 1000 },
           { name: 'severity', label: 'Mức độ', options: ['MILD', 'MODERATE', 'SEVERE'] },
           { name: 'healthStatus', label: 'Tình trạng sức khỏe của ngựa', options: ['FIT', 'MONITORING', 'INJURED', 'QUARANTINED'] },
         ]} onSave={async (values) => { await service.addExamination(item.id, {
-          symptoms: values.symptoms, examinedAt: new Date().toISOString(),
+          symptoms: values.symptoms, examinedAt: parseClubDateTime(values.examinedAt)!.toISOString(),
           ...(values.diagnosis ? { diagnosis: values.diagnosis } : {}),
           ...(values.severity ? { severity: values.severity as ClinicalSeverity } : {}),
           ...(values.healthStatus ? { healthStatus: values.healthStatus as 'FIT' | 'MONITORING' | 'INJURED' | 'QUARANTINED' } : {}),
@@ -253,13 +255,14 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
     <div role="tabpanel" id="case-panel-recovery" aria-labelledby="case-tab-recovery" hidden={panel !== 'recovery'} className="medical-stack">
       <Card title="Các lần tái khám"><History count={item.reexaminations.length} empty="Chưa có lần tái khám">{item.reexaminations.map((exam) =>
         <li key={exam.id}>{viLabel(exam.recoveryStatus)}<p>{exam.findings}</p><small>{dateTime(exam.examinedAt)}</small></li>)}</History>
-        {!closed && <MedicalForm submitLabel="Lưu lần tái khám" fields={[
+        {!closed && <MedicalForm initial={{ examinedAt: clubDateTime() }} submitLabel="Lưu lần tái khám" fields={[
           { name: 'recoveryStatus', label: 'Tình trạng hồi phục', options: ['NOT_RECOVERED', 'IMPROVING', 'RECOVERED'], required: true },
+          { name: 'examinedAt', label: 'Ngày giờ tái khám', type: 'datetime-local', required: true },
           { name: 'findings', label: 'Kết quả khám', type: 'textarea', required: true },
           { name: 'healthStatus', label: 'Tình trạng sức khỏe của ngựa', options: ['FIT', 'MONITORING', 'INJURED', 'QUARANTINED'] },
         ]} onSave={async (values) => { await service.addReexamination(item.id, {
           recoveryStatus: values.recoveryStatus as RecoveryStatus, findings: values.findings,
-          examinedAt: new Date().toISOString(),
+          examinedAt: parseClubDateTime(values.examinedAt)!.toISOString(),
           ...(values.healthStatus ? { healthStatus: values.healthStatus as 'FIT' | 'MONITORING' | 'INJURED' | 'QUARANTINED' } : {}),
         }); reload(); }} />}</Card>
     </div>
