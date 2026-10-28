@@ -10,6 +10,7 @@ import { sexLabel, strengthSummary } from '../horses/shared/options';
 import { viLabel } from '../../shared/viLabels';
 import { dateTime } from '../evaluation/models';
 import { clubDate } from '../../shared/clubCalendar';
+import { formatDate } from '../horses/shared/format';
 
 export function HorseSummary({ flow }: { flow: ProgramCreationFlow }) {
   const horse = flow.horse;
@@ -78,7 +79,7 @@ export function DraftSteps({ step, flow, issues, update, edit }: {
       const label = `Giai đoạn ${index + 1}`;
       const prefix = `phases[${index}]`;
       const options = ['LOW', 'MEDIUM', 'MEDIUM_HIGH', 'HIGH'].map((value) => ({ value, label: viLabel(value) }));
-      return <tr key={index}><td><strong>{phase.name}</strong><p>{phase.startDate} — {phase.endDate}</p></td><td><div className={styles.stack}><p className={styles.muted}>Mẫu: {template.version.phases.find((source) => source.id === phase.templateVersionPhaseId)?.intensityGuidance ?? 'Chưa cung cấp'}</p><TextAreaField label={`${label} — khối lượng`} maxLength={500} value={phase.workload ?? ''} error={error(`${prefix}.workload`)} onChange={(event) => phaseUpdate(index, { workload: event.target.value })} /></div></td><td>
+      return <tr key={index}><td><strong>{phase.name}</strong><p>{formatDate(phase.startDate)} — {formatDate(phase.endDate)}</p></td><td><div className={styles.stack}><p className={styles.muted}>Mẫu: {template.version.phases.find((source) => source.id === phase.templateVersionPhaseId)?.intensityGuidance ?? 'Chưa cung cấp'}</p><TextAreaField label={`${label} — khối lượng`} maxLength={500} value={phase.workload ?? ''} error={error(`${prefix}.workload`)} onChange={(event) => phaseUpdate(index, { workload: event.target.value })} /></div></td><td>
         <div className={styles.fields}>
           <SelectField label={`${label} — cường độ tối thiểu`} placeholder="Chưa xác định" options={options} value={phase.intensityMin ?? ''} error={error(`${prefix}.intensityMin`)} onChange={(event) => phaseUpdate(index, { intensityMin: (event.target.value || null) as Intensity | null })} />
           <SelectField label={`${label} — cường độ tối đa`} placeholder="Chưa xác định" options={options} value={phase.intensityMax ?? ''} error={error(`${prefix}.intensityMax`)} onChange={(event) => phaseUpdate(index, { intensityMax: (event.target.value || null) as Intensity | null })} />
@@ -124,7 +125,7 @@ export function DraftSteps({ step, flow, issues, update, edit }: {
       </div></Card>
       <Card title="Giai đoạn" action={<Button type="button" variant="tertiary" onClick={() => edit(4)}>Sửa khối lượng</Button>}><div className={styles.stack}>
         {[...draft.phases].sort((a, b) => a.phaseOrder - b.phaseOrder).map((phase, index) => <div className={styles.summary} key={index}>
-          <h3>{phase.phaseOrder}. {phase.name}</h3><p>{phase.startDate} — {phase.endDate}</p><p>{phase.objective}</p>
+          <h3>{phase.phaseOrder}. {phase.name}</h3><p>{formatDate(phase.startDate)} — {formatDate(phase.endDate)}</p><p>{phase.objective}</p>
           <p>Cường độ: {viLabel(phase.intensityMin, 'Chưa xác định')} — {viLabel(phase.intensityMax, 'Chưa xác định')}</p><p>Khối lượng: {phase.workload || 'Chưa xác định'}</p>
         </div>)}
       </div></Card>

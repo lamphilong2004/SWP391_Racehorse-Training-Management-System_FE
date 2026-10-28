@@ -1,4 +1,4 @@
-.scroll { min-width: 0; max-width: 100%; overflow-x: auto; border-radius: var(--radius-md); scrollbar-gutter: stable; }
+.scroll { min-width: 0; max-width: 100%; overflow-x: auto; border-radius: var(--radius-md); }
 .scroll:focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 2px; }
 .table {
   width: 100%;

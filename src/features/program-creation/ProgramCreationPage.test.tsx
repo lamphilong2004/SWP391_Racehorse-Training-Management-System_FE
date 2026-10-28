@@ -96,6 +96,7 @@ describe('CORE-022 UI + production router + real transport with HTTP fixtures (n
     const accountMenu = await screen.findByRole('button', { name: 'Menu tài khoản' });
     expect(screen.queryByRole('link', { name: 'Tạo chương trình' })).not.toBeInTheDocument();
     await actor.click(accountMenu);
+    await actor.click(screen.getByRole('menuitem', { name: /Tài khoản của tôi/ }));
     expect(await screen.findByRole('heading', { name: 'Tài khoản của tôi' })).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: 'Đăng xuất' })).toBeInTheDocument();
     expect(authSession.read()?.accessToken).toBe('fixture-program-jwt');
@@ -212,7 +213,7 @@ describe('CORE-022 UI + production router + real transport with HTTP fixtures (n
       }
     } });
     await review(actor); await actor.click(submit());
-    expect(await screen.findByText(message)).toBeInTheDocument();
+    expect(await screen.findByText(kind === 'forbidden' ? 'Bạn không có quyền thực hiện thao tác này.' : message)).toBeInTheDocument();
     if (kind === 'conflict') expect(screen.getByText('Veterinarian restriction: no training until cleared.')).toBeInTheDocument();
     expect(authSession.read()?.accessToken).toBe('fixture-program-jwt');
     expect(screen.getByText('Horse-specific program')).toBeInTheDocument();

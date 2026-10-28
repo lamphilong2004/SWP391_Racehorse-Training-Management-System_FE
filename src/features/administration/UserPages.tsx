@@ -25,8 +25,9 @@ export function UserListPage() {
     </TableToolbar>
     {resource.pending && <LoadingState label="Đang tải tài khoản…" />}{resource.error && <ErrorState title="Không tải được danh sách tài khoản" description={resource.error} onRetry={resource.reload} />}
     {resource.data && <><Card><div className={styles.scroll}><DataTable rows={resource.data.items} rowKey={(u) => u.id} caption="Nhân sự và người dùng" empty={<EmptyState title="Không có tài khoản phù hợp" />} columns={[
-      { key: 'name', header: 'Họ tên', render: (u) => u.fullName }, { key: 'code', header: 'Mã người dùng', render: (u) => u.userCode },
-      { key: 'email', header: 'Email', render: (u) => u.email }, { key: 'role', header: 'Vai trò', render: (u) => u.roles.map((r) => ROLE_LABELS[r]).join(', ') },
+      { key: 'name', header: 'Người dùng', render: (u) => <div className={styles.person}><strong>{u.fullName}</strong><span>{u.email}</span></div> },
+      { key: 'code', header: 'Mã người dùng', render: (u) => <span className={styles.code}>{u.userCode}</span> },
+      { key: 'role', header: 'Vai trò', render: (u) => <span className={styles.nowrap}>{u.roles.map((r) => ROLE_LABELS[r]).join(', ')}</span> },
       { key: 'status', header: 'Trạng thái', render: (u) => <StatusBadge family="account" status={u.accountStatus} /> },
       { key: 'login', header: 'Lần đăng nhập cuối', render: (u) => time(u.lastLoginAt) }, { key: 'edit', header: 'Thao tác', render: (u) => <ButtonLink size="sm" variant="secondary" to={`/admin/users/${u.id}/edit`} aria-label={`Sửa ${u.fullName}`}>Sửa</ButtonLink> },
     ]} /></div></Card><div className={styles.actions}><Button variant="secondary" disabled={page === 0} onClick={() => setPage(page - 1)}>Trước</Button><span>{resource.data.totalItems} tài khoản · trang {page + 1}</span><Button variant="secondary" disabled={page + 1 >= resource.data.totalPages} onClick={() => setPage(page + 1)}>Sau</Button></div></>}

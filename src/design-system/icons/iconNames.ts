@@ -27,6 +27,7 @@ export const ICON_NAMES = [
   'image',
   'info',
   'lock',
+  'log-out',
   'menu',
   'more-horizontal',
   'octagon-x',

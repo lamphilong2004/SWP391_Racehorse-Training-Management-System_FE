@@ -25,7 +25,8 @@ it('mounts the approved list with canonical JWT transport and enters the existin
   expect(screen.getByRole('link', { name: '+ Tạo chương trình huấn luyện' })).toHaveAttribute('href', '/training/programs/new');
   expect(screen.getByRole('link', { name: 'Xem Foundation' })).toHaveAttribute('href', '/training/programs/10');
   expect(screen.getByText('Tóm tắt chương trình')).toBeInTheDocument();
-  expect(screen.getAllByText('Chưa cung cấp').length).toBeGreaterThanOrEqual(6);
+  // Goal and progress are not provided by the API, so the list shows no placeholder columns for them.
+  expect(screen.queryByRole('columnheader', { name: 'Tiến độ' })).not.toBeInTheDocument();
   expect(screen.queryByText(/58%/)).not.toBeInTheDocument();
 });
 it('pages and filters status on the server without assignedToMe or unsupported search fields', async () => {

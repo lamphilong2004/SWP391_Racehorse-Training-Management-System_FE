@@ -102,6 +102,8 @@
   letter-spacing: 0.08em;
 }
 
+.userMenu { position: relative; }
+
 .user {
   display: flex;
   align-items: center;
@@ -163,6 +165,113 @@
 }
 
 .menu:hover, .bell:hover { background: var(--color-bg-subtle); }
+
+.user { padding: 4px 8px 4px 4px; transition: background var(--motion-fast) var(--motion-ease); }
+.user:hover, .user[aria-expanded="true"] { background: var(--color-bg-subtle); }
+.user:focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 2px; }
+.chevron { transition: transform var(--motion-fast) var(--motion-ease); }
+.chevronOpen { transform: rotate(180deg); }
+
+/* Account dropdown (menu-button pattern): identity card, shortcuts, sign-out. */
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 50;
+  width: 320px;
+  padding: var(--space-sm);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elev-3, 0 12px 32px rgb(15 23 42 / 0.16));
+  animation: dropdownIn var(--motion-fast, 120ms) var(--motion-ease, ease-out);
+}
+@keyframes dropdownIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .dropdown { animation: none; } }
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  margin-bottom: var(--space-xs);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-subtle);
+}
+.avatarLarge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background: var(--color-brand-primary, var(--color-primary-600));
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
+}
+.identityText { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.identityText strong { font-size: 15px; line-height: 22px; color: var(--color-text-primary); overflow-wrap: anywhere; }
+.email { font-size: 12px; line-height: 16px; color: var(--color-text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rolePill {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-50);
+  color: var(--color-primary-600);
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 600;
+}
+.menuGroup { display: flex; flex-direction: column; padding: var(--space-xs) 0; }
+.menuGroup + .menuGroup { border-top: 1px solid var(--color-border-default); }
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.menuItem:hover, .menuItem:focus-visible { background: var(--color-bg-subtle); outline: none; }
+.menuItem:focus-visible { box-shadow: inset 0 0 0 2px var(--color-border-focus); }
+.menuItem:disabled { cursor: progress; opacity: 0.7; }
+.menuIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-subtle);
+  color: var(--color-text-secondary);
+}
+.menuItem:hover .menuIcon { background: var(--color-bg-surface); }
+.menuText { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.menuText > span { font-size: 14px; line-height: 20px; font-weight: 500; }
+.menuText small { font-size: 12px; line-height: 16px; color: var(--color-text-secondary); }
+.menuCount {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-danger-600);
+  color: var(--color-text-on-primary);
+  font-size: 11px;
+  line-height: 20px;
+  font-weight: 600;
+  text-align: center;
+}
+.signOut, .signOut .menuIcon { color: var(--color-danger-600); }
 
 :global([data-ui-v3]) .header {
   box-shadow: var(--elev-1);
