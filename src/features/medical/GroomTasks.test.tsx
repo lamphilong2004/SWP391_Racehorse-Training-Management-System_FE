@@ -31,7 +31,7 @@ it.each(['CLUB_MANAGER', 'HEAD_TRAINER', 'TRAINER', 'WORK_RIDER', 'VETERINARIAN'
 });
 it('Groom accesses assigned tasks through the real adapter and cannot open clinical routes', async () => {
   const { router, fetcher } = mount('GROOM');
-  expect(await screen.findAllByText(/Cold compress/)).toHaveLength(2);
+  expect(await screen.findAllByText(/Cold compress/)).toHaveLength(1);
   expect(fetcher.mock.calls.some(([url]) => url.includes('/api/groom/treatment-tasks'))).toBe(true);
   await router.navigate('/medical/cases/9');
   expect(await screen.findByText('Không có quyền truy cập')).toBeInTheDocument();

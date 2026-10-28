@@ -125,6 +125,39 @@ describe('AppShell', () => {
     expect(screen.getByText('NT')).toBeInTheDocument();
   });
 
+  it('opens the account menu with identity and shortcuts, closes on Escape and navigates from an item', async () => {
+    const router = createMemoryRouter([
+      { path: '*', element: <AppShell user={{ fullName: 'Nguyen Thanh', role: 'VETERINARIAN' }} breadcrumb={[{ label: 'Tổng quan' }]} unreadCount={2}><p>content</p></AppShell> },
+    ], { initialEntries: [ROUTES.dashboard] });
+    render(<RouterProvider router={router} />);
+    const actor = userEvent.setup();
+    const trigger = screen.getByRole('button', { name: 'Menu tài khoản' });
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+
+    await actor.click(trigger);
+    const menu = screen.getByRole('menu', { name: 'Tài khoản' });
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    expect(within(menu).getAllByRole('menuitem').map((item) => item.textContent)).toEqual([
+      'Tài khoản của tôiHồ sơ cá nhân và thông tin đăng nhập',
+      'Đổi mật khẩuNên đổi mật khẩu do Club Manager cấp',
+      'Thông báo2 thông báo chưa đọc2',
+      'Không gian làm việcVề trang tổng quan của vai trò',
+    ]);
+    expect(within(menu).getAllByRole('menuitem')[0]).toHaveFocus();
+    await actor.keyboard('{ArrowDown}');
+    expect(within(menu).getAllByRole('menuitem')[1]).toHaveFocus();
+
+    await actor.keyboard('{Escape}');
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+
+    await actor.click(trigger);
+    await actor.click(screen.getByRole('menuitem', { name: /Đổi mật khẩu/ }));
+    expect(router.state.location.pathname).toBe(ROUTES.account);
+    expect(router.state.location.hash).toBe('#doi-mat-khau');
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  });
+
   it.each([
     ['CLUB_MANAGER', '/horses/6', 'Ngựa'],
     ['CLUB_MANAGER', '/horses/6/identity', 'Ngựa'],

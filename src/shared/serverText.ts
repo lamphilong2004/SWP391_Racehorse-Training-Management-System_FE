@@ -2,7 +2,10 @@
  * Vietnamese display text for fixed English strings the Backend returns (activation checklist, horse timeline).
  * The Backend is unchanged; any text not listed here is shown exactly as the server sent it.
  */
+import { SERVER_ERROR_PATTERNS, SERVER_ERROR_TEXT } from './serverErrors';
+
 const TEXT: Record<string, string> = {
+  ...SERVER_ERROR_TEXT,
   // GET /api/horses/{id}/activation-status checklist (labels and state descriptions)
   'Horse identity': 'Nhận dạng ngựa',
   'Horse identity is valid.': 'Thông tin nhận dạng hợp lệ.',
@@ -80,6 +83,7 @@ const PATTERNS: [RegExp, (...groups: string[]) => string][] = [
   [/^Your adjustment request for program (\S+) was (APPROVED|REJECTED)\.$/, (id, status) => `Đề xuất điều chỉnh chương trình ${id} của bạn đã ${status === 'APPROVED' ? 'được duyệt' : 'bị từ chối'}.`],
   [/^Session (\S+) has been assigned to you\.$/, (code) => `Bạn được giao buổi tập ${code}.`],
   [/^You have been assigned to (.+)\.$/, (name) => `Bạn được giao phụ trách ${name}.`],
+  ...SERVER_ERROR_PATTERNS,
 ];
 
 export function serverText(text: string | null | undefined): string {

@@ -2,7 +2,7 @@ import { clubDateTime, parseClubDateTime } from '../../shared/clubCalendar';
 import { boxLabel } from '../../shared/stableBox';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { ActionBar, AlertBanner, ButtonLink, Button, Card, DataTable, EmptyState, KeyValue, MetricCard, StatusBadge, TableToolbar, SelectField, TextField, Tabs } from '../../design-system';
+import { ActionBar, AlertBanner, ButtonLink, Button, Card, DataTable, EmptyState, Icon, KeyValue, MetricCard, StatusBadge, TableToolbar, SelectField, TextField, Tabs } from '../../design-system';
 import { PageHeader } from '../../layout/PageHeader';
 import { MEDICAL_ROUTES as ROUTES } from './paths';
 import { MedicalForm } from './MedicalForm';
@@ -15,6 +15,7 @@ import { dateTime } from '../evaluation/models';
 import { medicalErrorMessage } from './errors';
 import './medical.css';
 import { viLabel } from '../../shared/viLabels';
+import { formatDate } from '../horses/shared/format';
 
 const casePath = (id: number) => ROUTES.medicalCaseDetail.replace(':caseId', String(id));
 const latest = <T extends { examinedAt: string },>(items: T[]) => [...items].sort((a, b) => Date.parse(b.examinedAt) - Date.parse(a.examinedAt))[0];
@@ -139,7 +140,7 @@ export function HerdHealthPage() {
   const visible = horses.data?.filter((horse) => !health || (health === 'UNASSESSED' ? horse.healthStatus === null : horse.healthStatus === health)) ?? [];
   return <><PageHeader title="Tổng quan sức khỏe đàn ngựa" description="Tình trạng sức khỏe và khả năng tập luyện được hiển thị riêng" actions={<Button onClick={() => navigate(ROUTES.medical)}>Xem ca y tế</Button>} />
     {!data ? <ResourceState error={error} retry={reload} /> : <div className="medical-stack">
-      <p className="text-caption">{data.totalHorses} con ngựa · {data.unassessed} chưa đánh giá</p>
+      <p className="text-caption">{data.totalHorses} con ngựa trong câu lạc bộ{data.unassessed ? ` · ${data.unassessed} con chưa có đánh giá sức khỏe (ngựa mới đến, xem ở Tổng quan)` : ''}</p>
       <p className="medical-overline">Tình trạng sức khỏe · toàn câu lạc bộ</p><div className="medical-grid medical-herd-grid">
         {[['Khỏe', data.fit], ['Đang theo dõi', data.monitoring], ['Bị chấn thương', data.injured], ['Đang cách ly', data.quarantined]].map(([label, value]) =>
           <MetricCard key={label} label={String(label)} value={String(value)} />)}
@@ -155,13 +156,23 @@ export function HerdHealthPage() {
         </button>)}
       </div>
       {cases.error && <div className="medical-actions"><p className="text-caption">Không tải được tóm tắt ca y tế.</p><Button variant="secondary" onClick={cases.reload}>Tải lại tóm tắt ca</Button></div>}
-      {!visible.length ? <EmptyState title="Không có ngựa phù hợp bộ lọc" /> : <div className="medical-grid medical-herd-grid">{visible.map((horse) => <Card key={horse.id} className="medical-herd-horse">
-        <h3 className="text-h3">{horse.name}</h3><p className="text-caption">{horse.horseCode}{horse.currentBoxCode ? ` · ${boxLabel(horse.currentBoxCode)}` : ''}</p>
-        <div className="medical-actions">{horse.healthStatus ? <StatusBadge family="health" status={horse.healthStatus} /> : <span className="text-caption">{horse.healthStatus === null ? 'Chưa đánh giá' : 'Không có tình trạng sức khỏe'}</span>}<StatusBadge family="availability" status={horse.trainingAvailability} /></div>
-        {cases.data ? cases.data.filter((item) => item.horseId === horse.id && item.status === 'OPEN').length ? cases.data.filter((item) => item.horseId === horse.id && item.status === 'OPEN').map((item) => <div key={item.id} className="medical-case-preview">
-          <p>Ca đang mở · {item.reason ?? `Ca ${item.id}`}</p><p className="text-caption">{item.treatmentPlan?.reexaminationDate ? `Tái khám ${item.treatmentPlan.reexaminationDate}` : 'Chưa hẹn tái khám'}</p><Link to={casePath(item.id)}>Mở ca →</Link>
-        </div>) : <p className="text-caption">Không có ca đang mở</p> : <p className="text-caption">{cases.error ? 'Không tải được tóm tắt ca' : 'Đang tải tóm tắt ca…'}</p>}
-      </Card>)}</div>}
+      {!visible.length ? <EmptyState title="Không có ngựa phù hợp bộ lọc" /> : <div className="medical-grid medical-herd-grid">{visible.map((horse) => {
+        const open = cases.data?.filter((item) => item.horseId === horse.id && item.status === 'OPEN') ?? [];
+        const attention = horse.trainingAvailability === 'LOCKED' || horse.healthStatus === 'INJURED' || horse.healthStatus === 'QUARANTINED' ? 'danger'
+          : horse.trainingAvailability === 'LIMITED' || horse.healthStatus === 'MONITORING' || open.length ? 'warning' : undefined;
+        return <Card key={horse.id} className={`medical-herd-horse${attention ? ` medical-herd-${attention}` : ''}`}>
+          <div className="medical-herd-head"><div><h3 className="text-h3">{horse.name}</h3><p className="text-caption">{horse.horseCode}{horse.currentBoxCode ? ` · ${boxLabel(horse.currentBoxCode)}` : ''}</p></div>
+            <Link to={`/horses/${horse.id}`} aria-label={`Xem hồ sơ ${horse.name}`}>Hồ sơ</Link></div>
+          <div className="medical-actions medical-herd-badges">{horse.healthStatus ? <StatusBadge family="health" status={horse.healthStatus} /> : <span className="text-caption">Chưa đánh giá sức khỏe</span>}<StatusBadge family="availability" status={horse.trainingAvailability} /></div>
+          <div className="medical-herd-foot">
+            {cases.data ? open.length ? open.map((item) => <div key={item.id} className="medical-case-preview">
+              <p className="medical-herd-case-title">Ca y tế #{item.id} đang mở</p>
+              {item.reason && <p className="medical-herd-reason" title={item.reason}>{item.reason}</p>}
+              <div className="medical-herd-case-meta"><span className="text-caption">{item.treatmentPlan?.reexaminationDate ? `Tái khám ${formatDate(item.treatmentPlan.reexaminationDate)}` : 'Chưa hẹn tái khám'}</span><Link to={casePath(item.id)}>Mở ca →</Link></div>
+            </div>) : <p className="text-caption medical-herd-calm"><Icon name="check-circle" size={16} />Không có ca đang mở</p> : <p className="text-caption">{cases.error ? 'Không tải được tóm tắt ca' : 'Đang tải tóm tắt ca…'}</p>}
+          </div>
+        </Card>;
+      })}</div>}
     </div>}
   </>;
 }
@@ -321,7 +332,7 @@ function CaseTasks({ caseId }: { caseId: number }) {
   const { data, error, reload } = useResource(load);
   return <Card title="Công việc điều trị đã giao">{!data ? <ResourceState error={error} retry={reload} /> : <div className="medical-stack">
     <History count={data.items.length} empty="Chưa giao công việc điều trị nào">{data.items.map((task) =>
-      <li key={task.id}>{task.taskDate} · Groom {task.assignedGroomUserId} · {viLabel(task.status)}<p>{task.instruction}</p></li>)}</History>
+      <li key={task.id}>{formatDate(task.taskDate)} · Groom {task.assignedGroomUserId} · {viLabel(task.status)}<p>{task.instruction}</p></li>)}</History>
     <div className="medical-actions"><Button variant="secondary" disabled={page === 0} onClick={() => setPage(page - 1)}>Trước</Button><span>Trang {page + 1} · tổng {data.totalElements}</span><Button variant="secondary" disabled={(page + 1) * data.size >= data.totalElements} onClick={() => setPage(page + 1)}>Sau</Button></div>
   </div>}</Card>;
 }

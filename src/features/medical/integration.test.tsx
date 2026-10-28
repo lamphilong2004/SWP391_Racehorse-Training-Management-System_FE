@@ -74,8 +74,9 @@ it('restores a Vet and clears clinical data after sign-out', async () => {
   const router = mount('/medical');
   expect(await screen.findByText('Lameness')).toBeInTheDocument();
   await router.navigate('/dashboard');
-  fireEvent.click(await screen.findByRole('button', { name: 'Menu tài khoản' }));
-  fireEvent.click(await screen.findByRole('button', { name: 'Đăng xuất' }));
+  await screen.findByRole('heading', { name: 'Ngựa mới đến' });
+  fireEvent.click(screen.getByRole('button', { name: 'Menu tài khoản' }));
+  fireEvent.click(await screen.findByRole('menuitem', { name: 'Đăng xuất' }));
   expect(await screen.findByRole('heading', { name: 'Đăng nhập Racehorse Ops' })).toBeInTheDocument();
   expect(screen.queryByText('Lameness')).not.toBeInTheDocument();
   expect(authSession.read()).toBeNull();

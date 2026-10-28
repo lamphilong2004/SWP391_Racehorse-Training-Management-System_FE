@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useLocation, useNavigate } from 'react-router';
 import { ActionBar, AlertBanner, ButtonLink, Button, Card, ErrorState, KeyValue, LoadingState, TextField, UnsavedChangesGuard } from '../design-system';
 import { AppShell } from '../layout/AppShell';
 import { PageHeader } from '../layout/PageHeader';
@@ -33,6 +33,8 @@ function AccountContent() {
   </div></AppShell>;
 }
 function AccountForm({ profile }: { profile: UserDetail }) {
+  const { hash } = useLocation();
+  useEffect(() => { if (hash === '#doi-mat-khau') document.getElementById('doi-mat-khau')?.scrollIntoView({ block: 'start' }); }, [hash]);
   const request = useFlowRequest();
   const [name, setName] = useState(profile.fullName), [savedName, setSavedName] = useState(profile.fullName);
   const [currentPassword, setCurrentPassword] = useState(''), [newPassword, setNewPassword] = useState(''), [confirmPassword, setConfirmPassword] = useState('');
@@ -59,12 +61,12 @@ function AccountForm({ profile }: { profile: UserDetail }) {
         <div className={styles.formFields}><TextField label="Họ và tên" required maxLength={150} value={name} disabled={busy} onChange={(e) => setName(e.target.value)} /><TextField label="Email" type="email" value={profile.email} readOnly helperText="Muốn đổi email cần liên hệ Club Manager." /></div>
         <ActionBar><Button type="submit" disabled={busy || name === savedName}>Lưu hồ sơ</Button></ActionBar>
       </form></Card>
-      <Card title="Đổi mật khẩu"><form onSubmit={(e) => { void save(e, true); }} className={styles.stack}>
+      <div id="doi-mat-khau" className={styles.stack}><Card title="Đổi mật khẩu"><form onSubmit={(e) => { void save(e, true); }} className={styles.stack}>
         <TextField label="Mật khẩu hiện tại" type="password" autoComplete="current-password" required value={currentPassword} disabled={busy} onChange={(e) => setCurrentPassword(e.target.value)} />
         <div className={styles.formFields}><TextField label="Mật khẩu mới" type="password" autoComplete="new-password" minLength={8} maxLength={64} required value={newPassword} disabled={busy} onChange={(e) => setNewPassword(e.target.value)} /><TextField label="Nhập lại mật khẩu mới" type="password" autoComplete="new-password" required value={confirmPassword} disabled={busy} onChange={(e) => setConfirmPassword(e.target.value)} /></div>
         <p>Khôi phục mật khẩu chưa dùng được trên môi trường chính thức: cần có dịch vụ email được duyệt.</p>
         <ActionBar><Button type="submit" disabled={busy}>{busy ? 'Đang lưu…' : 'Đổi mật khẩu'}</Button></ActionBar>
-      </form></Card>
+      </form></Card></div>
     </div><Card title="Tài khoản & quyền truy cập"><KeyValue label="Mã người dùng" value={profile.userCode} /><KeyValue label="Vai trò" value={profile.roles.map((r) => ROLE_LABELS[r]).join(', ')} /><KeyValue label="Trạng thái tài khoản" value={viLabel(profile.accountStatus)} /><KeyValue label="Lần đăng nhập cuối" value={profile.lastLoginAt ? new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(profile.lastLoginAt)) : 'Chưa bao giờ'} /><p>Vai trò và quyền hạn của bạn do Club Manager quản lý.</p></Card></div>
   </>;
 }

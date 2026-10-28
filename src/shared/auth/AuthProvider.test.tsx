@@ -114,10 +114,10 @@ describe('CORE-008 auth flow', () => {
   });
 
   it.each([
-    [401, 'UNAUTHORIZED', 'Invalid email or password.'],
-    [403, 'FORBIDDEN', 'Your account is waiting for Club Manager approval.'],
-    [403, 'FORBIDDEN', 'Your account is deactivated.'],
-  ])('shows the contract %i login error without creating a session', async (status, code, message) => {
+    [401, 'UNAUTHORIZED', 'Invalid email or password.', 'Email hoặc mật khẩu không đúng.'],
+    [403, 'FORBIDDEN', 'Your account is waiting for Club Manager approval.', 'Tài khoản của bạn đang chờ Club Manager duyệt.'],
+    [403, 'FORBIDDEN', 'Your account is deactivated.', 'Tài khoản của bạn đã bị vô hiệu hóa.'],
+  ])('shows the contract %i login error (in Vietnamese) without creating a session', async (status, code, message, shown) => {
     vi.stubGlobal('fetch', vi.fn(async () => errorEnvelope(status, code, message)));
     renderApp();
     const actor = userEvent.setup();
@@ -126,7 +126,7 @@ describe('CORE-008 auth flow', () => {
     await actor.type(screen.getByLabelText('Mật khẩu'), 'wrong-password');
     await actor.click(screen.getByRole('button', { name: 'Đăng nhập' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(message);
+    expect(await screen.findByRole('alert')).toHaveTextContent(shown);
     expect(window.localStorage.getItem('racehorse.auth.local.v1')).toBeNull();
     expect(window.sessionStorage.getItem('racehorse.auth.session.v1')).toBeNull();
   });
@@ -225,8 +225,8 @@ describe('CORE-008 auth flow', () => {
     const actor = userEvent.setup();
 
     await actor.click(await screen.findByRole('button', { name: 'Menu tài khoản' }));
-    expect(router.state.location.pathname).toBe('/account');
-    await actor.click(await screen.findByRole('button', { name: 'Đăng xuất' }));
+    expect(screen.getByRole('menu', { name: 'Tài khoản' })).toBeInTheDocument();
+    await actor.click(screen.getByRole('menuitem', { name: 'Đăng xuất' }));
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/login'));
     expect(fetchMock).toHaveBeenCalledWith(
@@ -249,8 +249,8 @@ describe('CORE-008 auth flow', () => {
     const actor = userEvent.setup();
 
     await actor.click(await screen.findByRole('button', { name: 'Menu tài khoản' }));
-    expect(router.state.location.pathname).toBe('/account');
-    await actor.click(await screen.findByRole('button', { name: 'Đăng xuất' }));
+    expect(screen.getByRole('menu', { name: 'Tài khoản' })).toBeInTheDocument();
+    await actor.click(screen.getByRole('menuitem', { name: 'Đăng xuất' }));
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/login'));
     expect(await screen.findByText('Đã đăng xuất trên thiết bị này. Chưa xác nhận được việc đăng xuất trên máy chủ.')).toBeInTheDocument();
