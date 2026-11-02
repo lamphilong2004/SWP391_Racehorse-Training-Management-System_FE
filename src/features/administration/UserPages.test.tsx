@@ -16,6 +16,17 @@ function mount(path = '/admin/users/new') {
   return router;
 }
 beforeEach(() => { request.mockReset(); });
+it('offers experience descriptions without guessing them from years and retains custom descriptions', async () => {
+  request.mockResolvedValue([]);mount();
+  await screen.findByLabelText(/Họ và tên/);
+  fireEvent.change(screen.getByLabelText('Cấp độ kinh nghiệm'), { target: { value: 'Lâu năm' } });
+  fireEvent.change(screen.getByLabelText('Kinh nghiệm (năm)'), { target: { value: '0' } });
+  expect(screen.getByLabelText('Cấp độ kinh nghiệm')).toHaveValue('Lâu năm');
+  fireEvent.change(screen.getByLabelText('Cấp độ kinh nghiệm'), { target: { value: '__CUSTOM_VALUE__' } });
+  expect(screen.getByLabelText('Cấp độ kinh nghiệm (nhập thêm)')).toHaveValue('Lâu năm');
+  fireEvent.change(screen.getByLabelText('Cấp độ kinh nghiệm (nhập thêm)'), { target: { value: 'Theo hồ sơ đã xác nhận' } });
+  expect(screen.getByLabelText('Cấp độ kinh nghiệm (nhập thêm)')).toHaveValue('Theo hồ sơ đã xác nhận');
+});
 it('submits once, waits for server success and leaves without a false unsaved dialog', async () => {
   let complete!: (value: unknown) => void;
   request.mockImplementation(() => new Promise((resolve) => { complete = resolve; }));

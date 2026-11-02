@@ -26,6 +26,7 @@ function destination(notice: Notice, roles: RoleCode[]): string | undefined {
   if (notice.targetType === 'INCIDENT' && !roles.includes('HORSE_OWNER')) return `/incidents/${id}`;
   if (notice.targetType === 'MEDICAL_CASE' && roles.some((r) => ['VETERINARIAN', 'TRAINER', 'HEAD_TRAINER', 'CLUB_MANAGER'].includes(r))) return `/medical/cases/${id}`;
   if (notice.targetType === 'CARE_TASK' && roles.includes('GROOM')) return '/care/tasks';
+  if (notice.targetType === 'STABLE_CARE' && roles.some(role => ['GROOM', 'CLUB_MANAGER', 'HEAD_TRAINER', 'VETERINARIAN'].includes(role))) return '/care/daily';
   if (['HORSE_TRAINING_PROGRAM', 'TRAINING_PROGRAM'].includes(notice.targetType ?? '') && roles.some((r) => ['HEAD_TRAINER', 'TRAINER'].includes(r))) return `/training/programs/${id}`;
   return undefined;
 }

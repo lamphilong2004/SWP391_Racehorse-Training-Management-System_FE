@@ -13,6 +13,7 @@ import { sexLabel } from '../shared/options';
 import { useBreadcrumb } from '../shared/HorseManagementLayout';
 import styles from '../shared/horses.module.css';
 import { AssignBoxModal } from './AssignBoxModal';
+import { HorseRecordPicker } from '../shared/HorseRecordPicker';
 
 interface Loaded {
   horse: HorseDetail;
@@ -47,6 +48,9 @@ function PedigreeOwnershipPageContent() {
   const [refreshing, setRefreshing] = useState(false);
   const [sire, setSire] = useState('');
   const [dam, setDam] = useState('');
+  const [sireChoice, setSireChoice] = useState<HorseDetail>();
+  const [damChoice, setDamChoice] = useState<HorseDetail>();
+  const [parentPicker, setParentPicker] = useState<'sire' | 'dam'>();
   const [ownerId, setOwnerId] = useState('');
   const [share, setShare] = useState('');
   const [effectiveFrom, setEffectiveFrom] = useState(todayIsoDate());
@@ -88,6 +92,7 @@ function PedigreeOwnershipPageContent() {
       initializedHorse.current = horse.id;
       setSire(horse.pedigree.sire.name || horse.pedigree.sire.horseCode || '');
       setDam(horse.pedigree.dam.name || horse.pedigree.dam.horseCode || '');
+      setSireChoice(undefined); setDamChoice(undefined); setParentPicker(undefined);
       setOwnerId(String(horse.currentOwnerships[0]?.owner.id ?? ''));
     }
   }, []);
@@ -142,14 +147,15 @@ function PedigreeOwnershipPageContent() {
     pending.current = true; setSaving(true);
     try {
       // A parent that exactly matches one registered horse (name or code) is linked by record; otherwise kept as a name.
-      const parent = async (name: string, existing: HorseDetail['pedigree']['sire']) => {
+      const parent = async (name: string, existing: HorseDetail['pedigree']['sire'], selected?: HorseDetail) => {
         const value = name.trim();
+        if (selected && value === selected.name) return { horseId: selected.id, name: null };
         if (existing.horseId && value === (existing.name || existing.horseCode || '')) return { horseId: existing.horseId, name: null };
         const found = (await api.listHorses({ q: value, page: 0, size: 20 })).items
           .filter((item) => item.id !== horse.id && [item.name, item.horseCode].some((text) => text?.toLowerCase() === value.toLowerCase()));
         return found.length === 1 ? { horseId: found[0].id, name: null } : { horseId: null, name: value };
       };
-      await api.setPedigree(horse.id, { sire: await parent(sire, horse.pedigree.sire), dam: await parent(dam, horse.pedigree.dam) });
+      await api.setPedigree(horse.id, { sire: await parent(sire, horse.pedigree.sire, sireChoice), dam: await parent(dam, horse.pedigree.dam, damChoice) });
       if (ownerId && !horse.currentOwnerships.some((o) => o.owner.id === Number(ownerId))) {
         await api.addOwnership(horse.id, { ownerUserId: Number(ownerId), sharePercentage: Number(share), effectiveFrom, isManagingOwner: managing });
       }
@@ -165,6 +171,7 @@ function PedigreeOwnershipPageContent() {
 
   // Memory-only dirty state against the loaded horse; ownership/pedigree drafts are never stored locally.
   const dirty = !saved && (sire !== (horse.pedigree.sire.name || horse.pedigree.sire.horseCode || '') || dam !== (horse.pedigree.dam.name || horse.pedigree.dam.horseCode || '')
+    || Boolean(sireChoice && sireChoice.id !== horse.pedigree.sire.horseId) || Boolean(damChoice && damChoice.id !== horse.pedigree.dam.horseId)
     || ownerId !== String(horse.currentOwnerships[0]?.owner.id ?? '') || share !== '' || managing);
 
   return (
@@ -196,10 +203,14 @@ function PedigreeOwnershipPageContent() {
             <div className={styles.cardBody}>
               <h2 className={styles.cardTitle}>Phả hệ</h2>
               <div className={styles.row}>
-                <TextField label="Ngựa cha *" value={sire} maxLength={150} error={errors.sire} disabled={saving}
-                  onChange={(e) => { setSire(e.target.value); setErrors((x) => ({ ...x, sire: undefined })); }} />
-                <TextField label="Ngựa mẹ *" value={dam} maxLength={150} error={errors.dam} disabled={saving}
-                  onChange={(e) => { setDam(e.target.value); setErrors((x) => ({ ...x, dam: undefined })); }} />
+                <div className={styles.parentField}><TextField label="Ngựa cha *" value={sire} maxLength={150} error={errors.sire} disabled={saving}
+                  helperText={sireChoice ? `Đã chọn hồ sơ ${sireChoice.horseCode}. Sửa tên sẽ bỏ lựa chọn này.` : 'Nhập tên ngựa ngoài hệ thống hoặc chọn hồ sơ đã có.'}
+                  onChange={(e) => { setSire(e.target.value); setSireChoice(undefined); setErrors((x) => ({ ...x, sire: undefined })); }} />
+                  <Button variant="secondary" size="sm" disabled={saving} onClick={() => setParentPicker('sire')}>Chọn ngựa cha có hồ sơ</Button></div>
+                <div className={styles.parentField}><TextField label="Ngựa mẹ *" value={dam} maxLength={150} error={errors.dam} disabled={saving}
+                  helperText={damChoice ? `Đã chọn hồ sơ ${damChoice.horseCode}. Sửa tên sẽ bỏ lựa chọn này.` : 'Nhập tên ngựa ngoài hệ thống hoặc chọn hồ sơ đã có.'}
+                  onChange={(e) => { setDam(e.target.value); setDamChoice(undefined); setErrors((x) => ({ ...x, dam: undefined })); }} />
+                  <Button variant="secondary" size="sm" disabled={saving} onClick={() => setParentPicker('dam')}>Chọn ngựa mẹ có hồ sơ</Button></div>
               </div>
             </div>
           </Card>
@@ -258,6 +269,12 @@ function PedigreeOwnershipPageContent() {
         </aside>
       </div>
 
+      {parentPicker && <HorseRecordPicker api={api} kind={parentPicker} horseId={horse.id} onClose={() => setParentPicker(undefined)}
+        onSelected={selected => {
+          if (parentPicker === 'sire') { setSire(selected.name); setSireChoice(selected); }
+          else { setDam(selected.name); setDamChoice(selected); }
+          setErrors(current => ({ ...current, [parentPicker]: undefined })); setParentPicker(undefined);
+        }} />}
       <div className={styles.footer}>
         <Button variant="secondary" onClick={() => navigate('/horses')} disabled={saving}>Hủy</Button>
         <Button type="submit" disabled={saving || refreshing || unavailable.length > 0 || !owners?.length}>{'Lưu & tiếp tục'}</Button>

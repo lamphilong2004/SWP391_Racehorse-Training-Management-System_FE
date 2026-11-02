@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { buildRoutes } from '../../app/router';
@@ -21,7 +21,7 @@ function SessionProbe() {
   const auth = useAuth();
   return <><button onClick={() => void auth.logout()}>Fixture logout</button><button onClick={() => void auth.login('second@fixture.test', 'fixture-only', false)}>Fixture switch</button></>;
 }
-function mount(path = '/horses', options: { role?: RoleCode; anonymous?: boolean; status?: number; offline?: boolean; setup?: boolean; store?: HorseDetail[]; create?: () => Promise<Response> } = {}) {
+function mount(path = '/horses', options: { role?: RoleCode; anonymous?: boolean; status?: number; offline?: boolean; setup?: boolean; store?: HorseDetail[]; list?: (url: URL) => unknown; create?: () => Promise<Response> } = {}) {
   const actor = { ...manager, roles: [options.role ?? 'CLUB_MANAGER'] };
   const store = options.store ?? [horse()];
   const requests: { method: string; path: string; body?: unknown }[] = [];
@@ -39,7 +39,7 @@ function mount(path = '/horses', options: { role?: RoleCode; anonymous?: boolean
       if (options.create) return options.create();
       const saved = { ...horse(82), ...JSON.parse(String(init?.body)), lifecycle: 'DRAFT' as const }; store.push(saved); return ok(saved, 201);
     }
-    if (path === '/api/horses' && method === 'GET') return ok({ items: store, page: 0, size: 20, totalItems: store.length, totalPages: 1 });
+    if (path === '/api/horses' && method === 'GET') return ok(options.list ? options.list(url) : { items: store, page: 0, size: 20, totalItems: store.length, totalPages: 1 });
     if (/^\/api\/horses\/\d+$/.test(path)) return ok(store.find((h) => h.id === Number(path.split('/')[3])) ?? horse());
     if (path === '/api/stable-boxes') return ok([
       { id: 31, boxCode: 'B-01', yard: 'Fixture yard', status: 'FREE', currentHorse: null },
@@ -60,6 +60,66 @@ function mount(path = '/horses', options: { role?: RoleCode; anonymous?: boolean
 }
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); });
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); localStorage.clear(); sessionStorage.clear(); });
+
+it.each([0, 1])('shows an honest compact registry summary for %s returned rows', async (count) => {
+  mount('/horses', { store: count ? [horse()] : [] });
+  await screen.findByRole('heading', { name: 'Hồ sơ ngựa' });
+  expect(screen.getByText(`${count} ngựa trên trang này`)).toBeInTheDocument();
+  expect(screen.queryByText('Ngựa phù hợp', { exact: true })).not.toBeInTheDocument();
+  const pagination = screen.getByRole('navigation', { name: 'Phân trang danh sách ngựa' });
+  expect(within(pagination).getByRole('status')).toHaveTextContent('Trang 1 / 1');
+  expect(within(pagination).getByRole('button', { name: 'Trước' })).toBeDisabled();
+  expect(within(pagination).getByRole('button', { name: 'Sau' })).toBeDisabled();
+  if (!count) expect(screen.getByText('Không có ngựa phù hợp')).toBeInTheDocument();
+});
+
+it('keeps total results separate from page size and preserves server pagination actions', async () => {
+  const records = Array.from({ length: 21 }, (_, i) => ({ ...horse(81 + i), name: `Fixture horse ${i + 1}` }));
+  const state = mount('/horses', { list: (url) => {
+    const page = Number(url.searchParams.get('page') ?? '0');
+    return { items: records.slice(page * 20, (page + 1) * 20), page, size: 20, totalItems: 21, totalPages: 2 };
+  } });
+  await screen.findByText('20 ngựa trên trang này');
+  expect(screen.getByText(/21 kết quả/)).toBeInTheDocument();
+  await userEvent.click(within(screen.getByRole('navigation', { name: 'Phân trang danh sách ngựa' })).getByRole('button', { name: 'Sau' }));
+  await screen.findByText('1 ngựa trên trang này');
+  expect(screen.getByText(/21 kết quả/)).toBeInTheDocument();
+  expect(screen.getByRole('table', { name: 'Danh sách ngựa' })).toHaveTextContent('Fixture horse 21');
+  const pagination = screen.getByRole('navigation', { name: 'Phân trang danh sách ngựa' });
+  expect(within(pagination).getByRole('status')).toHaveTextContent('Trang 2 / 2');
+  expect(within(pagination).getByRole('button', { name: 'Sau' })).toBeDisabled();
+  await userEvent.click(within(pagination).getByRole('button', { name: 'Trước' }));
+  await screen.findByText('20 ngựa trên trang này');
+  expect(state.requests.filter(request => request.method !== 'GET')).toHaveLength(0);
+});
+
+it('uses a country dropdown while preserving custom origin text through failed saves', async () => {
+  mount('/horses/new', { create: async () => failure(409, 'Duplicate code') });
+  await screen.findByRole('heading', { name: 'Thêm ngựa' });
+  await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Quốc gia xuất xứ' }), 'Japan');
+  expect(screen.getByRole('combobox', { name: 'Quốc gia xuất xứ' })).toHaveValue('Japan');
+  await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Quốc gia xuất xứ' }), '__CUSTOM_VALUE__');
+  const custom = screen.getByRole('textbox', { name: 'Quốc gia xuất xứ (nhập thêm)' });
+  expect(custom).toHaveValue('Japan');
+  fireEvent.change(custom, { target: { value: 'Existing custom origin' } });
+  fireEvent.change(screen.getByLabelText('Tên ngựa *'), { target: { value: 'Origin fixture' } });
+  fireEvent.change(screen.getByLabelText('Mã ngựa *'), { target: { value: 'ORIGIN' } });
+  await userEvent.click(screen.getByRole('button', { name: 'Lưu nháp & tiếp tục' }));
+  await screen.findByText('Duplicate code');expect(custom).toHaveValue('Existing custom origin');
+});
+
+it('wires a selected pedigree record by ID even when two candidates share a name', async () => {
+  const state = mount('/horses/81/edit', { setup: true, store: [horse(), { ...horse(91), name: 'Same parent', horseCode: 'P-91' }, { ...horse(92), name: 'Same parent', horseCode: 'P-92' }] });
+  await screen.findByRole('heading', { name: 'Phả hệ & quyền sở hữu · Fixture Draft' });
+  await userEvent.click(screen.getByRole('button', { name: 'Chọn ngựa cha có hồ sơ' }));
+  await screen.findByRole('option', { name: 'Same parent · P-92' });
+  await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Hồ sơ ngựa cha' }), '92');
+  await userEvent.click(screen.getByRole('button', { name: 'Dùng hồ sơ đã chọn' }));
+  expect(screen.getByLabelText('Ngựa cha *')).toHaveValue('Same parent');
+  fireEvent.change(screen.getByLabelText('Ngựa mẹ *'), { target: { value: 'External dam' } });
+  await userEvent.click(screen.getByRole('button', { name: 'Lưu & tiếp tục' }));
+  await waitFor(() => expect(state.requests.find(r => r.method === 'PUT')).toMatchObject({ path: '/api/horses/81/pedigree', body: { sire: { horseId: 92, name: null }, dam: { horseId: null, name: 'External dam' } } }));
+});
 
 it('presents an activation instant as local date/time while preserving the server instant', async () => {
   const instant = '2026-10-23T23:45:00.000Z';

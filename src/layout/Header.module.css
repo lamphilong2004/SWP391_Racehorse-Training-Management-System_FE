@@ -73,8 +73,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
   padding: 0;
   border: 0;
   background: transparent;
@@ -85,8 +86,8 @@
 
 .count {
   position: absolute;
-  top: -2px;
-  left: 18px;
+  top: 0;
+  right: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -99,7 +100,8 @@
   font-size: 11px;
   line-height: 16px;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: normal;
 }
 
 .userMenu { position: relative; }
@@ -165,6 +167,7 @@
 }
 
 .menu:hover, .bell:hover { background: var(--color-bg-subtle); }
+.menu:focus-visible, .bell:focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 2px; }
 
 .user { padding: 4px 8px 4px 4px; transition: background var(--motion-fast) var(--motion-ease); }
 .user:hover, .user[aria-expanded="true"] { background: var(--color-bg-subtle); }

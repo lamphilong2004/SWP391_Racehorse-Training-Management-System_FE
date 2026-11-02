@@ -265,6 +265,13 @@ it('declares optional racing strengths on registration and shows them on the pro
   await userEvent.click(within(distance).getByLabelText('Nước rút'));
   await userEvent.click(within(distance).getByLabelText('Đường dài'));
   await userEvent.click(within(distance).getByLabelText('Đường dài'));
+  expect(screen.getByText('2 đặc điểm đã chọn')).toBeInTheDocument();
+  await userEvent.click(screen.getByRole('button', { name: 'Bỏ chọn tất cả' }));
+  expect(screen.getByText('Chưa khai báo', { exact: true })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Bỏ chọn tất cả' })).toBeDisabled();
+  expect(within(distance).getByLabelText('Nước rút')).not.toBeChecked();
+  await userEvent.click(within(screen.getByRole('group', { name: 'Thể chất' })).getByLabelText('Tốc độ'));
+  await userEvent.click(within(distance).getByLabelText('Nước rút'));
   fireEvent.click(screen.getByRole('button', { name: 'Lưu nháp & tiếp tục' }));
   await screen.findByRole('heading', { name: 'Phả hệ & quyền sở hữu · Quick Step' });
   expect(readSamples().horseRegistry!.records.find((horse) => horse.horseCode === 'STR-010')?.strengths).toEqual(['SPRINT', 'SPEED']);

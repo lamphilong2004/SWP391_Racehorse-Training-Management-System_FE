@@ -20,6 +20,55 @@ function mount(path: string) {
 
 afterEach(() => { authSession.clear(); vi.unstubAllGlobals(); });
 
+it('selects a real horse by name/code for a new medical case and retains the draft after a rejected save', async () => {
+  authSession.save('jwt', 3600, false);
+  const fetcher = vi.fn(async (url: string, init?: RequestInit) => {
+    if (url.endsWith('/api/auth/me')) return ok(vet);
+    if (url.includes('/api/horses?')) return ok({ items: [{ id: 14, name: 'Same horse name', horseCode: 'H-14' }, { id: 15, name: 'Same horse name', horseCode: 'H-15' }], page: 0, size: 20, totalItems: 2, totalPages: 1 });
+    if (url.endsWith('/api/medical/cases') && init?.method === 'POST') return fail(409, 'CONFLICT', 'Case changed; retry.');
+    throw new Error('Unexpected case-picker fixture request');
+  });
+  vi.stubGlobal('fetch', fetcher);mount('/medical/cases/new');
+  fireEvent.change(await screen.findByLabelText('Lý do'), { target: { value: 'Observation requiring review' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Tạo ca' }));
+  expect(await screen.findByText('Ngựa là bắt buộc')).toBeInTheDocument();
+  expect(fetcher.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(false);
+  fireEvent.click(screen.getByRole('button', { name: 'Chọn ngựa' }));
+  await screen.findByRole('option', { name: 'Same horse name · H-15' });
+  fireEvent.change(screen.getByRole('combobox', { name: 'Hồ sơ ngựa' }), { target: { value: '15' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Dùng hồ sơ đã chọn' }));
+  expect(screen.getByLabelText('Ngựa')).toHaveValue('Same horse name · H-15');
+  expect(screen.getByLabelText('Ngựa')).toHaveAttribute('readonly');
+  fireEvent.click(screen.getByRole('button', { name: 'Tạo ca' }));
+  await screen.findByText('Case changed; retry.');
+  expect(screen.getByLabelText('Lý do')).toHaveValue('Observation requiring review');
+  expect(screen.getByLabelText('Ngựa')).toHaveValue('Same horse name · H-15');
+  const post = fetcher.mock.calls.find(([, init]) => init?.method === 'POST');
+  expect(JSON.parse(String(post?.[1]?.body))).toEqual({ horseId: 15, reason: 'Observation requiring review' });
+});
+
+it('shows horse lookup errors honestly and does not let an unselected case submit', async () => {
+  authSession.save('jwt', 3600, false);
+  const fetcher = vi.fn(async (url: string) => url.endsWith('/api/auth/me') ? ok(vet) : fail(503, 'SERVICE_UNAVAILABLE', 'Horse lookup unavailable'));
+  vi.stubGlobal('fetch', fetcher);mount('/medical/cases/new');
+  fireEvent.click(await screen.findByRole('button', { name: 'Chọn ngựa' }));
+  expect(await screen.findByText('Horse lookup unavailable')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Dùng hồ sơ đã chọn' })).toBeDisabled();
+  expect(screen.queryByRole('option')).not.toBeInTheDocument();
+  expect(fetcher.mock.calls.every(([url]) => !url.endsWith('/api/medical/cases'))).toBe(true);
+});
+
+it('shows the next examination as a local calendar date rather than a raw ISO date', async () => {
+  authSession.save('jwt', 3600, false);
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+    if (url.endsWith('/api/auth/me')) return ok(vet);
+    if (url.endsWith('/api/medical/cases/9')) return ok({ ...medicalCase, treatmentPlan: { id: 3, caseId: 9, createdAt: '2026-10-19T00:00:00Z', treatmentMedicationInstructions: 'Observation fixture', reexaminationDate: '2026-10-27' } });
+    if (url.endsWith('/api/horses/14')) return ok({ id: 14, horseCode: 'ST-014', name: 'Storm', lifecycle: 'ACTIVE', healthStatus: 'MONITORING', trainingAvailability: 'LIMITED' });
+    throw new Error('Unexpected fixture request');
+  }));
+  mount('/medical/cases/9');expect((await screen.findAllByText('27/10/2026')).length).toBeGreaterThan(0);expect(screen.queryByText('2026-10-27')).not.toBeInTheDocument();
+});
+
 it.each(['/medical/cases/no-such-id', '/medical/cases/0', '/medical/cases/no-such-id/treatment-plan'])('renders not-found for invalid route %s without a medical request', async (path) => {
   authSession.save('jwt', 3600, false);
   const fetcher = vi.fn(async (url: string) => {

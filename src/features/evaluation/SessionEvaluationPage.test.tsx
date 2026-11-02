@@ -57,8 +57,13 @@ describe('CORE-033 production route and auth boundary', () => {
   });
   it('shows planned numeric values without multiplying distance by reps', async () => {
     renderAt(); await userEvent.click(await screen.findByRole('tab', { name: 'Kế hoạch so với thực tế' }));
-    expect(screen.getByText('400 m')).toBeInTheDocument(); expect(screen.getByText('4 reps')).toBeInTheDocument();
+    expect(screen.getByText('400 m')).toBeInTheDocument(); expect(screen.getByText('4 lần')).toBeInTheDocument();
     expect(screen.queryByText('1,600 m')).not.toBeInTheDocument();
+  });
+  it('renders surface and intensity as Vietnamese labels while keeping API values untouched', async () => {
+    current.session.surface = 'SAND';current.session.intensity = 'LOW';current.session.exercises[0].intensity = 'LOW';renderAt();
+    expect(await screen.findByText('Cát')).toBeInTheDocument();expect(screen.getByText(/Thấp/)).toBeInTheDocument();
+    expect(screen.queryByText('SAND')).not.toBeInTheDocument();expect(current.session.surface).toBe('SAND');expect(current.session.intensity).toBe('LOW');
   });
   it('read roles cannot submit and Work Rider cannot request horse history', async () => {
     renderAt('/training/sessions/42/evaluation?view=history', ['WORK_RIDER']);

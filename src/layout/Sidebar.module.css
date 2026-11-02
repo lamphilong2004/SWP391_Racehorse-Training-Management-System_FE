@@ -73,11 +73,12 @@
   min-width: 0;
 }
 
-/* Long labels (e.g. 'Horse Training Programs') ellipsize instead of widening the sidebar. */
+/* Keep the approved label readable without widening the shared navigation rail. */
 .item > span:last-child {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  flex: 1;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .item:hover {
@@ -86,6 +87,7 @@
 
 .itemIcon {
   color: var(--color-sidebar-text, var(--color-text-secondary));
+  flex-shrink: 0;
 }
 
 .active,
@@ -146,7 +148,7 @@
 :global([data-ui-v3]) .brandName { color: #ffffff; }
 :global([data-ui-v3]) .brandIcon { color: var(--color-sidebar-accent); }
 :global([data-ui-v3]) .workspace, :global([data-ui-v3]) .heading { color: var(--color-sidebar-muted); }
-:global([data-ui-v3]) .item { height: 40px; color: var(--color-sidebar-text); transition: background-color var(--motion-fast) var(--motion-ease), color var(--motion-fast) var(--motion-ease); }
+:global([data-ui-v3]) .item { height: auto; min-height: 44px; padding-top: 8px; padding-bottom: 8px; color: var(--color-sidebar-text); transition: background-color var(--motion-fast) var(--motion-ease), color var(--motion-fast) var(--motion-ease); }
 :global([data-ui-v3]) .item:hover { color: #ffffff; }
 :global([data-ui-v3]) .itemIcon { color: var(--color-sidebar-muted); }
 :global([data-ui-v3]) .item:hover .itemIcon { color: var(--color-sidebar-text); }

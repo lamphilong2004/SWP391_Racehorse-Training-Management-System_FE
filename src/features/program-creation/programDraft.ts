@@ -90,7 +90,7 @@ export function validateProgramCreation(input: CreateProgramRequest, candidate?:
   }
 
   if (!Number.isSafeInteger(input.trainer.trainerUserId) || input.trainer.trainerUserId <= 0) add('trainer.trainerUserId', 'Hãy chọn Trainer.');
-  date('trainer.effectiveFrom', input.trainer.effectiveFrom);
+  if (!validDate(input.trainer.effectiveFrom)) add('trainer.effectiveFrom', 'Chọn ngày hợp lệ để Trainer bắt đầu phụ trách.');
   text('trainer.reason', input.trainer.reason, 500);
   if (candidate) {
     if (candidate.user.id !== input.trainer.trainerUserId) add('trainer.trainerUserId', 'Hãy chọn Trainer trong danh sách ứng viên hiện tại.');

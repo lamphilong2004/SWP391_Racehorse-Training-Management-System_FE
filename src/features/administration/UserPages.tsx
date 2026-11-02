@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { AlertBanner, Button, ButtonLink, Card, Checkbox, DataTable, EmptyState, ErrorState, LoadingState, RadioGroup, SelectField, StatusBadge, TableToolbar, TextField, UnsavedChangesGuard } from '../../design-system';
+import { AlertBanner, Button, ButtonLink, Card, Checkbox, DataTable, EmptyState, ErrorState, LoadingState, PresetField, RadioGroup, SelectField, StatusBadge, TableToolbar, TextField, UnsavedChangesGuard } from '../../design-system';
+import { EXPERIENCE_PRESETS } from '../../shared/formPresets';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { ROLE_CODES, ROLE_LABELS, type RoleCode } from '../../shared/auth/roles';
 import { FlowShell } from '../main-flows/FlowShell';
@@ -94,7 +95,7 @@ function UserEditor({ initial }: { initial: UserDetail | null }) {
     <Card title="Vai trò"><RadioGroup label="Vai trò trong hệ thống" required value={role} disabled={busy} options={roleOptions} onChange={(value) => changeRole(value as RoleCode)} helperText="Đổi vai trò sẽ đổi quyền truy cập; dữ liệu lịch sử vẫn được giữ. Không có vai trò tùy chỉnh." /></Card>
     {staff && <Card title="Kinh nghiệm & kỹ năng"><div className={styles.stack}><div className={styles.formFields}>
       <TextField label="Kinh nghiệm (năm)" type="number" min={0} max={32767} step={1} inputMode="numeric" value={years} error={yearsError} disabled={busy} onChange={(e) => setYears(e.target.value)} />
-      <TextField label="Cấp độ kinh nghiệm" maxLength={50} value={level} disabled={busy} onChange={(e) => setLevel(e.target.value)} helperText="Nhập tự do, ví dụ: Lâu năm." />
+      <PresetField label="Cấp độ kinh nghiệm" maxLength={50} value={level} disabled={busy} onValueChange={setLevel} options={EXPERIENCE_PRESETS} helperText="Mô tả kinh nghiệm do người quản lý xác nhận; có thể nhập thêm. Không tự suy ra từ số năm." />
     </div>{kind ? <SkillPicker kind={kind} value={skillIds} disabled={busy} onChange={setSkillIds} /> : <p className={styles.muted}>Kỹ năng chỉ áp dụng cho Trainer (chuyên môn) và Work Rider (kỹ năng cưỡi).</p>}
       <p className={styles.muted}>Dùng cho gợi ý của Head Trainer; gợi ý không bao giờ tự quyết định.</p></div></Card>}
     {current && <Card title="Trạng thái tài khoản"><StatusBadge family="account" status={current.accountStatus} /><p>Tài khoản ngừng hoạt động không thể đăng nhập. Dữ liệu của họ vẫn được giữ.</p><Button type="button" className={styles.statusAction} variant={current.accountStatus === 'ACTIVE' ? 'danger' : 'secondary'} disabled={busy || current.id === user?.id} onClick={() => { void changeStatus(); }}>{current.accountStatus === 'ACTIVE' ? 'Vô hiệu hóa tài khoản' : 'Kích hoạt tài khoản'}</Button></Card>}

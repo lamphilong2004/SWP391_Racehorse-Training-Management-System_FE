@@ -8,12 +8,12 @@ import { AppShell } from './AppShell';
 import { NAVIGATION, visibleSections, withoutDeferred } from './navigation';
 import type { RoleCode } from '../shared/auth/roles';
 
-/** Deferred modules per the CORE-002 DoD (DEC-007, DEC-008 §3.5). */
+/** Flow 4 was subsequently approved; racing, reports and preventive care stay deferred. */
 const DEFERRED_BY_ROLE: Partial<Record<RoleCode, string[]>> = {
-  CLUB_MANAGER: ['Chuồng', 'Cuộc đua', 'Kho', 'Báo cáo'],
+  CLUB_MANAGER: ['Cuộc đua', 'Báo cáo'],
   HEAD_TRAINER: ['Cuộc đua'],
   VETERINARIAN: ['Chăm sóc phòng ngừa'],
-  GROOM: ['Chăm sóc hằng ngày', 'Chăm sóc phòng ngừa'],
+  GROOM: ['Chăm sóc phòng ngừa'],
 };
 
 describe('deferred sidebar modules', () => {
@@ -53,9 +53,9 @@ describe('deferred sidebar modules', () => {
       </MemoryRouter>,
     );
     const nav = screen.getByRole('navigation', { name: 'Chính' });
-    expect(within(nav).getAllByRole('link').map((link) => link.textContent)).toEqual(['Hôm nay', 'Công việc chăm sóc', 'Sự cố']);
+    expect(within(nav).getAllByRole('link').map((link) => link.textContent)).toEqual(['Hôm nay', 'Công việc chăm sóc', 'Chăm sóc hằng ngày', 'Kho & yêu cầu bổ sung', 'Sự cố']);
     expect(within(nav).getByText('Công việc của tôi')).toBeInTheDocument();
-    expect(visibleSections('CLUB_MANAGER')[2].items.map((item) => item.label)).toEqual(['Nhật ký hệ thống']);
+    expect(visibleSections('CLUB_MANAGER')[2].items.map((item) => item.label)).toEqual(['Kho', 'Nhật ký hệ thống']);
   });
 
   it('drops a section whose items are all deferred', () => {
@@ -69,6 +69,15 @@ describe('deferred sidebar modules', () => {
 });
 
 describe('role navigation', () => {
+  it('exposes daily care and inventory only to the approved Flow 4 roles', () => {
+    const allowed = new Set<RoleCode>(['CLUB_MANAGER', 'HEAD_TRAINER', 'VETERINARIAN', 'GROOM']);
+    for (const role of ROLE_CODES) {
+      const destinations = visibleSections(role).flatMap((section) => section.items.map((item) => item.to));
+      expect(destinations.includes(ROUTES.dailyCare)).toBe(allowed.has(role));
+      expect(destinations.includes(ROUTES.inventory)).toBe(['CLUB_MANAGER', 'VETERINARIAN', 'GROOM'].includes(role));
+    }
+  });
+
   it('defines a sidebar for exactly the 7 RBAC roles', () => {
     expect(Object.keys(NAVIGATION).sort()).toEqual([...ROLE_CODES].sort());
     expect(ROLE_CODES).toHaveLength(7);

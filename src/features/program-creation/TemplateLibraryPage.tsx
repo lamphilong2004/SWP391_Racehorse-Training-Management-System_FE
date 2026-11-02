@@ -26,9 +26,9 @@ export function TemplateLibraryPage() {
     </TableToolbar>
     {resource.pending && <LoadingState label="Đang tải thư viện mẫu chương trình…" />}
     {resource.error && <ErrorState title="Không tải được thư viện mẫu" description={resource.error} onRetry={resource.reload} />}
-    {resource.data && <>{resource.data.items.length === 0 ? <EmptyState title="Không tìm thấy mẫu nào" description="Hãy tạo mẫu mới hoặc đổi bộ lọc." /> : <div className={styles.fields}>{resource.data.items.map((template) => <Card key={template.id} title={template.name}><div className={styles.stack}>
+    {resource.data && <>{resource.data.items.length === 0 ? <EmptyState title="Không tìm thấy mẫu nào" description="Hãy tạo mẫu mới hoặc đổi bộ lọc." /> : <div className={styles.fields}>{resource.data.items.map((template) => <Card key={template.id} title={template.name} className={styles.templateCard}><div className={styles.templateBody}>
       <p>{template.goals || 'Chưa có mục tiêu.'}</p><KeyValue label="Mẫu chương trình" value={template.templateCode} /><KeyValue label="Phiên bản" value={`v${template.latestVersionNo}`} /><KeyValue label="Trạng thái" value={viLabel(template.status)} />
-      <Button variant="secondary" onClick={() => setSelected(template.id)}>Xem {template.name}</Button>
+      <Button variant="secondary" aria-label={`Xem ${template.name}`} onClick={() => setSelected(template.id)}>Xem chi tiết</Button>
     </div></Card>)}</div>}
       <div className={styles.row}><Button variant="secondary" disabled={page === 0 || resource.pending} onClick={() => setPage(page - 1)}>Trước</Button><span>Trang {page + 1} · {resource.data.totalItems} mẫu</span><Button variant="secondary" disabled={page + 1 >= resource.data.totalPages || resource.pending} onClick={() => setPage(page + 1)}>Sau</Button></div>
     </>}

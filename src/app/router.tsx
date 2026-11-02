@@ -25,6 +25,7 @@ import { ExerciseLibraryPage } from '../features/training/exercises/ExerciseLibr
 import { ownerApplicationRoutes } from '../features/owner/ownerApplicationRoutes';
 import { registrationRoutes } from '../features/registration/routes';
 import { TemplateLibraryPage } from '../features/program-creation/TemplateLibraryPage';
+import { StableCareEntry } from '../features/stable-care/StableCareEntry';
 
 
 /**
@@ -73,6 +74,9 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
     { path: '/admin/users/:id/edit', element: <RequireAuth allowedRoles={['CLUB_MANAGER']}><UserEditorPage /></RequireAuth> },
     { path: ROUTES.rolesPermissions, element: <RequireAuth allowedRoles={['CLUB_MANAGER']}><RolesPage /></RequireAuth> },
     { path: ROUTES.notifications, element: <RequireAuth><NotificationsPage /></RequireAuth> },
+    { path: '/stable', element: <RequireAuth allowedRoles={['CLUB_MANAGER', 'HEAD_TRAINER', 'VETERINARIAN']}><StableCareEntry /></RequireAuth> },
+    { path: '/care/daily', element: <RequireAuth allowedRoles={['CLUB_MANAGER', 'HEAD_TRAINER', 'VETERINARIAN', 'GROOM']}><StableCareEntry /></RequireAuth> },
+    { path: '/inventory', element: <RequireAuth allowedRoles={['CLUB_MANAGER', 'VETERINARIAN', 'GROOM']}><StableCareEntry /></RequireAuth> },
     // CORE-048 (DEC-008): public access request and Club Manager review; each page enforces its own boundary.
     ...registrationRoutes,
     // CORE-056 candidate mount: canonical API provider plus legacy deep-link aliases.

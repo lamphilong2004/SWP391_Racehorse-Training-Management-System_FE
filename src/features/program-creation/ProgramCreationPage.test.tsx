@@ -87,6 +87,42 @@ describe('CORE-022 UI + production router + real transport with HTTP fixtures (n
     expect(posts()).toHaveLength(1);
   });
 
+  it('defaults an empty Trainer assignment date to the program start so Step 6 can continue without a hidden required field', async () => {
+    const { actor, posts } = setup();
+    await toTrainer(actor);
+    await actor.click(screen.getByRole('button', { name: 'Chọn Fixture Trainer' }));
+    expect(screen.getByLabelText('Trainer phụ trách từ ngày', { exact: false })).toHaveValue('2026-11-01');
+    expect(screen.getByRole('checkbox', { name: 'Tôi đã đọc các cảnh báo về Trainer' })).not.toBeChecked();
+    await actor.click(screen.getByRole('checkbox', { name: 'Tôi đã đọc các cảnh báo về Trainer' }));
+    change('Lý do phân công', 'Observed training suitability');
+    await actor.click(screen.getByRole('button', { name: 'Đã chọn Fixture Trainer' }));
+    expect(screen.getByRole('checkbox', { name: 'Tôi đã đọc các cảnh báo về Trainer' })).toBeChecked();
+    expect(screen.getByLabelText('Lý do phân công')).toHaveValue('Observed training suitability');
+    await next(actor);
+    expect(screen.getByRole('heading', { name: 'Tóm tắt chương trình' })).toBeInTheDocument();
+    expect(posts()).toHaveLength(0);
+  });
+
+  it('keeps an assignment date the Head Trainer entered explicitly when choosing a candidate', async () => {
+    const { actor } = setup();
+    await toTrainer(actor);
+    change('Trainer phụ trách từ ngày', '2026-11-02');
+    await actor.click(screen.getByRole('button', { name: 'Chọn Fixture Trainer' }));
+    expect(screen.getByLabelText('Trainer phụ trách từ ngày', { exact: false })).toHaveValue('2026-11-02');
+  });
+
+  it('points back to the invalid program date rather than leaving the user stuck at Trainer after midnight', async () => {
+    const { actor, posts } = setup();
+    await toTrainer(actor);
+    await actor.click(screen.getByRole('button', { name: 'Chọn Fixture Trainer' }));
+    await actor.click(screen.getByRole('checkbox', { name: 'Tôi đã đọc các cảnh báo về Trainer' }));
+    vi.setSystemTime(new Date('2026-11-01T17:00:00Z'));
+    await next(actor);
+    expect(screen.getByLabelText('Ngày bắt đầu chương trình', { exact: false })).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('Tên chương trình', { exact: false })).toHaveValue('Horse-specific program');
+    expect(posts()).toHaveLength(0);
+  });
+
   it.each(ROLE_CODES.filter((role) => role !== 'HEAD_TRAINER'))('blocks %s before loading feature data or creating a program', async (role) => {
     const { actor, fetchMock, posts } = setup({ role });
     expect(await screen.findByText('Không có quyền truy cập')).toBeInTheDocument();

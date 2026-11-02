@@ -4,23 +4,23 @@
 .filters > :first-child { flex: 0 1 280px; min-width: 200px; }
 .filters > :nth-child(2) { flex: 0 1 200px; min-width: 160px; }
 .filters > :last-child { margin-left: auto; align-self: center; }
-.grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-lg); }
-.exercise { display: flex; flex-direction: column; gap: var(--space-md); min-height: 246px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); align-items: stretch; gap: var(--space-lg); }
+.exercise { display: flex; flex: 1; flex-direction: column; gap: var(--space-md); min-width: 0; }
 .exercise h2 { margin: 0; font-size: 16px; line-height: 24px; }
 .exercise p { margin: 0; }
 .details { display: flex; justify-content: space-between; gap: var(--space-md); flex-wrap: wrap; }
-.actions { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); }
+.actions { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--color-border-default); display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); }
 .gait { display: inline-flex; align-items: center; gap: var(--space-xs); padding: var(--space-xs) var(--space-sm); background: var(--color-bg-subtle); border-radius: var(--radius-sm); font-size: 12px; }
 .fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-lg); }
 .selected { outline: 2px solid var(--color-primary-600); }
 .sectionTitle { margin: 0 0 var(--space-sm); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-secondary); }
-@media (max-width: 1200px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (max-width: 900px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .fields { grid-template-columns: 1fr; } }
-@media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .fields { grid-template-columns: 1fr; } }
 
 .exercise h2 { font-family: var(--font-family-headline); letter-spacing: -.02em; }
 .gait { border: 1px solid var(--color-border-default); }
 .selected { outline-offset: 3px; }
+.exercise h2, .exercise p, .details > * { overflow-wrap: anywhere; }
+:global([data-ui-v3]) .gait { background: var(--color-accent-sky-surface); color: var(--color-accent-sky-ink); }
 @media (max-width: 767px) {
   .filters > :first-child, .filters > :nth-child(2) { min-width: 0; flex: 1 1 100%; }
   .filters > :last-child { margin-left: 0; }

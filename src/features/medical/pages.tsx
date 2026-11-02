@@ -1,6 +1,6 @@
 import { clubDateTime, parseClubDateTime } from '../../shared/clubCalendar';
 import { boxLabel } from '../../shared/stableBox';
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { ActionBar, AlertBanner, ButtonLink, Button, Card, DataTable, EmptyState, Icon, KeyValue, MetricCard, StatusBadge, TableToolbar, SelectField, TextField, Tabs } from '../../design-system';
 import { PageHeader } from '../../layout/PageHeader';
@@ -16,6 +16,9 @@ import { medicalErrorMessage } from './errors';
 import './medical.css';
 import { viLabel } from '../../shared/viLabels';
 import { formatDate } from '../horses/shared/format';
+import { HorseRecordPicker } from '../horses/shared/HorseRecordPicker';
+import type { HorseDetail, Page as HorsePage } from '../horses/api/types';
+import { useFlowRequest } from '../main-flows/api';
 
 const casePath = (id: number) => ROUTES.medicalCaseDetail.replace(':caseId', String(id));
 const latest = <T extends { examinedAt: string },>(items: T[]) => [...items].sort((a, b) => Date.parse(b.examinedAt) - Date.parse(a.examinedAt))[0];
@@ -52,7 +55,7 @@ function TreatmentCaseSummary({ item }: { item: MedicalCase }) {
     <KeyValue label="Tình trạng sức khỏe" value={horse.data?.healthStatus ? <StatusBadge family="health" status={horse.data.healthStatus} /> : 'Không có'} />
     {availability.data ? <AvailabilityDetails availability={availability.data} /> : <ResourceState error={availability.error} retry={availability.reload} />}
     <KeyValue label="Lần tái khám gần nhất" value={review ? `${dateTime(review.examinedAt)} · ${viLabel(review.recoveryStatus)}` : 'Không có'} />
-    <KeyValue label="Lần khám tiếp theo" value={item.treatmentPlan?.reexaminationDate ?? 'Chưa lên lịch'} />
+    <KeyValue label="Lần khám tiếp theo" value={item.treatmentPlan?.reexaminationDate ? formatDate(item.treatmentPlan?.reexaminationDate) : 'Chưa lên lịch'} />
     <p className="text-caption">Khả năng tập luyện được thay đổi riêng. Lưu phác đồ này không làm thay đổi nó.</p>
   </div></Card>;
 }
@@ -119,9 +122,24 @@ export function CaseListPage() {
 export function CreateCasePage() {
   const { service } = useMedicalRuntime();
   const navigate = useNavigate();
+  const request = useFlowRequest();
+  const [selectedHorse, setSelectedHorse] = useState<HorseDetail>();
+  const [choosing, setChoosing] = useState(false);
+  const lookup = useMemo(() => ({ listHorses: (query: Record<string, string | number | undefined> = {}) => {
+    const params = new URLSearchParams();
+    Object.entries(query).forEach(([key, value]) => { if (value !== undefined) params.set(key, String(value)); });
+    return request<HorsePage<HorseDetail>>(`/api/horses?${params}`, { method: 'GET' });
+  } }), [request]);
   return <><ButtonLink variant="tertiary" to={ROUTES.medical}>← Quay lại danh sách ca</ButtonLink><PageHeader title="Tạo ca y tế" />
     <Card title="Ca y tế độc lập"><MedicalForm submitLabel="Tạo ca" onCancel={() => navigate(ROUTES.medical)} fields={[
-      { name: 'horseId', label: 'Mã ngựa', type: 'number', required: true },
+      { name: 'horseId', label: 'Ngựa', type: 'number', required: true, render: field => <div className="medical-stack">
+        <TextField label="Ngựa" readOnly required value={selectedHorse ? `${selectedHorse.name} · ${selectedHorse.horseCode}` : ''}
+          placeholder="Chọn hồ sơ ngựa" error={field.error} disabled={field.disabled} helperText="Tìm theo tên hoặc mã, không cần nhớ ID ngựa." />
+        <Button variant="secondary" disabled={field.disabled} onClick={() => setChoosing(true)}>{selectedHorse ? 'Đổi ngựa' : 'Chọn ngựa'}</Button>
+        {choosing && <HorseRecordPicker api={lookup} kind="medical" onClose={() => setChoosing(false)} onSelected={horse => {
+          setSelectedHorse(horse); field.onChange(String(horse.id)); setChoosing(false);
+        }} />}
+      </div> },
       { name: 'reason', label: 'Lý do', type: 'textarea', required: true, maxLength: 2000 },
     ]} onSave={async (values) => {
       const item = await service.createCase({ horseId: positiveId(values.horseId), reason: values.reason });
@@ -211,7 +229,7 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
     <div role="tabpanel" id="case-panel-record" aria-labelledby="case-tab-record" hidden={panel !== 'record'} className="medical-stack">
       <Card title="Thể trạng hiện tại"><KeyValue label="Chẩn đoán gần nhất" value={latest(item.examinations)?.diagnosis ?? (item.examinations.length ? 'Chưa có chẩn đoán' : 'Đang chờ khám')} />
         <KeyValue label="Hồi phục" value={viLabel(latest(item.reexaminations)?.recoveryStatus, 'Chưa ghi nhận tái khám')} />
-        <KeyValue label="Lần khám tiếp theo" value={item.treatmentPlan?.reexaminationDate ?? 'Chưa lên lịch'} /></Card>
+        <KeyValue label="Lần khám tiếp theo" value={item.treatmentPlan?.reexaminationDate ? formatDate(item.treatmentPlan?.reexaminationDate) : 'Chưa lên lịch'} /></Card>
       {!closed && <Card className="medical-close-panel" title="Đóng ca y tế"><p>Cần có ít nhất một lần khám hoặc tái khám. Nếu có chấn thương hoặc phác đồ điều trị, lần tái khám gần nhất phải là Đã hồi phục. Mọi công việc điều trị phải hoàn thành, sự cố liên quan đã xử lý xong và hạn chế của ca đã được gỡ.</p>
         {closeError && <AlertBanner type="danger" title={closeError} />}
         {confirmClose ? <ActionBar leading={<span>Đóng ca {item.id}?</span>}><Button variant="secondary" disabled={closing} onClick={() => setConfirmClose(false)}>Hủy</Button><Button disabled={closing} onClick={async () => {
@@ -222,7 +240,7 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
     </div>
     <div role="tabpanel" id="case-panel-examination" aria-labelledby="case-tab-examination" hidden={panel !== 'examination'} className="medical-stack">
       <Card title="Các lần khám"><History count={item.examinations.length} empty="Chưa có lần khám nào">{item.examinations.map((exam) =>
-        <li key={exam.id}><strong>{dateTime(exam.examinedAt)}</strong><p>{exam.symptoms}</p><p>{exam.diagnosis || 'Chưa có chẩn đoán'} · {exam.severity || 'Chưa đặt mức độ'}</p></li>)}</History>
+        <li key={exam.id}><strong>{dateTime(exam.examinedAt)}</strong><p>{exam.symptoms}</p><p>{exam.diagnosis || 'Chưa có chẩn đoán'} · {viLabel(exam.severity, 'Chưa đặt mức độ')}</p></li>)}</History>
         {!closed && <MedicalForm submitLabel="Lưu lần khám" initial={{ examinedAt: clubDateTime() }} fields={[
           { name: 'examinedAt', label: 'Ngày giờ khám', type: 'datetime-local', required: true },
           { name: 'symptoms', label: 'Triệu chứng và phát hiện', type: 'textarea', required: true },
@@ -258,7 +276,7 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
         <KeyValue label="Điều trị và thuốc" value={item.treatmentPlan.treatmentMedicationInstructions} />
         <KeyValue label="Nghỉ ngơi" value={item.treatmentPlan.restInstructions ?? '—'} />
         <KeyValue label="Chăm sóc" value={item.treatmentPlan.careInstructions ?? '—'} />
-        <KeyValue label="Ngày tái khám" value={item.treatmentPlan.reexaminationDate ?? 'Chưa lên lịch'} />
+        <KeyValue label="Ngày tái khám" value={item.treatmentPlan.reexaminationDate ? formatDate(item.treatmentPlan.reexaminationDate) : 'Chưa lên lịch'} />
       </div> : <EmptyState title="Chưa có phác đồ điều trị" />}
         {!closed && <ButtonLink to={casePath(item.id) + '/treatment-plan'}>Mở trình soạn phác đồ điều trị</ButtonLink>}</Card>
       <CaseTasks caseId={item.id} />

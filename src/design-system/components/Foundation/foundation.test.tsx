@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { ActionBar, Button, DesignSystemScope, Drawer, Modal, ResponsiveGrid, Skeleton, Stack, ToastRegion } from '../../index';
 
 it('keeps a controlled pending button disabled, named and unable to submit twice', async () => {
@@ -54,4 +55,32 @@ it.each([Modal, Drawer])('keeps an opted-in dirty overlay open on Escape and clo
   expect(close).not.toHaveBeenCalled(); expect(screen.getByRole('textbox', { name: 'Draft' })).toHaveValue('Retained');
   rerender(<Component open onClose={close} title="Editing"><input aria-label="Draft" defaultValue="Retained" /></Component>);
   fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true })); expect(close).toHaveBeenCalledOnce();
+});
+
+it.each([Modal, Drawer])('returns focus to the opener when a conditional overlay closes by button', async Component => {
+  function Harness() {
+    const [open, setOpen] = useState(false);
+    return <><button onClick={() => setOpen(true)}>Open details</button>{open && <Component open onClose={() => setOpen(false)} title="Details"><input aria-label="Detail field" /></Component>}</>;
+  }
+  render(<Harness />);
+  const opener = screen.getByRole('button', { name: 'Open details' });
+  await userEvent.click(opener);
+  await userEvent.click(screen.getByRole('textbox', { name: 'Detail field' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Đóng' }));
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  expect(opener).toHaveFocus();
+});
+
+it.each([Modal, Drawer])('returns focus on Escape while keeping controlled close semantics', async Component => {
+  function Harness() {
+    const [open, setOpen] = useState(false);
+    return <><button onClick={() => setOpen(true)}>Open details</button>{open && <Component open onClose={() => setOpen(false)} title="Details"><input aria-label="Detail field" /></Component>}</>;
+  }
+  render(<Harness />);
+  const opener = screen.getByRole('button', { name: 'Open details' });
+  await userEvent.click(opener);
+  await userEvent.click(screen.getByRole('textbox', { name: 'Detail field' }));
+  fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }));
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  expect(opener).toHaveFocus();
 });

@@ -15,6 +15,16 @@ import { TextField } from './TextField/TextField';
 import { WizardStepper } from './WizardStepper/WizardStepper';
 
 describe('Button', () => {
+  it('keeps outlined danger entry accessible and prevents activation while pending', async () => {
+    const click = vi.fn();
+    const { rerender } = render(<Button variant="danger-outline" onClick={click}>Hủy công việc</Button>);
+    const button = screen.getByRole('button', { name: 'Hủy công việc' });
+    expect(button).toHaveAttribute('type', 'button');
+    await userEvent.click(button); expect(click).toHaveBeenCalledOnce();
+    rerender(<Button variant="danger-outline" loading onClick={click}>Hủy công việc</Button>);
+    expect(button).toBeDisabled(); expect(button).toHaveAttribute('aria-busy', 'true');
+    await userEvent.click(button); expect(click).toHaveBeenCalledOnce();
+  });
   it('renders a typed button with the variant and size classes', () => {
     render(
       <Button variant="destructive" size="sm">

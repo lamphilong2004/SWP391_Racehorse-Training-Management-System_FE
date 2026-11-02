@@ -22,6 +22,8 @@ const LABELS: Record<string, string> = {
   EXERCISE_MEDICAL_BLOCK: 'Bài tập đang bị hạn chế y tế chặn.',
   // intensity
   LOW: 'Thấp', MEDIUM: 'Trung bình', MEDIUM_HIGH: 'Trung bình cao', HIGH: 'Cao',
+  // Training surface codes stay unchanged on the wire.
+  SAND: 'Cát', TURF: 'Cỏ', DIRT: 'Đất', SYNTHETIC: 'Tổng hợp',
   // severity / realtime
   NORMAL: 'Bình thường', WARNING: 'Cảnh báo', CRITICAL: 'Nghiêm trọng', MILD: 'Nhẹ', MODERATE: 'Vừa', SEVERE: 'Nặng',
   // recovery / incident / adjustment / registration

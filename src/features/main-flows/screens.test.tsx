@@ -49,12 +49,13 @@ it('schedules one session through all four steps using the approved draft/recomm
     if (path === '/api/exercises') return [{ id: 8, name: 'Walk' }];
     if (path.endsWith('/suitability-check')) return { trainingAvailability: 'AVAILABLE', sessionBlocked: false, exercises: [], sessionIssues: [] };
     if (path.endsWith('/work-rider-recommendations')) return { candidates: [{ user: { id: 5, fullName: 'Test Rider' }, label: 'SUITABLE', warnings: [], reasons: [], skills: [], hardBlock: null }] };
-    if (path === '/api/training-sessions' && init?.method === 'POST') { posts++; return { id: 42 }; }
+    if (path === '/api/training-sessions' && init?.method === 'POST') { expect(JSON.parse(String(init.body))).toMatchObject({ surface: 'TURF' }); posts++; return { id: 42 }; }
     throw new Error(`Unexpected test request: ${path}`);
   });
   render(<MemoryRouter initialEntries={['/training/schedule/session/new']}><Routes><Route path="/training/schedule/session/new" element={<CreateSessionPage />} /><Route path="/training/session/:id" element={<h1>Saved session detail</h1>} /></Routes></MemoryRouter>);
   await screen.findByRole('option', { name: 'Test Horse · Test program' }); change('Chương trình', '10');
   await screen.findByRole('option', { name: 'Foundation' }); change('Giai đoạn', '31'); change('Ngày', '2026-11-05'); change('Giờ bắt đầu', '06:00'); change('Thời lượng dự kiến', '60');
+  fireEvent.change(screen.getByRole('combobox', { name: 'Mặt sân tập' }), { target: { value: 'TURF' } });
   fireEvent.click(screen.getByRole('button', { name: 'Tiếp: Bài tập' }));
   await screen.findByRole('option', { name: 'Walk' }); change('Thêm bài tập', '8');
   fireEvent.click(screen.getByRole('button', { name: 'Tiếp: Work Rider' }));

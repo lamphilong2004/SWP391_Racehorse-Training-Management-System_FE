@@ -4,6 +4,7 @@
   flex-direction: column;
   gap: 6px;
   width: 100%;
+  min-width: 0;
 }
 
 .fieldset {
@@ -14,6 +15,7 @@
 }
 
 .label {
+  overflow-wrap: break-word;
   font-size: 14px;
   line-height: 20px;
   font-weight: 500;
@@ -88,9 +90,25 @@
 }
 
 :global([data-ui-v3]) .label,
-:global([data-app-shell]:has([data-ui-v3])) .label { font-size: 12px; font-weight: 600; }
+:global([data-app-shell]:has([data-ui-v3])) .label { font-size: 13px; line-height: 20px; font-weight: 600; }
 :global([data-ui-v3]) .control,
-:global([data-app-shell]:has([data-ui-v3])) .control { transition: border-color 120ms ease, box-shadow 120ms ease; }
+:global([data-app-shell]:has([data-ui-v3])) .control {
+  border-color: var(--color-field-border);
+  transition: border-color var(--motion-fast) var(--motion-ease), box-shadow var(--motion-fast) var(--motion-ease);
+}
+:global([data-ui-v3]) .control:hover:not(:disabled):not(:has(:disabled)):not(.controlError):not(:focus):not(:focus-within) { border-color: var(--color-field-hover-border); }
+:global([data-ui-v3]) .control:focus,
+:global([data-ui-v3]) .control:focus-within { border-color: var(--color-border-focus); box-shadow: var(--elev-focus); }
+:global([data-ui-v3]) .control[readonly],
+:global([data-ui-v3]) .control:has([readonly]) { background: var(--color-field-readonly-surface); }
+:global([data-ui-v3]) .control.controlError {
+  --color-border-focus: var(--color-danger-600);
+  --elev-focus: 0 0 0 3px color-mix(in srgb, var(--color-danger-600) 16%, transparent);
+  border-color: var(--color-danger-600);
+}
+:global([data-ui-v3]) .control:disabled,
+:global([data-ui-v3]) .control:has(:disabled) { border-color: var(--color-border-default); background: var(--color-bg-subtle); }
+:global([data-ui-v3]) .message { line-height: 18px; }
 @media (prefers-reduced-motion: reduce) {
   :global([data-ui-v3]) .control,
   :global([data-app-shell]:has([data-ui-v3])) .control { transition: none; }

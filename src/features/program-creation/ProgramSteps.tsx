@@ -94,19 +94,22 @@ export function DraftSteps({ step, flow, issues, update, edit }: {
   </div>;
 
   if (step === 5) return <div className={styles.stack}>
-    <AlertBanner type="info" title="Chọn Trainer">Gợi ý mô tả mức phù hợp. Hãy xem lý do và xác nhận các cảnh báo trước khi tiếp tục.</AlertBanner>
+    <AlertBanner type="info" title="Chọn Trainer">Chọn người phụ trách, kiểm tra ngày phân công và xác nhận các cảnh báo nếu có trước khi tiếp tục.</AlertBanner>
     {trainers?.candidates.length ? <div className={styles.candidates}>{trainers.candidates.map((candidate) => <CandidateCard key={candidate.user.id}
       name={candidate.user.fullName} subtitle={`Trainer${candidate.experienceLevel ? ` · ${candidate.experienceLevel}` : ''}`} tags={candidate.skills}
       className={draft.trainer.trainerUserId === candidate.user.id ? styles.selected : undefined}
       facts={[{ label: 'Mức phù hợp', value: viLabel(candidate.label) }, { label: 'Lý do', value: candidate.reasons.join(' · ') || 'Chưa cung cấp' },
         ...(candidate.warnings.length ? [{ label: 'Cảnh báo', value: candidate.warnings.join(' · ') }] : []),
         ...(candidate.hardBlock ? [{ label: 'Không có', value: candidate.hardBlock }] : [])]}
-      actions={<Button type="button" variant="secondary" aria-pressed={draft.trainer.trainerUserId === candidate.user.id} disabled={Boolean(candidate.hardBlock)} onClick={() => update({ trainer: { ...draft.trainer, trainerUserId: candidate.user.id, warningsAcknowledged: false, reason: '' } })}>
+      actions={<Button type="button" variant="secondary" aria-pressed={draft.trainer.trainerUserId === candidate.user.id} disabled={Boolean(candidate.hardBlock)} onClick={() => {
+        if (draft.trainer.trainerUserId === candidate.user.id) return;
+        update({ trainer: { ...draft.trainer, trainerUserId: candidate.user.id, effectiveFrom: draft.trainer.effectiveFrom || draft.periodStart, warningsAcknowledged: false, reason: '' } });
+      }}>
         {draft.trainer.trainerUserId === candidate.user.id ? `Đã chọn ${candidate.user.fullName}` : `Chọn ${candidate.user.fullName}`}
       </Button>} />)}</div> : <EmptyState title="Không có Trainer phù hợp" description={trainers?.emptyReason ?? 'Không có ứng viên cho ngựa và phiên bản mẫu này.'} />}
     {error('trainer.trainerUserId') && <p className={styles.error} role="alert">{error('trainer.trainerUserId')}</p>}
     <Card title="Phân công"><div className={styles.stack}>
-      <TextField label="Trainer phụ trách từ ngày" type="date" required value={draft.trainer.effectiveFrom} error={error('trainer.effectiveFrom')} onChange={(event) => update({ trainer: { ...draft.trainer, effectiveFrom: event.target.value } })} />
+      <TextField label="Trainer phụ trách từ ngày" type="date" required value={draft.trainer.effectiveFrom} helperText="Mặc định là ngày bắt đầu chương trình khi chọn Trainer. Bạn có thể điều chỉnh ngày phân công." error={error('trainer.effectiveFrom')} onChange={(event) => update({ trainer: { ...draft.trainer, effectiveFrom: event.target.value } })} />
       <TextAreaField label="Lý do phân công" maxLength={500} value={draft.trainer.reason ?? ''} error={error('trainer.reason')} onChange={(event) => update({ trainer: { ...draft.trainer, reason: event.target.value } })} />
       {Boolean(selectedTrainer?.warnings.length) && <>
         <AlertBanner type="warning" title="Cảnh báo về Trainer"><ul className={styles.reasons}>{selectedTrainer!.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></AlertBanner>
