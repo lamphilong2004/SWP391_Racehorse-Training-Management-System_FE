@@ -3,6 +3,8 @@
  * API never changes; only what the user reads does. Unknown values are shown as they are.
  */
 const LABELS: Record<string, string> = {
+  // role data scope (GET /api/admin/roles scoping)
+  ROLE_LEVEL: 'Theo vai trò · toàn câu lạc bộ', ROW_LEVEL_OWN: 'Chỉ ngựa mình sở hữu', ASSIGNMENT_SCOPED: 'Theo phân công',
   // lifecycle / account / program / generic status
   JUNIOR: 'Mới vào nghề', INTERMEDIATE: 'Trung bình', SENIOR: 'Nhiều kinh nghiệm', EXPERT: 'Chuyên gia',
   RECOMMENDED: 'Được gợi ý', SUITABLE: 'Phù hợp', SUITABLE_WITH_CAUTION: 'Phù hợp — cần lưu ý', NOT_RECOMMENDED: 'Không khuyến nghị',

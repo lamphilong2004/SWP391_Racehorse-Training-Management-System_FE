@@ -4,6 +4,7 @@ import { AlertBanner, Button, ButtonLink, Card, Checkbox, DataTable, EmptyState,
 import { EXPERIENCE_PRESETS } from '../../shared/formPresets';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { ROLE_CODES, ROLE_LABELS, type RoleCode } from '../../shared/auth/roles';
+import { viLabel } from '../../shared/viLabels';
 import { FlowShell } from '../main-flows/FlowShell';
 import { errorMessage, idOf, useFlowRequest } from '../main-flows/api';
 import { useResource } from '../main-flows/useResource';
@@ -126,7 +127,7 @@ export function RolesPage() {
         { key: 'feature', header: 'Chức năng', render: (r) => `${r.feature} · ${r.id}` },
         ...ROLE_CODES.map((r, index) => ({ key: r, header: ROLE_LABELS[r], render: (row: (typeof CORE_ROLE_MATRIX)[number]) => row.access[index] })),
       ]} /></div></Card>
-      <Card title="Danh mục vai trò hiện tại của hệ thống"><DataTable rows={resource.data} rowKey={(r) => r.roleCode} caption="Vai trò và phạm vi dữ liệu của hệ thống" columns={[{ key: 'role', header: 'Vai trò', render: (r) => r.displayName }, { key: 'scope', header: 'Phạm vi', render: (r) => r.scoping }]} /></Card>
+      <Card title="Danh mục vai trò hiện tại của hệ thống"><DataTable rows={resource.data} rowKey={(r) => r.roleCode} caption="Vai trò và phạm vi dữ liệu của hệ thống" columns={[{ key: 'role', header: 'Vai trò', render: (r) => ROLE_LABELS[r.roleCode as RoleCode] ?? r.displayName }, { key: 'scope', header: 'Phạm vi dữ liệu', render: (r) => viLabel(r.scoping) }]} /></Card>
     </div>}
   </FlowShell>;
 }
