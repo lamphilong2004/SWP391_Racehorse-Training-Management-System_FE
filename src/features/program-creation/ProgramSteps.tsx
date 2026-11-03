@@ -44,9 +44,7 @@ export function DraftSteps({ step, flow, issues, update, edit }: {
     update({ trainer: { ...draft.trainer, trainerUserId: id, effectiveFrom: draft.trainer.effectiveFrom || draft.periodStart, warningsAcknowledged: false, reason: '' } });
   };
 
-  if (step === 3) return <div className={styles.columns}>
-    <div className={styles.stack}>
-      <AlertBanner type="info" title="Chương trình riêng cho ngựa này">Thay đổi chỉ áp dụng cho chương trình này. Mẫu gốc không bị thay đổi.</AlertBanner>
+  if (step === 3) return <div className={styles.stack}>
       <Card title="Thông tin chương trình"><div className={styles.stack}>
         <TextField label="Tên chương trình" required maxLength={150} value={draft.name} error={error('name')} onChange={(event) => update({ name: event.target.value })} />
         <TextAreaField label="Mục tiêu huấn luyện" maxLength={2000} value={draft.goals ?? ''} error={error('goals')} onChange={(event) => update({ goals: event.target.value })} />
@@ -57,13 +55,15 @@ export function DraftSteps({ step, flow, issues, update, edit }: {
         <TextAreaField label="Chỉ số mục tiêu" maxLength={1000} value={draft.targetMetrics ?? ''} error={error('targetMetrics')} onChange={(event) => update({ targetMetrics: event.target.value })} />
         <TextAreaField label="Ghi chú" maxLength={2000} value={draft.notes ?? ''} error={error('notes')} onChange={(event) => update({ notes: event.target.value })} />
       </div></Card>
+      <p className={styles.stepHint}>Chọn ngày cho từng giai đoạn trong thời gian chương trình. Các giai đoạn không được chồng lấn.</p>
+      <div className={styles.phaseSettings}>
       {draft.phases.map((phase, index) => {
         const prefix = `phases[${index}]`;
         const label = `Giai đoạn ${index + 1}`;
         return <Card key={index} title={label}><div className={styles.stack}>
           <p className={styles.muted}>Giai đoạn gốc: {phase.templateVersionPhaseId ?? 'Không có'}</p>
           <div className={styles.fields}>
-            <TextField label={`${label} order`} type="number" min={1} step={1} required value={phase.phaseOrder} error={error(`${prefix}.phaseOrder`)} onChange={(event) => phaseUpdate(index, { phaseOrder: Number(event.target.value) })} />
+            <TextField label={`${label} — thứ tự`} type="number" min={1} step={1} required value={phase.phaseOrder} error={error(`${prefix}.phaseOrder`)} onChange={(event) => phaseUpdate(index, { phaseOrder: Number(event.target.value) })} />
             <TextField label={`${label} — tên`} required maxLength={150} value={phase.name} error={error(`${prefix}.name`)} onChange={(event) => phaseUpdate(index, { name: event.target.value })} />
             <TextField label={`${label} — ngày bắt đầu`} type="date" required min={draft.periodStart || clubDate()} max={draft.periodEnd || undefined} value={phase.startDate} error={error(`${prefix}.startDate`)} onChange={(event) => phaseUpdate(index, { startDate: event.target.value })} />
             <TextField label={`${label} — ngày kết thúc`} type="date" required min={phase.startDate || draft.periodStart || clubDate()} max={draft.periodEnd || undefined} value={phase.endDate} error={error(`${prefix}.endDate`)} onChange={(event) => phaseUpdate(index, { endDate: event.target.value })} />
@@ -71,12 +71,7 @@ export function DraftSteps({ step, flow, issues, update, edit }: {
           <TextAreaField label={`${label} — mục tiêu`} maxLength={1000} value={phase.objective ?? ''} error={error(`${prefix}.objective`)} onChange={(event) => phaseUpdate(index, { objective: event.target.value })} />
         </div></Card>;
       })}
-    </div>
-    <div className={styles.stack}><Card title="Mẫu gốc"><div className={styles.stack}>
-      <KeyValue label="Mẫu chương trình" value={template.version.name} /><KeyValue label="Phiên bản" value={`v${template.version.versionNo}`} />
-      <KeyValue label="Thời lượng gợi ý" value={template.version.recommendedDuration ?? 'Chưa cung cấp'} />
-      <p className={styles.muted}>Đặt ngày cho ngựa này. Mỗi giai đoạn phải nằm trong thời gian chương trình và không chồng lấn giai đoạn khác.</p>
-    </div></Card><Card title="Dòng thời gian chương trình"><div className={styles.stack}>{draft.phases.map((phase, index) => <KeyValue key={index} label={`${phase.phaseOrder}. ${phase.name}`} value={`${phase.startDate || 'Chưa đặt ngày bắt đầu'} → ${phase.endDate || 'Chưa đặt ngày kết thúc'}`} />)}</div></Card><Card title="Bài tập được chọn sau"><p>Giai đoạn đặt mục tiêu, ngày và khoảng cường độ. Trainer chọn bài tập cho từng buổi tập trong giai đoạn đã duyệt.</p></Card></div>
+      </div>
   </div>;
 
   if (step === 4) return <div className={styles.columns}>
@@ -106,7 +101,7 @@ export function DraftSteps({ step, flow, issues, update, edit }: {
   </div>;
 
   if (step === 5) return <div className={styles.stack}>
-    <AlertBanner type="info" title="Chọn Trainer">Chọn người phụ trách, kiểm tra ngày phân công và xác nhận các cảnh báo nếu có trước khi tiếp tục.</AlertBanner>
+    <p className={styles.stepHint}>Chọn Trainer, kiểm tra ngày phân công và xác nhận cảnh báo nếu có.</p>
     {trainers?.candidates.length ? <div className={styles.candidates}>{trainers.candidates.map((candidate) => <CandidateCard key={candidate.user.id}
       name={candidate.user.fullName} subtitle={`Trainer${candidate.experienceLevel ? ` · ${candidate.experienceLevel}` : ''}`} tags={candidate.skills}
       onSelect={candidate.hardBlock ? undefined : () => chooseTrainer(candidate.user.id)}
@@ -132,7 +127,7 @@ export function DraftSteps({ step, flow, issues, update, edit }: {
   if (step === 6) return <div className={styles.columns}>
     <div className={styles.stack}>
       <Card title="Tóm tắt chương trình" action={<Button type="button" variant="tertiary" onClick={() => edit(3)}>Sửa chương trình</Button>}><div className={styles.stack}>
-        <KeyValue label="Họ tên" value={draft.name} /><KeyValue label="Thời gian" value={`${draft.periodStart} — ${draft.periodEnd}`} />
+        <KeyValue label="Tên chương trình" value={draft.name} /><KeyValue label="Thời gian" value={`${formatDate(draft.periodStart)} — ${formatDate(draft.periodEnd)}`} />
         <KeyValue label="Mục tiêu huấn luyện" value={draft.goals || 'Chưa xác định'} /><KeyValue label="Chỉ số mục tiêu" value={draft.targetMetrics || 'Chưa xác định'} />
         <KeyValue label="Ghi chú" value={draft.notes || 'Chưa xác định'} /><KeyValue label="Nguồn" value={`${template.template.templateCode} · v${template.version.versionNo}`} />
       </div></Card>
@@ -158,7 +153,7 @@ export function DraftSteps({ step, flow, issues, update, edit }: {
 export function ProgramResult({ flow, reload, reloading, readError }: { flow: ProgramCreationFlow; reload: () => void; reloading: boolean; readError: string | null }) {
   const program = flow.created!;
   return <div className={styles.stack}>
-    <AlertBanner type="success" title="Đã tạo chương trình">Mã chương trình: {program.id}</AlertBanner>
+    <AlertBanner feedback type="success" title="Đã tạo chương trình">Mã chương trình: {program.id}</AlertBanner>
       <ButtonLink to={`/training/programs/${program.id}`}>Mở chi tiết chương trình</ButtonLink>
     <Card title={program.name}><div className={styles.stack}>
       <StatusBadge family="program" status={program.status} /><KeyValue label="Ngựa" value={`${program.horse.name} · ${program.horse.horseCode}`} />

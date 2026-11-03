@@ -113,7 +113,7 @@ function EvaluationContent({ sessionId, api }: { sessionId: number; api: Evaluat
       </div>}
       <div ref={evaluationPanel} tabIndex={-1} role="tabpanel" id="evaluation-panel-evaluation" aria-labelledby="evaluation-tab-evaluation" hidden={selected !== 'evaluation'}>
           <div className="evaluation-columns"><div className="evaluation-stack">
-            {saved && <AlertBanner type="success" title="Đã lưu đánh giá">
+            {saved && <AlertBanner feedback type="success" title="Đã lưu đánh giá">
               <p>{`Trạng thái buổi tập vẫn là ${viLabel(session.status)}.`}</p>
               <p>Horse Owner có quyền xem hồ sơ ngựa sẽ thấy nhãn kết quả trong mục Huấn luyện & thành tích.</p>
             </AlertBanner>}

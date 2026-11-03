@@ -65,7 +65,7 @@ function ReviewResults({ query, revision, onRefresh, onPage }: { query: Registra
   const data = current.data;
   const approved = useCallback((request: RegistrationRequest) => { setDecision(null); setNotice(`Đã ${request.status === 'APPROVED' ? 'duyệt' : 'từ chối'} yêu cầu ${request.id}.`); onRefresh(); }, [onRefresh]);
   return <>
-    {notice && <AlertBanner type="success" title={notice} />}
+    {notice && <AlertBanner feedback type="success" title={notice} />}
     {!data ? current.error ? <ErrorState title={current.forbidden ? 'Không có quyền truy cập' : 'Không tải được yêu cầu đăng ký'} description={current.error} onRetry={current.forbidden ? undefined : onRefresh} /> : <LoadingState label="Đang tải yêu cầu đăng ký…" /> : <Card title="Yêu cầu truy cập">
       <div className={styles.tableScroll}><DataTable<RegistrationRequest> caption="Yêu cầu đăng ký" rows={data.items} rowKey={(row) => row.id} empty={<EmptyState title="Không có yêu cầu đăng ký" description="Không có yêu cầu phù hợp với trạng thái và trang này." />} columns={[
         { key: 'applicant', header: 'Người đăng ký', render: (row) => <div><strong>{row.fullName}</strong><span className={styles.secondary}>{row.email}</span></div> },

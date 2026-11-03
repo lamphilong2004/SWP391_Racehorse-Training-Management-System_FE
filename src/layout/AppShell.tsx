@@ -7,6 +7,7 @@ import { AlertBanner } from '../design-system';
 import { businessDataMode } from '../shared/data/businessData';
 import { ROLE_TEST_LOGIN } from '../staging/stagingMode';
 import { useNotifications } from '../shared/notifications/NotificationsProvider';
+import { FeedbackHostContext } from '../design-system/components/AlertBanner/FeedbackHostContext';
 const NotificationDrawer = lazy(() => import('../features/administration/NotificationsPage').then((module) => ({ default: module.NotificationDrawer })));
 
 export interface AppShellProps extends HeaderProps {
@@ -26,6 +27,7 @@ export interface AppShellProps extends HeaderProps {
 export function AppShell({ children, designSystem, ...headerProps }: AppShellProps) {
   const [navOpen, setNavOpen] = useState(false);
   const [noticesOpen, setNoticesOpen] = useState(false);
+  const [feedbackHost, setFeedbackHost] = useState<HTMLDivElement | null>(null);
   const notifications = useNotifications();
   const menuButton = useRef<HTMLButtonElement>(null);
   const { pathname } = useLocation();
@@ -48,6 +50,7 @@ export function AppShell({ children, designSystem, ...headerProps }: AppShellPro
   const close = () => { setNavOpen(false); menuButton.current?.focus(); };
 
   return (
+    <FeedbackHostContext.Provider value={feedbackHost}>
     <div className={styles.shell} data-app-shell>
       <a className={styles.skip} href="#main-content">Bỏ qua đến nội dung chính</a>
       <Sidebar role={headerProps.user.role} id="app-navigation" open={navOpen} />
@@ -63,6 +66,8 @@ export function AppShell({ children, designSystem, ...headerProps }: AppShellPro
           {children}
         </main>
       </div>
+      <div ref={setFeedbackHost} className={styles.feedbackStack} aria-label="Thông báo thao tác" data-design-system="v2" />
     </div>
+    </FeedbackHostContext.Provider>
   );
 }

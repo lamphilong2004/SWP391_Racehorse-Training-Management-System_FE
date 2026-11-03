@@ -67,7 +67,7 @@ function NotificationContent({ role, roles, compact = false }: { role: RoleCode;
     </div>
     <ActionBar leading={notifications?.unreadCount !== undefined ? <span>{notifications.unreadCount} chưa đọc</span> : undefined}><Button variant="secondary" disabled={busy || !notifications?.unreadCount} onClick={() => { void mark(); }}>Đánh dấu tất cả đã đọc</Button></ActionBar>
     {notifications?.error && <ErrorState title="Không lấy được số thông báo chưa đọc" description={notifications.error} onRetry={() => { void notifications.refresh(); }} />}
-    {error && <AlertBanner type="danger" title="Cập nhật thông báo thất bại">{error}</AlertBanner>}
+    {error && <AlertBanner feedback type="danger" title="Cập nhật thông báo thất bại">{error}</AlertBanner>}
     {resource.pending && <LoadingState label="Đang tải thông báo…" />}{resource.error && <ErrorState title="Không tải được thông báo" description={resource.error} onRetry={resource.reload} />}
     {resource.data && <><Card>{resource.data.items.length === 0 && <EmptyState title="Không có thông báo phù hợp" />}
       {resource.data.items.map((notice) => { const summaryOnly = isIncidentSummary(notice, roles); const target = summaryOnly ? undefined : destination(notice, roles); return <div key={notice.id} className={styles.notice}>

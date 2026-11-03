@@ -3,6 +3,7 @@ import { Icon } from '../../icons/Icon';
 import { cx } from '../../utils/cx';
 import styles from './Overlay.module.css';
 import { useModalDialog } from './useModalDialog';
+import { FeedbackHostContext } from '../AlertBanner/FeedbackHostContext';
 
 export interface ModalProps {
   open: boolean;
@@ -25,7 +26,7 @@ export function Modal({ open, onClose, title, size = 'md', footer, children, cla
   return (
     <dialog ref={ref} aria-labelledby={titleId} className={cx(styles.modal, styles[size], className)}>
       {open && (
-        <div className={styles.surface}>
+        <FeedbackHostContext.Provider value={null}><div className={styles.surface}>
           <header className={styles.header}>
             <h2 id={titleId} className={styles.title}>
               {title}
@@ -36,7 +37,7 @@ export function Modal({ open, onClose, title, size = 'md', footer, children, cla
           </header>
           <div className={styles.body}>{children}</div>
           {footer && <footer className={styles.footer}>{footer}</footer>}
-        </div>
+        </div></FeedbackHostContext.Provider>
       )}
     </dialog>
   );

@@ -69,7 +69,7 @@ export function TreatmentPlanEditor({ initial, onSave, onCancel, openedAt, retai
       </fieldset>)}
       <Button type="button" variant="secondary" onClick={() => setPlan({ ...plan, groomTasks: [...tasks, { assignedGroomUserId: 0, instruction: '', taskDate: '' }] })}>Thêm công việc cho Groom</Button>
     </fieldset></Card>
-    {error && <AlertBanner type="danger" title={error} />}
+    {error && <AlertBanner feedback type="danger" title={error} />}
     <ActionBar>
       {onCancel && <Button type="button" variant="secondary" disabled={saving} onClick={onCancel}>Hủy</Button>}
       <Button type="submit" disabled={saving}>{saving ? 'Đang lưu…' : 'Lưu phác đồ điều trị'}</Button>

@@ -101,7 +101,7 @@ function UserEditor({ initial }: { initial: UserDetail | null }) {
       <p className={styles.muted}>Dùng cho gợi ý của Head Trainer; gợi ý không bao giờ tự quyết định.</p></div></Card>}
     {current && <Card title="Trạng thái tài khoản"><StatusBadge family="account" status={current.accountStatus} /><p>Tài khoản ngừng hoạt động không thể đăng nhập. Dữ liệu của họ vẫn được giữ.</p><Button type="button" className={styles.statusAction} variant={current.accountStatus === 'ACTIVE' ? 'danger' : 'secondary'} disabled={busy || current.id === user?.id} onClick={() => { void changeStatus(); }}>{current.accountStatus === 'ACTIVE' ? 'Vô hiệu hóa tài khoản' : 'Kích hoạt tài khoản'}</Button></Card>}
     </div><Card title="Vai trò này được truy cập gì"><p>{ROLE_LABELS[role]}</p><p>Quyền hạn cố định theo vai trò đã duyệt và phạm vi dữ liệu của hệ thống.</p><ButtonLink variant="secondary" to="/admin/roles">Xem vai trò & quyền hạn</ButtonLink><p>Horse Owner chỉ thấy ngựa của mình. Mật khẩu chỉ được nhập, không bao giờ hiển thị lại.</p></Card></div>
-    {error && <AlertBanner type="danger" title="Chưa lưu được người dùng">{error}</AlertBanner>}
+    {error && <AlertBanner feedback type="danger" title="Chưa lưu được người dùng">{error}</AlertBanner>}
     <div className={styles.actions}>{busy ? <Button type="button" variant="secondary" disabled>Hủy</Button> : <ButtonLink variant="secondary" to="/admin/users">Hủy</ButtonLink>}<Button type="submit" disabled={busy}>{busy ? 'Đang lưu…' : initial ? 'Lưu thay đổi' : 'Tạo người dùng'}</Button></div>
   </form></>;
 }

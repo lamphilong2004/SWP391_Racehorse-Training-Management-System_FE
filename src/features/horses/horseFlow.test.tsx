@@ -32,7 +32,9 @@ it('registers, declares ownership, assigns a FREE box and shows pending baseline
   await user.type(screen.getByLabelText('Ngựa cha *'), 'Northern Crest');
   await user.type(screen.getByLabelText('Ngựa mẹ *'), 'Silver Lining');
   await user.selectOptions(screen.getByLabelText('Chủ ngựa'), '17');
-  await user.type(screen.getByLabelText('Tỷ lệ sở hữu (%)'), '65');
+  expect(screen.queryByLabelText('Tỷ lệ sở hữu (%)')).not.toBeInTheDocument();
+  expect(screen.queryByLabelText('Sở hữu có hiệu lực từ')).not.toBeInTheDocument();
+  expect(screen.queryByLabelText('Chủ quản lý')).not.toBeInTheDocument();
   await user.click(screen.getByRole('button', { name: 'Xếp ô chuồng' }));
   await user.click(await screen.findByRole('button', { name: /B-07/ }));
   await user.click(screen.getByRole('button', { name: /^Xác nhận xếp ô$/ }));
@@ -41,8 +43,10 @@ it('registers, declares ownership, assigns a FREE box and shows pending baseline
   await screen.findByRole('heading', { name: 'Chờ kích hoạt' });
   expect(await screen.findByText(/River Dance tự chuyển sang Hoạt động/)).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: /Approve|Activate horse/ })).not.toBeInTheDocument();
-  const saved = await requestApi<{ lifecycle: string; activatedAt: string | null; currentOwnerships: { sharePercentage: number }[] }>(`/api/horses/${id}`);
-  expect(saved.lifecycle).toBe('DRAFT'); expect(saved.activatedAt).toBeNull(); expect(saved.currentOwnerships[0].sharePercentage).toBe(65);
+  const saved = await requestApi<HorseDetail>(`/api/horses/${id}`);
+  expect(saved.lifecycle).toBe('DRAFT'); expect(saved.activatedAt).toBeNull();
+  expect(saved.currentOwnerships).toHaveLength(1);
+  expect(saved.currentOwnerships[0]).toMatchObject({ owner: { id: 17 }, sharePercentage: 100, isManagingOwner: true });
   expect(fetch).not.toHaveBeenCalled();
 });
 it('keeps registration input on a duplicate registry number and can retry', async () => {
@@ -168,7 +172,7 @@ it('retains the identity 404 error without offering an unverified saved profile'
 });
 it.each(['owners', 'assignments', 'activation'] as const)('keeps the form visible without inventing missing %s data (HTTP fixtures)', async (missing) => {
   setBusinessActor(manager);
-  const horse = await requestApi<HorseDetail>('/api/horses/7');
+  const horse = { ...(await requestApi<HorseDetail>('/api/horses/7')), currentOwnerships: [] };
   const activation = await requestApi('/api/horses/7/activation-status');
   vi.stubEnv('VITE_BUSINESS_DATA_SOURCE', 'api');
   const fetcher = vi.fn((input: RequestInfo | URL) => {
@@ -214,14 +218,12 @@ it('retains typed and deliberately cleared fields across setup retry, then sends
   fireEvent.change(screen.getByLabelText('Ngựa cha *'), { target: { value: '' } });
   fireEvent.change(screen.getByLabelText('Ngựa mẹ *'), { target: { value: 'Edited Dam' } });
   fireEvent.change(screen.getByLabelText('Chủ ngựa'), { target: { value: '17' } });
-  fireEvent.change(screen.getByLabelText('Tỷ lệ sở hữu (%)'), { target: { value: '65' } });
   available = true;
   fireEvent.click(screen.getByRole('button', { name: 'Thử lại' }));
   await waitFor(() => expect(screen.getByRole('button', { name: 'Lưu & tiếp tục' })).toBeEnabled());
   expect(screen.getByLabelText('Ngựa cha *')).toHaveValue('');
   expect(screen.getByLabelText('Ngựa mẹ *')).toHaveValue('Edited Dam');
   expect(screen.getByLabelText('Chủ ngựa')).toHaveValue('17');
-  expect(screen.getByLabelText('Tỷ lệ sở hữu (%)')).toHaveValue(65);
   fireEvent.click(screen.getByRole('button', { name: 'Lưu & tiếp tục' }));
   expect(await screen.findByText('Nhập ngựa cha.')).toBeInTheDocument();
   expect(fetcher.mock.calls.filter(([, init]) => init?.method === 'PUT' || init?.method === 'POST')).toHaveLength(0);
@@ -231,12 +233,14 @@ it('retains typed and deliberately cleared fields across setup retry, then sends
   const writes = fetcher.mock.calls.filter(([, init]) => init?.method === 'PUT' || init?.method === 'POST');
   expect(writes).toHaveLength(2);
   expect(JSON.parse(String(writes[0][1]?.body))).toEqual({ sire: { horseId: null, name: 'Edited Sire' }, dam: { horseId: null, name: 'Edited Dam' } });
-  expect(JSON.parse(String(writes[1][1]?.body))).toMatchObject({ ownerUserId: 17, sharePercentage: 65, isManagingOwner: false });
+  expect(JSON.parse(String(writes[1][1]?.body))).toEqual({ ownerUserId: 17, sharePercentage: 100, effectiveFrom: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/), isManagingOwner: true });
 });
 it('preserves existing parent references and ownership when saving unchanged pedigree', async () => {
   setBusinessActor(manager); await requestApi('/api/horses/7');
   const data = readSamples(); data.horseRegistry!.records[0].pedigree.sire = { horseId: 91, name: 'Northern Star', horseCode: 'SIRE-91' }; saveSamples(data);
   open('/horses/7/edit'); await screen.findByRole('heading', { name: 'Phả hệ & quyền sở hữu · Thunder Bolt' });
+  expect(screen.getByText(/Chủ ngựa hiện tại/)).toBeInTheDocument();
+  expect(screen.queryByLabelText('Chủ ngựa')).not.toBeInTheDocument();
   await userEvent.click(screen.getByRole('button', { name: 'Lưu & tiếp tục' }));
   await screen.findByRole('heading', { name: 'Chờ kích hoạt' });
   const horse = readSamples().horseRegistry!.records[0];

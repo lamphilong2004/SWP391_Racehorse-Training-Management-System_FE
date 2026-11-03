@@ -55,7 +55,7 @@ function AccountForm({ profile }: { profile: UserDetail }) {
     } catch (failure) { setError(errorMessage(failure)); } finally { inFlight.current = false; setBusy(false); }
   }
   return <><UnsavedChangesGuard dirty={name !== savedName || !!currentPassword || !!newPassword || !!confirmPassword} />
-    {error && <AlertBanner type="danger" title="Cập nhật tài khoản thất bại">{error}</AlertBanner>}{message && <AlertBanner type="success" title={message} />}
+    {error && <AlertBanner feedback type="danger" title="Cập nhật tài khoản thất bại">{error}</AlertBanner>}{message && <AlertBanner feedback type="success" title={message} />}
     <div className={styles.columns}><div className={styles.stack}>
       <Card title="Hồ sơ"><form onSubmit={(e) => { void save(e, false); }} className={styles.stack}>
         <div className={styles.formFields}><TextField label="Họ và tên" required maxLength={150} value={name} disabled={busy} onChange={(e) => setName(e.target.value)} /><TextField label="Email" type="email" value={profile.email} readOnly helperText="Muốn đổi email cần liên hệ Club Manager." /></div>

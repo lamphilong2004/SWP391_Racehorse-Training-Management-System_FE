@@ -38,8 +38,8 @@ function Review({ id }: { id: number }) {
   return <Card title="Đánh giá sẵn sàng của Head Trainer">
     <p className={styles.subtitle}>Nên làm trước khi tập. Xác nhận này không duyệt kích hoạt và không đổi sức khỏe, khả năng tập luyện hay vòng đời.</p>
     {service.source === 'sample' && <p className={styles.subtitle}>Xác nhận mẫu · chỉ lưu trên trình duyệt này.</p>}
-    {success && <AlertBanner type="success" title="Đã ghi đánh giá sẵn sàng" />}
-    {writeError !== undefined && <AlertBanner type="danger" title={writeError === 403 ? 'Chỉ Head Trainer được ghi đánh giá này.' : writeError === 404 ? 'Không tìm thấy ngựa.' : 'Đánh giá chưa được xác nhận. Hãy thử lại sau.'} />}
+    {success && <AlertBanner feedback type="success" title="Đã ghi đánh giá sẵn sàng" />}
+    {writeError !== undefined && <AlertBanner feedback type="danger" title={writeError === 403 ? 'Chỉ Head Trainer được ghi đánh giá này.' : writeError === 404 ? 'Không tìm thấy ngựa.' : 'Đánh giá chưa được xác nhận. Hãy thử lại sau.'} />}
     {current?.error !== undefined ? <ErrorState title={current.error === 403 ? 'Không có quyền truy cập' : current.error === 404 ? 'Không tìm thấy ngựa' : 'Không tải được mức sẵn sàng'} description="Không tải được danh mục kích hoạt hiện tại." onRetry={current.error === 403 || current.error === 404 ? undefined : () => setRevision((n) => n + 1)} /> : !current?.value ? <LoadingState label="Đang tải danh mục sẵn sàng…" /> : <>
       <ul className={styles.checklist}>{current.value.checklist.map((item) => <li key={item.id}><strong>{serverText(item.label)}</strong><span>{item.requirement === 'RECOMMENDED' ? item.state === 'REVIEWED' ? 'Đã đánh giá · không bắt buộc' : 'Khuyến nghị · không bắt buộc' : item.state === 'SATISFIED' ? 'Hoàn tất' : 'Đang chờ'}</span></li>)}</ul>
       {user!.roles.includes('HEAD_TRAINER') && <Button disabled={busy} onClick={() => void acknowledge()}>{busy ? 'Đang ghi đánh giá…' : 'Ghi đánh giá sẵn sàng'}</Button>}

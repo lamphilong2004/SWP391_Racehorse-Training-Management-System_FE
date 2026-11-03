@@ -77,7 +77,7 @@ export function IncidentListPage({ service, role, actorId, horse, reporter, stab
   async function submit(input: IncidentCreateRequest) { try { const created = await service.report(input); setSuccess(`Đã gửi sự cố ${created.incidentCode}.`); state.reload(); } catch (error) { throw new Error(safeError(error), { cause: error }); } }
   return <div className="medical-stack">
     <PageHeader title="Sự cố" description={['GROOM', 'TRAINER', 'WORK_RIDER'].includes(role) ? 'Sự cố bạn đã báo' : 'Báo cáo sự cố'} actions={role === 'GROOM' ? <Button onClick={() => setReport(true)}>Báo cáo sự cố</Button> : undefined} />
-    {success && <AlertBanner type="success" title={success}>Đã ghi nhận báo cáo. Chỉ Veterinarian được thay đổi trạng thái xử lý.</AlertBanner>}
+    {success && <AlertBanner feedback type="success" title={success}>Đã ghi nhận báo cáo. Chỉ Veterinarian được thay đổi trạng thái xử lý.</AlertBanner>}
     <TableToolbar label="Bộ lọc sự cố" scope="page" resultCount={state.data ? rows.length : undefined} hasFilters={Boolean(query || status || horseFilter)} onClear={() => { setQuery(''); setStatus(''); setHorseFilter(''); }}><TextField label="Tìm trên trang hiện tại" placeholder="Tìm mã sự cố hoặc mã ngựa…" value={query} onChange={(event) => setQuery(event.target.value)} />
       <SelectField label="Ngựa (trang hiện tại)" value={horseFilter} placeholder="Tất cả ngựa" options={horses.map((id) => ({ value: String(id), label: stable?.find((item) => item.id === id)?.label.split(' · ').slice(0, 2).join(' · ') ?? `Ngựa ${id}` }))} onChange={(event) => setHorseFilter(event.target.value)} />
       <SelectField label="Trạng thái (trang hiện tại)" value={status} placeholder="Tất cả trạng thái" options={['REPORTED', 'UNDER_REVIEW', 'RESOLVED'].map((value) => ({ value, label: viLabel(value) }))} onChange={(event) => setStatus(event.target.value)} />
@@ -144,7 +144,7 @@ function IncidentDetail({ id, service, role, actorId, horse, reporter }: { id: n
       </div><aside className="medical-stack"><IncidentHorseStatus horseId={item.horseId} read={horse} /><Card title="Xử lý">
         {item.medicalCaseId && role === 'VETERINARIAN' && <ButtonLink to={casePath(item.medicalCaseId)}>Ca y tế {item.medicalCaseId}</ButtonLink>}
         {role !== 'VETERINARIAN' ? <p>Chế độ chỉ xem cho người báo. Hồ sơ y tế chỉ dành cho đội thú y.</p> : item.status === 'RESOLVED' ? <p>Sự cố đã được xử lý xong. Không còn thao tác nào khác.</p> : <div className="medical-stack">
-          {error && <AlertBanner type="danger" title={error} />}
+          {error && <AlertBanner feedback type="danger" title={error} />}
           {item.status === 'REPORTED' && !item.medicalCaseId && <><Button disabled={busy} onClick={() => review('OPEN_CASE')}>Mở ca y tế</Button><TextField label="Mã ca y tế đang mở" type="number" min={1} step={1} value={caseId} onChange={(event) => setCaseId(event.target.value)} /><Button variant="secondary" disabled={busy || !caseId} onClick={() => review('LINK_CASE')}>Liên kết ca y tế</Button></>}
           <Button variant="secondary" disabled={busy} onClick={() => review('RESOLVE')}>Đóng sự cố</Button>
         </div>}

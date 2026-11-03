@@ -10,13 +10,13 @@ vi.mock('../../shared/auth/AuthProvider', () => ({ useAuth: () => ({ user: { id:
 vi.mock('../../shared/auth/authSession', () => ({ authSession: { read: () => ({ accessToken: state.token }) } }));
 vi.mock('../../layout/AppShell', () => ({ AppShell: ({ children }: { children: ReactNode }) => <main>{children}</main> }));
 const currentDate = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-const task = (name = 'Sao Mai') => ({ id: 10, horseId: 1, horseName: name, horseCode: 'SM', source: 'CARE', taskType: 'CLEANING', taskDate: currentDate(), slot: '08:00', instructions: 'Quan sát và vệ sinh', groomUserId: 2, groomName: 'Groom fixture', boxCode: 'A-01', completedAt: null, cancelledAt: null, cancellationReason: null });
+const task = (name = 'Sao Mai') => ({ id: 10, horseId: 1, horseName: name, horseCode: 'SM', source: 'CARE', taskType: 'CLEANING', taskDate: currentDate(), slot: '00:00', instructions: 'Quan sát và vệ sinh', groomUserId: 2, groomName: 'Groom fixture', boxCode: 'A-01', completedAt: null, cancelledAt: null, cancellationReason: null });
 const ok = (data: unknown) => new Response(JSON.stringify({ success: true, data }), { status: 200 });
 const fail = () => new Response(JSON.stringify({ success: false, error: { code: 'CONFLICT', message: 'Stock changed.', details: [] } }), { status: 409 });
 function element(path: string) { return <RouterProvider router={createMemoryRouter([{ path: '*', element: <StableCarePage /> }], { initialEntries: [path] })} />; }
 function mount(path: string) { return render(element(path)); }
 beforeEach(() => { state.id = 2; state.role = 'GROOM'; state.token = 'fixture-token-a'; state.handle.mockClear(); });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); });
 describe('Flow 4 API-only UI', () => {
   it('groups task actions by horse and requires explicit confirmation before cancellation', async () => {
     state.role = 'CLUB_MANAGER';
@@ -121,7 +121,17 @@ describe('Flow 4 API-only UI', () => {
   it('does not permit completing future daily work', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => ok([task()])));mount('/care/daily');await screen.findByText('Sao Mai');
     fireEvent.change(screen.getByLabelText('Ngày công việc (giờ Việt Nam)'), { target: { value: '2099-01-01' } });
-    await screen.findByText('Sao Mai');expect(screen.getByRole('button', { name: 'Hoàn thành' })).toBeDisabled();
+    await screen.findByText('Sao Mai');expect(screen.queryByRole('button', { name: 'Hoàn thành' })).not.toBeInTheDocument();
+  });
+  it('shows Hoàn thành at the Vietnam slot without a reload', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-03T00:59:59Z'));
+    vi.stubGlobal('fetch', vi.fn(async () => ok([{ ...task(), slot: '08:00 · ca sáng' }])));
+    mount('/care/daily');
+    expect(await screen.findByText('Chưa đến giờ')).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Hoàn thành' })).not.toBeInTheDocument();
+    vi.setSystemTime(new Date('2026-11-03T01:00:00Z'));
+    expect(await screen.findByRole('button', { name: 'Hoàn thành' }, { timeout: 2500 })).toBeEnabled();
   });
   it('drops old account data and ignores late responses after an account switch', async () => {
     let resolveOld!: (value: Response) => void;

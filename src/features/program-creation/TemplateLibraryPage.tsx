@@ -18,7 +18,7 @@ export function TemplateLibraryPage() {
   const load = useCallback((signal: AbortSignal) => api.list(status, search, page, signal), [api, status, search, page]);
   const resource = useResource(load);
   return <FlowShell title="Mẫu chương trình" description="Các chiến lược huấn luyện dùng lại được. Lưu phiên bản mới không làm thay đổi chương trình của ngựa đang có." section="Huấn luyện" role="HEAD_TRAINER" actions={<Button onClick={() => setEditor('new')}>Tạo mẫu</Button>}>
-    {notice && <AlertBanner type="success" title={notice} />}
+    {notice && <AlertBanner feedback type="success" title={notice} />}
     <TableToolbar label="Bộ lọc thư viện mẫu" scope="server" resultCount={resource.pending ? undefined : resource.data?.totalItems} hasFilters={Boolean(query || search || status !== 'ACTIVE')} onClear={() => { setQuery(''); setSearch(''); setStatus('ACTIVE'); setPage(0); }} onSubmit={(event) => { event.preventDefault(); setPage(0); setSearch(query); }}>
       <TextField label="Tìm mẫu chương trình" type="search" maxLength={100} value={query} onChange={(event) => setQuery(event.target.value)} />
       <SelectField label="Trạng thái mẫu" value={status} options={[{ value: 'ACTIVE', label: 'Đang hoạt động' }, { value: 'ARCHIVED', label: 'Đã lưu trữ' }]} onChange={(event) => { setStatus(event.target.value); setPage(0); }} />

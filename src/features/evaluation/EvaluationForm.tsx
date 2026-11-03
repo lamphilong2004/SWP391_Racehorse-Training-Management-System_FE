@@ -45,7 +45,7 @@ export function EvaluationForm({ onSave, interrupted, onPendingChange, onDirtyCh
       </div>
     </Card>
     <Card title="Khuyến nghị — các buổi tập tiếp theo"><TextAreaField label="Ghi chú khuyến nghị" value={recommendation} onChange={(event) => setRecommendation(event.target.value)} error={errors.recommendation} disabled={saving || conflict} helperText="Chỉ khuyến nghị ở cấp buổi tập. Thay đổi chiến lược cần Head Trainer phê duyệt." rows={4} /></Card>
-    {failure && <AlertBanner type="danger" title={failure} children={conflict ? 'Máy chủ từ chối lần gửi này. Hãy tải lại buổi tập để xem trạng thái hiện tại trước khi tiếp tục.' : 'Nội dung bạn nhập vẫn được giữ. Bạn có thể thử lại.'} />}
+    {failure && <AlertBanner feedback type="danger" title={failure} children={conflict ? 'Máy chủ từ chối lần gửi này. Hãy tải lại buổi tập để xem trạng thái hiện tại trước khi tiếp tục.' : 'Nội dung bạn nhập vẫn được giữ. Bạn có thể thử lại.'} />}
     <ActionBar className="evaluation-save-bar" leading={<p>{interrupted && 'Buổi tập giữ trạng thái Bị gián đoạn. '}Horse Owner xem nhãn kết quả sau khi lưu.</p>}>
       <Button type="submit" disabled={saving || conflict}>{saving ? 'Đang lưu…' : 'Lưu đánh giá'}</Button>
     </ActionBar>
