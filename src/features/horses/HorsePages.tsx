@@ -49,7 +49,7 @@ export function HorseListPage() {
     {!data ? <HorseState error={error} retry={reload} /> : <>
       <Card><div className={styles.registryHeading}><h2>Hồ sơ ngựa</h2><span>{data.items.length} ngựa trên trang này</span></div><div className={styles.table}><DataTable<HorseDetail> caption="Danh sách ngựa" rows={data.items} rowKey={(h) => h.id} empty={<EmptyState title="Không có ngựa phù hợp" />} columns={[
         { key: 'name', header: 'Ngựa', width: '22%', render: (h) => <Link className={styles.horseIdentity} to={`/horses/${h.id}`}>
-          {canManage && businessDataMode() === 'api' && <HorsePhotoImage thumbnail name={h.name} path={`/api/horses/${h.id}/photos/primary`} />}
+          {businessDataMode() === 'api' && <HorsePhotoImage thumbnail name={h.name} path={`/api/horses/${h.id}/photos/primary`} />}
           <div className={styles.horseIdentityText}><strong>{h.name}</strong><span>{h.horseCode}</span></div>
         </Link> },
         { key: 'breed', header: 'Giống · tuổi', render: (h) => <div className={styles.horseFacts}><span>{h.breed ?? 'Chưa ghi nhận'}</span><small>{ageInYears(h.foaledDate) ?? '—'} tuổi · {sexLabel(h.sex)}</small></div> },
