@@ -24,7 +24,7 @@ export function AdjustmentRequestsPage() {
   const resource = useResource(load), data = resource.data;
   return <FlowShell title="Yêu cầu điều chỉnh chương trình" description={headTrainer ? 'Xem xét các thay đổi chiến lược do Trainer đề xuất. Phê duyệt chỉ ghi nhận quyết định; hãy chủ động áp dụng thay đổi đã duyệt vào chương trình.' : 'Các yêu cầu thay đổi chiến lược của bạn và quyết định của Head Trainer.'}
     section="Chương trình huấn luyện ngựa" role={headTrainer ? 'HEAD_TRAINER' : 'TRAINER'}>
-    {applied && <AlertBanner type="success" title="Đã áp dụng điều chỉnh">{applied.programName} đã dùng các giai đoạn mới điều chỉnh. <Link to={`/training/programs/${applied.item.programId}`}>Mở chương trình</Link></AlertBanner>}
+    {applied && <AlertBanner feedback type="success" title="Đã áp dụng điều chỉnh">{applied.programName} đã dùng các giai đoạn mới điều chỉnh. <Link to={`/training/programs/${applied.item.programId}`}>Mở chương trình</Link></AlertBanner>}
     <Card><div className={styles.row}>
       <SelectField label="Trạng thái" value={status} onChange={(event) => { setStatus(event.target.value as AdjustmentStatus | ''); setPage(0); }}
         options={[{ value: '', label: 'Tất cả' }, { value: 'PENDING', label: 'Chờ duyệt' }, { value: 'APPROVED', label: 'Đã duyệt' }, { value: 'REJECTED', label: 'Từ chối' }]} />

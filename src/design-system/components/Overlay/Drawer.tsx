@@ -3,6 +3,7 @@ import { Icon } from '../../icons/Icon';
 import { cx } from '../../utils/cx';
 import styles from './Overlay.module.css';
 import { useModalDialog } from './useModalDialog';
+import { FeedbackHostContext } from '../AlertBanner/FeedbackHostContext';
 
 export interface DrawerProps {
   open: boolean;
@@ -23,7 +24,7 @@ export function Drawer({ open, onClose, title, subtitle, footer, children, class
   return (
     <dialog ref={ref} aria-labelledby={titleId} className={cx(styles.drawer, className)}>
       {open && (
-        <div className={cx(styles.surface, styles.drawerSurface)}>
+        <FeedbackHostContext.Provider value={null}><div className={cx(styles.surface, styles.drawerSurface)}>
           <header className={styles.header}>
             <div className={styles.titleGroup}>
               <h2 id={titleId} className={styles.title}>
@@ -37,7 +38,7 @@ export function Drawer({ open, onClose, title, subtitle, footer, children, class
           </header>
           <div className={cx(styles.body, styles.drawerBody)}>{children}</div>
           {footer && <footer className={styles.footer}>{footer}</footer>}
-        </div>
+        </div></FeedbackHostContext.Provider>
       )}
     </dialog>
   );

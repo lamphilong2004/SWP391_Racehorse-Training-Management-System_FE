@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -31,6 +31,8 @@ async function chooseTemplate(actor: Actor) {
   await next(actor); await next(actor);
   await actor.click(await screen.findByRole('button', { name: 'Dùng mẫu gợi ý Race Preparation 1600m' }));
   await screen.findByLabelText('Phiên bản mẫu');
+  expect(screen.getByText('Đã chọn', { exact: true })).toBeVisible();
+  expect(screen.queryByText('Mẫu chương trình không bị thay đổi')).not.toBeInTheDocument();
   await next(actor);
 }
 function customize() {
@@ -80,6 +82,35 @@ describe('CORE-022 UI + production router + real transport with HTTP fixtures (n
     expect(ready).toBeChecked();
     expect(ready.closest('tr')).toHaveAttribute('aria-selected', 'true');
     expect(screen.queryByRole('heading', { name: 'Ngựa đã chọn' })).not.toBeInTheDocument();
+  });
+
+  it('shows one dismissible date error toast while retaining inline field errors', async () => {
+    const { actor } = setup();
+    await chooseTemplate(actor);
+    await next(actor);
+    const notices = within(screen.getByLabelText('Thông báo thao tác'));
+    expect(notices.getAllByText('Nhập ngày hợp lệ.')).toHaveLength(1);
+    const start = screen.getByLabelText('Ngày bắt đầu chương trình', { exact: false });
+    await waitFor(() => expect(start).toHaveFocus());
+    await actor.click(notices.getByRole('button', { name: /Ẩn thông báo/ }));
+    expect(notices.queryByRole('alert')).not.toBeInTheDocument();
+    expect(start).toHaveAttribute('aria-invalid', 'true');
+  });
+
+  it.each([['QUARANTINED', 'Cách ly'], ['INJURED', 'Chấn thương']])('shows the health block for %s even if the restriction flag is AVAILABLE', async (healthStatus, label) => {
+    const horse = { id: 41, name: 'Ngựa A', horseCode: 'RH-041', lifecycle: 'ACTIVE', trainingAvailability: 'AVAILABLE', healthStatus };
+    const { actor, posts } = setup({ override: url => url.pathname === '/api/horses'
+      ? ok({ items: [horse], page: 0, size: 20, totalItems: 1, totalPages: 1 })
+      : undefined });
+    const radio = await screen.findByRole('radio', { name: 'Chọn Ngựa A (RH-041)' });
+    const row = radio.closest('tr')!;
+    expect(radio).toBeDisabled();
+    expect(within(row).getByText(label)).toBeVisible();
+    expect(within(row).getByText('Chưa thể tập luyện')).toBeVisible();
+    expect(within(row).queryByText('Sẵn sàng')).not.toBeInTheDocument();
+    await actor.click(row.cells[1]);
+    expect(radio).not.toBeChecked();
+    expect(posts()).toHaveLength(0);
   });
 
   it('lets Head Trainer enter from workspace, complete all steps, send a pinned DTO and read the saved result', async () => {
@@ -176,6 +207,7 @@ describe('CORE-022 UI + production router + real transport with HTTP fixtures (n
     expect(screen.queryByRole('checkbox', { name: 'Tôi đã đọc các cảnh báo về Trainer' })).not.toBeInTheDocument();
     expect(screen.getByLabelText('Trainer phụ trách từ ngày', { exact: false })).toHaveValue('');
     await actor.click(screen.getByRole('button', { name: 'Mẫu chương trình' }));
+    await actor.click(screen.getByRole('button', { name: 'Tất cả mẫu' }));
     await actor.click(screen.getByRole('button', { name: 'Dùng Recovery' }));
     await screen.findByLabelText('Phiên bản mẫu');
     await next(actor);

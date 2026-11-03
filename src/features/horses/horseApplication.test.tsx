@@ -182,13 +182,12 @@ it('preserves deliberately edited/cleared setup fields when supporting APIs reco
   await screen.findByText('Không tải được dữ liệu thiết lập ngựa');
   fireEvent.change(screen.getByLabelText('Ngựa cha *'), { target: { value: 'Draft sire' } });
   fireEvent.change(screen.getByLabelText('Ngựa mẹ *'), { target: { value: '' } });
-  fireEvent.change(screen.getByLabelText('Tỷ lệ sở hữu (%)'), { target: { value: '65' } });
   expect(screen.getByRole('button', { name: 'Lưu & tiếp tục' })).toBeDisabled();
   expect(screen.getByText('Không tải được lịch sử ô chuồng')).toBeInTheDocument();
   state.restoreSetup(); await userEvent.click(screen.getByRole('button', { name: 'Thử lại' }));
   await waitFor(() => expect(screen.queryByText('Không tải được dữ liệu thiết lập ngựa')).not.toBeInTheDocument());
   expect(screen.getByLabelText('Ngựa cha *')).toHaveValue('Draft sire'); expect(screen.getByLabelText('Ngựa mẹ *')).toHaveValue('');
-  expect(screen.getByLabelText('Tỷ lệ sở hữu (%)')).toHaveValue(65);
+  expect(screen.queryByLabelText('Tỷ lệ sở hữu (%)')).not.toBeInTheDocument();
   expect(state.requests.every((r) => r.method === 'GET')).toBe(true);
 });
 it('shows FREE/OCCUPIED boxes without fabricating an assignment when its API is missing', async () => {

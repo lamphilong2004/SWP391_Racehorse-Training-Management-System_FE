@@ -53,8 +53,8 @@ export function MedicalForm({ fields, initial = {}, submitLabel, onSave, onCance
       <SelectField label={field.label} aria-label={field.label} required={field.required} options={field.options.map((value) => ({ value, label: viLabel(value) }))} placeholder="Chọn…" value={values[field.name] ?? ''} error={errors[field.name]} disabled={pending} onChange={(event) => change(field.name, event.target.value)} /> :
       field.type === 'textarea' ? <TextAreaField label={field.label} aria-label={field.label} required={field.required} maxLength={field.maxLength} value={values[field.name] ?? ''} error={errors[field.name]} disabled={pending} onChange={(event) => change(field.name, event.target.value)} /> :
       <TextField label={field.label} aria-label={field.label} required={field.required} maxLength={field.maxLength} type={field.type ?? 'text'} max={field.type === 'datetime-local' ? clubDateTime() : undefined} min={field.type === 'number' ? 1 : undefined} step={field.type === 'number' ? 1 : undefined} value={values[field.name] ?? ''} error={errors[field.name]} disabled={pending} onChange={(event) => change(field.name, event.target.value)} />}</div>)}</div>
-    {result.error && <AlertBanner type="danger" title={result.error} />}
-    {result.success && <AlertBanner type="success" title={result.success} />}
+    {result.error && <AlertBanner feedback type="danger" title={result.error} />}
+    {result.success && <AlertBanner feedback type="success" title={result.success} />}
     <ActionBar>
       {onCancel && <Button type="button" variant="secondary" disabled={pending} onClick={onCancel}>Hủy</Button>}
       <Button type="submit" disabled={pending}>{pending ? 'Đang lưu…' : submitLabel}</Button>

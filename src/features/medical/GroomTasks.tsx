@@ -89,8 +89,8 @@ export function GroomTasks({ service }: { service: GroomService }) {
   }, [tasks, service, reload]);
   return <div className="medical-stack">
     <PageHeader title="Công việc chăm sóc & cho thuốc của tôi" description="Được giao từ phác đồ điều trị của Veterinarian" />
-    {action.success && <AlertBanner type="success" title={action.success} />}
-    {action.error && <AlertBanner type="danger" title={action.error} />}
+    {action.success && <AlertBanner feedback type="success" title={action.success} />}
+    {action.error && <AlertBanner feedback type="danger" title={action.error} />}
     {identities.source === state.tasks && identities.error && <AlertBanner type="warning" title={identities.error} />}
     <div className="medical-groom-filters">
       <div className="medical-actions" role="group" aria-label="Bộ lọc công việc">{[['today', 'Hôm nay'], ['upcoming', 'Sắp tới'], ['completed', 'Đã hoàn thành'], ['all', 'Tất cả được giao']].map(([value, label]) =>

@@ -37,7 +37,7 @@ function VetThresholdOverride({ horseId }: { horseId: number }) {
   return <Card title="Ngưỡng cảnh báo y tế"><div className={styles.stack}>
     {resource.pending && <LoadingState label="Đang tải ngưỡng đang áp dụng…" />}
     {resource.error && <ErrorState title="Không tải được ngưỡng" description={resource.error} onRetry={resource.reload} />}
-    {message && <AlertBanner type="success" title="Đã xác nhận yêu cầu ngưỡng">{message}</AlertBanner>}
+    {message && <AlertBanner feedback type="success" title="Đã xác nhận yêu cầu ngưỡng">{message}</AlertBanner>}
     <KeyValue label="Ngưỡng nhịp tim nghiêm trọng đang áp dụng" value={current ? `${current.thresholdValue} bpm · ${current.scope}` : 'Chưa cung cấp'} />
     <Button variant="secondary" disabled={resource.pending || !!resource.error} onClick={() => { setError(''); setMessage(''); setStage('edit'); setOpen(true); }}>Ngưỡng riêng</Button>
     <Modal open={open} onClose={close} title={stage === 'edit' ? `Ngưỡng riêng · Ngựa ${horseId}` : stage === 'set' ? 'Xác nhận đặt ngưỡng riêng' : 'Xác nhận kết thúc ngưỡng riêng'} footer={<>

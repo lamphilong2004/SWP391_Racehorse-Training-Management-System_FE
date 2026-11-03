@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { flushSync } from 'react-dom';
 import { useLocation, useNavigate, useParams } from 'react-router';
 import { ButtonLink,
-  AlertBanner, Button, Card, Checkbox, ErrorState, StatusBadge, Icon, LoadingState, SelectField, TextField,
+  AlertBanner, Button, Card, ErrorState, StatusBadge, Icon, LoadingState, SelectField, TextField,
  DesignSystemScope, UnsavedChangesGuard, focusFirstInvalid } from '../../../design-system';
 import { ApiRequestError } from '../api/horsesApi';
 import { useHorsesApi } from '../api/HorsesApiContext';
@@ -23,7 +23,7 @@ interface Loaded {
   unavailable: string[];
 }
 
-type Field = 'sire' | 'dam' | 'owner';
+type Field = 'sire' | 'dam';
 
 /**
  * SCR-HORSE-004 Pedigree & Ownership (Figma 283:2487) — Flow 1 step 1.2, BR-04. Declares sire/dam (sent as names:
@@ -52,9 +52,6 @@ function PedigreeOwnershipPageContent() {
   const [damChoice, setDamChoice] = useState<HorseDetail>();
   const [parentPicker, setParentPicker] = useState<'sire' | 'dam'>();
   const [ownerId, setOwnerId] = useState('');
-  const [share, setShare] = useState('');
-  const [effectiveFrom, setEffectiveFrom] = useState(todayIsoDate());
-  const [managing, setManaging] = useState(false);
   const pending = useRef(false);
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const [formError, setFormError] = useState<string>();
@@ -93,7 +90,7 @@ function PedigreeOwnershipPageContent() {
       setSire(horse.pedigree.sire.name || horse.pedigree.sire.horseCode || '');
       setDam(horse.pedigree.dam.name || horse.pedigree.dam.horseCode || '');
       setSireChoice(undefined); setDamChoice(undefined); setParentPicker(undefined);
-      setOwnerId(String(horse.currentOwnerships[0]?.owner.id ?? ''));
+      setOwnerId('');
     }
   }, []);
 
@@ -125,6 +122,8 @@ function PedigreeOwnershipPageContent() {
   }
 
   const { horse, owners, assignments, activation, unavailable } = data;
+  const hasOwner = horse.currentOwnerships.length > 0;
+  const canSave = unavailable.length === 0 && (hasOwner || Boolean(owners?.length));
   const baseline = activation?.checklist.find((c) => c.id === 'VETERINARIAN_BASELINE');
   const baselineDone = baseline ? baseline.state === 'SATISFIED' : undefined;
   const current = horse.currentAssignment;
@@ -133,13 +132,10 @@ function PedigreeOwnershipPageContent() {
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (pending.current || refreshing || unavailable.length > 0 || !owners?.length) return;
+    if (pending.current || refreshing || !canSave) return;
     const missing: Partial<Record<Field, string>> = {};
     if (!sire.trim()) missing.sire = 'Nhập ngựa cha.';
     if (!dam.trim()) missing.dam = 'Nhập ngựa mẹ.';
-    // Ownership is an activation requirement, not a pedigree prerequisite: an unknown owner may be declared later.
-    const alreadyOwned = !ownerId || horse.currentOwnerships.some((item) => item.owner.id === Number(ownerId));
-    if (!alreadyOwned && (!Number.isFinite(Number(share)) || Number(share) <= 0 || Number(share) > 100 || !effectiveFrom)) missing.owner = 'Nhập tỷ lệ sở hữu (lớn hơn 0, tối đa 100) và ngày hiệu lực.';
     setErrors(missing);
     setFormError(undefined);
     if (Object.keys(missing).length > 0) { focusFirstInvalid(form.current); return; }
@@ -156,8 +152,8 @@ function PedigreeOwnershipPageContent() {
         return found.length === 1 ? { horseId: found[0].id, name: null } : { horseId: null, name: value };
       };
       await api.setPedigree(horse.id, { sire: await parent(sire, horse.pedigree.sire, sireChoice), dam: await parent(dam, horse.pedigree.dam, damChoice) });
-      if (ownerId && !horse.currentOwnerships.some((o) => o.owner.id === Number(ownerId))) {
-        await api.addOwnership(horse.id, { ownerUserId: Number(ownerId), sharePercentage: Number(share), effectiveFrom, isManagingOwner: managing });
+      if (ownerId && !hasOwner) {
+        await api.addOwnership(horse.id, { ownerUserId: Number(ownerId), sharePercentage: 100, effectiveFrom: todayIsoDate(), isManagingOwner: true });
       }
       // Server confirmed both writes: release the unsaved-changes guard before leaving.
       flushSync(() => setSaved(true));
@@ -172,7 +168,7 @@ function PedigreeOwnershipPageContent() {
   // Memory-only dirty state against the loaded horse; ownership/pedigree drafts are never stored locally.
   const dirty = !saved && (sire !== (horse.pedigree.sire.name || horse.pedigree.sire.horseCode || '') || dam !== (horse.pedigree.dam.name || horse.pedigree.dam.horseCode || '')
     || Boolean(sireChoice && sireChoice.id !== horse.pedigree.sire.horseId) || Boolean(damChoice && damChoice.id !== horse.pedigree.dam.horseId)
-    || ownerId !== String(horse.currentOwnerships[0]?.owner.id ?? '') || share !== '' || managing);
+    || Boolean(!hasOwner && ownerId));
 
   return (
     <form ref={form} className={styles.page} onSubmit={submit} noValidate>
@@ -190,7 +186,7 @@ function PedigreeOwnershipPageContent() {
       {location.state?.photoUploadFailed && (
         <AlertBanner type="warning" title="Một số ảnh chưa được tải lên">Đã lưu ngựa. Hãy thêm lại ảnh từ hồ sơ ngựa.</AlertBanner>
       )}
-      {formError && <AlertBanner type="danger" title="Chưa lưu thay đổi">{formError}</AlertBanner>}
+      {formError && <AlertBanner feedback type="danger" title="Chưa lưu thay đổi">{formError}</AlertBanner>}
       {unavailable.length > 0 && <AlertBanner type="warning" title="Không tải được dữ liệu thiết lập ngựa">
         <p>{`Không tải được: ${unavailable.join(', ')}. Ngựa đã lưu vẫn còn. Tạm khóa lưu cho đến khi kiểm tra được dữ liệu cần thiết.`}</p>
         <Button variant="secondary" disabled={refreshing || saving} onClick={() => void load()}>{refreshing ? 'Đang thử lại…' : 'Thử lại'}</Button>
@@ -219,17 +215,12 @@ function PedigreeOwnershipPageContent() {
             <div className={styles.cardBody}>
               <h2 className={styles.cardTitle}>Quyền sở hữu</h2>
               <p className={styles.cardHelp}>Chủ ngựa xem ngựa này ở chế độ chỉ đọc trong cổng Horse Owner — chủ ngựa không sửa được dữ liệu quản lý.</p>
-              <SelectField label="Chủ ngựa" placeholder="Chưa khai báo chủ ngựa" value={ownerId} error={errors.owner}
+              {hasOwner ? <p>Chủ ngựa hiện tại: <strong>{horse.currentOwnerships.map(({ owner }) => owner.fullName).join(', ')}</strong></p> :
+              <SelectField label="Chủ ngựa" placeholder="Chưa khai báo chủ ngựa" value={ownerId}
                 disabled={!owners || saving || refreshing}
-                helperText={owners ? (owners.length ? 'Có thể để trống lúc này; cần có chủ ngựa trước khi kích hoạt.' : 'Chưa có tài khoản Horse Owner nào đang hoạt động. Hãy liên hệ Club Manager.') : 'Không tải được tài khoản chủ ngựa. Hãy tải lại dữ liệu thiết lập.'}
+                helperText={owners ? (owners.length ? 'Người được chọn sẽ là chủ ngựa. Có thể khai báo sau, trước khi kích hoạt.' : 'Chưa có tài khoản Horse Owner nào đang hoạt động. Hãy liên hệ Club Manager.') : 'Không tải được tài khoản chủ ngựa. Hãy tải lại dữ liệu thiết lập.'}
                 options={(owners ?? []).map((o) => ({ value: String(o.id), label: `${o.fullName} · tài khoản Horse Owner` }))}
-                onChange={(e) => { setOwnerId(e.target.value); setErrors((x) => ({ ...x, owner: undefined })); }} />
-              {!horse.currentOwnerships.some((item) => item.owner.id === Number(ownerId)) && <>
-                <TextField label="Tỷ lệ sở hữu (%)" type="number" min={0.01} max={100} step={0.01} value={share} disabled={saving} onChange={(event) => setShare(event.target.value)} />
-                <TextField label="Sở hữu có hiệu lực từ" type="date" value={effectiveFrom} disabled={saving} onChange={(event) => setEffectiveFrom(event.target.value)} />
-                <Checkbox label="Chủ quản lý" checked={managing} disabled={saving} onChange={(event) => setManaging(event.target.checked)} />
-              </>}
-              <p className={styles.cardHelp}>Các quyền sở hữu hiện có vẫn được giữ. Biểu mẫu không mặc định chỉ có một chủ hay sở hữu 100%.</p>
+                onChange={(e) => setOwnerId(e.target.value)} />}
             </div>
           </Card>
 
@@ -280,7 +271,7 @@ function PedigreeOwnershipPageContent() {
         }} />}
       <div className={styles.footer}>
         <Button variant="secondary" onClick={() => navigate('/horses')} disabled={saving}>Hủy</Button>
-        <Button type="submit" disabled={saving || refreshing || unavailable.length > 0 || !owners?.length}>{'Lưu & tiếp tục'}</Button>
+        <Button type="submit" disabled={saving || refreshing || !canSave}>{'Lưu & tiếp tục'}</Button>
       </div>
 
       {boxModalOpen && (

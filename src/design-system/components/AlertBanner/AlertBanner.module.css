@@ -73,3 +73,21 @@
 .simulated .title {
   color: var(--color-warning-600);
 }
+
+.feedback { pointer-events: auto; box-shadow: var(--elev-2); overflow-wrap: anywhere; }
+.feedback .icon { flex-shrink: 0; }
+.dismiss {
+  display: grid;
+  place-items: center;
+  flex: 0 0 32px;
+  block-size: 32px;
+  margin-block-start: -5px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+.dismiss:hover { border-color: var(--color-border-default); background: var(--color-bg-surface); }
+.dismiss:focus-visible { outline: 2px solid var(--color-border-focus); }
