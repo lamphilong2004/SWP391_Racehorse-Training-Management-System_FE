@@ -1,6 +1,6 @@
 import { clubDateTime, parseClubDateTime } from '../../shared/clubCalendar';
 import { useRef, useState, type ReactNode } from 'react';
-import { ActionBar, AlertBanner, Button, SelectField, TextAreaField, TextField } from '../../design-system';
+import { ActionBar, AlertBanner, Button, SelectField, TextAreaField, TextField, focusFirstInvalid } from '../../design-system';
 import { medicalErrorMessage } from './errors';
 import { validDate } from './groomService';
 import { viLabel } from '../../shared/viLabels';
@@ -25,6 +25,7 @@ export function MedicalForm({ fields, initial = {}, submitLabel, onSave, onCance
   }
   return <form className="medical-form" noValidate onSubmit={async (event) => {
     event.preventDefault();
+    const formElement = event.currentTarget;
     if (submitting.current) return;
     const validation: Record<string, string> = {};
     fields.forEach((field) => {
@@ -41,7 +42,7 @@ export function MedicalForm({ fields, initial = {}, submitLabel, onSave, onCance
       if (field.options && value && !field.options.includes(value)) validation[field.name] = 'Chọn một lựa chọn hợp lệ';
     });
     setErrors(validation); setResult({});
-    if (Object.keys(validation).length) return;
+    if (Object.keys(validation).length) { focusFirstInvalid(formElement); return; }
     submitting.current = true; setPending(true);
     try { await onSave(Object.fromEntries(Object.entries(values).map(([key, value]) => [key, value.trim()]))); setResult({ success: 'Đã lưu thành công' }); }
     catch (error) { setResult({ error: medicalErrorMessage(error, 'Không lưu được. Hãy thử lại.') }); }

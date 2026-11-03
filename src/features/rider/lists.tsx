@@ -1,3 +1,4 @@
+import { serverText } from '../../shared/serverText';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { AlertBanner, Card, DataTable, EmptyState, Icon, KeyValue, MetricCard, StatusBadge } from '../../design-system';
@@ -75,7 +76,7 @@ function Dashboard({ api }: { api: RiderApi }) {
             ? <AlertBanner type="warning" title="Buổi tập đã hết giờ">{EXPIRED_START_MESSAGE}</AlertBanner>
             : !next.blocked && preCheck(next) === 'ALL_NORMAL' && Date.parse(next.scheduledStart) <= now
             ? <AlertBanner type="success" title="Sẵn sàng">Kiểm tra trước buổi tập đạt{next.preSessionCheck ? ` at ${clock(next.preSessionCheck.performedAt)}` : ''}.</AlertBanner>
-            : <AlertBanner type="warning" title="Chờ điều kiện bắt đầu">{next.blockedMessage || (preCheck(next) === 'ABNORMAL' ? 'Kiểm tra trước buổi tập phát hiện bất thường. Không được bắt đầu buổi tập.'
+            : <AlertBanner type="warning" title="Chờ điều kiện bắt đầu">{serverText(next.blockedMessage) || (preCheck(next) === 'ABNORMAL' ? 'Kiểm tra trước buổi tập phát hiện bất thường. Không được bắt đầu buổi tập.'
               : preCheck(next) === 'ALL_NORMAL' && Date.parse(next.scheduledStart) > now ? `Kiểm tra trước buổi tập đạt. Có thể bắt đầu lúc ${clock(next.scheduledStart)}.` : 'Đang chờ kiểm tra trước buổi tập.')}</AlertBanner>}
           <div className={styles.endActions}><Link className={styles.primaryLink} to={`/rider/assignments/${next.id}`}>Xem lịch phân công</Link></div></div></Card>
           : <Card><EmptyState title="Không có lượt cưỡi sắp tới" description="Bạn chưa có lượt cưỡi nào được lên lịch." /></Card>}

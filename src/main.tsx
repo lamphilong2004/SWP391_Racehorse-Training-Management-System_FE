@@ -6,6 +6,9 @@ import './design-system/styles/tailwind.css';
 import { router } from './app/router';
 import { AuthProvider } from './shared/auth/AuthProvider';
 import { NotificationsProvider } from './shared/notifications/NotificationsProvider';
+import { installNativeValidationVi } from './shared/nativeValidationVi';
+
+installNativeValidationVi(document);
 
 const root = createRoot(document.getElementById('root')!);
 

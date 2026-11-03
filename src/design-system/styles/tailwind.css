@@ -148,3 +148,6 @@
 [data-ui-v3] [data-page-banner] nav a:not([aria-current='page']):hover { background: rgb(255 255 255 / 12%); color: #ffffff; }
 [data-ui-v3] [data-page-banner] nav a[aria-current='page'] { background: #ffffff; color: var(--color-brand-primary, #0b132b); box-shadow: 0 2px 8px -2px rgb(0 0 0 / 30%); }
 [data-ui-v3] [data-page-banner] nav a:focus-visible { outline: 2px solid #6ee7b7; outline-offset: 2px; }
+/* Plain text links (no class) in content: 3.5px block padding lifts the hit area to >= 24px (17px inline, 20px block
+   measured) without changing line boxes of inline links. */
+[data-ui-v3] main a:not([class]) { padding-block: 3.5px; }
