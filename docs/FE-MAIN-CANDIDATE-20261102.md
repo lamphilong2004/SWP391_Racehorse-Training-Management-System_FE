@@ -20,6 +20,8 @@ This report records the local UI candidate requested for re-verification and pub
 
 ## Verification status
 
+Fresh cross-flow verification on 2026-11-03 is recorded in [FOUR-FLOW-LOCAL-VERIFICATION-20261103.md](FOUR-FLOW-LOCAL-VERIFICATION-20261103.md): 175 actual HTTP requests/48 assertions, 14 independent SQL readback checks plus live structural verification, and seven-role browser checks on 15 routes/30 open-refresh cases. All passed in the stated scope. This adds real business-write evidence; it does not grant Independent Gate approval or imply exhaustive browser form submission coverage.
+
 | Check | Current result |
 |---|---|
 | Full FE test suite, one worker | PASS:1073/1073 tests,96/96 files after authorized resource cleanup,403.75seconds. Same assertions, per-file isolation and20second timeout. Runtime/application source tested at54a55f2; subsequent changes in this batch are documentation only. |
