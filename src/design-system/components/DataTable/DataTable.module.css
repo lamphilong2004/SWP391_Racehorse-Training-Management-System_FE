@@ -128,12 +128,12 @@
 :global([data-ui-v3]) .headerCell { @apply text-[12.5px] font-bold text-[#0f3d32]; border-bottom: 1px solid #cfe8dd; }
 :global([data-ui-v3]) .row .cell:first-child { @apply font-semibold text-rh-navy; }
 
-/* Design direction A (2026-11-03): each row is a rounded card on the surface; small uppercase column labels. */
+/* Design direction A (2026-11-03): each row is a rounded card on the surface; quiet sentence-case column labels. */
 :global([data-ui-v3]) .scroll { @apply rounded-none border-0 bg-transparent px-0.5 shadow-none; }
 :global([data-ui-v3]) .table { border-collapse: separate; border-spacing: 0 8px; background: transparent; margin-top: -8px; }
 :global([data-ui-v3]) .headerRow, :global([data-ui-v3]) .headerCell { background: var(--color-bg-surface); }
 :global([data-ui-v3]) .headerRow { border: 0; height: 36px; }
-:global([data-ui-v3]) .headerCell { @apply border-0 py-2 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500; }
+:global([data-ui-v3]) .headerCell { @apply border-0 py-2 text-[12.5px] font-semibold normal-case tracking-normal text-slate-500; }
 :global([data-ui-v3]) .row, :global([data-ui-v3]) .row:nth-child(even):not(.selected) { background: transparent; box-shadow: none; }
 :global([data-ui-v3]) .row > .cell {
   background: #f8fafc;

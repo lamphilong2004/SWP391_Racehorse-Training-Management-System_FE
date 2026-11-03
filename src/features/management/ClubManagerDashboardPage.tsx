@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { ROUTES } from '../../app/routePaths';
 import { Card, EmptyState, ErrorState, LoadingState, MetricCard, StatusBadge, type StatusOf } from '../../design-system';
 import { AppShell } from '../../layout/AppShell';
+import { viLabel } from '../../shared/viLabels';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { RecentAudit } from './RecentAudit';
 import { ManagementShortcuts } from './ManagementShortcuts';
@@ -15,7 +16,7 @@ import { businessDataMode } from '../../shared/data/businessData';
 
 const total = (rows: CountByKey[]) => rows.reduce((sum, row) => sum + row.count, 0);
 const count = (rows: CountByKey[], key: string) => rows.find((row) => row.key === key)?.count ?? 0;
-const label = (key: string) => key.replaceAll('_', ' ').toLowerCase();
+const label = (key: string) => viLabel(key, key);
 // Existing CM-guarded route in the FE integration harness; do not add shared routes here.
 const pendingActivationPath = `${ROUTES.horses}/pending-activation`;
 
