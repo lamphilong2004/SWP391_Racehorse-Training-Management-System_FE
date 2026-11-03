@@ -12,6 +12,8 @@ import { collectAssignedTasks, createGroomService, type GroomService, type Groom
 import type { HorseIdentity } from './horseRead';
 import './medical.css';
 import { useClubToday } from '../../shared/useClubToday';
+import { formatDate } from '../horses/shared/format';
+import { dateTime } from '../evaluation/models';
 
 function groomError(error: unknown) {
   if (error instanceof ApiError) {
@@ -103,11 +105,10 @@ export function GroomTasks({ service }: { service: GroomService }) {
             <div className="medical-stack">{filtered.filter((t) => t.horseId === horseId).map((task) => <article key={task.id} className="medical-groom-task">
               <div className="medical-groom-task-row">
                 <Checkbox className={task.status === 'COMPLETED' ? 'medical-completed-checkbox' : undefined} label="" aria-label={`Hoàn thành công việc ${task.id}`} value={task.id} checked={task.status === 'COMPLETED'} disabled={busy !== null || task.status === 'COMPLETED'} onChange={handleComplete} />
-                <div><strong>{task.instruction}</strong><p className="text-caption">Ngựa {task.horseId} · {task.taskDate}</p></div>
+                <div><strong>{task.instruction}</strong><p className="text-caption">Ngày thực hiện {formatDate(task.taskDate)}</p></div>
                 {task.scheduledSlot && <span className="medical-slot"><Icon name="clock" size={14} />{task.scheduledSlot}</span>}
-                <p className="text-caption">{task.completedAt ? <>Đã hoàn thành <time dateTime={task.completedAt}>{new Date(task.completedAt).toLocaleString('vi-VN')}</time></> : busy === task.id ? 'Đang hoàn thành…' : 'Chưa hoàn thành'}</p>
+                <p className="text-caption">{task.completedAt ? <>Đã hoàn thành <time dateTime={task.completedAt}>{dateTime(task.completedAt)}</time></> : busy === task.id ? 'Đang hoàn thành…' : 'Chưa hoàn thành'}</p>
               </div>
-              <p className="medical-instruction"><Icon name="file-text" size={14} />Hướng dẫn: {task.instruction}</p>
             </article>)}</div>
           </Card>)}
     </div><aside className="medical-stack">

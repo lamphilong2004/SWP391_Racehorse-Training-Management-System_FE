@@ -2,7 +2,36 @@
  * Vietnamese display text for fixed English strings the Backend returns (activation checklist, horse timeline).
  * The Backend is unchanged; any text not listed here is shown exactly as the server sent it.
  */
+import { SERVER_ERROR_PATTERNS, SERVER_ERROR_TEXT } from './serverErrors';
+
 const TEXT: Record<string, string> = {
+  ...SERVER_ERROR_TEXT,
+  // Flow 4 fixed server messages; preserve arbitrary user-entered notes verbatim.
+  'This role cannot perform the stable-care action.': 'Vai trò của bạn không được thực hiện thao tác chăm sóc này.',
+  'Choose today or later and at most 366 days per plan.': 'Chọn ngày bắt đầu từ hôm nay trở đi; mỗi kế hoạch tối đa 366 ngày.',
+  'Choose an ACTIVE Groom.': 'Chọn một Groom đang hoạt động.',
+  'Horse must have exactly one stable assignment on every task date.': 'Ngựa cần có đúng một ô chuồng trong từng ngày công việc. Hãy kiểm tra lịch xếp chuồng.',
+  'A plan cannot move to another horse.': 'Không thể chuyển kế hoạch sang ngựa khác.',
+  'This plan has historical or completed tasks. Preserve its log and create a non-overlapping future plan.': 'Kế hoạch có công việc trong quá khứ hoặc đã hoàn thành. Hãy giữ lịch sử và tạo kế hoạch cho khoảng ngày tương lai không trùng lịch hiện có.',
+  'Duplicate task type and slot in this plan.': 'Loại công việc và khung giờ đang bị trùng trong kế hoạch.',
+  'An overlapping task already exists for this horse, type and slot.': 'Ngựa đã có công việc cùng loại và khung giờ trong khoảng ngày này.',
+  'A nutrition plan already covers this horse in the selected period.': 'Ngựa đã có kế hoạch dinh dưỡng trong khoảng ngày được chọn.',
+  'Duplicate meal and component.': 'Bữa ăn và thành phần đang bị trùng.',
+  'Future tasks cannot be completed early.': 'Chưa thể hoàn thành công việc của ngày tương lai.',
+  'Assigned daily-care task was not found.': 'Không tìm thấy công việc chăm sóc được giao cho bạn.',
+  'Daily-care task was not found.': 'Không tìm thấy công việc chăm sóc.',
+  'Task assignment changed. Refresh before trying again.': 'Phân công vừa thay đổi. Hãy tải lại công việc và kiểm tra trước khi thử lại.',
+  'Completed or past tasks cannot be cancelled or reassigned.': 'Không thể hủy hoặc đổi Groom cho công việc đã hoàn thành hay đã qua ngày.',
+  'Cancelled tasks cannot be reassigned.': 'Không thể đổi Groom cho công việc đã hủy.',
+  'This task is cancelled and cannot be completed.': 'Công việc đã hủy nên không thể đánh dấu hoàn thành.',
+  'This plan has recorded task changes. Manage pending tasks individually to preserve history.': 'Kế hoạch đã có lịch sử thay đổi. Hãy điều chỉnh từng việc chưa thực hiện để giữ nguyên lịch sử.',
+  'The plan changed while completing this task. Refresh your assignments and review before trying again.': 'Kế hoạch vừa thay đổi. Hãy tải lại công việc được giao và kiểm tra trước khi thử lại.',
+  'An inventory item with this name and unit already exists.': 'Đã có vật tư cùng tên và đơn vị.',
+  'Units cannot change after stock movements.': 'Không thể đổi đơn vị sau khi đã có lịch sử nhập/xuất.',
+  'Stock movement must be nonzero and within the supported precision.': 'Số lượng nhập/xuất phải khác 0 và nằm trong giới hạn cho phép.',
+  'Stock changed, item is inactive, or quantity is insufficient. Refresh and review before submitting again.': 'Tồn kho đã thay đổi, vật tư đã ngừng sử dụng hoặc không đủ số lượng. Hãy tải lại tồn kho và kiểm tra trước khi gửi lại.',
+  'Inventory item is inactive.': 'Vật tư đã ngừng sử dụng.',
+  'Only the assigned Groom can report an incident for a care task due today or earlier.': 'Chỉ Groom được phân công mới được báo bất thường cho công việc đến hạn hôm nay hoặc trước đó.',
   // GET /api/horses/{id}/activation-status checklist (labels and state descriptions)
   'Horse identity': 'Nhận dạng ngựa',
   'Horse identity is valid.': 'Thông tin nhận dạng hợp lệ.',
@@ -51,6 +80,11 @@ const TEXT: Record<string, string> = {
   'scheduledStart must be in the future. Choose a later time or reschedule the session.': 'Giờ bắt đầu phải ở tương lai. Hãy chọn thời điểm muộn hơn.',
   'periodStart must be today or later in Asia/Ho_Chi_Minh.': 'Ngày bắt đầu chương trình phải từ hôm nay trở đi (giờ Việt Nam).',
   'Unknown strength code.': 'Mã thế mạnh không hợp lệ.',
+  'examinedAt cannot be in the future.': 'Ngày giờ khám không được ở tương lai.',
+  'examinedAt cannot be before the horse was registered.': 'Ngày giờ khám không được trước ngày đăng ký ngựa.',
+  'Use 8–64 characters, a letter and a digit, at most 72 UTF-8 bytes, and not your email.': 'Mật khẩu 8–64 ký tự, có chữ và số, không trùng email.',
+  'Passwords must match.': 'Mật khẩu nhập lại chưa khớp.',
+  'A user with this email already exists.': 'Email này đã có tài khoản.',
   'Acknowledge the Work Rider warnings before saving the session.': 'Hãy xác nhận đã đọc cảnh báo về Work Rider trước khi lưu buổi tập.',
   'The Groom is not notified for this session.': 'Chỉ báo được cho ngựa đang ở chuồng hoặc buổi tập bạn được giao.',
   'The horse is INJURED or QUARANTINED; the Veterinarian must re-examine it before a training program is created.': 'Ngựa đang chấn thương hoặc cách ly; Veterinarian cần tái khám trước khi lập chương trình huấn luyện.',
@@ -75,6 +109,7 @@ const PATTERNS: [RegExp, (...groups: string[]) => string][] = [
   [/^Your adjustment request for program (\S+) was (APPROVED|REJECTED)\.$/, (id, status) => `Đề xuất điều chỉnh chương trình ${id} của bạn đã ${status === 'APPROVED' ? 'được duyệt' : 'bị từ chối'}.`],
   [/^Session (\S+) has been assigned to you\.$/, (code) => `Bạn được giao buổi tập ${code}.`],
   [/^You have been assigned to (.+)\.$/, (name) => `Bạn được giao phụ trách ${name}.`],
+  ...SERVER_ERROR_PATTERNS,
 ];
 
 export function serverText(text: string | null | undefined): string {

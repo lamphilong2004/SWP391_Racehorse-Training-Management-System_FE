@@ -8,12 +8,12 @@ import { AppShell } from './AppShell';
 import { NAVIGATION, visibleSections, withoutDeferred } from './navigation';
 import type { RoleCode } from '../shared/auth/roles';
 
-/** Deferred modules per the CORE-002 DoD (DEC-007, DEC-008 §3.5). */
+/** Flow 4 was subsequently approved; racing, reports and preventive care stay deferred. */
 const DEFERRED_BY_ROLE: Partial<Record<RoleCode, string[]>> = {
-  CLUB_MANAGER: ['Chuồng', 'Cuộc đua', 'Kho', 'Báo cáo'],
+  CLUB_MANAGER: ['Cuộc đua', 'Báo cáo'],
   HEAD_TRAINER: ['Cuộc đua'],
   VETERINARIAN: ['Chăm sóc phòng ngừa'],
-  GROOM: ['Chăm sóc hằng ngày', 'Chăm sóc phòng ngừa'],
+  GROOM: ['Chăm sóc phòng ngừa'],
 };
 
 describe('deferred sidebar modules', () => {
@@ -53,9 +53,9 @@ describe('deferred sidebar modules', () => {
       </MemoryRouter>,
     );
     const nav = screen.getByRole('navigation', { name: 'Chính' });
-    expect(within(nav).getAllByRole('link').map((link) => link.textContent)).toEqual(['Hôm nay', 'Công việc chăm sóc', 'Sự cố']);
+    expect(within(nav).getAllByRole('link').map((link) => link.textContent)).toEqual(['Hôm nay', 'Công việc chăm sóc', 'Chăm sóc hằng ngày', 'Kho & yêu cầu bổ sung', 'Sự cố']);
     expect(within(nav).getByText('Công việc của tôi')).toBeInTheDocument();
-    expect(visibleSections('CLUB_MANAGER')[2].items.map((item) => item.label)).toEqual(['Nhật ký hệ thống']);
+    expect(visibleSections('CLUB_MANAGER')[2].items.map((item) => item.label)).toEqual(['Kho', 'Nhật ký hệ thống']);
   });
 
   it('drops a section whose items are all deferred', () => {
@@ -69,6 +69,15 @@ describe('deferred sidebar modules', () => {
 });
 
 describe('role navigation', () => {
+  it('exposes daily care and inventory only to the approved Flow 4 roles', () => {
+    const allowed = new Set<RoleCode>(['CLUB_MANAGER', 'HEAD_TRAINER', 'VETERINARIAN', 'GROOM']);
+    for (const role of ROLE_CODES) {
+      const destinations = visibleSections(role).flatMap((section) => section.items.map((item) => item.to));
+      expect(destinations.includes(ROUTES.dailyCare)).toBe(allowed.has(role));
+      expect(destinations.includes(ROUTES.inventory)).toBe(['CLUB_MANAGER', 'VETERINARIAN', 'GROOM'].includes(role));
+    }
+  });
+
   it('defines a sidebar for exactly the 7 RBAC roles', () => {
     expect(Object.keys(NAVIGATION).sort()).toEqual([...ROLE_CODES].sort());
     expect(ROLE_CODES).toHaveLength(7);
@@ -123,6 +132,39 @@ describe('AppShell', () => {
     expect(screen.getByRole('link', { name: 'Nhân sự & người dùng' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('button', { name: 'Thông báo, 3 chưa đọc' })).toBeInTheDocument();
     expect(screen.getByText('NT')).toBeInTheDocument();
+  });
+
+  it('opens the account menu with identity and shortcuts, closes on Escape and navigates from an item', async () => {
+    const router = createMemoryRouter([
+      { path: '*', element: <AppShell user={{ fullName: 'Nguyen Thanh', role: 'VETERINARIAN' }} breadcrumb={[{ label: 'Tổng quan' }]} unreadCount={2}><p>content</p></AppShell> },
+    ], { initialEntries: [ROUTES.dashboard] });
+    render(<RouterProvider router={router} />);
+    const actor = userEvent.setup();
+    const trigger = screen.getByRole('button', { name: 'Menu tài khoản' });
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+
+    await actor.click(trigger);
+    const menu = screen.getByRole('menu', { name: 'Tài khoản' });
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    expect(within(menu).getAllByRole('menuitem').map((item) => item.textContent)).toEqual([
+      'Tài khoản của tôiHồ sơ cá nhân và thông tin đăng nhập',
+      'Đổi mật khẩuNên đổi mật khẩu do Club Manager cấp',
+      'Thông báo2 thông báo chưa đọc2',
+      'Không gian làm việcVề trang tổng quan của vai trò',
+    ]);
+    expect(within(menu).getAllByRole('menuitem')[0]).toHaveFocus();
+    await actor.keyboard('{ArrowDown}');
+    expect(within(menu).getAllByRole('menuitem')[1]).toHaveFocus();
+
+    await actor.keyboard('{Escape}');
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+
+    await actor.click(trigger);
+    await actor.click(screen.getByRole('menuitem', { name: /Đổi mật khẩu/ }));
+    expect(router.state.location.pathname).toBe(ROUTES.account);
+    expect(router.state.location.hash).toBe('#doi-mat-khau');
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
   });
 
   it.each([

@@ -19,6 +19,9 @@ export default defineConfig(({ mode, command }) => {
   test: {
     globals: true,
     environment: 'jsdom',
+    // HTTP fixtures assert this origin. Keep personal .env.local proxy settings
+    // out of unit tests; dev servers and production builds keep their own env.
+    env: { VITE_API_BASE_URL: 'http://localhost:8080' },
     setupFiles: ['./src/test/setup.ts'],
     // Router-level jsdom tests are CPU-heavy; default 5 s/1 s budgets flake when all workers run in parallel.
     testTimeout: 20_000,

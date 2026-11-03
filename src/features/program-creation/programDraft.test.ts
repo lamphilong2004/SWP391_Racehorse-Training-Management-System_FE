@@ -70,4 +70,12 @@ describe('CORE-022 horse-specific program draft', () => {
       'phases[0].intensityMax', 'trainer.warningsAcknowledged',
     ]);
   });
+
+  it('names the missing Trainer assignment date explicitly and keeps warning acknowledgement mandatory', () => {
+    const input = validRequest(); input.trainer.effectiveFrom = ''; input.trainer.warningsAcknowledged = false;
+    expect(validateProgramCreation(input, candidate)).toEqual(expect.arrayContaining([
+      { field: 'trainer.effectiveFrom', message: 'Chọn ngày hợp lệ để Trainer bắt đầu phụ trách.' },
+      expect.objectContaining({ field: 'trainer.warningsAcknowledged' }),
+    ]));
+  });
 });

@@ -31,6 +31,36 @@ function mount(path = '/owner/horses', options: { user?: CurrentUser | null; ser
 afterEach(() => { localStorage.clear(); sessionStorage.clear(); vi.restoreAllMocks(); });
 
 describe('CORE-056 read-only Owner journey', () => {
+  it.each(['DRAFT', 'INACTIVE'] as const)('distinguishes %s lifecycle from AVAILABLE on list and health summary', async (lifecycle) => {
+    const source = createOwnerSampleTransport({ readSamples: canonicalFixture, getBusinessActor: () => ownerA }, () => new Date('2026-10-18T00:00:00Z'));
+    const horse = { ...await source.detail(7, { actorId: 17 }), lifecycle, availability: 'AVAILABLE' as const };
+    const service: OwnerService = { async list() { return [horse]; }, async detail() { return horse; } };
+    mount('/owner/horses', { service });
+    await screen.findByText('Hồ sơ chưa hoạt động — chưa đủ điều kiện tập luyện.');
+    expect(screen.getByText('Khả năng tập đang lưu: Không hạn chế.')).toBeInTheDocument();
+    expect(screen.queryByText('Sẵn sàng', { exact: true })).not.toBeInTheDocument();
+    expect(screen.queryByText('Được tập bình thường')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('link', { name: /Xem ngựa/ }));
+    await screen.findByRole('heading', { name: 'Hồ sơ' });
+    await userEvent.click(screen.getByRole('tab', { name: 'Sức khỏe & mức sẵn sàng' }));
+    await screen.findByText('Hồ sơ chưa hoạt động — chưa đủ điều kiện tập luyện.');
+    expect(screen.queryByText('Sẵn sàng', { exact: true })).not.toBeInTheDocument();
+  });
+  it.each(['LIMITED', 'LOCKED'] as const)('keeps %s warnings visible on a draft horse', async (availability) => {
+    const source = createOwnerSampleTransport({ readSamples: canonicalFixture, getBusinessActor: () => ownerA }, () => new Date('2026-10-18T00:00:00Z'));
+    const horse = { ...await source.detail(7, { actorId: 17 }), lifecycle: 'DRAFT' as const, availability };
+    mount('/owner/horses', { service: { async list() { return [horse]; }, async detail() { return horse; } } });
+    await screen.findByText('Hồ sơ chưa hoạt động — chưa đủ điều kiện tập luyện.');
+    expect(screen.getByText(availability === 'LIMITED' ? 'Hạn chế' : 'Khóa', { exact: true })).toBeInTheDocument();
+  });
+  it('preserves the availability wording when lifecycle is active or unknown', async () => {
+    const source = createOwnerSampleTransport({ readSamples: canonicalFixture, getBusinessActor: () => ownerA }, () => new Date('2026-10-18T00:00:00Z'));
+    const horse = await source.detail(7, { actorId: 17 });
+    mount('/owner/horses', { service: { async list() { return [horse, { ...horse, id: 9, name: 'Lifecycle not shared', lifecycle: null }]; }, async detail() { return horse; } } });
+    await screen.findByRole('heading', { name: 'Lifecycle not shared' });
+    expect(screen.getAllByText('Được tập bình thường')).toHaveLength(2);
+    expect(screen.queryByText('Hồ sơ chưa hoạt động — chưa đủ điều kiện tập luyện.')).not.toBeInTheDocument();
+  });
   it('lists only owned horses and opens the approved profile/health/training tabs', async () => {
     mount(); await screen.findByRole('heading', { name: 'Ngựa của tôi' });
     expect(screen.getByRole('heading', { name: 'Thunder Bolt' })).toBeInTheDocument(); expect(screen.queryByRole('heading', { name: 'Ocean Pride' })).not.toBeInTheDocument();

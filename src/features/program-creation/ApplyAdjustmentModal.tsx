@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState, type FormEvent } from 'react';
+import { formatDate } from '../horses/shared/format';
 import { AlertBanner, Button, ErrorState, LoadingState, Modal, SelectField, TextAreaField, TextField } from '../../design-system';
 import { dateTime } from '../evaluation/models';
 import { errorMessage, useFlowRequest } from '../main-flows/api';
@@ -60,7 +61,7 @@ export function ApplyAdjustmentModal({ item, onClose, onApplied }: { item: Adjus
       {resource.error && <ErrorState title="Không tải được chương trình" description={resource.error} onRetry={resource.reload} />}
       {resource.data?.applied && <AlertBanner type="warning" title="Đã áp dụng trước đó">Yêu cầu này đã được áp dụng lúc {dateTime(resource.data.applied.occurredAt)}. Áp dụng lại sẽ thay thế các giai đoạn một lần nữa.</AlertBanner>}
       {program && phases && <form id="apply-adjustment-form" className={styles.stack} onSubmit={submit} noValidate aria-busy={busy}>
-        <p className={styles.muted}>{program.horse.name} · {program.name}. Các giai đoạn phải nằm trong khoảng {program.periodStart} – {program.periodEnd}, theo thứ tự và không chồng lấn. Không thể xóa giai đoạn đã có buổi tập.</p>
+        <p className={styles.muted}>{program.horse.name} · {program.name}. Các giai đoạn phải nằm trong khoảng {formatDate(program.periodStart)} – {formatDate(program.periodEnd)}, theo thứ tự và không chồng lấn. Không thể xóa giai đoạn đã có buổi tập.</p>
         {phases.map((phase, index) => {
           const label = `Giai đoạn ${index + 1}`, issue = (field: string) => issues[`${index}.${field}`];
           return <fieldset key={phase.id ?? `new-${index}`} className={styles.fieldset}>

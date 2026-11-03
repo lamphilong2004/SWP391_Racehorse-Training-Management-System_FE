@@ -1,6 +1,8 @@
 .shell {
+  position: relative;
   display: flex;
   height: 100vh;
+  overflow: hidden;
   background: var(--color-bg-page);
 }
 
@@ -13,6 +15,7 @@
 
 /* Design System v2 §E: content gutter 24 @1280, 32 @1440+, 16 on narrow web. */
 .content {
+  position: relative;
   flex: 1;
   min-height: 0;
   min-width: 0;

@@ -1,0 +1,42 @@
+.stack { display: grid; gap: 20px; min-width: 0; }
+.stack > * { min-width: 0; }
+.header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
+.header h1 { margin: 4px 0; font-family: var(--font-family-headline); font-size: clamp(24px, 2.5vw, 32px); }
+.eyebrow { color: var(--color-primary-600); font-weight: 600; margin: 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 16px; align-items: start; }
+.item { display: flex; flex-wrap: wrap; gap: 12px; padding: 16px; border: 1px solid var(--color-border-default); border-radius: var(--radius-md); align-items: start; }
+.item > * { flex: 1 1 160px; min-width: 0; }
+.item > button { flex: 0 0 auto; align-self: start; margin-top: 24px; }
+.grid > button { justify-self: end; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.actions a { color: var(--color-primary-600); padding: 10px 4px; font-weight: 600; }
+.actions a[aria-current="page"] { background: var(--color-bg-subtle); border-radius: var(--radius-md); box-shadow: inset 0 -2px var(--color-primary-600); text-decoration: none; }
+.listActions { display: flex; justify-content: flex-end; }
+.fields { display: grid; gap: 20px; min-width: 0; padding: 0; border: 0; margin: 0; }
+.saveActions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; margin-left: auto; }
+.stack time { display: block; font-size: 12px; margin-top: 4px; }
+.dayHeader { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
+.dayHeader h2 { margin: 0 0 6px; font-size: 20px; }
+.dayHeader p { margin: 0; max-width: 76ch; color: var(--color-text-secondary); }
+.dateActions { display: grid; grid-template-columns: minmax(180px, 260px) auto; align-items: end; gap: 12px; max-width: 100%; }
+.summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+/* Explicit semantic tones must survive MetricCard's positional decorative accents. */
+.summaryTotal { --metric-accent: var(--color-info-600); --metric-surface: var(--color-info-50); }
+.summaryPending { --metric-accent: var(--color-warning-600); --metric-surface: var(--color-warning-50); }
+.summaryDone { --metric-accent: var(--color-success-600); --metric-surface: var(--color-success-50); }
+.summaryCancelled { --metric-accent: var(--color-neutral-600); --metric-surface: var(--color-bg-subtle); }
+.guidance { font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; }
+.rowActions { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; width: max-content; max-width: 100%; min-width: 248px; }
+.rowMutations { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.rowActions button { gap: 6px; }
+.stateCell { display: grid; justify-items: start; gap: 6px; min-width: 145px; }
+.stateCell p { margin: 0; overflow-wrap: anywhere; }
+.stateCell small { color: var(--color-text-secondary); }
+.taskState { border: 1px solid var(--color-border-default); border-radius: var(--radius-full); padding: 4px 10px; font-size: 12px; line-height: 1.5; font-weight: 600; white-space: nowrap; }
+.taskState[data-state='done'] { color: var(--color-success-600); background: var(--color-success-50); }
+.taskState[data-state='open'] { color: var(--color-warning-600); background: var(--color-warning-50); }
+.taskState[data-state='cancelled'] { color: var(--color-text-secondary); background: var(--color-bg-subtle); }
+@media (max-width: 1100px) { .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .summary { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 640px) { .dateActions { width: 100%; grid-template-columns: minmax(0, 1fr) auto; } }
+@media (max-width: 767px) { .actions button { min-height: 44px; } }

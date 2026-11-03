@@ -13,11 +13,12 @@
   border: 1px solid var(--color-border-default);
 }
 :global([data-ui-v3]) .default {
-  border-top: 3px solid var(--color-brand-secondary);
-  background: linear-gradient(120deg, var(--color-primary-50), var(--color-bg-surface) 65%);
+  border-top: 3px solid var(--metric-accent, var(--color-brand-secondary));
+  background: var(--metric-surface, linear-gradient(120deg, var(--color-primary-50), var(--color-bg-surface) 65%));
 }
-:global([data-ui-v3]) .default:nth-child(3n + 2) { border-top-color: var(--color-accent-sky); background: linear-gradient(120deg, var(--color-accent-sky-surface), var(--color-bg-surface) 65%); }
-:global([data-ui-v3]) .default:nth-child(3n) { border-top-color: var(--color-accent-violet); background: linear-gradient(120deg, var(--color-accent-violet-surface), var(--color-bg-surface) 65%); }
+:global([data-ui-v3]) .default:nth-child(3n + 2) { border-top-color: var(--metric-accent, var(--color-accent-sky)); background: var(--metric-surface, linear-gradient(120deg, var(--color-accent-sky-surface), var(--color-bg-surface) 65%)); }
+:global([data-ui-v3]) .default:nth-child(3n) { border-top-color: var(--metric-accent, var(--color-accent-violet)); background: var(--metric-surface, linear-gradient(120deg, var(--color-accent-violet-surface), var(--color-bg-surface) 65%)); }
+:global([data-ui-v3]) .label { font-size: 12px; line-height: 18px; letter-spacing: normal; text-transform: none; }
 .card { min-width: 0; }
 .value { overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
 

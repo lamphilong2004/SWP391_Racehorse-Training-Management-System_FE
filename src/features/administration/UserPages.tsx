@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { AlertBanner, Button, ButtonLink, Card, Checkbox, DataTable, EmptyState, ErrorState, LoadingState, RadioGroup, SelectField, StatusBadge, TableToolbar, TextField, UnsavedChangesGuard } from '../../design-system';
+import { AlertBanner, Button, ButtonLink, Card, Checkbox, DataTable, EmptyState, ErrorState, LoadingState, PresetField, RadioGroup, SelectField, StatusBadge, TableToolbar, TextField, UnsavedChangesGuard } from '../../design-system';
+import { EXPERIENCE_PRESETS } from '../../shared/formPresets';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { ROLE_CODES, ROLE_LABELS, type RoleCode } from '../../shared/auth/roles';
 import { FlowShell } from '../main-flows/FlowShell';
@@ -25,8 +26,9 @@ export function UserListPage() {
     </TableToolbar>
     {resource.pending && <LoadingState label="Đang tải tài khoản…" />}{resource.error && <ErrorState title="Không tải được danh sách tài khoản" description={resource.error} onRetry={resource.reload} />}
     {resource.data && <><Card><div className={styles.scroll}><DataTable rows={resource.data.items} rowKey={(u) => u.id} caption="Nhân sự và người dùng" empty={<EmptyState title="Không có tài khoản phù hợp" />} columns={[
-      { key: 'name', header: 'Họ tên', render: (u) => u.fullName }, { key: 'code', header: 'Mã người dùng', render: (u) => u.userCode },
-      { key: 'email', header: 'Email', render: (u) => u.email }, { key: 'role', header: 'Vai trò', render: (u) => u.roles.map((r) => ROLE_LABELS[r]).join(', ') },
+      { key: 'name', header: 'Người dùng', render: (u) => <div className={styles.person}><strong>{u.fullName}</strong><span>{u.email}</span></div> },
+      { key: 'code', header: 'Mã người dùng', render: (u) => <span className={styles.code}>{u.userCode}</span> },
+      { key: 'role', header: 'Vai trò', render: (u) => <span className={styles.nowrap}>{u.roles.map((r) => ROLE_LABELS[r]).join(', ')}</span> },
       { key: 'status', header: 'Trạng thái', render: (u) => <StatusBadge family="account" status={u.accountStatus} /> },
       { key: 'login', header: 'Lần đăng nhập cuối', render: (u) => time(u.lastLoginAt) }, { key: 'edit', header: 'Thao tác', render: (u) => <ButtonLink size="sm" variant="secondary" to={`/admin/users/${u.id}/edit`} aria-label={`Sửa ${u.fullName}`}>Sửa</ButtonLink> },
     ]} /></div></Card><div className={styles.actions}><Button variant="secondary" disabled={page === 0} onClick={() => setPage(page - 1)}>Trước</Button><span>{resource.data.totalItems} tài khoản · trang {page + 1}</span><Button variant="secondary" disabled={page + 1 >= resource.data.totalPages} onClick={() => setPage(page + 1)}>Sau</Button></div></>}
@@ -54,17 +56,24 @@ function UserEditor({ initial }: { initial: UserDetail | null }) {
   const initialSkills = useMemo(() => initial?.skills.map((skill) => skill.id) ?? [], [initial]);
   const [years, setYears] = useState(initial?.experienceYears == null ? '' : String(initial.experienceYears)), [level, setLevel] = useState(initial?.experienceLevel ?? '');
   const [skillIds, setSkillIds] = useState<number[]>(initialSkills);
+  const [password, setPassword] = useState(''), [confirm, setConfirm] = useState(''), [showPassword, setShowPassword] = useState(false);
   useEffect(() => { if (saved) void navigate('/admin/users'); }, [saved, navigate]);
   const staff = role !== 'HORSE_OWNER', kind = SKILL_KIND[role];
   const yearsError = years !== '' && !(/^\d+$/.test(years) && Number(years) <= 32767) ? 'Nhập số năm nguyên từ 0 đến 32767.' : undefined;
+  // Create requires a password; edit only changes it when the Club Manager types a new one.
+  const passwordRequired = !initial, passwordGiven = password !== '' || confirm !== '';
+  const passwordError = (passwordRequired || passwordGiven) && !(password.length >= 8 && password.length <= 64 && /\p{L}/u.test(password) && /\d/.test(password) && password.toLowerCase() !== email.trim().toLowerCase())
+    ? 'Mật khẩu 8–64 ký tự, có chữ và số, không trùng email.' : undefined;
+  const confirmError = !passwordError && (passwordRequired || passwordGiven) && confirm !== password ? 'Mật khẩu nhập lại chưa khớp.' : undefined;
+  const [triedSubmit, setTriedSubmit] = useState(false);
   const dirty = name !== (initial?.fullName ?? '') || email !== (initial?.email ?? '') || role !== (initial?.roles[0] ?? 'GROOM')
-    || years !== (initial?.experienceYears == null ? '' : String(initial.experienceYears)) || level !== (initial?.experienceLevel ?? '') || skillIds.join() !== initialSkills.join();
+    || years !== (initial?.experienceYears == null ? '' : String(initial.experienceYears)) || level !== (initial?.experienceLevel ?? '') || skillIds.join() !== initialSkills.join() || passwordGiven;
   // Skills belong to one role (Trainer specialization / Work Rider skill); a role change starts from that role's saved skills.
   const changeRole = (next: RoleCode) => { setRole(next); setSkillIds(next === initial?.roles[0] ? initialSkills : []); };
   async function submit(event: FormEvent) {
-    event.preventDefault(); if (inFlight.current || yearsError) return; inFlight.current = true; setBusy(true); setError('');
+    event.preventDefault(); setTriedSubmit(true); if (inFlight.current || yearsError || passwordError || confirmError) return; inFlight.current = true; setBusy(true); setError('');
     const input: UserInput = { fullName: name.trim(), email: email.trim(), roleCode: role, experienceYears: staff && years !== '' ? Number(years) : null,
-      experienceLevel: staff && level.trim() ? level.trim() : null, skillIds: kind ? skillIds : [] };
+      experienceLevel: staff && level.trim() ? level.trim() : null, skillIds: kind ? skillIds : [], ...(passwordGiven || passwordRequired ? { password, confirmPassword: confirm } : {}) };
     try { if (initial) await api.update(initial.id, input); else await api.create(input); setSaved(true); }
     catch (failure) { setError(errorMessage(failure)); } finally { inFlight.current = false; setBusy(false); }
   }
@@ -78,14 +87,19 @@ function UserEditor({ initial }: { initial: UserDetail | null }) {
     <div className={styles.columns}><div className={styles.stack}><Card title="Hồ sơ"><div className={styles.formFields}>
       <TextField label="Họ và tên" required maxLength={150} value={name} disabled={busy} onChange={(e) => setName(e.target.value)} /><TextField label="Email" type="email" required maxLength={254} value={email} disabled={busy} onChange={(e) => setEmail(e.target.value)} />
     </div><p className={styles.muted}>{initial ? `Không thể thay đổi mã người dùng ${initial.userCode}.` : 'Mã người dùng được cấp tự động. Trạng thái ban đầu là Đang hoạt động.'}</p></Card>
+    <Card title={initial ? 'Đặt lại mật khẩu' : 'Mật khẩu đăng nhập'}><div className={styles.formFields}>
+      <TextField label={initial ? 'Mật khẩu mới (để trống nếu không đổi)' : 'Mật khẩu'} required={passwordRequired} type={showPassword ? 'text' : 'password'} autoComplete="new-password" maxLength={64} value={password} error={triedSubmit || password ? passwordError : undefined} disabled={busy} onChange={(e) => setPassword(e.target.value)} helperText="8–64 ký tự, có chữ và số." />
+      <TextField label="Nhập lại mật khẩu" required={passwordRequired} type={showPassword ? 'text' : 'password'} autoComplete="new-password" maxLength={64} value={confirm} error={triedSubmit || confirm ? confirmError : undefined} disabled={busy} onChange={(e) => setConfirm(e.target.value)} />
+    </div><Checkbox label="Hiện mật khẩu" checked={showPassword} disabled={busy} onChange={(e) => setShowPassword(e.target.checked)} />
+    <p className={styles.muted}>{initial ? 'Chỉ dùng khi người dùng quên mật khẩu. Người dùng nên tự đổi lại trong Tài khoản sau khi đăng nhập.' : 'Gửi mật khẩu này cho người dùng; họ đăng nhập bằng email và mật khẩu này, rồi tự đổi trong Tài khoản.'}</p></Card>
     <Card title="Vai trò"><RadioGroup label="Vai trò trong hệ thống" required value={role} disabled={busy} options={roleOptions} onChange={(value) => changeRole(value as RoleCode)} helperText="Đổi vai trò sẽ đổi quyền truy cập; dữ liệu lịch sử vẫn được giữ. Không có vai trò tùy chỉnh." /></Card>
     {staff && <Card title="Kinh nghiệm & kỹ năng"><div className={styles.stack}><div className={styles.formFields}>
       <TextField label="Kinh nghiệm (năm)" type="number" min={0} max={32767} step={1} inputMode="numeric" value={years} error={yearsError} disabled={busy} onChange={(e) => setYears(e.target.value)} />
-      <TextField label="Cấp độ kinh nghiệm" maxLength={50} value={level} disabled={busy} onChange={(e) => setLevel(e.target.value)} helperText="Nhập tự do, ví dụ: Lâu năm." />
+      <PresetField label="Cấp độ kinh nghiệm" maxLength={50} value={level} disabled={busy} onValueChange={setLevel} options={EXPERIENCE_PRESETS} helperText="Mô tả kinh nghiệm do người quản lý xác nhận; có thể nhập thêm. Không tự suy ra từ số năm." />
     </div>{kind ? <SkillPicker kind={kind} value={skillIds} disabled={busy} onChange={setSkillIds} /> : <p className={styles.muted}>Kỹ năng chỉ áp dụng cho Trainer (chuyên môn) và Work Rider (kỹ năng cưỡi).</p>}
       <p className={styles.muted}>Dùng cho gợi ý của Head Trainer; gợi ý không bao giờ tự quyết định.</p></div></Card>}
     {current && <Card title="Trạng thái tài khoản"><StatusBadge family="account" status={current.accountStatus} /><p>Tài khoản ngừng hoạt động không thể đăng nhập. Dữ liệu của họ vẫn được giữ.</p><Button type="button" className={styles.statusAction} variant={current.accountStatus === 'ACTIVE' ? 'danger' : 'secondary'} disabled={busy || current.id === user?.id} onClick={() => { void changeStatus(); }}>{current.accountStatus === 'ACTIVE' ? 'Vô hiệu hóa tài khoản' : 'Kích hoạt tài khoản'}</Button></Card>}
-    </div><Card title="Vai trò này được truy cập gì"><p>{ROLE_LABELS[role]}</p><p>Quyền hạn cố định theo vai trò đã duyệt và phạm vi dữ liệu của hệ thống.</p><ButtonLink variant="secondary" to="/admin/roles">Xem vai trò & quyền hạn</ButtonLink><p>Horse Owner chỉ thấy ngựa của mình. Người quản lý không đặt mật khẩu cho người dùng.</p></Card></div>
+    </div><Card title="Vai trò này được truy cập gì"><p>{ROLE_LABELS[role]}</p><p>Quyền hạn cố định theo vai trò đã duyệt và phạm vi dữ liệu của hệ thống.</p><ButtonLink variant="secondary" to="/admin/roles">Xem vai trò & quyền hạn</ButtonLink><p>Horse Owner chỉ thấy ngựa của mình. Mật khẩu chỉ được nhập, không bao giờ hiển thị lại.</p></Card></div>
     {error && <AlertBanner type="danger" title="Chưa lưu được người dùng">{error}</AlertBanner>}
     <div className={styles.actions}>{busy ? <Button type="button" variant="secondary" disabled>Hủy</Button> : <ButtonLink variant="secondary" to="/admin/users">Hủy</ButtonLink>}<Button type="submit" disabled={busy}>{busy ? 'Đang lưu…' : initial ? 'Lưu thay đổi' : 'Tạo người dùng'}</Button></div>
   </form></>;

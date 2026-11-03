@@ -20,7 +20,7 @@ const allowed: RoleCode[] = ['VETERINARIAN', 'HEAD_TRAINER', 'CLUB_MANAGER', 'TR
 const incidentPath = (id: number) => MEDICAL_ROUTES.incidents + '/' + id;
 const casePath = (id: number) => MEDICAL_ROUTES.medicalCaseDetail.replace(':caseId', String(id));
 const displayDate = (value: string) => new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(value));
-const labelType = (value: string) => { const text = value.toLowerCase().replaceAll('_', ' '); return text.charAt(0).toUpperCase() + text.slice(1); };
+const labelType = (value: string) => value === 'OTHER' ? 'Khác' : viLabel(value);
 function safeError(error: unknown) {
   if (error instanceof ApiError && error.status === 403) return 'Không có quyền truy cập. Tài khoản của bạn không xem được sự cố này.';
   if (error instanceof ApiError && error.status === 404) return 'Không tìm thấy sự cố.';
@@ -86,10 +86,9 @@ export function IncidentListPage({ service, role, actorId, horse, reporter, stab
       { key: 'code', header: 'SỰ CỐ', render: (item) => <Link to={incidentPath(item.id)}>{item.incidentCode}</Link> },
       { key: 'horse', header: 'NGỰA', render: (item) => <IncidentHorse horseId={item.horseId} read={horse} /> },
       { key: 'observation', header: 'QUAN SÁT', render: (item) => <span>{labelType(item.incidentType)}<br /><small>{viLabel(item.observedSeverity)}</small></span> },
-      { key: 'reporter', header: 'NGƯỜI BÁO', render: (item) => <IncidentReporter userId={item.reportedByUserId} actorId={actorId} read={reporter} /> },
+      { key: 'reporter', header: 'NGƯỜI BÁO', nowrap: true, render: (item) => <IncidentReporter userId={item.reportedByUserId} actorId={actorId} read={reporter} /> },
       { key: 'reported', header: 'THỜI ĐIỂM BÁO', nowrap: true, render: (item) => <time dateTime={item.reportedAt}>{displayDate(item.reportedAt)}</time> },
       { key: 'status', header: 'TRẠNG THÁI', render: (item) => <StatusBadge family="incident" status={item.status} /> },
-      { key: 'reviewer', header: 'NGƯỜI XEM XÉT', render: () => 'Không có' },
     ]} /><div className="medical-actions"><Button variant="secondary" disabled={!page} onClick={() => setPage(page - 1)}>Trước</Button><span>Trang {page + 1} · {state.data.totalElements} báo cáo</span><Button variant="secondary" disabled={(page + 1) * state.data.size >= state.data.totalElements} onClick={() => setPage(page + 1)}>Sau</Button></div></div>}</Card>
     <p className="text-caption">Bộ lọc áp dụng cho trang hiện tại. Chỉ Veterinarian được chuyển trạng thái sự cố.</p>
     {report && <IncidentReportModal open source={{ kind: 'groom', contextLabel: 'Quan sát tại chuồng (ngoài buổi tập)' }} horses={stable ?? horses.map((id) => ({ id, label: `Ngựa ${id}` }))} onClose={() => setReport(false)} onSubmit={submit} />}

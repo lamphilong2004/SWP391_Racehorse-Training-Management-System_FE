@@ -120,6 +120,23 @@
 
 :global([data-ui-v3]) .title { font-family: var(--font-family-headline); letter-spacing: -.02em; }
 :global([data-ui-v3]) .surface { border: 1px solid var(--color-border-default); }
+:global([data-ui-v3]) .header {
+  height: auto; min-height: 72px; padding-block: 16px; gap: 16px;
+  background: var(--color-overlay-chrome);
+}
+:global([data-ui-v3]) .title { color: var(--color-brand-primary); overflow-wrap: anywhere; }
+:global([data-ui-v3]) .body { min-height: 0; line-height: 1.6; }
+:global([data-ui-v3]) .footer {
+  height: auto; min-height: 72px; padding-block: 16px; flex-wrap: wrap;
+  background: var(--color-overlay-chrome);
+}
+:global([data-ui-v3]) .close {
+  min-width: 36px; min-height: 36px; flex-shrink: 0;
+  border: 1px solid var(--color-field-border); border-radius: var(--radius-md);
+  background: var(--color-bg-surface);
+}
+:global([data-ui-v3]) .close:hover:not(:disabled) { border-color: var(--color-field-hover-border); background: var(--color-bg-subtle); }
+:global([data-ui-v3]) .close:focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 2px; }
 :global([data-ui-v3]) .modal::backdrop,
 :global([data-ui-v3]) .drawer::backdrop { background: rgb(11 19 43 / 40%); }
 @media (max-width: 767px) {

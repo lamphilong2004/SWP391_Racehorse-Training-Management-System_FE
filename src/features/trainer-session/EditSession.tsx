@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState, type FormEvent } from 'react';
-import { AlertBanner, Button, Card, ErrorState, LoadingState, Modal, SelectField, TextAreaField, TextField } from '../../design-system';
+import { AlertBanner, Button, Card, ErrorState, LoadingState, Modal, PresetField, SelectField, TextAreaField, TextField } from '../../design-system';
+import { SURFACE_PRESETS } from '../../shared/formPresets';
 import { errorMessage } from '../main-flows/api';
 import { useResource } from '../main-flows/useResource';
 import type { Intensity } from '../program-creation/programTypes';
@@ -60,7 +61,7 @@ function DetailsForm({ session, busy, save }: { session: TrainingSession; busy: 
       <TextField label="Giờ bắt đầu" type="time" required helperText="Giờ Việt Nam. Chọn thời điểm ở tương lai." value={time} onChange={(event) => setWhen(`${date}T${event.target.value}`)} />
       <TextField label="Thời lượng dự kiến (phút)" type="number" min="1" value={duration} onChange={(event) => setDuration(event.target.value)} />
       <SelectField label="Cường độ buổi tập" value={intensity} options={[{ value: '', label: 'Giữ nguyên' }, ...INTENSITIES.map((value) => ({ value, label: viLabel(value) }))]} onChange={(event) => setIntensity(event.target.value)} />
-      <TextField label="Mặt sân tập" maxLength={50} value={surface} onChange={(event) => setSurface(event.target.value)} />
+      <PresetField label="Mặt sân tập" maxLength={50} value={surface} options={SURFACE_PRESETS} onValueChange={setSurface} />
       <TextField label="Trọng tâm buổi tập" maxLength={200} value={focus} onChange={(event) => setFocus(event.target.value)} />
     </div>
     {error && <AlertBanner type="danger" title="Chưa lưu được thông tin">{error}</AlertBanner>}
@@ -90,7 +91,7 @@ function ExercisesForm({ api, session, busy, save }: { api: Api; session: Traini
       action={<Button type="button" variant="tertiary" aria-label={`Xóa ${name(item.exerciseDefinitionId)}`} onClick={() => setItems(items.filter((_, at) => at !== index))}>Xóa</Button>}><div className={styles.stack}><div className={styles.fields}>
       {(['distanceM', 'durationMin', 'repetitions', 'restIntervalMin'] as const).map((key) => <TextField key={key} label={{ distanceM: 'Quãng đường (m)', durationMin: 'Thời lượng (phút)', repetitions: 'Số lần lặp', restIntervalMin: 'Thời gian nghỉ (phút)' }[key]} type="number" min="0" step={key === 'repetitions' ? '1' : 'any'} value={item[key] ?? ''} onChange={(event) => patch(index, { [key]: event.target.value === '' ? null : Number(event.target.value) })} />)}
       <SelectField label="Cường độ" value={item.intensity ?? ''} options={[{ value: '', label: 'Chưa xác định' }, ...INTENSITIES.map((value) => ({ value, label: viLabel(value) }))]} onChange={(event) => patch(index, { intensity: (event.target.value || null) as Intensity | null })} />
-      <TextField label="Mặt sân" maxLength={50} value={item.surface ?? ''} onChange={(event) => patch(index, { surface: event.target.value })} /></div>
+      <PresetField label="Mặt sân" maxLength={50} value={item.surface ?? ''} options={SURFACE_PRESETS} onValueChange={surface => patch(index, { surface })} /></div>
       <TextAreaField label="Xác nhận / lý do giữ lại" maxLength={1000} value={item.acknowledgementNote ?? ''} onChange={(event) => patch(index, { acknowledgementNote: event.target.value })} helperText="Bắt buộc với loại C hoặc D. Không thể bỏ qua chặn bắt buộc do y tế." /></div></Card>)}
     {error && <AlertBanner type="danger" title="Chưa lưu được bài tập">{error}</AlertBanner>}
     <div className={styles.row}><Button type="submit">{busy ? 'Đang kiểm tra…' : 'Kiểm tra & lưu bài tập'}</Button><span className="text-caption">Mức phù hợp được kiểm tra trước khi lưu và kiểm tra lại trên máy chủ.</span></div>

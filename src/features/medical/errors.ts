@@ -12,6 +12,6 @@ const CLINICAL_ERRORS: Record<string, string> = {
 
 export function medicalErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof ApiError && error.status === 403) return `Không có quyền truy cập: ${error.message}`;
-  if (error instanceof ApiError && CLINICAL_ERRORS[error.message]) return CLINICAL_ERRORS[error.message];
+  if (error instanceof ApiError && CLINICAL_ERRORS[error.rawMessage]) return CLINICAL_ERRORS[error.rawMessage];
   return error instanceof Error ? error.message : fallback;
 }

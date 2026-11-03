@@ -44,6 +44,7 @@ export function TextAreaField({
         aria-invalid={error ? true : undefined}
         aria-describedby={hasMessage ? `${textareaId}-message` : undefined}
         {...rest}
+        aria-label={rest['aria-label'] ?? label}
       />
     </Field>
   );

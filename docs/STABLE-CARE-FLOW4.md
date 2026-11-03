@@ -1,0 +1,19 @@
+# Flow 4 local review
+
+Uses canonical AuthProvider, requestApi, AppShell and the existing design system. There is no sample store or fabricated write success. The backend candidate documents exact DTOs and permissions in docs/STABLE-CARE-FLOW4.md.
+
+- Club Manager: menu Chăm sóc & dinh dưỡng (`/stable`), Công việc theo ngày (`/care/daily`), Kho (`/inventory`). Creates/edits eligible plans and inventory metadata; records actual stock movements.
+- Head Trainer: `/stable` reads care and writes nutrition; `/care/daily` reads work and can reassign/cancel pending nutrition tasks. No care-task mutation or inventory permission.
+- Veterinarian: reads plans, daily work and inventory. Clinical actions remain in Medical.
+- Groom: `/care/daily` lists own daily care/nutrition assignments; completes due tasks and reports linked incidents in the shared modal. `/inventory` shows stock and permits replenishment requests. Medical treatment tasks remain `/care/tasks`.
+- Trainer, Work Rider and Horse Owner have no new Flow 4 permissions. Their existing three-flow routes remain unchanged.
+
+The date is a Vietnam club-calendar date. Empty, loading, HTTP error and retry states are explicit. Inputs remain on failed submission; supporting directory failure disables Save. A keyed session boundary discards previous-account data and late responses. Notifications of type STABLE_CARE link to the daily workspace. Table filters label their loaded-data scope; totals use actual records only.
+
+UI review on 2026-10-29: failed/loading reads no longer show a contradictory empty table or zero count. Confirmed save messages survive closing the editor. Care/inventory editors use shared unsaved-change confirmation; record selectors are locked during editing to prevent silent input loss. Long instructions/reasons use multiline fields, editors receive heading focus, and fixed server conflicts have Vietnamese display text. See UI-UX-REVIEW-20261029.md for verification scope.
+
+Plan editors permit multiple items and an explicit date range. Completed/historical plans cannot be overwritten; server conflicts preserve the editor. Stock movements require the currently displayed expected balance. Stale or insufficient balance conflicts require reloading and reviewing, not a silent retry. Replenishment requests do not increase stock.
+
+Task-change continuation2026-10-29: Manager may reassign/cancel pending CARE or NUTRITION tasks today/future; Head Trainer only NUTRITION. Open `/care/daily`, choose the date, then use Đổi Groom or Hủy công việc on the specific row. A reason and expected current assignee are sent to the real API. No optimistic success or automatic write retry is used. Failed requests retain form values. The date selector is disabled during a task/incident dialog; unsaved navigation/close requires confirmation. Lịch sử shows persisted previous/new Groom, actor, time and reason. Cancelled work stays visible and has its own filter/count; completion and incident reporting are disabled. Completed/past work has no mutation controls. No treatment, inventory or session-start behavior changes.
+
+Local verification: 33 focused tests including routing/shared incident modal, lint, TypeScript, build and production bundle isolation. Real browser checks cover nineteen routes across seven roles, login/refresh, care/nutrition create/edit persistence, replenishment refresh, manual stock input and Groom completion readback. Ten Flow 4 role/route combinations pass at four viewports (1440x900, 1280x800, 1024x768, 390x844), plus CSS zoom 125% and four UI logout checks. The runtime is local API mode at port 5214, not a protected role-test Preview. No main merge/push or cloud deployment occurred. Larger data sets, native browser toolbar zoom and every business exception have not been exhaustively checked.

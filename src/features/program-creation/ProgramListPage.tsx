@@ -7,6 +7,7 @@ import type { AssignedProgram, ProgramStatus } from '../training/assigned/suppor
 import { useProgramCreationApi } from './programTransport';
 import styles from '../main-flows/flow.module.css';
 import { viLabel } from '../../shared/viLabels';
+import { formatDate } from '../horses/shared/format';
 
 /** CORE-022 / SCR-TRAIN-001 (77:317). List reads only; the existing wizard owns creation. */
 export function ProgramListPage() {
@@ -35,11 +36,9 @@ export function ProgramListPage() {
       {data && <><div className={styles.table}><DataTable<AssignedProgram> caption="Chương trình huấn luyện ngựa" rows={rows} rowKey={(item) => item.id} empty={<EmptyState title="Không có chương trình phù hợp" description="Đổi bộ lọc hoặc tạo chương trình huấn luyện mới." />} columns={[
         { key: 'horse', header: 'Ngựa', render: (item) => <><strong>{item.horse.name}</strong><p className="text-caption">{item.horse.horseCode}</p>{item.trainingAvailability && <StatusBadge family="availability" status={item.trainingAvailability} />}</> },
         { key: 'program', header: 'Chương trình', render: (item) => <>{item.name}<p className="text-caption">Mẫu chương trình {item.sourceTemplateId} · v{item.sourceTemplateVersion}</p></> },
-        { key: 'goal', header: 'Mục tiêu', render: () => 'Chưa cung cấp' },
         { key: 'trainer', header: 'Trainer', render: (item) => item.currentTrainer?.fullName ?? 'Chưa cung cấp' },
         { key: 'phase', header: 'Giai đoạn hiện tại', render: (item) => item.currentPhaseName ?? 'Chưa cung cấp' },
-        { key: 'progress', header: 'Tiến độ', render: () => 'Chưa cung cấp' },
-        { key: 'period', header: 'Thời gian', render: (item) => `${item.periodStart} → ${item.periodEnd}` },
+        { key: 'period', header: 'Thời gian', render: (item) => <span className={styles.period}><span>{formatDate(item.periodStart)}</span><span>→ {formatDate(item.periodEnd)}</span></span> },
         { key: 'status', header: 'Trạng thái', render: (item) => <StatusBadge family="program" status={item.status} /> },
         { key: 'detail', header: 'Chi tiết', render: (item) => <ButtonLink to={`/training/programs/${item.id}`} aria-label={`Xem ${item.name}`}>Xem</ButtonLink> },
       ]} /></div><div className={styles.row}><span>{rows.length} hiển thị trên trang này · {data.totalItems} chương trình phù hợp bộ lọc máy chủ</span><Button variant="secondary" disabled={page === 0} onClick={() => changePage(page - 1)}>Chương trình trước</Button><span>Trang {page + 1}/{Math.max(1, data.totalPages)}</span><Button variant="secondary" disabled={page + 1 >= data.totalPages} onClick={() => changePage(page + 1)}>Chương trình tiếp</Button></div></>}

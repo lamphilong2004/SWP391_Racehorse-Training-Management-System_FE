@@ -9,7 +9,8 @@ export interface UserDetail extends CurrentUser {
 }
 export type SkillKind = 'TRAINER_SPECIALIZATION' | 'RIDER_SKILL';
 export interface Skill { id: number; name: string; kind: SkillKind }
-export interface UserInput { fullName: string; email: string; roleCode: RoleCode; experienceYears: number | null; experienceLevel: string | null; skillIds: number[] }
+/** DEC-012: password is set by the Club Manager on create (required in the form) or reset on edit (optional). Write-only. */
+export interface UserInput { fullName: string; email: string; roleCode: RoleCode; experienceYears: number | null; experienceLevel: string | null; skillIds: number[]; password?: string; confirmPassword?: string }
 export interface RoleInfo { roleCode: RoleCode; displayName: string; scoping: string }
 export function accountApi(request: FlowRequest) {
   const write = <T,>(path: string, method: string, value: unknown) => request<T>(path, { method, body: JSON.stringify(value) });

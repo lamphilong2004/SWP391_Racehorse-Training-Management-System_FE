@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { flushSync } from 'react-dom';
 import { useNavigate, useParams } from 'react-router';
-import { AlertBanner, Button, Card, StatusBadge, ErrorState, Icon, PhotoAttachmentTile, SelectField, TextField, DesignSystemScope, UnsavedChangesGuard, focusFirstInvalid } from '../../../design-system';
+import { AlertBanner, Button, Card, StatusBadge, ErrorState, Icon, PhotoAttachmentTile, SelectField, TextField, PresetField, DesignSystemScope, UnsavedChangesGuard, focusFirstInvalid } from '../../../design-system';
+import { COUNTRY_PRESETS } from '../../../shared/formPresets';
 import { ApiRequestError } from '../api/horsesApi';
 import { useHorsesApi } from '../api/HorsesApiContext';
 import { useBreadcrumb } from '../shared/HorseManagementLayout';
@@ -48,6 +49,7 @@ function RegisterHorsePageContent() {
   const [strengths, setStrengths] = useState<string[]>([]), [baselineStrengths, setBaselineStrengths] = useState<string[]>([]);
   const [saved, setSaved] = useState(false);
   const form = useRef<HTMLFormElement>(null);
+  const strengthHelpId = useId();
   const [customSex, setCustomSex] = useState(false), [customBreed, setCustomBreed] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const [formError, setFormError] = useState<string>();
@@ -172,15 +174,16 @@ function RegisterHorsePageContent() {
               <div className={styles.row}>
                 <TextField label="Ngày sinh" type="date" value={values.foaledDate}
                   onChange={(e) => set('foaledDate')(e.target.value)} error={errors.foaledDate} />
-                <SelectField label="Giới tính" placeholder="Chọn hoặc nhập giới tính" options={[...SEX_OPTIONS, ...(values.sex && !customSex && !SEX_OPTIONS.some((option) => option.value === values.sex) ? [{ value: values.sex, label: `${sexLabel(values.sex)} (theo dữ liệu đã lưu)` }] : []), { value: '__CUSTOM__', label: 'Nhập giá trị khác' }]} value={customSex ? '__CUSTOM__' : values.sex}
+                <SelectField label="Giới tính" placeholder="Chọn giới tính" options={[...SEX_OPTIONS, ...(values.sex && !customSex && !SEX_OPTIONS.some((option) => option.value === values.sex) ? [{ value: values.sex, label: `${sexLabel(values.sex)} (theo dữ liệu đã lưu)` }] : []), { value: '__CUSTOM__', label: 'Nhập giá trị khác' }]} value={customSex ? '__CUSTOM__' : values.sex}
                   onChange={(e) => { setCustomSex(e.target.value === '__CUSTOM__'); set('sex')(e.target.value === '__CUSTOM__' ? '' : e.target.value); }} error={errors.sex} />
-                <SelectField label="Giống ngựa" placeholder="Chọn hoặc nhập giống ngựa" options={[...BREED_OPTIONS, { value: '__CUSTOM__', label: 'Khác / nhập giống ngựa' }]} value={customBreed ? '__CUSTOM__' : values.breed}
+                <SelectField label="Giống ngựa" placeholder="Chọn giống ngựa" options={[...BREED_OPTIONS, { value: '__CUSTOM__', label: 'Khác / nhập giống ngựa' }]} value={customBreed ? '__CUSTOM__' : values.breed}
                   onChange={(e) => { setCustomBreed(e.target.value === '__CUSTOM__'); set('breed')(e.target.value === '__CUSTOM__' ? '' : e.target.value); }} error={errors.breed} />
               </div>
               {customSex && <TextField label="Giới tính (nhập tay)" value={values.sex} maxLength={20} onChange={(event) => set('sex')(event.target.value)} />}
               {customBreed && <TextField label="Giống ngựa (nhập tay)" value={values.breed} maxLength={100} onChange={(event) => set('breed')(event.target.value)} />}
-              <TextField label="Quốc gia xuất xứ" placeholder="Quốc gia nơi ngựa được sinh ra"
-                value={values.countryOfOrigin} onChange={(e) => set('countryOfOrigin')(e.target.value)} maxLength={100} error={errors.countryOfOrigin} />
+              <PresetField label="Quốc gia xuất xứ" options={COUNTRY_PRESETS}
+                value={values.countryOfOrigin} onValueChange={set('countryOfOrigin')} maxLength={100} error={errors.countryOfOrigin}
+                helperText="Nơi ngựa được sinh ra. Chọn quốc gia hoặc nhập thêm nếu chưa có trong danh sách." />
               <TextField label="Số vi mạch / số đăng ký" placeholder="Nhập số vi mạch hoặc số đăng ký"
                 value={values.registrationNo} onChange={(e) => set('registrationNo')(e.target.value)} maxLength={50}
                 error={errors.registrationNo} helperText="Phải là duy nhất — hệ thống kiểm tra khi bạn lưu." />
@@ -188,14 +191,15 @@ function RegisterHorsePageContent() {
           </Card>
 
           <Card>
-            <fieldset className={[styles.cardBody, styles.strengthFieldset].join(' ')} disabled={loading}>
-              <legend className={styles.cardTitle}>Thế mạnh (Club Manager khai báo)</legend>
-              <p className={styles.cardHelp}>Không bắt buộc. Để trống nếu chưa rõ. Head Trainer dùng thông tin này khi chọn mẫu chương trình; đây không phải đánh giá đã xác nhận và không suy ra từ phả hệ.</p>
+            <fieldset className={[styles.cardBody, styles.strengthFieldset].join(' ')} disabled={loading || saving} aria-describedby={strengthHelpId}>
+              <legend className={styles.cardTitle}>Thế mạnh của ngựa</legend>
+              <div className={styles.strengthHeader}><span className={styles.strengthOptional}>Club Manager khai báo · Không bắt buộc</span><span className={styles.strengthCount} role="status">{strengths.length ? `${strengths.length} đặc điểm đã chọn` : 'Chưa khai báo'}</span></div>
+              <p id={strengthHelpId} className={styles.cardHelp}>Có thể chọn nhiều đặc điểm đã biết. Để trống nếu chưa đánh giá; đây là thông tin khai báo, chưa thay thế xác nhận của Head Trainer.</p>
               <div className={styles.strengthGroups}>
-                {STRENGTH_GROUPS.map((group) => (
-                  <div key={group.title} role="group" aria-label={group.title} className={styles.strengthGroup}>
+                {STRENGTH_GROUPS.map((group, index) => (
+                  <div key={group.title} role="group" aria-label={group.title} aria-describedby={`${strengthHelpId}-${index}`} className={styles.strengthGroup}>
                     <h3 className={styles.strengthGroupTitle}>{group.title}</h3>
-                    <p className={styles.cardHelp}>{group.help}</p>
+                    <p id={`${strengthHelpId}-${index}`} className={styles.strengthGroupHelp}>{group.help}</p>
                     <div className={styles.strengthChips}>
                       {group.options.map((option) => (
                         <label key={option.value} className={styles.strengthChip}>
@@ -208,6 +212,7 @@ function RegisterHorsePageContent() {
                   </div>
                 ))}
               </div>
+              <div className={styles.strengthFooter}><span>Chạm để chọn; chạm lại để bỏ chọn.</span><Button variant="tertiary" size="sm" disabled={!strengths.length || loading || saving} onClick={() => setStrengths([])}>Bỏ chọn tất cả</Button></div>
             </fieldset>
           </Card>
 

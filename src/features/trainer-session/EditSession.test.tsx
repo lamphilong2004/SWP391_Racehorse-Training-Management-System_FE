@@ -18,7 +18,7 @@ function setup(overrides: Partial<Record<string, ReturnType<typeof vi.fn>>> = {}
 
 it('patches only schedule details and keeps the Work Rider', async () => {
   const { api, saved } = setup();
-  fireEvent.change(screen.getByLabelText(/Mặt sân tập/), { target: { value: 'Turf' } });
+  fireEvent.change(screen.getByLabelText('Mặt sân tập (nhập thêm)'), { target: { value: 'Turf' } });
   fireEvent.change(screen.getByLabelText(/Thời lượng dự kiến/), { target: { value: '45' } });
   fireEvent.click(screen.getByRole('button', { name: 'Lưu thông tin' }));
   await waitFor(() => expect(saved).toHaveBeenCalled());
@@ -43,7 +43,7 @@ it('keeps the draft and sends no update when the selected start time has already
   expect(await screen.findByText(/Giờ bắt đầu phải ở tương lai/)).toBeInTheDocument();
   expect(api.update).not.toHaveBeenCalled();
   expect(saved).not.toHaveBeenCalled();
-  expect(screen.getByLabelText('Mặt sân tập')).toHaveValue('Sand');
+  expect(screen.getByLabelText('Mặt sân tập (nhập thêm)')).toHaveValue('Sand');
 });
 
 it('replaces the exercise plan in order after a clean check', async () => {

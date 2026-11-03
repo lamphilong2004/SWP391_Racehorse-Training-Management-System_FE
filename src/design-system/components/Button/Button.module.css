@@ -19,6 +19,8 @@
 
 .sm {
   height: var(--control-height-sm, 32px);
+  padding-inline: 12px;
+  font-size: 13px;
 }
 .md {
   height: var(--control-height-md, 40px);
@@ -80,6 +82,19 @@
   background: var(--color-bg-subtle);
 }
 
+/* A clearly bounded entry to a destructive confirmation, without a filled danger action in every row. */
+.destructive, .danger-outline {
+  --color-border-focus: var(--color-danger-600);
+  --color-focus-outline: var(--color-danger-600);
+}
+.danger-outline {
+  background: var(--color-bg-surface);
+  border-color: var(--color-danger-outline-border, var(--color-danger-600));
+  color: var(--color-danger-600);
+}
+.danger-outline:hover:not(:disabled) { background: var(--color-danger-50); border-color: var(--color-danger-600); }
+.danger-outline:disabled { background: var(--color-bg-subtle); border-color: var(--color-border-default); }
+
 .icon { padding: 0; aspect-ratio: 1; background: transparent; color: var(--color-text-secondary); }
 .icon:hover:not(:disabled) { background: var(--color-bg-subtle); }
 .pendingLabel { opacity: 0; }
@@ -92,18 +107,21 @@
   box-shadow: 0 1px 3px rgb(11 19 43 / 12%);
 }
 .button[aria-busy='true'] .spinner { color: var(--color-primary-600); }
+.destructive[aria-busy='true'] .spinner, .danger-outline[aria-busy='true'] .spinner { color: var(--color-danger-600); }
 .spinner { position: absolute; width: 18px; height: 18px; border: 2px solid currentColor; border-right-color: transparent; border-radius: var(--radius-full); animation: pending .8s linear infinite; }
 @keyframes pending { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .button { transition: none; } .spinner { animation: none; } }
 
 /* 2026-10-27 polish: one focus ring, a pressed state, and darker hovers instead of opacity. */
-.button:focus-visible { outline: none; box-shadow: var(--elev-focus); }
+.button:focus-visible { outline: 2px solid var(--color-focus-outline, var(--color-border-focus)); outline-offset: 3px; }
 .button:active:not(:disabled) { transform: translateY(1px); }
 :global([data-ui-v3]) .primary:hover:not(:disabled) { background: var(--color-primary-700); }
 :global([data-ui-v3]) .primary:active:not(:disabled) { background: var(--color-primary-800, var(--color-primary-700)); }
 :global([data-ui-v3]) .primary:disabled, :global([data-ui-v3]) .destructive:disabled { background: #e2e8f0; color: #94a3b8; box-shadow: none; }
-:global([data-ui-v3]) .secondary { border-color: var(--color-border-strong); box-shadow: 0 1px 2px rgb(11 19 43 / 5%); }
-:global([data-ui-v3]) .secondary:hover:not(:disabled) { background: var(--color-bg-subtle); border-color: #94a3b8; }
+:global([data-ui-v3]) .secondary { border-color: var(--color-button-secondary-border); color: var(--color-button-secondary-text); box-shadow: none; }
+:global([data-ui-v3]) .secondary:hover:not(:disabled) { background: var(--color-button-secondary-hover); border-color: var(--color-border-strong); }
+:global([data-ui-v3]) .secondary:disabled { color: var(--color-text-disabled); }
 :global([data-ui-v3]) .tertiary { color: var(--color-primary-700); }
 :global([data-ui-v3]) .destructive:hover:not(:disabled) { opacity: 1; background: #991b1b; }
 :global([data-ui-v3]) .destructive:focus-visible { box-shadow: 0 0 0 3px rgb(185 28 28 / 25%); }
+@media (prefers-reduced-motion: reduce) { .button:active:not(:disabled) { transform: none; } }

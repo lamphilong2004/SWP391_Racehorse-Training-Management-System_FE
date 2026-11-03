@@ -53,17 +53,30 @@
 .medical-groom-panel { gap: 12px; }
 .medical-groom-panel p:not(.text-caption) { font-size: 13px; }
 .medical-treatment-layout { grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr); }
-.medical-herd-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.medical-herd-horse { padding: 20px; gap: 10px; }
-.medical-herd-horse h3 { font-size: 16px; }
-.medical-herd-horse a { font-size: 13px; color: var(--color-primary-600); text-decoration: none; }
-.medical-case-preview { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--color-border-default); padding-top: 10px; }
-.medical-case-preview > p:first-child { font-size: 13px; font-weight: 500; }
+.medical-herd-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); align-items: stretch; }
+.medical-herd-horse { position: relative; overflow: hidden; padding: 20px; gap: 12px; }
+/* Status strip: green = no attention, amber = monitoring/limited/open case, red = locked/injured/quarantined. */
+.medical-herd-horse::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 4px; background: var(--color-success-600); }
+.medical-herd-warning::before { background: var(--color-warning-600); }
+.medical-herd-danger::before { background: var(--color-danger-600); }
+.medical-herd-horse h3 { font-size: 16px; line-height: 24px; }
+.medical-herd-horse a { font-size: 13px; font-weight: 600; color: var(--color-primary-600); text-decoration: none; white-space: nowrap; }
+.medical-herd-horse a:hover { text-decoration: underline; }
+.medical-herd-head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-md); }
+.medical-herd-head > div { min-width: 0; }
+.medical-herd-badges { gap: var(--space-sm); }
+.medical-herd-foot { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--color-border-default); }
+.medical-case-preview { display: flex; flex-direction: column; gap: 6px; }
+.medical-case-preview + .medical-case-preview { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--color-border-default); }
+.medical-herd-case-title { font-size: 13px; font-weight: 600; color: var(--color-text-primary); }
+.medical-herd-reason { font-size: 13px; line-height: 20px; color: var(--color-text-secondary); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.medical-herd-case-meta { display: flex; justify-content: space-between; align-items: center; gap: var(--space-sm); flex-wrap: wrap; }
+.medical-herd-calm { display: flex; align-items: center; gap: 6px; color: var(--color-text-secondary); }
 .medical-page-heading { justify-content: space-between; }
 .medical-progress { display: flex; flex-wrap: wrap; gap: var(--space-md); padding: var(--space-md); border: 1px solid var(--color-border-default); border-radius: var(--radius-md); background: var(--color-bg-surface); }
 .medical-progress > span { flex: 1; min-width: 120px; padding: var(--space-sm); text-align: center; color: var(--color-text-secondary); background: var(--color-bg-subtle); border-radius: var(--radius-sm); }
 .medical-progress > .medical-progress-active { color: var(--color-primary-600); background: var(--color-primary-50); font-weight: 600; }
-@media (max-width: 1000px) { .medical-treatment-layout, .medical-herd-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 1000px) { .medical-treatment-layout { grid-template-columns: minmax(0, 1fr); } }
 
 /* Figma 274:9405: 24px gap, flexible status card and 380px supporting column. */
 .medical-summary-columns { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: var(--space-xl); align-items: start; }

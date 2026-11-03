@@ -14,6 +14,8 @@ import styles from './owner.module.css';
 const tabs = [{ value: 'profile', label: 'Hồ sơ & phả hệ' }, { value: 'health', label: 'Sức khỏe & mức sẵn sàng' }, { value: 'training', label: 'Huấn luyện & thành tích' }];
 const healthLabels = { FIT: 'Khỏe mạnh', MONITORING: 'Đang theo dõi', INJURED: 'Đang được thú y chăm sóc', QUARANTINED: 'Đang được thú y chăm sóc' };
 const readinessLabels = { AVAILABLE: 'Được tập bình thường', LIMITED: 'Vẫn tập trong giới hạn của thú y', LOCKED: 'Veterinarian đã tạm dừng tập luyện' };
+const availabilityFacts = { AVAILABLE: 'Không hạn chế', LIMITED: 'Hạn chế', LOCKED: 'Khóa' };
+const isNonOperational = (horse: OwnerHorse) => horse.lifecycle === 'DRAFT' || horse.lifecycle === 'INACTIVE';
 const missing = 'Chưa chia sẻ';
 const calendar = (iso: string | null) => iso ? new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(iso)) : missing;
 const timestamp = (iso: string) => new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
@@ -73,7 +75,7 @@ function OwnerContent() {
         <PageHeader title="Ngựa của tôi" description={`Xin chào, ${user!.fullName} · ${current.horses.length} con ngựa đứng tên bạn · ${new Intl.DateTimeFormat('vi-VN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(new Date())} · chế độ chỉ xem`} />
         <AlertBanner className={styles.note} title="Bạn chỉ thấy các ngựa đứng tên mình. Ngựa khác của câu lạc bộ không hiện trong cổng này. Thông tin chỉ để xem — nhân viên câu lạc bộ cập nhật." />
         {query && <div className={styles.searchResult}>Kết quả tìm kiếm cho “{params.get('q')}” trong ngựa của bạn <Button variant="tertiary" onClick={() => { setParams({}); setSearchEpoch((value) => value + 1); }}>Xóa tìm kiếm</Button></div>}
-        {!horses?.length ? <EmptyState title={query ? 'Không có ngựa phù hợp' : 'Chưa có ngựa nào đứng tên bạn'} description="Liên hệ câu lạc bộ nếu bạn nghĩ còn thiếu ngựa trong cổng của mình." /> : <div className={styles.horseGrid}>{horses.map((item, index) => <Card key={item.id} className={styles.horseCard}><div className={styles.cardTop}><Photo horse={item} /><div><h2>{item.name}</h2><p className={styles.caption}>{meta(item)}</p></div></div><Badges horse={item} /><div className={styles.divider} /><Facts><Fact label="Sức khỏe" value={item.health ? healthLabels[item.health] : missing} /><Fact label="Mức sẵn sàng" value={item.availability ? readinessLabels[item.availability] : missing} /><Fact label="Huấn luyện" value={item.program === undefined ? 'Xem trang của ngựa' : item.program ? [item.program.name, item.program.phase].filter(Boolean).join(' · ') : 'Chưa có chương trình'} /><Fact label="Buổi tập tiếp theo" value={item.nextSession ? `${timestamp(item.nextSession.date)} · ${item.nextSession.title ?? missing}` : 'Hiện khi có lịch buổi tập tiếp theo'} /></Facts><Link className={`${styles.viewLink} ${index ? styles.secondaryLink : ''}`} aria-label={`Xem ngựa ${item.name}`} to={`${ROUTES.myHorses}/${item.id}`}>Xem ngựa<span className="sr-only"> {item.name}</span></Link></Card>)}</div>}
+        {!horses?.length ? <EmptyState title={query ? 'Không có ngựa phù hợp' : 'Chưa có ngựa nào đứng tên bạn'} description="Liên hệ câu lạc bộ nếu bạn nghĩ còn thiếu ngựa trong cổng của mình." /> : <div className={styles.horseGrid}>{horses.map((item, index) => <Card key={item.id} className={styles.horseCard}><div className={styles.cardTop}><Photo horse={item} /><div><h2>{item.name}</h2><p className={styles.caption}>{meta(item)}</p></div></div><Badges horse={item} /><div className={styles.divider} /><Facts><Fact label="Sức khỏe" value={item.health ? healthLabels[item.health] : missing} /><Fact label="Mức sẵn sàng" value={<Readiness horse={item} />} /><Fact label="Huấn luyện" value={item.program === undefined ? 'Xem trang của ngựa' : item.program ? [item.program.name, item.program.phase].filter(Boolean).join(' · ') : 'Chưa có chương trình'} /><Fact label="Buổi tập tiếp theo" value={item.nextSession ? `${timestamp(item.nextSession.date)} · ${item.nextSession.title ?? missing}` : 'Hiện khi có lịch buổi tập tiếp theo'} /></Facts><Link className={`${styles.viewLink} ${index ? styles.secondaryLink : ''}`} aria-label={`Xem ngựa ${item.name}`} to={`${ROUTES.myHorses}/${item.id}`}>Xem ngựa<span className="sr-only"> {item.name}</span></Link></Card>)}</div>}
       </>}
     </div>
   </AppShell>;
@@ -82,7 +84,11 @@ function Photo({ horse, detail = false }: { horse: OwnerHorse; detail?: boolean 
   const [failed, setFailed] = useState(false);
   return <div className={`${styles.photo} ${detail ? styles.detailPhoto : ''}`}>{horse.photo && !failed ? <img src={horse.photo} alt={`${horse.name}`} onError={() => setFailed(true)} /> : <Icon name={detail ? 'image' : 'horseshoe'} size={detail ? 32 : 28} />}</div>;
 }
-function Badges({ horse }: { horse: OwnerHorse }) { return <div className={styles.badges}>{horse.lifecycle && <StatusBadge family="lifecycle" status={horse.lifecycle} />}{horse.health && <StatusBadge family="health" status={horse.health} />}{horse.availability && <StatusBadge family="availability" status={horse.availability} />}</div>; }
+function Badges({ horse }: { horse: OwnerHorse }) { return <div className={styles.badges}>{horse.lifecycle && <StatusBadge family="lifecycle" status={horse.lifecycle} />}{horse.health && <StatusBadge family="health" status={horse.health} />}{horse.availability && !(isNonOperational(horse) && horse.availability === 'AVAILABLE') && <StatusBadge family="availability" status={horse.availability} />}</div>; }
+function Readiness({ horse }: { horse: OwnerHorse }) {
+  if (isNonOperational(horse)) return <span className={styles.readiness}><span>Hồ sơ chưa hoạt động — chưa đủ điều kiện tập luyện.</span><small>Khả năng tập đang lưu: {horse.availability ? availabilityFacts[horse.availability] : missing}.</small></span>;
+  return <>{horse.availability ? readinessLabels[horse.availability] : missing}</>;
+}
 function Facts({ children }: { children: ReactNode }) { return <div className={styles.facts}>{children}</div>; }
 function Fact({ label, value }: { label: string; value: ReactNode }) { return <KeyValue className={styles.fact} label={label} value={value ?? missing} />; }
 function Section({ title, children }: { title: string; children: ReactNode }) { return <Card className={styles.section}><h2>{title}</h2>{children}</Card>; }
@@ -98,7 +104,7 @@ function Health({ horse }: { horse: OwnerHorse }) {
       <p className={styles.caption}>Bản tóm tắt dành cho chủ ngựa, do Veterinarian của câu lạc bộ cập nhật.</p>
       <div className={styles.healthFacts}>
         <Fact label="Sức khỏe" value={<span className={styles.badges}>{horse.health && <StatusBadge family="health" status={horse.health} />}{horse.health ? healthLabels[horse.health] : missing}</span>} />
-        <Fact label="Mức sẵn sàng tập luyện" value={<span className={styles.badges}>{horse.availability && <StatusBadge family="availability" status={horse.availability} />}{horse.availability ? readinessLabels[horse.availability] : missing}</span>} />
+        <Fact label="Mức sẵn sàng tập luyện" value={<span className={styles.badges}>{horse.availability && !(isNonOperational(horse) && horse.availability === 'AVAILABLE') && <StatusBadge family="availability" status={horse.availability} />}<Readiness horse={horse} /></span>} />
         <Fact label="Giới hạn tập luyện" value="Chưa có tóm tắt cho chủ ngựa" />
         <Fact label="Lần khám sức khỏe tiếp theo" value={calendar(horse.healthSummary?.reviewDate ?? null)} />
       </div>

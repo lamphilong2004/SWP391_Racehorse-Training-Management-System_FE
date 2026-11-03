@@ -65,7 +65,11 @@ export function ProgramCreationPage() {
       if (step >= 5 && !candidate && !nextIssues.some((issue) => issue.field === 'trainer.trainerUserId')) nextIssues.push({ field: 'trainer.trainerUserId', message: 'Hãy chọn Trainer trong danh sách ứng viên hiện tại.' });
     }
     setIssues(nextIssues);
-    if (nextIssues.length) return;
+    if (nextIssues.length) {
+      const issueStep = stepForField(nextIssues[0].field);
+      if (issueStep < step) setStep(issueStep);
+      return;
+    }
     if (step < 6) setStep(step + 1);
     else {
       const outcome = await flow.submit();

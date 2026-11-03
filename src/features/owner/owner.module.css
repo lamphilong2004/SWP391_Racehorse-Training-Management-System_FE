@@ -7,8 +7,11 @@
 .back { font-size: 14px; font-weight: 500; color: var(--color-primary-600); text-decoration: none; align-self: flex-start; }
 .back:hover { text-decoration: underline; }
 .back:focus-visible, .viewLink:focus-visible { outline: 2px solid var(--color-primary-600); outline-offset: 4px; }
-.horseGrid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 24px; align-items: start; }
-.horseCard { border-radius: 12px; gap: 14px; }
+.horseGrid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 24px; align-items: stretch; }
+.horseCard { border-radius: 12px; gap: 14px; height: 100%; }
+.horseCard > .viewLink { margin-top: auto; }
+.cardTop > div:last-child { min-width: 0; }
+.horseCard h2 { overflow-wrap: anywhere; }
 .horseCard h2 { font-size: 20px; line-height: 24px; }
 .cardTop, .horseHeader { display: flex; align-items: center; gap: 20px; }
 .cardTop { gap: 16px; }
@@ -20,6 +23,8 @@
 .headerName p, .caption { color: var(--color-text-secondary); font-size: 13px; line-height: 18px; }
 .cardTop .caption { margin-top: 4px; }
 .badges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.readiness { display: grid; gap: 4px; }
+.readiness small { color: var(--color-text-secondary); font-size: 12px; line-height: 18px; font-weight: 400; }
 .divider { height: 1px; background: var(--color-border-default); }
 .facts { display: flex; flex-direction: column; gap: 12px; }
 .fact { display: grid; grid-template-columns: 160px minmax(0,1fr); gap: 12px; margin: 0; align-items: start; }

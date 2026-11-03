@@ -29,6 +29,7 @@ export function SelectField({
   id,
   className,
   disabled,
+  required,
   value,
   defaultValue,
   ...rest
@@ -38,17 +39,19 @@ export function SelectField({
   const hasMessage = Boolean(error ?? helperText);
   const isEmpty = (value ?? defaultValue ?? '') === '';
   return (
-    <Field id={selectId} label={label} helperText={helperText} error={error} disabled={disabled} className={className}>
+    <Field id={selectId} label={label} helperText={helperText} error={error} disabled={disabled} required={required} className={className}>
       <div className={cx(fieldControlClasses.control, error && fieldControlClasses.error, styles.wrapper)}>
         <select
           id={selectId}
           className={cx(styles.select, isEmpty && placeholder && styles.placeholder)}
           disabled={disabled}
+          required={required}
           value={value}
           defaultValue={defaultValue}
           aria-invalid={error ? true : undefined}
           aria-describedby={hasMessage ? `${selectId}-message` : undefined}
           {...rest}
+          aria-label={rest['aria-label'] ?? label}
         >
           {placeholder !== undefined && <option value="">{placeholder}</option>}
           {options.map((option) => (

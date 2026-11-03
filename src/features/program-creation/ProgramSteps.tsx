@@ -10,6 +10,7 @@ import { sexLabel, strengthSummary } from '../horses/shared/options';
 import { viLabel } from '../../shared/viLabels';
 import { dateTime } from '../evaluation/models';
 import { clubDate } from '../../shared/clubCalendar';
+import { formatDate } from '../horses/shared/format';
 
 export function HorseSummary({ flow }: { flow: ProgramCreationFlow }) {
   const horse = flow.horse;
@@ -78,7 +79,7 @@ export function DraftSteps({ step, flow, issues, update, edit }: {
       const label = `Giai đoạn ${index + 1}`;
       const prefix = `phases[${index}]`;
       const options = ['LOW', 'MEDIUM', 'MEDIUM_HIGH', 'HIGH'].map((value) => ({ value, label: viLabel(value) }));
-      return <tr key={index}><td><strong>{phase.name}</strong><p>{phase.startDate} — {phase.endDate}</p></td><td><div className={styles.stack}><p className={styles.muted}>Mẫu: {template.version.phases.find((source) => source.id === phase.templateVersionPhaseId)?.intensityGuidance ?? 'Chưa cung cấp'}</p><TextAreaField label={`${label} — khối lượng`} maxLength={500} value={phase.workload ?? ''} error={error(`${prefix}.workload`)} onChange={(event) => phaseUpdate(index, { workload: event.target.value })} /></div></td><td>
+      return <tr key={index}><td><strong>{phase.name}</strong><p>{formatDate(phase.startDate)} — {formatDate(phase.endDate)}</p></td><td><div className={styles.stack}><p className={styles.muted}>Mẫu: {template.version.phases.find((source) => source.id === phase.templateVersionPhaseId)?.intensityGuidance ?? 'Chưa cung cấp'}</p><TextAreaField label={`${label} — khối lượng`} maxLength={500} value={phase.workload ?? ''} error={error(`${prefix}.workload`)} onChange={(event) => phaseUpdate(index, { workload: event.target.value })} /></div></td><td>
         <div className={styles.fields}>
           <SelectField label={`${label} — cường độ tối thiểu`} placeholder="Chưa xác định" options={options} value={phase.intensityMin ?? ''} error={error(`${prefix}.intensityMin`)} onChange={(event) => phaseUpdate(index, { intensityMin: (event.target.value || null) as Intensity | null })} />
           <SelectField label={`${label} — cường độ tối đa`} placeholder="Chưa xác định" options={options} value={phase.intensityMax ?? ''} error={error(`${prefix}.intensityMax`)} onChange={(event) => phaseUpdate(index, { intensityMax: (event.target.value || null) as Intensity | null })} />
@@ -93,19 +94,22 @@ export function DraftSteps({ step, flow, issues, update, edit }: {
   </div>;
 
   if (step === 5) return <div className={styles.stack}>
-    <AlertBanner type="info" title="Chọn Trainer">Gợi ý mô tả mức phù hợp. Hãy xem lý do và xác nhận các cảnh báo trước khi tiếp tục.</AlertBanner>
+    <AlertBanner type="info" title="Chọn Trainer">Chọn người phụ trách, kiểm tra ngày phân công và xác nhận các cảnh báo nếu có trước khi tiếp tục.</AlertBanner>
     {trainers?.candidates.length ? <div className={styles.candidates}>{trainers.candidates.map((candidate) => <CandidateCard key={candidate.user.id}
       name={candidate.user.fullName} subtitle={`Trainer${candidate.experienceLevel ? ` · ${candidate.experienceLevel}` : ''}`} tags={candidate.skills}
       className={draft.trainer.trainerUserId === candidate.user.id ? styles.selected : undefined}
       facts={[{ label: 'Mức phù hợp', value: viLabel(candidate.label) }, { label: 'Lý do', value: candidate.reasons.join(' · ') || 'Chưa cung cấp' },
         ...(candidate.warnings.length ? [{ label: 'Cảnh báo', value: candidate.warnings.join(' · ') }] : []),
         ...(candidate.hardBlock ? [{ label: 'Không có', value: candidate.hardBlock }] : [])]}
-      actions={<Button type="button" variant="secondary" aria-pressed={draft.trainer.trainerUserId === candidate.user.id} disabled={Boolean(candidate.hardBlock)} onClick={() => update({ trainer: { ...draft.trainer, trainerUserId: candidate.user.id, warningsAcknowledged: false, reason: '' } })}>
+      actions={<Button type="button" variant="secondary" aria-pressed={draft.trainer.trainerUserId === candidate.user.id} disabled={Boolean(candidate.hardBlock)} onClick={() => {
+        if (draft.trainer.trainerUserId === candidate.user.id) return;
+        update({ trainer: { ...draft.trainer, trainerUserId: candidate.user.id, effectiveFrom: draft.trainer.effectiveFrom || draft.periodStart, warningsAcknowledged: false, reason: '' } });
+      }}>
         {draft.trainer.trainerUserId === candidate.user.id ? `Đã chọn ${candidate.user.fullName}` : `Chọn ${candidate.user.fullName}`}
       </Button>} />)}</div> : <EmptyState title="Không có Trainer phù hợp" description={trainers?.emptyReason ?? 'Không có ứng viên cho ngựa và phiên bản mẫu này.'} />}
     {error('trainer.trainerUserId') && <p className={styles.error} role="alert">{error('trainer.trainerUserId')}</p>}
     <Card title="Phân công"><div className={styles.stack}>
-      <TextField label="Trainer phụ trách từ ngày" type="date" required value={draft.trainer.effectiveFrom} error={error('trainer.effectiveFrom')} onChange={(event) => update({ trainer: { ...draft.trainer, effectiveFrom: event.target.value } })} />
+      <TextField label="Trainer phụ trách từ ngày" type="date" required value={draft.trainer.effectiveFrom} helperText="Mặc định là ngày bắt đầu chương trình khi chọn Trainer. Bạn có thể điều chỉnh ngày phân công." error={error('trainer.effectiveFrom')} onChange={(event) => update({ trainer: { ...draft.trainer, effectiveFrom: event.target.value } })} />
       <TextAreaField label="Lý do phân công" maxLength={500} value={draft.trainer.reason ?? ''} error={error('trainer.reason')} onChange={(event) => update({ trainer: { ...draft.trainer, reason: event.target.value } })} />
       {Boolean(selectedTrainer?.warnings.length) && <>
         <AlertBanner type="warning" title="Cảnh báo về Trainer"><ul className={styles.reasons}>{selectedTrainer!.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></AlertBanner>
@@ -124,7 +128,7 @@ export function DraftSteps({ step, flow, issues, update, edit }: {
       </div></Card>
       <Card title="Giai đoạn" action={<Button type="button" variant="tertiary" onClick={() => edit(4)}>Sửa khối lượng</Button>}><div className={styles.stack}>
         {[...draft.phases].sort((a, b) => a.phaseOrder - b.phaseOrder).map((phase, index) => <div className={styles.summary} key={index}>
-          <h3>{phase.phaseOrder}. {phase.name}</h3><p>{phase.startDate} — {phase.endDate}</p><p>{phase.objective}</p>
+          <h3>{phase.phaseOrder}. {phase.name}</h3><p>{formatDate(phase.startDate)} — {formatDate(phase.endDate)}</p><p>{phase.objective}</p>
           <p>Cường độ: {viLabel(phase.intensityMin, 'Chưa xác định')} — {viLabel(phase.intensityMax, 'Chưa xác định')}</p><p>Khối lượng: {phase.workload || 'Chưa xác định'}</p>
         </div>)}
       </div></Card>

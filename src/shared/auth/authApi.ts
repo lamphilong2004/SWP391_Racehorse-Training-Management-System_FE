@@ -1,6 +1,7 @@
 import type { RoleCode } from './roles';
 import { getBusinessActor, usesSampleData } from '../data/businessData';
 import { resolveApiBase } from '../apiOrigin';
+import { serverText } from '../serverText';
 
 const API_BASE_URL = resolveApiBase(import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:8080' : ''), import.meta.env.DEV);
 
@@ -42,14 +43,19 @@ export type ApiErrorCode =
   | 'INTERNAL_ERROR';
 
 export class ApiError extends Error {
+  /** The server's original (English) wording; `message` and `details` carry the Vietnamese display text. */
+  readonly rawMessage: string;
+  readonly details: ApiErrorDetail[];
   constructor(
     readonly status: number,
     readonly code: ApiErrorCode | 'NETWORK_ERROR' | 'INVALID_RESPONSE' | 'SERVER_UNAVAILABLE',
     message: string,
-    readonly details: ApiErrorDetail[] = [],
+    details: ApiErrorDetail[] = [],
   ) {
-    super(message);
+    super(serverText(message) || message);
     this.name = 'ApiError';
+    this.rawMessage = message;
+    this.details = details.map((detail) => ({ ...detail, message: serverText(detail.message) || detail.message }));
   }
 }
 
@@ -59,7 +65,7 @@ export function isInactiveAccountError(error: unknown): error is ApiError {
     error instanceof ApiError &&
     error.status === 403 &&
     error.code === 'FORBIDDEN' &&
-    error.message === 'Your account is deactivated.'
+    error.rawMessage === 'Your account is deactivated.'
   );
 }
 

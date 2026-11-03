@@ -36,3 +36,11 @@
   .heading > *, .row > * { min-width: 0; max-width: 100%; }
   .footer { justify-content: flex-start; }
 }
+
+/* Compact two-line table cell: name on top, long system code below (kept on one line, truncated). */
+.cellStack { display: flex; flex-direction: column; gap: 2px; min-width: 0; max-width: 170px; }
+.cellStack strong { white-space: nowrap; }
+.cellCode { font-size: 12px; line-height: 16px; color: var(--color-text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Table + side panel layouts stack below 1366px so the table keeps its full width. */
+@media (max-width: 1365px) { .columnsStackNarrow { grid-template-columns: minmax(0, 1fr); } }
+.period { display: flex; flex-direction: column; white-space: nowrap; font-size: 13px; }

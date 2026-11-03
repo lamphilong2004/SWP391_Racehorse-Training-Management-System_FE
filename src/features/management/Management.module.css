@@ -44,7 +44,7 @@
 .number { margin: 0 0 var(--space-lg); font-size: 28px; font-weight: 600; line-height: 36px; }
 .tableScroll { overflow-x: auto; width: 100%; }
 .tableScroll table { min-width: 880px; }
-.tableScroll td { overflow-wrap: anywhere; max-width: 300px; }
+.tableScroll td { overflow-wrap: break-word; max-width: 300px; }
 .secondary { display: block; margin-top: 0; font-size: 12px; color: var(--color-text-secondary); }
 .code { font-size: 12px; font-weight: 500; }
 .readOnly { display: inline-flex; align-items: center; color: var(--color-text-secondary); background: var(--color-bg-subtle); padding: var(--space-xs) var(--space-sm); font-size: 11px; line-height: 16px; font-weight: 600; border-radius: var(--radius-sm); text-transform: uppercase; }

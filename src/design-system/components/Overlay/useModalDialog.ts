@@ -10,11 +10,20 @@ export function useModalDialog(open: boolean, onClose: () => void) {
   useEffect(() => {
     const dialog = ref.current;
     if (!dialog) return;
-    if (open && !dialog.open) {
-      dialog.showModal();
-    } else if (!open && dialog.open) {
-      dialog.close();
+    if (!open) {
+      if (dialog.open) dialog.close();
+      return;
     }
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (!dialog.open) dialog.showModal();
+    // Conditional drawers are removed rather than rendered with open=false.
+    // Close the native dialog and restore its opener without stealing another overlay's focus.
+    return () => {
+      const active = document.activeElement;
+      const restore = active === document.body || (active !== null && dialog.contains(active));
+      if (dialog.open) dialog.close();
+      if (restore && opener?.isConnected && !opener.matches(':disabled')) opener.focus({ preventScroll: true });
+    };
   }, [open]);
 
   useEffect(() => {

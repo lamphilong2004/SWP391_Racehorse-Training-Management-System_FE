@@ -64,7 +64,7 @@ it('keeps role boundaries and returns to the entry after sign-out', async () => 
   expect(await screen.findByText('Tài khoản của bạn không có quyền truy cập trang này.')).toBeInTheDocument();
   await act(() => router.navigate('/dashboard'));
   fireEvent.click(await screen.findByRole('button', { name: 'Menu tài khoản' }));
-  fireEvent.click(await screen.findByRole('button', { name: 'Đăng xuất' }));
+  fireEvent.click(await screen.findByRole('menuitem', { name: 'Đăng xuất' }));
   expect(await screen.findByRole('heading', { name: 'Đăng nhập thử theo vai trò' })).toBeInTheDocument();
   expect(authSession.read()).toBeNull();
 });
