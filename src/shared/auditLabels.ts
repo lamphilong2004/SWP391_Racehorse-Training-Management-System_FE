@@ -31,6 +31,11 @@ const ACTIONS: Record<string, string> = {
   CRITICAL_ACKNOWLEDGED: 'Xác nhận cảnh báo nghiêm trọng', MONITORING_ALERT_ACKNOWLEDGED: 'Xác nhận cảnh báo giám sát',
   MEDICAL_RESTRICTION_SET: 'Đặt hạn chế y tế', MEDICAL_RESTRICTION_LIFTED: 'Gỡ hạn chế y tế',
   INCIDENT_REPORTED: 'Báo cáo sự cố', OPEN_CASE: 'Mở ca y tế', LINK_CASE: 'Liên kết ca y tế',
+  // program history entry types
+  CREATED: 'Tạo chương trình', ACTIVATED: 'Kích hoạt', PAUSED: 'Tạm dừng', COMPLETED: 'Hoàn thành', CANCELLED: 'Hủy',
+  PHASE_WORKLOAD_INTENSITY: 'Điều chỉnh khối lượng / cường độ giai đoạn', PHASE_TIMELINE: 'Điều chỉnh thời gian giai đoạn',
+  PHASE_OBJECTIVE: 'Điều chỉnh mục tiêu giai đoạn', PHASE_STRUCTURE: 'Điều chỉnh cấu trúc giai đoạn', TOTAL_DURATION: 'Điều chỉnh tổng thời gian',
+  PRIMARY_GOAL: 'Điều chỉnh mục tiêu chính', SOURCE_TEMPLATE: 'Đổi mẫu gốc', OTHER_STRUCTURAL: 'Thay đổi cấu trúc khác',
   // stable care, nutrition and inventory (Flow 4)
   CARE_PLAN_SAVED: 'Lưu kế hoạch chăm sóc', NUTRITION_PLAN_SAVED: 'Lưu kế hoạch dinh dưỡng',
   DAILY_CARE_COMPLETED: 'Hoàn tất công việc chăm sóc', DAILY_CARE_CANCELLED: 'Hủy công việc chăm sóc', DAILY_CARE_REASSIGNED: 'Giao lại công việc chăm sóc',

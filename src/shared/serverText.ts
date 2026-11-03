@@ -135,6 +135,7 @@ const PATTERNS: [RegExp, (...groups: string[]) => string][] = [
   [/^Your adjustment request for program (\S+) was (APPROVED|REJECTED)\.$/, (id, status) => `Đề xuất điều chỉnh chương trình ${id} của bạn đã ${status === 'APPROVED' ? 'được duyệt' : 'bị từ chối'}.`],
   [/^Session (\S+) has been assigned to you\.$/, (code) => `Bạn được giao buổi tập ${code}.`],
   [/^You have been assigned to (.+)\.$/, (name) => `Bạn được giao phụ trách ${name}.`],
+  [/^Training is locked by the Veterinarian: (.+)$/, (reason) => `Veterinarian đã khóa tập luyện: ${reason}`],
   [/^Template version (\d+) (created|saved)\.$/, (n, verb) => `Đã ${verb === 'created' ? 'tạo' : 'lưu'} phiên bản mẫu ${n}.`],
   [/^Adjustment requested: (\S+)\.$/, (type) => `Đã gửi đề xuất điều chỉnh: ${adjustment(type)}.`],
   [/^Adjustment request (approved|rejected): (\S+)\.$/, (status, type) => `Đề xuất điều chỉnh ${adjustment(type)} đã ${status === 'approved' ? 'được duyệt' : 'bị từ chối'}.`],

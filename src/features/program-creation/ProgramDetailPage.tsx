@@ -10,6 +10,8 @@ import { createProgramDetailApi, type ProgramHistoryEntry, type ProgramProgress 
 import { HeadTrainerProgramActions, TrainerAdjustmentAction } from './ProgramActions';
 import styles from '../main-flows/flow.module.css';
 import { viLabel } from '../../shared/viLabels';
+import { auditActionLabel } from '../../shared/auditLabels';
+import { serverText } from '../../shared/serverText';
 
 /** SCR-TRAIN-002/022: read-only Overview, Progress and History. Row scope remains enforced by Backend. */
 export function ProgramDetailPage() {
@@ -66,8 +68,8 @@ function ProgramReadTab({ tab, programId }: { tab: string; programId: number }) 
       { key: 'interrupted', header: 'Bị gián đoạn', render: (item) => item.interrupted }, { key: 'distance', header: 'Quãng đường (hệ thống)', render: (item) => metric(item.totalDistanceM, 'm') },
       { key: 'evaluation', header: 'Đánh giá gần nhất', render: (item) => item.lastEvaluationLabel ?? 'Chưa cung cấp' },
     ]} /></div> : <div className={styles.table}><DataTable<ProgramHistoryEntry> caption="Lịch sử chương trình từ hệ thống" rows={resource.data as ProgramHistoryEntry[]} rowKey={(item) => `${item.occurredAt}-${item.entryType}-${item.summary}`} empty={<EmptyState title="Chưa có lịch sử chương trình" />} columns={[
-      { key: 'time', header: 'Thời gian', nowrap: true, render: (item) => dateTime(item.occurredAt) }, { key: 'type', header: 'Sự kiện', render: (item) => item.entryType },
-      { key: 'actor', header: 'Người thực hiện', render: (item) => item.actor?.fullName ?? 'Chưa cung cấp' }, { key: 'summary', header: 'Tóm tắt', render: (item) => item.summary },
+      { key: 'time', header: 'Thời gian', nowrap: true, render: (item) => dateTime(item.occurredAt) }, { key: 'type', header: 'Sự kiện', render: (item) => <span title={item.entryType}>{auditActionLabel(item.entryType)}</span> },
+      { key: 'actor', header: 'Người thực hiện', render: (item) => item.actor?.fullName ?? 'Chưa cung cấp' }, { key: 'summary', header: 'Tóm tắt', render: (item) => item.summary ? <span title={item.summary}>{serverText(item.summary)}</span> : 'Chưa cung cấp' },
     ]} /></div>)}
   </Card>;
 }

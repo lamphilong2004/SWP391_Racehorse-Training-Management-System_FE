@@ -73,6 +73,8 @@
 [data-app-shell]:has([data-ui-v3]) [data-design-system='v2'],
 [data-design-system='v3'] {
   --control-height-md: 44px;
+  /* Captions reuse the disabled ink; keep it at 4.5:1 on the tinted row-card surface (#f8fafc). */
+  --color-text-disabled: #66666e;
   --color-field-border: #c3cfdb;
   --color-field-hover-border: #7f9ab0;
 }
@@ -120,3 +122,7 @@
 [data-ui-v3] [data-page-banner] :is(a, button)[class*='secondary'] { border-color: rgb(255 255 255 / 70%); }
 [data-ui-v3] [data-page-banner] :is(h1, .text-h1)[tabindex='-1']:focus { outline: none; }
 [data-ui-v3] [data-page-banner] :is(h1, .text-h1) + p { margin-top: 6px; }
+
+/* Standalone back links and links inside table cells get a 24px minimum target (WCAG 2.2 target size). */
+[data-ui-v3] main :is(a, button)[class*='back'],
+[data-ui-v3] main td a:not([class*='button']) { display: inline-flex; align-items: center; min-height: 24px; }

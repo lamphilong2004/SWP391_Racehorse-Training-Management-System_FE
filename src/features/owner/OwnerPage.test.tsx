@@ -66,7 +66,7 @@ describe('CORE-056 read-only Owner journey', () => {
     expect(screen.getByRole('heading', { name: 'Thunder Bolt' })).toBeInTheDocument(); expect(screen.queryByRole('heading', { name: 'Ocean Pride' })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('link', { name: /Xem ngựa/ }));
     await screen.findByRole('heading', { name: 'Hồ sơ' });
-    expect(screen.getByText('Northern Star')).toBeInTheDocument(); expect(screen.getByText('CHỈ XEM')).toBeInTheDocument();
+    expect(screen.getByText('Northern Star')).toBeInTheDocument(); expect(screen.getByText('Chỉ xem')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('tab', { name: 'Sức khỏe & mức sẵn sàng' }));
     await screen.findByText('Bản tóm tắt dành cho chủ ngựa, do Veterinarian của câu lạc bộ cập nhật.');
     expect(screen.getByText(/Cổng này không hiển thị chi tiết y tế như chẩn đoán, điều trị và thuốc\. Chỉ Veterinarian được thay đổi sức khỏe hoặc mức sẵn sàng\./)).toBeInTheDocument();
