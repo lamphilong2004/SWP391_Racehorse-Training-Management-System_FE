@@ -1,3 +1,4 @@
+@reference '../../styles/tailwind.css';
 /* Figma Input 7:22 / Select 7:47 — height 40, padding 12, radius/md */
 .field {
   display: flex;
@@ -113,3 +114,14 @@
   :global([data-ui-v3]) .control,
   :global([data-app-shell]:has([data-ui-v3])) .control { transition: none; }
 }
+
+/* 2026-11 Tailwind refresh: rounder controls with an inner shade and a soft emerald focus halo. */
+:global([data-ui-v3]) .label { @apply text-[13px] font-semibold tracking-[0.005em] text-rh-text; }
+:global([data-ui-v3]) .requiredMark { @apply text-rh-danger; }
+:global([data-ui-v3]) .control {
+  @apply rounded-rh-control border-rh-field bg-rh-surface shadow-rh-control;
+}
+:global([data-ui-v3]) .control:hover:not(:disabled):not(:has(:disabled)):not(.controlError):not(:focus):not(:focus-within) { @apply border-rh-field-hover; }
+:global([data-ui-v3]) .control:focus, :global([data-ui-v3]) .control:focus-within { @apply border-rh-primary bg-rh-surface shadow-rh-focus; }
+:global([data-ui-v3]) .control.controlError { @apply bg-rh-danger-soft/40; }
+:global([data-ui-v3]) .errorMessage { @apply font-medium; }

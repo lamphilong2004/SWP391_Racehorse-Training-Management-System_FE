@@ -1,6 +1,7 @@
 /// <reference types="vitest/config" />
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 import { resolveApiBase } from './src/shared/apiOrigin.ts';
 
 export default defineConfig(({ mode, command }) => {
@@ -8,7 +9,7 @@ export default defineConfig(({ mode, command }) => {
   // Validate deployable artifacts before compilation, including accidental local .env values.
   if (command === 'build') resolveApiBase(env.VITE_API_BASE_URL, false);
   return {
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   server: {
     port: 5173,
     proxy: env.VITE_API_PROXY_TARGET ? {

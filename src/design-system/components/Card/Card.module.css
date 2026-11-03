@@ -1,3 +1,4 @@
+@reference '../../styles/tailwind.css';
 .card {
   display: flex;
   flex-direction: column;
@@ -49,3 +50,14 @@
 /* Content surfaces carry elevation; inner controls and tables stay flat. */
 :global([data-ui-v3]) .card { border-color: var(--color-border-default); box-shadow: 0 2px 6px rgb(11 19 43 / 3%); }
 :global([data-ui-v3]) .title { font-size: 15px; font-weight: 700; color: var(--color-brand-primary); }
+
+/* 2026-11 Tailwind refresh: softer surface, header band instead of the accent bar. */
+:global([data-ui-v3]) .card { @apply rounded-rh-card border-rh-border bg-rh-surface shadow-rh-card; }
+:global([data-ui-v3]) .header {
+  @apply -mx-6 -mt-6 rounded-t-rh-card border-b border-rh-border px-6 py-4;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-bg-subtle) 70%, transparent), transparent);
+}
+:global([data-ui-v3]) .header + .divider { @apply hidden; }
+:global([data-ui-v3]) .title { @apply flex items-center gap-2.5 border-l-0 pl-0 text-[15px] font-bold text-rh-navy; }
+:global([data-ui-v3]) .title::before { content: ''; @apply size-2 shrink-0 rounded-full bg-rh-primary; box-shadow: 0 0 0 4px var(--color-primary-50); }
+@media (max-width: 600px) { :global([data-ui-v3]) .header { @apply -mx-4 -mt-4 px-4; } }

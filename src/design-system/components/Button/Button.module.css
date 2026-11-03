@@ -1,3 +1,4 @@
+@reference '../../styles/tailwind.css';
 /* Figma Button 6:28 — Type × State */
 .button {
   position: relative;
@@ -125,3 +126,11 @@
 :global([data-ui-v3]) .destructive:hover:not(:disabled) { opacity: 1; background: #991b1b; }
 :global([data-ui-v3]) .destructive:focus-visible { box-shadow: 0 0 0 3px rgb(185 28 28 / 25%); }
 @media (prefers-reduced-motion: reduce) { .button:active:not(:disabled) { transform: none; } }
+
+/* 2026-11 Tailwind refresh: rounder buttons, lifted primary with a soft emerald glow. */
+:global([data-ui-v3]) .button { @apply rounded-rh-control; }
+:global([data-ui-v3]) .primary:not(:disabled) { @apply shadow-rh-button; }
+:global([data-ui-v3]) .primary:hover:not(:disabled) { @apply -translate-y-px; }
+:global([data-ui-v3]) .secondary:not(:disabled) { @apply bg-rh-surface shadow-[0_1px_2px_rgb(11_19_43/6%)]; }
+:global([data-ui-v3]) .secondary:hover:not(:disabled) { @apply border-rh-primary text-rh-primary-hover; }
+@media (prefers-reduced-motion: reduce) { :global([data-ui-v3]) .primary:hover:not(:disabled) { transform: none; } }

@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { Icon } from '../../../design-system';
 import { requestHorsePhoto } from '../../../shared/auth/authApi';
 import { authSession } from '../../../shared/auth/authSession';
+import defaultPhoto from './horse-default.jpg';
 import styles from './horsePhoto.module.css';
+
+/** Shared illustrative photo (CC0, Wikimedia Commons "Chestnut horse against a cloudy sky (Unsplash).jpg"), never presented as the horse itself. */
+const DEFAULT_TITLE = 'Ảnh minh họa — ngựa này chưa có ảnh riêng';
 
 export function HorsePhotoImage({ path, name, className, revision = 0, thumbnail = false }: {
   path: string;
@@ -47,11 +50,16 @@ export function HorsePhotoImage({ path, name, className, revision = 0, thumbnail
     };
   }, [path, revision, shouldLoad, token]);
 
+  // Settled without a usable photo (none uploaded, no permission, failed load or signed out): show the labelled default.
+  const fallback = !current?.url && (Boolean(current) || !token);
   return <div ref={container} className={className ?? (thumbnail ? styles.thumbnail : styles.sessionPhoto)}
-    aria-hidden={thumbnail || undefined}>
+    aria-hidden={thumbnail || undefined} title={fallback ? DEFAULT_TITLE : undefined} data-photo-state={current?.url ? 'photo' : fallback ? 'default' : 'loading'}>
     {current?.url ? <img src={current.url} alt={thumbnail ? '' : `Ảnh ${name}`} decoding="async"
       onError={() => setResult({ ...current, url: null, failed: true })} />
-      : thumbnail ? <Icon name="image" size={18} />
-        : <span>{current?.failed ? 'Không tải được ảnh' : current ? 'Chưa có ảnh' : token ? 'Đang tải ảnh…' : 'Chưa có ảnh'}</span>}
+      : fallback ? <>
+        <img src={defaultPhoto} alt={thumbnail ? '' : `${DEFAULT_TITLE} (${name})`} decoding="async" />
+        {!thumbnail && <span className={styles.defaultLabel}>{current?.failed ? 'Không tải được ảnh · ảnh minh họa' : 'Ảnh minh họa'}</span>}
+      </>
+        : thumbnail ? null : <span>Đang tải ảnh…</span>}
   </div>;
 }

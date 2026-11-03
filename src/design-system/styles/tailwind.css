@@ -1,0 +1,67 @@
+/*
+ * Tailwind CSS v4 on top of the Racehorse design tokens (tokens.css stays the single source of colour, radius and
+ * elevation). Preflight is NOT imported: global.css remains the base layer, so existing screens keep their resets.
+ * Utilities and `@apply` (CSS modules use `@reference` to this file) resolve to the token variables, so the
+ * [data-ui-v3] navy/emerald scope still switches every value.
+ */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+@theme inline {
+  --color-rh-page: var(--color-bg-page);
+  --color-rh-surface: var(--color-bg-surface);
+  --color-rh-subtle: var(--color-bg-subtle);
+  --color-rh-border: var(--color-border-default);
+  --color-rh-border-strong: var(--color-border-strong);
+  --color-rh-field: var(--color-field-border, var(--color-border-strong));
+  --color-rh-field-hover: var(--color-field-hover-border, var(--color-border-strong));
+  --color-rh-text: var(--color-text-primary);
+  --color-rh-muted: var(--color-text-secondary);
+  --color-rh-disabled: var(--color-text-disabled);
+  --color-rh-navy: var(--color-brand-primary, var(--color-text-primary));
+  --color-rh-primary: var(--color-primary-600);
+  --color-rh-primary-hover: var(--color-primary-700);
+  --color-rh-primary-soft: var(--color-primary-50);
+  --color-rh-success: var(--color-success-600);
+  --color-rh-success-soft: var(--color-success-50);
+  --color-rh-warning: var(--color-warning-600);
+  --color-rh-warning-soft: var(--color-warning-50);
+  --color-rh-danger: var(--color-danger-600);
+  --color-rh-danger-soft: var(--color-danger-50);
+  --color-rh-info: var(--color-info-600);
+  --color-rh-table-head: var(--color-table-header, var(--color-bg-subtle));
+  --color-rh-row-hover: var(--color-row-hover, var(--color-bg-subtle));
+
+  --font-rh: var(--font-family);
+  --font-rh-head: var(--font-family-headline, var(--font-family));
+
+  --radius-rh-control: 10px;
+  --radius-rh-card: 16px;
+
+  --shadow-rh-card: 0 1px 2px rgb(11 19 43 / 4%), 0 8px 24px -12px rgb(11 19 43 / 10%);
+  --shadow-rh-raised: 0 2px 4px rgb(11 19 43 / 6%), 0 16px 32px -16px rgb(11 19 43 / 18%);
+  --shadow-rh-control: inset 0 1px 1px rgb(11 19 43 / 4%);
+  --shadow-rh-focus: 0 0 0 4px color-mix(in srgb, var(--color-primary-600) 18%, transparent);
+  --shadow-rh-button: 0 1px 2px rgb(4 120 87 / 20%), 0 4px 12px -4px rgb(4 120 87 / 35%);
+}
+
+/*
+ * 2026-11 visual refresh tokens (unlayered, same selectors as tokens.css, loaded after it). Every feature surface that
+ * already uses these variables — 12 card-radius and 23 elevation users — picks up the softer, rounder look at once.
+ */
+[data-ui-v3],
+:root[data-ui-v3] [data-design-system='v2'],
+[data-app-shell]:has([data-ui-v3]),
+[data-app-shell]:has([data-ui-v3]) [data-design-system='v2'],
+[data-design-system='v3'] {
+  --color-bg-page: #f2f5f9;
+  --color-table-header: #f6f8fb;
+  --color-row-hover: #effaf5;
+  --card-radius: 16px;
+  --dialog-radius: 16px;
+  --radius-lg: 14px;
+  --elev-1: 0 1px 2px rgb(11 19 43 / 4%), 0 8px 24px -12px rgb(11 19 43 / 10%);
+  --elev-2: 0 2px 4px rgb(11 19 43 / 6%), 0 16px 32px -16px rgb(11 19 43 / 18%);
+  --elev-focus: 0 0 0 4px rgb(5 150 105 / 18%);
+}

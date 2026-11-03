@@ -177,3 +177,7 @@
 @media (max-width: 1100px) { .strengthGroups { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 360px) { .strengthChips { grid-template-columns: minmax(0, 1fr); } }
 @media (prefers-reduced-motion: reduce) { .strengthChip span { transition: none; } }
+
+/* 2026-11 refresh: section titles match the shared Card heading (emerald dot, navy text). */
+:global([data-ui-v3]) .cardTitle { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 700; color: var(--color-brand-primary); }
+:global([data-ui-v3]) .cardTitle::before { content: ''; width: 8px; height: 8px; flex-shrink: 0; border-radius: 999px; background: var(--color-primary-600); box-shadow: 0 0 0 4px var(--color-primary-50); }

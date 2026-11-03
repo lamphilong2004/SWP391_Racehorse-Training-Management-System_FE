@@ -65,3 +65,14 @@
   .heading > *, .row > * { min-width: 0; max-width: 100%; }
   .footer { gap: var(--space-md); }
 }
+
+/* The horse photo replaces the radio dot: the chosen horse gets an emerald ring and a check badge. */
+.horseChoice { position: relative; }
+.horseChoice > [data-photo-state] { width: 48px; height: 48px; transition: box-shadow var(--motion-fast, 120ms) ease; }
+.horseChoice:has(input:checked) > [data-photo-state] { box-shadow: 0 0 0 2px var(--color-bg-surface), 0 0 0 4px var(--color-primary-600); }
+.horseChoice:has(input:checked)::before {
+  content: '✓'; position: absolute; left: 32px; top: -2px; z-index: 1; display: grid; place-items: center;
+  width: 20px; height: 20px; border-radius: 999px; border: 2px solid var(--color-bg-surface);
+  background: var(--color-primary-600); color: var(--color-text-on-primary); font-size: 11px; font-weight: 700;
+}
+.horseChoice:has(input:disabled) > [data-photo-state] { filter: grayscale(0.85); opacity: 0.7; }

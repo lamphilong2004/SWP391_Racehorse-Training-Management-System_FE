@@ -1,3 +1,4 @@
+@reference '../design-system/styles/tailwind.css';
 .page { display: flex; flex-direction: column; gap: var(--space-xl); max-width: 1600px; margin: 0 auto; }
 .heading { display: flex; align-items: center; justify-content: space-between; gap: var(--space-xl); flex-wrap: wrap; }
 .heading h1 { margin: var(--space-sm) 0; }
@@ -37,3 +38,22 @@
 .welcome, .actionGrid > *, .metrics > * { min-width: 0; }
 .actionCard { border-radius: var(--card-radius); }
 .identity { overflow-wrap: anywhere; }
+
+/* 2026-11 Tailwind refresh: navy → emerald hero for the greeting, lifted quick-action cards. */
+:global([data-ui-v3]) .welcome {
+  @apply relative overflow-hidden rounded-rh-card border-0 text-white shadow-rh-raised;
+  background:
+    radial-gradient(120% 140% at 100% 0%, rgb(16 185 129 / 35%), transparent 55%),
+    linear-gradient(120deg, var(--color-brand-navy, #0b132b) 0%, #12305a 55%, #065f46 100%);
+}
+:global([data-ui-v3]) .welcome::after {
+  content: ''; @apply pointer-events-none absolute -right-10 -bottom-16 size-56 rounded-full;
+  border: 28px solid rgb(255 255 255 / 6%);
+}
+:global([data-ui-v3]) .welcome h2 { @apply text-white; }
+:global([data-ui-v3]) .welcome p, :global([data-ui-v3]) .welcome .eyebrow { color: rgb(226 232 240 / 88%); }
+:global([data-ui-v3]) .welcomeIcon { @apply bg-white/12 text-emerald-300 ring-1 ring-white/20; }
+:global([data-ui-v3]) .access { @apply relative z-1 rounded-full bg-white/10 px-3 py-1.5 text-white ring-1 ring-white/20; }
+:global([data-ui-v3]) .actionCard { @apply transition-[transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:shadow-rh-raised; }
+:global([data-ui-v3]) .actionIcon { @apply ring-1 ring-emerald-200/70; }
+@media (prefers-reduced-motion: reduce) { :global([data-ui-v3]) .actionCard { @apply transition-none hover:translate-y-0; } }

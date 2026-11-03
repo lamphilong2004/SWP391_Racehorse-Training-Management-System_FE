@@ -1,3 +1,4 @@
+@reference '../../styles/tailwind.css';
 .scroll { min-width: 0; max-width: 100%; overflow-x: auto; border-radius: var(--radius-md); }
 .scroll:focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 2px; }
 .table {
@@ -105,3 +106,17 @@
 :global([data-ui-v3]) .row:hover, :global([data-ui-v3]) .row:focus-within { background: var(--color-row-hover); }
 :global([data-ui-v3]) .selected, :global([data-ui-v3]) .selected:hover, :global([data-ui-v3]) .selected:focus-within { background: var(--color-primary-50); box-shadow: inset 3px 0 0 var(--color-primary-600); }
 @media (prefers-reduced-motion: reduce) { :global([data-ui-v3]) .row { transition: none; } }
+
+/* 2026-11 Tailwind refresh: raised table card, calmer header, zebra rows and a clear selected row. */
+:global([data-ui-v3]) .scroll { @apply rounded-rh-card border-rh-border bg-rh-surface shadow-rh-card; }
+:global([data-ui-v3]) .headerRow { @apply border-b border-rh-border bg-rh-table-head; }
+:global([data-ui-v3]) .headerCell { @apply bg-rh-table-head px-5 py-3 text-[12.5px] font-semibold text-rh-muted; }
+:global([data-ui-v3]) .headerCell:first-child { @apply pl-6; }
+:global([data-ui-v3]) .cell { @apply px-5 py-3.5; }
+:global([data-ui-v3]) .cell:first-child { @apply pl-6; }
+:global([data-ui-v3]) .row:nth-child(even):not(.selected) { background: color-mix(in srgb, var(--color-bg-subtle) 45%, var(--color-bg-surface)); }
+:global([data-ui-v3]) .row:hover:not(.selected), :global([data-ui-v3]) .row:focus-within:not(.selected) { @apply bg-rh-row-hover; }
+:global([data-ui-v3]) .selected, :global([data-ui-v3]) .selected:hover, :global([data-ui-v3]) .selected:focus-within {
+  @apply bg-rh-primary-soft;
+  box-shadow: inset 4px 0 0 var(--color-primary-600);
+}

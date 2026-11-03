@@ -1,3 +1,4 @@
+@reference '../../styles/tailwind.css';
 .bar {
   display: flex;
   gap: var(--space-sm);
@@ -34,3 +35,8 @@
 
 :global([data-design-system='v2']) .bar { max-width: 100%; overflow-x: auto; overflow-y: hidden; }
 @media (prefers-reduced-motion: reduce) { .tab { transition: none; } }
+
+/* 2026-11 Tailwind refresh: segmented tabs; the active section sits raised on a soft track. */
+:global([data-ui-v3]) .bar { @apply w-fit max-w-full gap-1 rounded-xl border border-rh-border bg-rh-subtle p-1; }
+:global([data-ui-v3]) .tab { @apply mb-0 h-9 rounded-lg border-0 px-4 text-rh-muted hover:bg-rh-surface/70 hover:text-rh-text; }
+:global([data-ui-v3]) .active { @apply bg-rh-surface text-rh-primary-hover shadow-[0_1px_2px_rgb(11_19_43/8%),0_2px_8px_-2px_rgb(11_19_43/10%)]; }
