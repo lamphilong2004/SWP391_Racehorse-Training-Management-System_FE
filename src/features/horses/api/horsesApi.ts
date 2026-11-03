@@ -46,7 +46,9 @@ function activation(value: ActivationStatus): ActivationStatus {
 export function createHorsesApi(http: HttpClient) {
   return {
     listHorses: (query: Record<string, string | number | undefined> = {}) => http.request<Page<HorseDetail>>('GET', '/api/horses', { query }),
-    createHorse: (body: HorseIdentityRequest) => http.request<HorseDetail>('POST', '/api/horses', { body }),
+    previewHorseCode: () => http.request<{ horseCode: string }>('GET', '/api/horses/next-code'),
+    createHorse: (body: Omit<HorseIdentityRequest, 'horseCode'> & { horseCode?: string }) =>
+      http.request<HorseDetail>('POST', '/api/horses', { body }),
     getHorse: (id: number) => http.request<HorseDetail>('GET', `/api/horses/${id}`),
     updateHorse: (id: number, body: HorseIdentityRequest) => http.request<HorseDetail>('PUT', `/api/horses/${id}`, { body }),
     setPedigree: (id: number, body: PedigreeRequest) => http.request<HorseDetail>('PUT', `/api/horses/${id}/pedigree`, { body }),

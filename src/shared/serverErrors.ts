@@ -226,7 +226,7 @@ export const SERVER_ERROR_TEXT: Record<string, string> = {
   'Adjustment request fields are invalid.': 'Thông tin đề xuất điều chỉnh chưa hợp lệ.',
   'Horse id and templateVersionId must be positive.': 'Cần chọn ngựa và mẫu chương trình hợp lệ.',
   'An active template version was not found.': 'Không tìm thấy phiên bản mẫu đang hoạt động.',
-  'The template version lists no required specialization.': 'Mẫu chương trình chưa khai báo chuyên môn Trainer cần có.',
+  'The template version lists no required specialization.': 'Mẫu này không yêu cầu chuyên môn cụ thể. Bạn có thể chọn huấn luyện viên đang hoạt động.',
   'No active Trainer account exists.': 'Chưa có tài khoản Trainer nào đang hoạt động.',
   'No active Trainer has a profile matching the template\'s required skills.': 'Chưa có Trainer nào có chuyên môn phù hợp với mẫu này.',
   'status must be ACTIVE or ARCHIVED.': 'Trạng thái mẫu phải là Đang dùng hoặc Lưu trữ.',
@@ -331,6 +331,8 @@ export const SERVER_ERROR_TEXT: Record<string, string> = {
 
 /** Internal persistence failures and Jakarta Bean Validation defaults (field names are shown by the form). */
 export const SERVER_ERROR_PATTERNS: [RegExp, (...groups: string[]) => string][] = [
+  [/^Trainer specialization matches a required template skill: (.+)\.$/, (skill) => `Chuyên môn phù hợp với yêu cầu của mẫu: ${skill}.`],
+  [/^No Trainer specialization matches the template's required skills: (.+)\.$/, (skills) => `Huấn luyện viên này chưa có chuyên môn phù hợp với yêu cầu của mẫu: ${skills}.`],
   [/^(SQL Server|The database|Database) did not return .+\.$/, () => 'Máy chủ chưa lưu được dữ liệu. Hãy thử lại.'],
   [/^Could not .+\.$/, () => 'Máy chủ không xử lý được yêu cầu này. Hãy thử lại sau.'],
   [/^must not be (blank|null|empty)$/, () => 'Không được để trống.'],

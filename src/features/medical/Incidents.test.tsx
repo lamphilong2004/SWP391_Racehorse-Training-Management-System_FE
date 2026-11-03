@@ -101,6 +101,14 @@ it('handles an unavailable list with retry and no stale reports', async () => {
   await screen.findByText('Không có sự cố'); expect(screen.queryByText('INC-001')).not.toBeInTheDocument();
 });
 it('invalid direct links never request a report', () => { const value = service(); detail(value, 'GROOM', '/incidents/-1'); expect(screen.getByText('Không tìm thấy sự cố')).toBeInTheDocument(); expect(value.get).not.toHaveBeenCalled(); });
+it('shows an access message without retry or incident details on a forbidden direct link', async () => {
+  const value = service();
+  vi.mocked(value.get).mockRejectedValue(new ApiError(403, 'FORBIDDEN', 'private report'));
+  detail(value, 'GROOM');
+  expect(await screen.findByText('Không có quyền xem chi tiết sự cố')).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Thử lại' })).not.toBeInTheDocument();
+  expect(screen.queryByText('private report')).not.toBeInTheDocument();
+});
 it('blocks Horse Owner and anonymous incident routes before any report request', async () => {
   authSession.save('fixture', 3600, false); const fetcher = vi.fn().mockResolvedValue(ok({ id: 99, userCode: 'O99', fullName: 'Chủ ngựa', email: 'owner@example.test', roles: ['HORSE_OWNER'], accountStatus: 'ACTIVE' })); vi.stubGlobal('fetch', fetcher);
   const router = createMemoryRouter(buildRoutes(false), { initialEntries: ['/incidents/1'] }); render(<AuthProvider><RouterProvider router={router} /></AuthProvider>);

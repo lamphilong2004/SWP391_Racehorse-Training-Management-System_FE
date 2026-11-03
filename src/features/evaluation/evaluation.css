@@ -5,6 +5,18 @@
 .evaluation-stack p, .evaluation-stack h1 { margin: 0; }
 .evaluation-stack p { white-space: pre-wrap; overflow-wrap: anywhere; }
 .evaluation-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-lg); }
+.evaluation-next-action { display: flex; flex-wrap: wrap; gap: var(--space-md); align-items: center; justify-content: space-between; }
+.evaluation-next-action p { flex: 1 1 230px; }
+#evaluation-panel-evaluation { scroll-margin-top: var(--space-md); }
+.evaluation-stack > .evaluation-save-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  padding: var(--space-md);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface);
+}
 .evaluation-columns { display: grid; grid-template-columns: minmax(0, 2.1fr) minmax(240px, 1fr); gap: var(--space-xl); align-items: start; }
 .evaluation-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-md); }
 .evaluation-facts { display: flex; flex-wrap: wrap; gap: var(--space-xl); margin-bottom: var(--space-lg); }

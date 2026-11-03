@@ -9,6 +9,8 @@ import { useAuth } from '../../shared/auth/AuthProvider';
 import { ApiError } from '../../shared/auth/authApi';
 import { OwnerContext } from './OwnerProvider';
 import type { OwnerHorse } from './ownerModel';
+import { RESULT_LABELS } from '../evaluation/models';
+import { HorsePhotoImage } from '../horses/shared/HorsePhotoImage';
 import styles from './owner.module.css';
 
 const tabs = [{ value: 'profile', label: 'Hồ sơ & phả hệ' }, { value: 'health', label: 'Sức khỏe & mức sẵn sàng' }, { value: 'training', label: 'Huấn luyện & thành tích' }];
@@ -25,7 +27,7 @@ function age(born: string | null, unit = 'tuổi') {
   const years = now.getUTCFullYear() - birth.getUTCFullYear() - Number(now.getUTCMonth() < birth.getUTCMonth() || (now.getUTCMonth() === birth.getUTCMonth() && now.getUTCDate() < birth.getUTCDate()));
   return years >= 0 ? `${years} ${unit}` : null;
 }
-const meta = (horse: OwnerHorse) => [horse.code, horse.breed, age(horse.born), horse.sex && horse.sex.charAt(0) + horse.sex.slice(1).toLowerCase()].filter(Boolean).join(' · ');
+const meta = (horse: OwnerHorse) => [horse.breed, age(horse.born), horse.sex && horse.sex.charAt(0) + horse.sex.slice(1).toLowerCase()].filter(Boolean).join(' · ');
 
 export function OwnerPage() { return <RequireAuth><OwnerAccess /></RequireAuth>; }
 function OwnerAccess() {
@@ -75,14 +77,16 @@ function OwnerContent() {
         <PageHeader title="Ngựa của tôi" description={`Xin chào, ${user!.fullName} · ${current.horses.length} con ngựa đứng tên bạn · ${new Intl.DateTimeFormat('vi-VN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(new Date())} · chế độ chỉ xem`} />
         <AlertBanner className={styles.note} title="Bạn chỉ thấy các ngựa đứng tên mình. Ngựa khác của câu lạc bộ không hiện trong cổng này. Thông tin chỉ để xem — nhân viên câu lạc bộ cập nhật." />
         {query && <div className={styles.searchResult}>Kết quả tìm kiếm cho “{params.get('q')}” trong ngựa của bạn <Button variant="tertiary" onClick={() => { setParams({}); setSearchEpoch((value) => value + 1); }}>Xóa tìm kiếm</Button></div>}
-        {!horses?.length ? <EmptyState title={query ? 'Không có ngựa phù hợp' : 'Chưa có ngựa nào đứng tên bạn'} description="Liên hệ câu lạc bộ nếu bạn nghĩ còn thiếu ngựa trong cổng của mình." /> : <div className={styles.horseGrid}>{horses.map((item, index) => <Card key={item.id} className={styles.horseCard}><div className={styles.cardTop}><Photo horse={item} /><div><h2>{item.name}</h2><p className={styles.caption}>{meta(item)}</p></div></div><Badges horse={item} /><div className={styles.divider} /><Facts><Fact label="Sức khỏe" value={item.health ? healthLabels[item.health] : missing} /><Fact label="Mức sẵn sàng" value={<Readiness horse={item} />} /><Fact label="Huấn luyện" value={item.program === undefined ? 'Xem trang của ngựa' : item.program ? [item.program.name, item.program.phase].filter(Boolean).join(' · ') : 'Chưa có chương trình'} /><Fact label="Buổi tập tiếp theo" value={item.nextSession ? `${timestamp(item.nextSession.date)} · ${item.nextSession.title ?? missing}` : 'Hiện khi có lịch buổi tập tiếp theo'} /></Facts><Link className={`${styles.viewLink} ${index ? styles.secondaryLink : ''}`} aria-label={`Xem ngựa ${item.name}`} to={`${ROUTES.myHorses}/${item.id}`}>Xem ngựa<span className="sr-only"> {item.name}</span></Link></Card>)}</div>}
+        {!horses?.length ? <EmptyState title={query ? 'Không có ngựa phù hợp' : 'Chưa có ngựa nào đứng tên bạn'} description="Liên hệ câu lạc bộ nếu bạn nghĩ còn thiếu ngựa trong cổng của mình." /> : <div className={styles.horseGrid}>{horses.map((item, index) => <Card key={item.id} className={styles.horseCard}><div className={styles.cardTop}><Photo horse={item} /><div><h2>{item.name}</h2><p className={styles.caption}>{meta(item)}</p></div></div><Badges horse={item} /><div className={styles.divider} /><Facts><Fact label="Sức khỏe" value={item.health ? healthLabels[item.health] : missing} /><Fact label="Mức sẵn sàng" value={<Readiness horse={item} />} /><Fact label="Huấn luyện" value={item.program === undefined ? 'Xem trang của ngựa' : item.program ? [item.program.name, item.program.phase].filter(Boolean).join(' · ') : 'Chưa có chương trình'} />{item.nextSession && <Fact label="Buổi tập tiếp theo" value={timestamp(item.nextSession.date)} />}</Facts><Link className={`${styles.viewLink} ${index ? styles.secondaryLink : ''}`} aria-label={`Xem ngựa ${item.name}`} to={`${ROUTES.myHorses}/${item.id}`}>Xem ngựa<span className="sr-only"> {item.name}</span></Link></Card>)}</div>}
       </>}
     </div>
   </AppShell>;
 }
 function Photo({ horse, detail = false }: { horse: OwnerHorse; detail?: boolean }) {
-  const [failed, setFailed] = useState(false);
-  return <div className={`${styles.photo} ${detail ? styles.detailPhoto : ''}`}>{horse.photo && !failed ? <img src={horse.photo} alt={`${horse.name}`} onError={() => setFailed(true)} /> : <Icon name={detail ? 'image' : 'horseshoe'} size={detail ? 32 : 28} />}</div>;
+  const { source } = useContext(OwnerContext);
+  const className = `${styles.photo} ${detail ? styles.detailPhoto : ''}`;
+  return source === 'api' ? <HorsePhotoImage className={className} name={horse.name} path={`/api/owner/horses/${horse.id}/photo`} />
+    : <div className={className}>Chưa có ảnh</div>;
 }
 function Badges({ horse }: { horse: OwnerHorse }) { return <div className={styles.badges}>{horse.lifecycle && <StatusBadge family="lifecycle" status={horse.lifecycle} />}{horse.health && <StatusBadge family="health" status={horse.health} />}{horse.availability && !(isNonOperational(horse) && horse.availability === 'AVAILABLE') && <StatusBadge family="availability" status={horse.availability} />}</div>; }
 function Readiness({ horse }: { horse: OwnerHorse }) {
@@ -116,5 +120,41 @@ function Health({ horse }: { horse: OwnerHorse }) {
   </div><aside className={styles.stack}><Section title="Ý nghĩa"><h3>Sức khỏe</h3><ul><li>Khỏe mạnh</li><li>Đang theo dõi</li><li>Đang được thú y chăm sóc</li></ul><h3>Mức sẵn sàng tập luyện</h3><ul><li>Sẵn sàng — được tập bình thường</li><li>Hạn chế — vẫn tập trong giới hạn do Veterinarian đặt</li><li>Khóa — Veterinarian đã tạm dừng tập luyện</li></ul></Section><AlertBanner className={styles.note} title="Cổng này không hiển thị chi tiết y tế như chẩn đoán, điều trị và thuốc. Chỉ Veterinarian được thay đổi sức khỏe hoặc mức sẵn sàng." /></aside></div>;
 }
 function Training({ horse }: { horse: OwnerHorse }) {
-  return <div className={styles.columns}><div className={styles.stack}><Section title="Chương trình huấn luyện hiện tại">{horse.program ? <><Facts><Fact label="Chương trình" value={horse.program.name} /><Fact label="Giai đoạn hiện tại" value={horse.program.phase} /><Fact label="Thời gian" value={`${calendar(horse.program.from)} – ${calendar(horse.program.to)}`} /><Fact label="Trainer" value={horse.program.trainer} /></Facts><Fact label="Tiến độ chương trình" value={horse.program.completed !== undefined && horse.program.planned !== undefined ? `${horse.program.completed} / ${horse.program.planned} buổi tập đã hoàn thành` : missing} /></> : <EmptyState title="Chưa có chương trình huấn luyện" description="Tóm tắt chương trình sẽ hiện ở đây khi câu lạc bộ chia sẻ." />}</Section><Section title="Buổi tập gần đây">{horse.sessions.length ? <div>{horse.sessions.map((session) => <div className={styles.session} key={session.id}><time title={session.date} dateTime={session.date}>{calendar(session.date)}</time><strong>{session.title ?? missing}</strong><span>{session.distanceM == null ? missing : `${new Intl.NumberFormat('vi-VN').format(session.distanceM)} m`}</span><StatusBadge family="session" status={session.status} /></div>)}</div> : <EmptyState title="Chưa có buổi tập nào" />}</Section><Section title="Cập nhật từ Trainer"><div className={styles.quote}><Icon name="user" size={16} /><p>Chưa có cập nhật.</p></div></Section></div><aside className={styles.stack}><Section title="Buổi tập tiếp theo">{horse.nextSession ? <><strong><time dateTime={horse.nextSession.date} title={horse.nextSession.date}>{timestamp(horse.nextSession.date)}{horse.nextSession.end ? ` – ${new Intl.DateTimeFormat('vi-VN', { timeStyle: 'short' }).format(new Date(horse.nextSession.end))}` : ''}</time></strong><p className={styles.caption}>{[horse.nextSession.title, horse.nextSession.phase].filter(Boolean).join(' · ') || missing}</p></> : <p className={styles.caption}>Hiện khi có lịch buổi tập tiếp theo</p>}</Section><AlertBanner className={styles.note} title="Bạn có thể theo dõi việc huấn luyện ở đây. Chương trình, buổi tập và người cưỡi do các huấn luyện viên của câu lạc bộ quản lý." /></aside></div>;
+  return <div className={horse.nextSession ? styles.columns : styles.stack}>
+    <div className={styles.stack}>
+      <Section title="Chương trình huấn luyện hiện tại">
+        {horse.program ? <>
+          <Facts>
+            <Fact label="Chương trình" value={horse.program.name} />
+            <Fact label="Giai đoạn hiện tại" value={horse.program.phase} />
+            <Fact label="Thời gian" value={`${calendar(horse.program.from)} – ${calendar(horse.program.to)}`} />
+            {horse.program.trainer && <Fact label="Trainer" value={horse.program.trainer} />}
+          </Facts>
+          <Fact label="Tiến độ chương trình" value={horse.program.completed !== undefined && horse.program.planned !== undefined
+            ? `${horse.program.completed} / ${horse.program.planned} buổi tập đã hoàn thành` : missing} />
+        </> : <EmptyState title="Chưa có chương trình huấn luyện" description="Tóm tắt sẽ hiện ở đây khi có chương trình." />}
+      </Section>
+      <Section title="Buổi tập gần đây">
+        {horse.sessions.length ? <div>{horse.sessions.map((session) => (
+          <div className={styles.session} key={session.id}>
+            <time dateTime={session.date}>{timestamp(session.date)}</time>
+            <div className={styles.sessionRecord}>
+              {session.evaluationResult ? <strong>{RESULT_LABELS[session.evaluationResult]}</strong>
+                : session.status === 'COMPLETED' ? <span>Chưa có đánh giá tóm tắt</span> : null}
+              {session.distanceM != null && <span>{new Intl.NumberFormat('vi-VN').format(session.distanceM)} m</span>}
+            </div>
+            <StatusBadge family="session" status={session.status} />
+          </div>
+        ))}</div> : <EmptyState title="Chưa có buổi tập nào" />}
+      </Section>
+    </div>
+    {horse.nextSession && <aside className={styles.stack}>
+      <Section title="Buổi tập tiếp theo">
+        <strong><time dateTime={horse.nextSession.date}>
+          {timestamp(horse.nextSession.date)}{horse.nextSession.end ? ` – ${new Intl.DateTimeFormat('vi-VN', { timeStyle: 'short' }).format(new Date(horse.nextSession.end))}` : ''}
+        </time></strong>
+        {horse.nextSession.phase && <p className={styles.caption}>{horse.nextSession.phase}</p>}
+      </Section>
+    </aside>}
+  </div>;
 }

@@ -6,8 +6,8 @@ import { buildRoutes } from '../../app/router';
 import { AuthProvider } from '../../shared/auth/AuthProvider';
 import { authSession } from '../../shared/auth/authSession';
 import { ROLE_CODES, type RoleCode } from '../../shared/auth/roles';
-import { failure, fixtureResponse, headTrainer } from './__tests__/httpFixtures';
-import { createdProgram, template, validRequest } from './__tests__/fixtures';
+import { failure, fixtureResponse, headTrainer, ok } from './__tests__/httpFixtures';
+import { candidate, createdProgram, template, validRequest } from './__tests__/fixtures';
 
 type Actor = ReturnType<typeof userEvent.setup>;
 type Override = (url: URL, init?: RequestInit) => Response | Promise<Response> | undefined;
@@ -58,6 +58,29 @@ const submit = () => screen.getByRole('button', { name: 'Tạo và kích hoạt 
 describe('CORE-022 UI + production router + real transport with HTTP fixtures (not live BE)', () => {
   beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-10-20T03:00Z')); localStorage.clear(); sessionStorage.clear(); });
   afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.useRealTimers(); });
+
+  it('explains in Vietnamese that a template without required skills permits selecting an active Trainer', async () => {
+    const reason = 'The template version lists no required specialization.';
+    const { actor } = setup({ override: (url) => url.pathname.endsWith('/trainer-recommendations')
+      ? ok({ candidates: [{ ...candidate, label: 'SUITABLE', reasons: [reason], warnings: [] }] })
+      : undefined });
+    await toTrainer(actor);
+    expect(screen.getByText(/Mẫu này không yêu cầu chuyên môn cụ thể/)).toBeVisible();
+    expect(screen.queryByText(reason)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Chọn Fixture Trainer' })).toBeEnabled();
+  });
+
+  it('selects an eligible horse from anywhere in its row and leaves a locked row unchanged', async () => {
+    const { actor } = setup();
+    const locked = await screen.findByRole('radio', { name: /^Chọn Locked Horse \(/ });
+    const ready = screen.getByRole('radio', { name: /^Chọn Thunder Bolt \(/ });
+    await actor.click(locked.closest('tr')!.cells[1]);
+    expect(locked).not.toBeChecked();
+    await actor.click(ready.closest('tr')!.cells[1]);
+    expect(ready).toBeChecked();
+    expect(ready.closest('tr')).toHaveAttribute('aria-selected', 'true');
+    expect(screen.queryByRole('heading', { name: 'Ngựa đã chọn' })).not.toBeInTheDocument();
+  });
 
   it('lets Head Trainer enter from workspace, complete all steps, send a pinned DTO and read the saved result', async () => {
     const { actor, router, posts, fetchMock } = setup({ path: '/dashboard' });

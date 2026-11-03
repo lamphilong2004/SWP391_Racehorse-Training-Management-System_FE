@@ -1,0 +1,41 @@
+.sessionPhoto {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  margin-block-end: 0.75rem;
+  border-radius: 0.625rem;
+  background: var(--color-surface-subtle, #f1f5f9);
+  padding: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.sessionPhoto:has(img) {
+  padding: 0;
+}
+
+.sessionPhoto img {
+  display: block;
+  width: 100%;
+  max-height: 13rem;
+  object-fit: contain;
+}
+
+.thumbnail {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  overflow: hidden;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-subtle);
+  color: var(--color-text-secondary);
+}
+
+.thumbnail img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

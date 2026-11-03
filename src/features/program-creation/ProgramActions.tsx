@@ -57,6 +57,7 @@ function ReassignModal({ program, onClose, onDone }: { program: ProgramDetail; o
   const [acknowledged, setAcknowledged] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState('');
   const options = (candidates.data?.candidates ?? []).filter((item) => item.user.id !== program.currentTrainer?.id);
   const selected = options.find((item) => item.user.id === trainerId);
+  const chooseTrainer = (id: number) => { setTrainerId(id); setAcknowledged(false); };
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (busy) return;
@@ -73,11 +74,12 @@ function ReassignModal({ program, onClose, onDone }: { program: ProgramDetail; o
       {candidates.pending && <LoadingState label="Đang tải danh sách Trainer phù hợp…" />}
       {candidates.error && <ErrorState title="Không tải được danh sách ứng viên" description={candidates.error} onRetry={candidates.reload} />}
       {candidates.data && (options.length === 0 ? <EmptyState title="Không có Trainer nào khác đang hoạt động" description={candidates.data.emptyReason ?? 'Chỉ có Trainer hiện tại đang hoạt động.'} /> : options.map((candidate) => <CandidateCard key={candidate.user.id}
+        onSelect={busy || candidate.hardBlock ? undefined : () => chooseTrainer(candidate.user.id)}
         name={candidate.user.fullName} subtitle={`Trainer${candidate.experienceLevel ? ` · ${candidate.experienceLevel}` : ''}`}
         tags={candidate.skills} facts={[{ label: 'Mức phù hợp', value: viLabel(candidate.label) }, { label: 'Lý do', value: candidate.reasons.join(' · ') || 'Chưa cung cấp' },
           ...(candidate.warnings.length ? [{ label: 'Cảnh báo', value: candidate.warnings.join(' · ') }] : []), ...(candidate.hardBlock ? [{ label: 'Bị chặn', value: candidate.hardBlock }] : [])]}
         className={trainerId === candidate.user.id ? styles.selected : undefined}
-        actions={<Button type="button" variant="secondary" aria-pressed={trainerId === candidate.user.id} disabled={busy || Boolean(candidate.hardBlock)} onClick={() => { setTrainerId(candidate.user.id); setAcknowledged(false); }}>
+        actions={<Button type="button" variant="secondary" aria-pressed={trainerId === candidate.user.id} disabled={busy || Boolean(candidate.hardBlock)} onClick={() => chooseTrainer(candidate.user.id)}>
           {trainerId === candidate.user.id ? `Đã chọn ${candidate.user.fullName}` : `Chọn ${candidate.user.fullName}`}</Button>} />))}
       <TextField label="Trainer mới phụ trách từ ngày" type="date" required value={effectiveFrom} disabled={busy} onChange={(event) => setEffectiveFrom(event.target.value)} />
       <TextAreaField label="Lý do đổi Trainer (không bắt buộc)" maxLength={500} value={reason} disabled={busy} onChange={(event) => setReason(event.target.value)} />

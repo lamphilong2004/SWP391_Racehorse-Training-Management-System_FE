@@ -270,6 +270,9 @@ function PedigreeOwnershipPageContent() {
       </div>
 
       {parentPicker && <HorseRecordPicker api={api} kind={parentPicker} horseId={horse.id} onClose={() => setParentPicker(undefined)}
+        otherParentId={parentPicker === 'sire'
+          ? damChoice?.id ?? (dam === (horse.pedigree.dam.name || horse.pedigree.dam.horseCode) ? horse.pedigree.dam.horseId ?? undefined : undefined)
+          : sireChoice?.id ?? (sire === (horse.pedigree.sire.name || horse.pedigree.sire.horseCode) ? horse.pedigree.sire.horseId ?? undefined : undefined)}
         onSelected={selected => {
           if (parentPicker === 'sire') { setSire(selected.name); setSireChoice(selected); }
           else { setDam(selected.name); setDamChoice(selected); }

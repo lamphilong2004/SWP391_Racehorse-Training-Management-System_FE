@@ -4,11 +4,10 @@ import styles from './PhotoAttachmentTile.module.css';
 
 export type PhotoAttachmentTileProps =
   | { state: 'empty'; onAdd?: () => void; className?: string }
-  | { state: 'attached'; fileName: string; onRemove?: () => void; className?: string };
+  | { state: 'attached'; fileName: string; previewUrl?: string; onRemove?: () => void; className?: string };
 
 /**
- * Figma Photo Attachment Tile (239:499) for MF-12 incident photos (BR-28): Empty (add) · Attached (placeholder +
- * remove). UI only — image storage is unresolved (Q-18), so no upload or preview is implemented here.
+ * Figma Photo Attachment Tile (239:499). The caller owns the selected file and preview URL.
  */
 export function PhotoAttachmentTile(props: PhotoAttachmentTileProps) {
   if (props.state === 'empty') {
@@ -21,7 +20,7 @@ export function PhotoAttachmentTile(props: PhotoAttachmentTileProps) {
   }
   return (
     <div className={cx(styles.tile, styles.attached, props.className)}>
-      <Icon name="image" size={28} className={styles.imageIcon} />
+      {props.previewUrl ? <img className={styles.preview} src={props.previewUrl} alt="" /> : <Icon name="image" size={28} className={styles.imageIcon} />}
       <span className={styles.fileName}>{props.fileName}</span>
       <button
         type="button"

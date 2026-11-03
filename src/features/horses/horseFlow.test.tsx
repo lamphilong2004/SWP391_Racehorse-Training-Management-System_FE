@@ -23,7 +23,6 @@ it('registers, declares ownership, assigns a FREE box and shows pending baseline
   const router = open('/horses/new'), user = userEvent.setup();
   await screen.findByRole('heading', { name: 'Thêm ngựa' });
   await user.type(screen.getByLabelText('Tên ngựa *'), 'River Dance');
-  await user.type(screen.getByLabelText('Mã ngựa *'), 'RD-015');
   fireEvent.change(screen.getByLabelText('Ngày sinh'), { target: { value: '2023-03-14' } });
   await user.selectOptions(screen.getByLabelText('Giới tính'), 'Filly');
   await user.selectOptions(screen.getByLabelText('Giống ngựa'), 'Thoroughbred');
@@ -46,15 +45,19 @@ it('registers, declares ownership, assigns a FREE box and shows pending baseline
   expect(saved.lifecycle).toBe('DRAFT'); expect(saved.activatedAt).toBeNull(); expect(saved.currentOwnerships[0].sharePercentage).toBe(65);
   expect(fetch).not.toHaveBeenCalled();
 });
-it('keeps registration input on duplicate code and can retry with corrected code', async () => {
+it('keeps registration input on a duplicate registry number and can retry', async () => {
+  setBusinessActor(manager); await requestApi('/api/horses/7');
+  const samples = readSamples();
+  samples.horseRegistry!.records[0].registrationNo = 'CHIP-007';
+  saveSamples(samples);
   open('/horses/new'); const user = userEvent.setup(); await screen.findByRole('heading', { name: 'Thêm ngựa' });
-  await user.type(screen.getByLabelText('Tên ngựa *'), 'Retry Horse'); await user.type(screen.getByLabelText('Mã ngựa *'), 'RH-007');
+  await user.type(screen.getByLabelText('Tên ngựa *'), 'Retry Horse'); await user.type(screen.getByLabelText('Số vi mạch / số đăng ký'), 'CHIP-007');
   fireEvent.change(screen.getByLabelText('Ngày sinh'), { target: { value: '2021-03-01' } });
   await user.selectOptions(screen.getByLabelText('Giới tính'), 'Mare'); await user.selectOptions(screen.getByLabelText('Giống ngựa'), 'Arabian');
   await user.click(screen.getByRole('button', { name: 'Lưu nháp & tiếp tục' }));
   expect(await screen.findByText('Horse code or registration number is already used.')).toBeInTheDocument();
   expect(screen.getByLabelText('Tên ngựa *')).toHaveValue('Retry Horse');
-  await user.clear(screen.getByLabelText('Mã ngựa *')); await user.type(screen.getByLabelText('Mã ngựa *'), 'RETRY-008');
+  await user.clear(screen.getByLabelText('Số vi mạch / số đăng ký')); await user.type(screen.getByLabelText('Số vi mạch / số đăng ký'), 'CHIP-008');
   await user.click(screen.getByRole('button', { name: 'Lưu nháp & tiếp tục' }));
   expect(await screen.findByRole('heading', { name: 'Phả hệ & quyền sở hữu · Retry Horse' })).toBeInTheDocument();
 });
@@ -110,7 +113,6 @@ it.each([404, 503])('keeps a created identity reachable when supporting APIs ret
   const router = open('/horses/new');
   await screen.findByRole('heading', { name: 'Thêm ngựa' });
   fireEvent.change(screen.getByLabelText('Tên ngựa *'), { target: { value: created.name } });
-  fireEvent.change(screen.getByLabelText('Mã ngựa *'), { target: { value: created.horseCode } });
   fireEvent.click(screen.getByRole('button', { name: 'Lưu nháp & tiếp tục' }));
   await screen.findByText('Không tải được dữ liệu thiết lập ngựa');
   expect(screen.queryByText('Không tìm thấy ngựa này.')).not.toBeInTheDocument();
@@ -123,6 +125,40 @@ it.each([404, 503])('keeps a created identity reachable when supporting APIs ret
   await screen.findByRole('heading', { name: created.name });
   expect(router.state.location.pathname).toBe('/horses/501');
 });
+it('uploads the selected photo with the identifier returned by horse creation', async () => {
+  setBusinessActor(manager);
+  const base = await requestApi<HorseDetail>('/api/horses/7');
+  const horse = { ...base, id: 502, horseCode: 'PHOTO-502', name: 'Photo Draft', lifecycle: 'DRAFT' };
+  vi.stubEnv('VITE_BUSINESS_DATA_SOURCE', 'api');
+  const fetcher = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+    const path = new URL(String(input), 'http://localhost').pathname;
+    if (path === '/api/horses' && init?.method === 'POST') {
+      return Promise.resolve(Response.json({ success: true, data: horse }, { status: 201 }));
+    }
+    if (path === '/api/horses/502/photos' && init?.method === 'POST') {
+      return Promise.resolve(Response.json({ success: true, data: { id: 1 } }, { status: 201 }));
+    }
+    if (path === '/api/horses/502') return Promise.resolve(Response.json({ success: true, data: horse }));
+    return Promise.resolve(Response.json({ success: false, error: { code: 'NOT_FOUND' } }, { status: 404 }));
+  });
+  vi.stubGlobal('fetch', fetcher);
+  open('/horses/new');
+  await screen.findByRole('heading', { name: 'Thêm ngựa' });
+  fireEvent.change(screen.getByLabelText('Tên ngựa *'), { target: { value: horse.name } });
+  const image = new File(['image bytes'], 'photo.png', { type: 'image/png' });
+  fireEvent.change(screen.getByLabelText('Thêm ảnh'), { target: { files: [image] } });
+  fireEvent.click(screen.getByRole('button', { name: 'Lưu nháp & tiếp tục' }));
+  await screen.findByText('Không tải được dữ liệu thiết lập ngựa');
+
+  const writes = fetcher.mock.calls.filter(([, init]) => init?.method === 'POST');
+  expect(writes.map(([path]) => new URL(String(path), 'http://localhost').pathname))
+    .toEqual(['/api/horses', '/api/horses/502/photos']);
+  const form = writes[1][1]?.body as FormData;
+  const sent = form.get('file') as File;
+  expect(sent).toMatchObject({ name: image.name, type: image.type, size: image.size });
+  expect(new Headers(writes[1][1]?.headers).has('Content-Type')).toBe(false);
+});
+
 it('retains the identity 404 error without offering an unverified saved profile', async () => {
   vi.stubEnv('VITE_BUSINESS_DATA_SOURCE', 'api');
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ success: false, error: { code: 'NOT_FOUND', message: 'Không tìm thấy ngựa' } }), { status: 404 })));
@@ -220,20 +256,18 @@ it('preserves a server-supplied sex value outside the Figma suggestions while ed
 it('saves a minimal draft without inventing missing identity values', async () => {
   open('/horses/new'); await screen.findByRole('heading', { name: 'Thêm ngựa' });
   fireEvent.change(screen.getByLabelText('Tên ngựa *'), { target: { value: 'Draft Arrival' } });
-  fireEvent.change(screen.getByLabelText('Mã ngựa *'), { target: { value: 'DRAFT-009' } });
   fireEvent.click(screen.getByRole('button', { name: 'Lưu nháp & tiếp tục' }));
   await screen.findByRole('heading', { name: 'Phả hệ & quyền sở hữu · Draft Arrival' });
-  expect(readSamples().horseRegistry!.records.find((horse) => horse.horseCode === 'DRAFT-009')).toMatchObject({ lifecycle: 'DRAFT', breed: null, sex: null, foaledDate: null, activatedAt: null });
+  expect(readSamples().horseRegistry!.records.find((horse) => horse.name === 'Draft Arrival')).toMatchObject({ horseCode: expect.stringMatching(/^RH-\d+$/), lifecycle: 'DRAFT', breed: null, sex: null, foaledDate: null, activatedAt: null });
 });
 it('retains the actual custom breed rather than serializing the Other option', async () => {
   open('/horses/new'); await screen.findByRole('heading', { name: 'Thêm ngựa' });
   fireEvent.change(screen.getByLabelText('Tên ngựa *'), { target: { value: 'Custom Breed' } });
-  fireEvent.change(screen.getByLabelText('Mã ngựa *'), { target: { value: 'CUSTOM-01' } });
   await userEvent.selectOptions(screen.getByLabelText('Giống ngựa'), '__CUSTOM__');
   fireEvent.change(screen.getByLabelText('Giống ngựa (nhập tay)'), { target: { value: 'Akhal-Teke' } });
   fireEvent.click(screen.getByRole('button', { name: 'Lưu nháp & tiếp tục' }));
   await screen.findByRole('heading', { name: 'Phả hệ & quyền sở hữu · Custom Breed' });
-  expect(readSamples().horseRegistry!.records.find((horse) => horse.horseCode === 'CUSTOM-01')?.breed).toBe('Akhal-Teke');
+  expect(readSamples().horseRegistry!.records.find((horse) => horse.name === 'Custom Breed')?.breed).toBe('Akhal-Teke');
 });
 it('makes pending horses after the first page reachable', async () => {
   setBusinessActor(manager); await requestApi('/api/horses/7');
@@ -259,7 +293,6 @@ it.each(['GROOM', 'WORK_RIDER'] as const)('provides shared header account logout
 it('declares optional racing strengths on registration and shows them on the profile', async () => {
   const router = open('/horses/new'); await screen.findByRole('heading', { name: 'Thêm ngựa' });
   fireEvent.change(screen.getByLabelText('Tên ngựa *'), { target: { value: 'Quick Step' } });
-  fireEvent.change(screen.getByLabelText('Mã ngựa *'), { target: { value: 'STR-010' } });
   const distance = screen.getByRole('group', { name: 'Cự ly sở trường' });
   await userEvent.click(within(screen.getByRole('group', { name: 'Thể chất' })).getByLabelText('Tốc độ'));
   await userEvent.click(within(distance).getByLabelText('Nước rút'));
@@ -274,7 +307,7 @@ it('declares optional racing strengths on registration and shows them on the pro
   await userEvent.click(within(distance).getByLabelText('Nước rút'));
   fireEvent.click(screen.getByRole('button', { name: 'Lưu nháp & tiếp tục' }));
   await screen.findByRole('heading', { name: 'Phả hệ & quyền sở hữu · Quick Step' });
-  expect(readSamples().horseRegistry!.records.find((horse) => horse.horseCode === 'STR-010')?.strengths).toEqual(['SPRINT', 'SPEED']);
+  expect(readSamples().horseRegistry!.records.find((horse) => horse.name === 'Quick Step')?.strengths).toEqual(['SPRINT', 'SPEED']);
   await router.navigate(`/horses/${router.state.location.pathname.split('/')[2]}`);
   expect(await screen.findByText('Nước rút · Tốc độ')).toBeInTheDocument();
 });

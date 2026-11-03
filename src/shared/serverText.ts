@@ -68,7 +68,7 @@ const TEXT: Record<string, string> = {
   'Work Rider has an overlapping session schedule.': 'Work Rider đã có buổi tập trùng khung giờ này.',
   'The scheduled time has passed; the Trainer must reschedule the session.': 'Đã quá giờ dự kiến của buổi tập; Trainer cần dời lịch trước khi bắt đầu.',
   'The scheduled time has passed; the Trainer must reschedule before a pre-session check.': 'Đã quá giờ dự kiến của buổi tập; Trainer cần dời lịch trước khi kiểm tra.',
-  'The pre-session check opens 12 hours before the scheduled start.': 'Chỉ được kiểm tra trước buổi tập trong vòng 12 giờ trước giờ bắt đầu.',
+  'The pre-session check opens 12 hours before the scheduled start.': 'Chưa đến thời gian kiểm tra. Groom có thể kiểm tra từ 12 giờ trước giờ bắt đầu buổi tập.',
   'The pre-session check is older than 12 hours before the scheduled start; ask the Groom for a new check.': 'Kết quả kiểm tra đã cũ hơn 12 giờ so với giờ bắt đầu; cần Groom kiểm tra lại.',
   'A pre-session check is already recorded; the session cannot move more than 12 hours after that check.': 'Buổi tập đã có kết quả kiểm tra; không thể dời lịch quá 12 giờ sau lần kiểm tra đó.',
   'A session cannot start before its scheduledStart; the Trainer must reschedule.': 'Chưa đến giờ bắt đầu dự kiến của buổi tập.',

@@ -30,9 +30,9 @@ function activation(h: HorseDetail, state: HorseSampleState): ActivationStatus {
 export async function handleHorseSample(path: string, init: RequestInit, actor: CurrentUser): Promise<{ handled: boolean; data?: unknown }> {
   const url = new URL(path, 'http://sample.invalid');
   const route = url.pathname, method = (init.method ?? 'GET').toUpperCase();
-  if (!(route === '/api/horses' || route === '/api/stable-boxes' || route === '/api/admin/users' || /^\/api\/horses\/(pending-activation|\d+(?:\/(pedigree|ownerships|photos|stable-assignments|activation-status))?)$/.test(route))) return { handled: false };
+  if (!(route === '/api/horses' || route === '/api/stable-boxes' || route === '/api/admin/users' || /^\/api\/horses\/(next-code|pending-activation|\d+(?:\/(pedigree|ownerships|photos|stable-assignments|activation-status))?)$/.test(route))) return { handled: false };
   if (!actor.roles.some((role) => ['CLUB_MANAGER', 'HEAD_TRAINER', 'TRAINER', 'VETERINARIAN', 'GROOM'].includes(role))) throw new ApiError(403, 'FORBIDDEN', 'Horse access is unavailable for your role.');
-  if (method !== 'GET' || route === '/api/admin/users' || route.includes('activation')) {
+  if (method !== 'GET' || route === '/api/admin/users' || route === '/api/horses/next-code' || route.includes('activation')) {
     if (!actor.roles.includes('CLUB_MANAGER')) throw new ApiError(403, 'FORBIDDEN', 'Only Club Manager manages the horse register.');
   }
   const data = readSamples();
@@ -44,12 +44,21 @@ export async function handleHorseSample(path: string, init: RequestInit, actor: 
   const result = (value: unknown) => { saveSamples(data); return { handled: true, data: structuredClone(value) }; };
   const page = <T,>(items: T[]) => { const page = Math.max(0, Number(url.searchParams.get('page')) || 0), size = Math.max(1, Number(url.searchParams.get('size')) || 50); return { items: items.slice(page * size, (page + 1) * size), page, size, totalItems: items.length, totalPages: Math.ceil(items.length / size) }; };
   const input = init.body && !(init.body instanceof FormData) ? JSON.parse(String(init.body)) : {};
+  const nextCode = () => {
+    const last = registry.records.reduce((max, horse) => {
+      if (!/^RH-[0-9]{1,17}$/i.test(horse.horseCode)) return max;
+      const number = BigInt(horse.horseCode.slice(3));
+      return number > max ? number : max;
+    }, BigInt(registry.records.length));
+    return `RH-${String(last + 1n).padStart(3, '0')}`;
+  };
   const identity = (request: HorseIdentityRequest, id?: number) => {
     if (!request.name?.trim() || !request.horseCode?.trim()) fail(400, 'Horse name and code are required.');
     if (registry.records.some((h) => h.id !== id && (h.horseCode.toLowerCase() === request.horseCode.toLowerCase() || (request.registrationNo && h.registrationNo === request.registrationNo)))) fail(409, 'Horse code or registration number is already used.');
   };
   if (route === '/api/admin/users') return result(page([sampleUser('HORSE_OWNER')]));
   if (route === '/api/stable-boxes') return result(registry.boxes.filter((b) => !url.searchParams.get('status') || b.status === url.searchParams.get('status')));
+  if (route === '/api/horses/next-code' && method === 'GET') return { handled: true, data: { horseCode: nextCode() } };
   if (route === '/api/horses/pending-activation') return result(page(registry.records.map((h) => activation(h, registry)).filter((h) => h.lifecycle === 'DRAFT')));
   if (route === '/api/horses') {
     if (method === 'GET') {
@@ -57,6 +66,7 @@ export async function handleHorseSample(path: string, init: RequestInit, actor: 
       return result(page(registry.records.filter((h) => (!url.searchParams.get('lifecycle') || h.lifecycle === url.searchParams.get('lifecycle')) && (!url.searchParams.get('availability') || h.trainingAvailability === url.searchParams.get('availability')) && `${h.name} ${h.horseCode}`.toLowerCase().includes(q))));
     }
     if (method === 'POST') {
+      if (!input.horseCode?.trim()) input.horseCode = nextCode();
       identity(input);
       const now = new Date().toISOString();
       const record: HorseDetail = { ...input, id: data.nextId++, lifecycle: 'DRAFT', healthStatus: null, trainingAvailability: 'AVAILABLE', currentBoxCode: null, currentAssignment: null, primaryPhotoUrl: null, activatedAt: null, pedigree: { sire: { horseId: null, name: null }, dam: { horseId: null, name: null } }, currentOwnerships: [], createdAt: now, updatedAt: null };

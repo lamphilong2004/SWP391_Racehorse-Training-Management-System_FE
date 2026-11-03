@@ -10,16 +10,20 @@ import { programErrorMessage, stepForField } from './programErrors';
 import { useProgramCreation } from './useProgramCreation';
 import { useProgramCreationApi } from './programTransport';
 import { useProgramLookup } from './useProgramLookup';
-import { AvailabilityNote, DraftSteps, HorseSummary, ProgramResult } from './ProgramSteps';
-import type { CreateProgramRequest, ProgramDetail } from './programTypes';
+import { DraftSteps, ProgramResult } from './ProgramSteps';
+import type { CreateProgramRequest, HorseSelection, ProgramDetail } from './programTypes';
 import styles from './ProgramCreationPage.module.css';
 import { ProgramProfile } from './ProgramProfile';
 import { viLabel } from '../../shared/viLabels';
 import { strengthSummary } from '../horses/shared/options';
 import { dateTime } from '../evaluation/models';
+import { HorsePhotoImage } from '../horses/shared/HorsePhotoImage';
+import { businessDataMode } from '../../shared/data/businessData';
 
 const STEP_NAMES = ['Ngựa', 'Hồ sơ', 'Mẫu chương trình', 'Tùy chỉnh', 'Khối lượng', 'Trainer', 'Xem lại'];
 const STEP_TITLES = ['Chọn ngựa', 'Hồ sơ huấn luyện', 'Chọn mẫu chương trình', 'Tùy chỉnh chương trình', 'Khối lượng và cường độ', 'Phân công Trainer', 'Xem lại và kích hoạt'];
+const canSelectHorse = (horse: HorseSelection) => horse.lifecycle === 'ACTIVE'
+  && horse.trainingAvailability !== 'LOCKED' && !['INJURED', 'QUARANTINED'].includes(horse.healthStatus ?? '');
 
 export function ProgramCreationPage() {
   const { user } = useAuth();
@@ -53,6 +57,11 @@ export function ProgramCreationPage() {
   const selectTemplate = (id: number, versionNo?: number) => {
     setIssues([]); setRequestedTemplate({ id, versionNo });
     void flow.selectTemplate(id, versionNo);
+  };
+  const chooseHorse = (horse: HorseSelection) => {
+    if (!canSelectHorse(horse) || flow.horse?.id === horse.id) return;
+    setIssues([]); setRequestedTemplate(null);
+    void flow.selectHorse(horse);
   };
   const advance = async () => {
     if (flow.pending) return;
@@ -92,39 +101,49 @@ export function ProgramCreationPage() {
       </div>
       {flow.created ? <ProgramResult flow={{ ...flow, created: readback ?? flow.created }} reload={() => void reload()} reloading={reloading} readError={readError} /> : <>
         <WizardStepper steps={STEP_NAMES} currentStep={step} onStepClick={(next) => { if (!busy) edit(next); }} />
-        {flow.horse && <div className={styles.context}><Icon name="horseshoe" /><strong>{flow.horse.name}</strong><span>{flow.horse.horseCode}</span>
+        {step !== 0 && flow.horse && <div className={styles.context}><Icon name="horseshoe" /><strong>{flow.horse.name}</strong><span>{flow.horse.horseCode}</span>
           <StatusBadge family="availability" status={flow.horse.trainingAvailability} />
           {flow.template && <span>{flow.template.template.templateCode} · v{flow.template.version.versionNo}</span>}
         </div>}
-        {!flow.horse && <div className={styles.context}><Icon name="horseshoe" /><span>Ngựa: chưa chọn</span></div>}
         {flow.error != null && <AlertBanner type="danger" title="Yêu cầu thất bại">{programErrorMessage(flow.error)}
           {flow.error instanceof ApiError && flow.error.details.length > 0 && <ul className={styles.reasons}>{flow.error.details.map((detail, index) => <li key={index}>{detail.message}</li>)}</ul>}
         </AlertBanner>}
         {flow.pending && <p role="status">{busy ? 'Đang tạo chương trình…' : 'Đang tải lựa chọn…'}</p>}
         {allIssues.length > 0 && <AlertBanner type="danger" title="Hãy kiểm tra các trường được đánh dấu"><ul className={styles.reasons}>{allIssues.map((issue, index) => <li key={`${issue.field}-${index}`}>{issue.message}</li>)}</ul></AlertBanner>}
         <form aria-label="Tạo chương trình huấn luyện" noValidate onSubmit={(event) => { event.preventDefault(); void advance(); }}>
-          <fieldset disabled={busy} className={styles.formBody}>
-            {step === 0 && <div className={styles.columns}><Card title="Chọn ngựa cho chương trình này"><div className={styles.stack}>
-              <div className={styles.row}><TextField label="Tìm ngựa" value={horseSearch} onChange={(event) => setHorseSearch(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); setHorseQuery({ ...horseQuery, q: horseSearch, page: 0 }); } }} />
+          <fieldset disabled={busy} className={step === 0 ? `${styles.formBody} ${styles.horseStep}` : styles.formBody}>
+            {step === 0 && <Card title="Chọn ngựa cho chương trình này"><div className={styles.stack}>
+              <p className={styles.muted}>Bấm vào dòng ngựa để chọn. Ngựa bị khóa tập luyện, chấn thương hoặc cách ly chưa thể được chọn.</p>
+              <div className={styles.horseFilters}><TextField label="Tìm ngựa" value={horseSearch} onChange={(event) => setHorseSearch(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); setHorseQuery({ ...horseQuery, q: horseSearch, page: 0 }); } }} />
                 <SelectField label="Khả năng tập luyện" value={horseQuery.availability} options={[{ value: '', label: 'Tất cả' }, ...['AVAILABLE', 'LIMITED', 'LOCKED'].map((value) => ({ value, label: viLabel(value) }))]} onChange={(event) => setHorseQuery({ ...horseQuery, page: 0, availability: event.target.value })} />
                 <Button type="button" variant="secondary" onClick={() => setHorseQuery({ ...horseQuery, q: horseSearch, page: 0 })}>Tìm ngựa</Button></div>
               {horses.pending && <p role="status">Đang tải danh sách ngựa…</p>}
               {horses.error != null && <ErrorState title="Không tải được danh sách ngựa" description={programErrorMessage(horses.error)} onRetry={horses.retry} />}
-              {horses.data && <div className={styles.table}><DataTable caption="Chọn một ngựa đang hoạt động" rows={horses.data.items.filter((horse) => horse.lifecycle === 'ACTIVE')} rowKey={(horse) => horse.id} selectedKey={flow.horse?.id} columns={[
-                { key: 'horse', header: 'Ngựa', render: (horse) => <label className={styles.horseChoice}><input type="radio" name="program-horse" aria-label={`Chọn ${horse.name} (${horse.horseCode})`} checked={flow.horse?.id === horse.id} disabled={horse.trainingAvailability === 'LOCKED' || ['INJURED', 'QUARANTINED'].includes(horse.healthStatus ?? '')} onChange={() => { setIssues([]); setRequestedTemplate(null); void flow.selectHorse(horse); }} /><Icon name="horseshoe" /><span>{horse.name}<small className={styles.muted}>{horse.horseCode}{horse.breed ? ` · ${horse.breed}` : ''}</small></span></label> },
+              {horses.data && <div className={`${styles.table} ${styles.horseTable}`}><DataTable caption="Chọn một ngựa đang hoạt động" rows={horses.data.items.filter((horse) => horse.lifecycle === 'ACTIVE')} rowKey={(horse) => horse.id} selectedKey={flow.horse?.id}
+                onRowClick={chooseHorse} isRowClickable={canSelectHorse} focusableRows={false} columns={[
+                { key: 'horse', header: 'Ngựa', render: (horse) => <div className={styles.horseChoice}>
+                  {businessDataMode() === 'api' ? <HorsePhotoImage thumbnail name={horse.name} path={`/api/horses/${horse.id}/photos/primary`} /> : <Icon name="horseshoe" size={24} />}
+                  <label>
+                    <input type="radio" name="program-horse" aria-label={`Chọn ${horse.name} (${horse.horseCode})`}
+                      checked={flow.horse?.id === horse.id} disabled={!canSelectHorse(horse)} onChange={() => chooseHorse(horse)} />
+                    <strong>{horse.name}</strong>
+                    <small className={styles.muted}>{horse.horseCode}{horse.breed ? ` · ${horse.breed}` : ''}</small>
+                    {flow.horse?.id === horse.id && <small className={styles.chosenHorse}>Đã chọn</small>}
+                  </label>
+                </div> },
                 { key: 'availability', header: 'Khả năng tập luyện', render: (horse) => <StatusBadge family="availability" status={horse.trainingAvailability} /> },
                 { key: 'strengths', header: 'Thế mạnh (khai báo)', render: (horse) => <span className={horse.strengths?.length ? undefined : styles.muted}>{strengthSummary(horse.strengths)}</span> },
                 { key: 'lastTraining', header: 'Lần tập gần nhất', render: (horse) => horse.lastTrainingAt ? dateTime(horse.lastTrainingAt) : <span className={styles.muted}>Chưa có buổi hoàn thành</span> },
                 { key: 'program', header: 'Chương trình hiện tại', render: (horse) => horse.currentProgramName ?? <span className={styles.muted}>Chưa có</span> },
               ]} /></div>}
               {horses.data?.items.length === 0 && <EmptyState title="Không có ngựa đang hoạt động" description="Hãy thử từ khóa khác." />}
-              {horses.data && <div className={styles.row}>
+              {horses.data && horses.data.totalPages > 1 && <div className={styles.row}>
                 <Button type="button" variant="tertiary" disabled={horseQuery.page === 0} onClick={() => setHorseQuery({ ...horseQuery, page: horseQuery.page - 1 })}>Ngựa trước</Button>
                 <span>Trang {horseQuery.page + 1}/{Math.max(1, horses.data.totalPages)}</span>
                 <Button type="button" variant="tertiary" disabled={horseQuery.page + 1 >= horses.data.totalPages} onClick={() => setHorseQuery({ ...horseQuery, page: horseQuery.page + 1 })}>Ngựa tiếp</Button>
               </div>}
               {error('horseId') && <p className={styles.error}>{error('horseId')}</p>}
-            </div></Card><div className={styles.stack}><HorseSummary flow={flow} /><AvailabilityNote flow={flow} /></div></div>}
+            </div></Card>}
             {step === 1 && flow.horse && <ProgramProfile horse={flow.horse} />}
             {step === 2 && <div className={styles.columns}><div className={styles.stack}>
               <Card title="Mẫu chương trình được gợi ý"><div className={styles.stack}>
@@ -155,7 +174,9 @@ export function ProgramCreationPage() {
             </div></div>}
             {step >= 3 && <DraftSteps step={step} flow={flow} issues={allIssues} update={update} edit={edit} />}
           </fieldset>
-          <ActionBar leading={<span>Bước {step + 1} / 7</span>}><Button type="button" variant="secondary" disabled={step === 0 || busy} onClick={() => edit(step - 1)}>Quay lại</Button>
+          <ActionBar className={step === 0 ? styles.horseActions : undefined}
+            leading={<span role="status">{step === 0 ? flow.horse ? `Đã chọn ${flow.horse.name} · ${flow.horse.horseCode}` : 'Chọn một ngựa để tiếp tục' : `Bước ${step + 1} / 7`}</span>}>
+            {step !== 0 && <Button type="button" variant="secondary" disabled={busy} onClick={() => edit(step - 1)}>Quay lại</Button>}
             <Button type="submit" disabled={Boolean(flow.pending)}>{busy ? 'Đang tạo chương trình…' : step === 6 ? 'Tạo và kích hoạt chương trình' : 'Tiếp tục'}</Button>
           </ActionBar>
         </form>

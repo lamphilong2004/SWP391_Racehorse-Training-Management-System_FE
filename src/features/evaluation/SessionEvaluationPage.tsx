@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { AlertBanner, Button, Card, ChartContainer, DataTable, EmptyState, ErrorState, KeyValue, LoadingState, MetricCard, Modal, StatusBadge, Tabs, UnsavedChangesGuard } from '../../design-system';
 import { AppShell } from '../../layout/AppShell';
@@ -42,6 +42,14 @@ function EvaluationContent({ sessionId, api }: { sessionId: number; api: Evaluat
   const [submitting, setSubmitting] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [confirmReload, setConfirmReload] = useState(false);
+  const evaluationPanel = useRef<HTMLDivElement>(null);
+  const moveToForm = useRef(false);
+  useEffect(() => {
+    if (tab !== 'evaluation' || !moveToForm.current) return;
+    moveToForm.current = false;
+    evaluationPanel.current?.scrollIntoView?.({ block: 'start' });
+    evaluationPanel.current?.focus({ preventScroll: true });
+  }, [tab]);
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
@@ -72,6 +80,7 @@ function EvaluationContent({ sessionId, api }: { sessionId: number; api: Evaluat
   const data = state.data;
   const { session, actual } = data;
   const canEvaluate = user?.roles.includes('TRAINER') && isTerminal(session.status);
+  const needsEvaluation = canEvaluate && !data.evaluation && !session.hasEvaluation;
   const canHistory = HISTORY_ROLES.some((role) => user?.roles.includes(role));
   const changeTab = (view: string) => setSearch((previous) => { const next = new URLSearchParams(previous); next.set('view', view); return next; });
   const selected = ['result', 'comparison', 'evaluation'].includes(tab) ? tab : 'result';
@@ -87,7 +96,13 @@ function EvaluationContent({ sessionId, api }: { sessionId: number; api: Evaluat
         <Button variant="danger" disabled={submitting} onClick={reload}>Hủy và tải lại</Button></>}>
       <p>Đánh giá của bạn chưa được lưu. Tải lại sẽ xóa nội dung đã nhập và lấy dữ liệu buổi tập mới nhất từ máy chủ.</p>
     </Modal>
-    {session.status === 'INTERRUPTED' ? <AlertBanner type="danger" title="BỊ GIÁN ĐOẠN — có thể đánh giá, chưa hoàn thành" children={`${session.interruptionReason || 'Buổi tập đã bị dừng.'} Lưu đánh giá vẫn giữ trạng thái Bị gián đoạn.`} /> : session.status === 'COMPLETED' ? <AlertBanner type="success" title="ĐÃ HOÀN THÀNH — xem lại kết quả đã ghi" children="Ghi đánh giá và khuyến nghị cho buổi tập đã thực hiện này." /> : <AlertBanner type="warning" title="Chưa thể đánh giá" children="Chỉ đánh giá được buổi tập Đã hoàn thành hoặc Bị gián đoạn." />}
+    {session.status === 'INTERRUPTED' ? <AlertBanner type="danger" title="Buổi tập bị gián đoạn">{session.interruptionReason || 'Buổi tập đã bị dừng.'}</AlertBanner> : session.status === 'COMPLETED' ? <AlertBanner type="success" title="Buổi tập đã hoàn thành" /> : <AlertBanner type="warning" title="Chưa thể đánh giá" children="Chỉ đánh giá được buổi tập Đã hoàn thành hoặc Bị gián đoạn." />}
+    {needsEvaluation && tab !== 'evaluation' && <AlertBanner type="info" title="Bước tiếp theo · Chốt đánh giá">
+      <div className="evaluation-next-action">
+        <p>{data.riderFeedback ? 'Work Rider đã gửi phản hồi. ' : ''}Sau khi lưu đánh giá, Horse Owner sẽ thấy nhãn kết quả của buổi này.</p>
+        <Button onClick={() => { moveToForm.current = true; changeTab('evaluation'); }}>Chốt đánh giá</Button>
+      </div>
+    </AlertBanner>}
     <Card><div className="evaluation-facts"><KeyValue label="Giờ bắt đầu dự kiến" value={dateTime(session.scheduledStart)} /><KeyValue label="Giờ kết thúc dự kiến" value={dateTime(session.scheduledEnd)} /><KeyValue label="Trọng tâm buổi tập" value={display(session.focus)} /><KeyValue label="Mặt sân" value={viLabel(session.surface, 'Chưa xác định')} /><KeyValue label="Trainer" value={display(session.trainer?.fullName)} /><KeyValue label="Work Rider" value={session.workRider.fullName} /><KeyValue label="Chương trình / Giai đoạn" value={`Chương trình ${session.programId} · ${session.phaseName}`} /></div><p className="text-caption">Đánh giá này chỉ áp dụng cho buổi tập đã thực hiện, không thay đổi chiến lược chương trình hay mẫu gốc.</p></Card>
     {tab === 'history' && (canHistory ? <PerformanceHistory key={session.horse.id} horseId={session.horse.id} api={api} onError={handleApiError} /> : <AlertBanner type="danger" title="Không có quyền truy cập" children="Vai trò của bạn không được xem lịch sử thành tích của ngựa." />)}
     {/* Kept mounted while History is shown so an unsaved evaluation draft is not lost (UX Playbook v2.1 §1.1). */}
@@ -96,9 +111,12 @@ function EvaluationContent({ sessionId, api }: { sessionId: number; api: Evaluat
       {selected !== 'evaluation' && <div role="tabpanel" id={`evaluation-panel-${selected}`} aria-labelledby={`evaluation-tab-${selected}`}>
         {selected === 'result' ? <ResultPanel data={data} /> : <ComparisonPanel data={data} />}
       </div>}
-      <div role="tabpanel" id="evaluation-panel-evaluation" aria-labelledby="evaluation-tab-evaluation" hidden={selected !== 'evaluation'}>
+      <div ref={evaluationPanel} tabIndex={-1} role="tabpanel" id="evaluation-panel-evaluation" aria-labelledby="evaluation-tab-evaluation" hidden={selected !== 'evaluation'}>
           <div className="evaluation-columns"><div className="evaluation-stack">
-            {saved && <AlertBanner type="success" title="Đã lưu đánh giá" children={`Trạng thái buổi tập vẫn là ${viLabel(session.status)}.`} />}
+            {saved && <AlertBanner type="success" title="Đã lưu đánh giá">
+              <p>{`Trạng thái buổi tập vẫn là ${viLabel(session.status)}.`}</p>
+              <p>Horse Owner có quyền xem hồ sơ ngựa sẽ thấy nhãn kết quả trong mục Huấn luyện & thành tích.</p>
+            </AlertBanner>}
             {data.evaluation ? <Card title="Đánh giá đã ghi"><div className="evaluation-stack"><p>{RESULT_LABELS[data.evaluation.result]}</p><KeyValue label="Tóm tắt" value={display(data.evaluation.evaluatedSummary)} /><KeyValue label="Ghi chú chuyên môn" value={display(data.evaluation.evaluationNotes)} /><KeyValue label="Khuyến nghị" value={display(data.evaluation.recommendation)} /><p className="text-caption">{data.evaluation.evaluatedBy.fullName} · {dateTime(data.evaluation.evaluatedAt)}</p></div></Card> : session.hasEvaluation ? <AlertBanner type="warning" title="Đã có đánh giá" children="Tải lại buổi tập để xem đánh giá đã ghi. Không được gửi lần thứ hai." /> : canEvaluate ?
               <EvaluationForm onPendingChange={setSubmitting} onDirtyChange={setDirty} interrupted={session.status === 'INTERRUPTED'} onSave={async (input) => {
                 try {

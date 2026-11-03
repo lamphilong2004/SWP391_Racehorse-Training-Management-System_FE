@@ -57,8 +57,8 @@ export function IncidentAccess({ detail = false }: { detail?: boolean }) {
   </AppShell>;
 }
 function useIncidentRead<T>(load: () => Promise<T>) {
-  const [revision, setRevision] = useState(0), [state, setState] = useState<{ source?: () => Promise<T>; data?: T; error?: string }>({});
-  useEffect(() => { let active = true; load().then((data) => { if (active) setState({ source: load, data }); }).catch((error: unknown) => { if (active) setState({ source: load, error: safeError(error) }); }); return () => { active = false; }; }, [load, revision]);
+  const [revision, setRevision] = useState(0), [state, setState] = useState<{ source?: () => Promise<T>; data?: T; error?: string; forbidden?: boolean }>({});
+  useEffect(() => { let active = true; load().then((data) => { if (active) setState({ source: load, data }); }).catch((error: unknown) => { if (active) setState({ source: load, error: safeError(error), forbidden: error instanceof ApiError && error.status === 403 }); }); return () => { active = false; }; }, [load, revision]);
   return { ...(state.source === load ? state : {}), reload: () => { setState({}); setRevision((n) => n + 1); } };
 }
 function State({ error, reload }: { error?: string; reload: () => void }) { return error ? <ErrorState title="Không tải được sự cố" description={error} onRetry={reload} /> : <LoadingState label="Đang tải sự cố…" />; }
@@ -76,7 +76,7 @@ export function IncidentListPage({ service, role, actorId, horse, reporter, stab
   const rows = state.data?.items.filter((item) => (!status || item.status === status) && (!horseFilter || String(item.horseId) === horseFilter) && [item.incidentCode, item.horseId, item.description].join(' ').toLowerCase().includes(query.toLowerCase())) ?? [];
   async function submit(input: IncidentCreateRequest) { try { const created = await service.report(input); setSuccess(`Đã gửi sự cố ${created.incidentCode}.`); state.reload(); } catch (error) { throw new Error(safeError(error), { cause: error }); } }
   return <div className="medical-stack">
-    <PageHeader title="Sự cố" description={role === 'GROOM' ? 'Sự cố bạn đã báo' : 'Báo cáo sự cố'} actions={role === 'GROOM' ? <Button onClick={() => setReport(true)}>Báo cáo sự cố</Button> : undefined} />
+    <PageHeader title="Sự cố" description={['GROOM', 'TRAINER', 'WORK_RIDER'].includes(role) ? 'Sự cố bạn đã báo' : 'Báo cáo sự cố'} actions={role === 'GROOM' ? <Button onClick={() => setReport(true)}>Báo cáo sự cố</Button> : undefined} />
     {success && <AlertBanner type="success" title={success}>Đã ghi nhận báo cáo. Chỉ Veterinarian được thay đổi trạng thái xử lý.</AlertBanner>}
     <TableToolbar label="Bộ lọc sự cố" scope="page" resultCount={state.data ? rows.length : undefined} hasFilters={Boolean(query || status || horseFilter)} onClear={() => { setQuery(''); setStatus(''); setHorseFilter(''); }}><TextField label="Tìm trên trang hiện tại" placeholder="Tìm mã sự cố hoặc mã ngựa…" value={query} onChange={(event) => setQuery(event.target.value)} />
       <SelectField label="Ngựa (trang hiện tại)" value={horseFilter} placeholder="Tất cả ngựa" options={horses.map((id) => ({ value: String(id), label: stable?.find((item) => item.id === id)?.label.split(' · ').slice(0, 2).join(' · ') ?? `Ngựa ${id}` }))} onChange={(event) => setHorseFilter(event.target.value)} />
@@ -131,7 +131,10 @@ function IncidentDetail({ id, service, role, actorId, horse, reporter }: { id: n
   }
   const item: Incident | undefined = state.data;
   return <div className="medical-stack"><ButtonLink variant="tertiary" to={MEDICAL_ROUTES.incidents}>← Quay lại danh sách sự cố</ButtonLink>
-    {!item ? <State error={state.error} reload={state.reload} /> : <>
+    {!item ? state.forbidden ? <AlertBanner type="warning" title="Không có quyền xem chi tiết sự cố">
+      <p>Danh sách sự cố chỉ hiển thị các báo cáo tài khoản của bạn được phép xem.</p>
+      {role === 'TRAINER' && <ButtonLink variant="secondary" to="/medical/restrictions">Xem hạn chế tập luyện</ButtonLink>}
+    </AlertBanner> : <State error={state.error} reload={state.reload} /> : <>
       <PageHeader title={item.incidentCode} description={`${labelType(item.incidentType)} · ${displayDate(item.reportedAt)}`} actions={<StatusBadge family="incident" status={item.status} />} />
       <div className="medical-progress" aria-label="Trạng thái xử lý">{(['REPORTED', 'UNDER_REVIEW', 'RESOLVED'] as const).map((status) => <span key={status} className={status === item.status ? 'medical-progress-active' : ''}><StatusBadge family="incident" status={status} /></span>)}<p>Chỉ Veterinarian được chuyển trạng thái này.</p></div>
       <div className="medical-grid medical-treatment-layout"><div className="medical-stack">
