@@ -126,3 +126,25 @@
 /* Standalone back links and links inside table cells get a 24px minimum target (WCAG 2.2 target size). */
 [data-ui-v3] main :is(a, button)[class*='back'],
 [data-ui-v3] main td a:not([class*='button']) { display: inline-flex; align-items: center; min-height: 24px; }
+
+/* Section navigation inside a page banner (e.g. Kế hoạch · Công việc theo ngày · Kho vật tư): a segmented control on
+   the dark banner — the current page is a white pill with navy text, the others light text. */
+[data-ui-v3] [data-page-banner] nav {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: rgb(255 255 255 / 8%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%);
+}
+[data-ui-v3] [data-page-banner] nav a:not([aria-current='page']), [data-ui-v3] [data-page-banner] nav a[aria-current='page'] {
+  padding: 8px 14px;
+  border-radius: 9px;
+  color: rgb(241 245 249 / 92%);
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: none;
+}
+[data-ui-v3] [data-page-banner] nav a:not([aria-current='page']):hover { background: rgb(255 255 255 / 12%); color: #ffffff; }
+[data-ui-v3] [data-page-banner] nav a[aria-current='page'] { background: #ffffff; color: var(--color-brand-primary, #0b132b); box-shadow: 0 2px 8px -2px rgb(0 0 0 / 30%); }
+[data-ui-v3] [data-page-banner] nav a:focus-visible { outline: 2px solid #6ee7b7; outline-offset: 2px; }
