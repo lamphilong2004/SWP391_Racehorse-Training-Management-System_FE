@@ -35,9 +35,10 @@ function mount(path = '/horses', options: { role?: RoleCode; anonymous?: boolean
     expect(new Headers(init?.headers).get('Authorization')).toMatch(/^Bearer fixture-/);
     if (options.offline) throw new Error('network fixture');
     if (options.status) return failure(options.status);
+    if (path === '/api/horses/next-code') return ok({ horseCode: 'RH-005' });
     if (path === '/api/horses' && method === 'POST') {
       if (options.create) return options.create();
-      const saved = { ...horse(82), ...JSON.parse(String(init?.body)), lifecycle: 'DRAFT' as const }; store.push(saved); return ok(saved, 201);
+      const saved = { ...horse(82), horseCode: 'RH-006', ...JSON.parse(String(init?.body)), lifecycle: 'DRAFT' as const }; store.push(saved); return ok(saved, 201);
     }
     if (path === '/api/horses' && method === 'GET') return ok(options.list ? options.list(url) : { items: store, page: 0, size: 20, totalItems: store.length, totalPages: 1 });
     if (/^\/api\/horses\/\d+$/.test(path)) return ok(store.find((h) => h.id === Number(path.split('/')[3])) ?? horse());
@@ -103,7 +104,6 @@ it('uses a country dropdown while preserving custom origin text through failed s
   expect(custom).toHaveValue('Japan');
   fireEvent.change(custom, { target: { value: 'Existing custom origin' } });
   fireEvent.change(screen.getByLabelText('Tên ngựa *'), { target: { value: 'Origin fixture' } });
-  fireEvent.change(screen.getByLabelText('Mã ngựa *'), { target: { value: 'ORIGIN' } });
   await userEvent.click(screen.getByRole('button', { name: 'Lưu nháp & tiếp tục' }));
   await screen.findByText('Duplicate code');expect(custom).toHaveValue('Existing custom origin');
 });
@@ -112,8 +112,7 @@ it('wires a selected pedigree record by ID even when two candidates share a name
   const state = mount('/horses/81/edit', { setup: true, store: [horse(), { ...horse(91), name: 'Same parent', horseCode: 'P-91' }, { ...horse(92), name: 'Same parent', horseCode: 'P-92' }] });
   await screen.findByRole('heading', { name: 'Phả hệ & quyền sở hữu · Fixture Draft' });
   await userEvent.click(screen.getByRole('button', { name: 'Chọn ngựa cha có hồ sơ' }));
-  await screen.findByRole('option', { name: 'Same parent · P-92' });
-  await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Hồ sơ ngựa cha' }), '92');
+  await userEvent.click(await screen.findByRole('radio', { name: 'Same parent · P-92' }));
   await userEvent.click(screen.getByRole('button', { name: 'Dùng hồ sơ đã chọn' }));
   expect(screen.getByLabelText('Ngựa cha *')).toHaveValue('Same parent');
   fireEvent.change(screen.getByLabelText('Ngựa mẹ *'), { target: { value: 'External dam' } });
@@ -136,14 +135,17 @@ it('enters Horse register from workspace menu, creates a DRAFT then lists/detail
   const state = mount('/dashboard', { store: [] });
   await userEvent.click(await screen.findByRole('link', { name: 'Ngựa' }));
   await userEvent.click(await screen.findByRole('link', { name: 'Thêm ngựa' }));
+  await waitFor(() => expect(screen.getByLabelText('Mã ngựa')).toHaveValue('RH-005'));
+  expect(screen.getByLabelText('Mã ngựa')).toHaveAttribute('readonly');
   fireEvent.change(screen.getByLabelText('Tên ngựa *'), { target: { value: 'New Fixture' } });
-  fireEvent.change(screen.getByLabelText('Mã ngựa *'), { target: { value: 'FIX-NEW' } });
   fireEvent.click(screen.getByRole('button', { name: 'Lưu nháp & tiếp tục' }));
   await screen.findByRole('heading', { name: 'Phả hệ & quyền sở hữu · New Fixture' });
+  expect(screen.getAllByText(/RH-006/).length).toBeGreaterThan(0);
   expect(screen.getByText('Không tải được dữ liệu thiết lập ngựa')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Lưu & tiếp tục' })).toBeDisabled();
-  expect(state.requests.find((r) => r.method === 'POST')).toMatchObject({ path: '/api/horses', body: { name: 'New Fixture', horseCode: 'FIX-NEW', breed: null, sex: null, foaledDate: null } });
+  expect(state.requests.find((r) => r.method === 'POST')).toMatchObject({ path: '/api/horses', body: { name: 'New Fixture', breed: null, sex: null, foaledDate: null } });
   expect(state.requests.find((r) => r.method === 'POST')!.body).not.toHaveProperty('lifecycle');
+  expect(state.requests.find((r) => r.method === 'POST')!.body).not.toHaveProperty('horseCode');
   await userEvent.click(screen.getByRole('link', { name: 'Xem hồ sơ ngựa đã lưu' }));
   await screen.findByRole('heading', { name: 'New Fixture' });
   await userEvent.click(screen.getByRole('link', { name: '← Quay lại danh sách ngựa' }));
@@ -153,24 +155,22 @@ it('enters Horse register from workspace menu, creates a DRAFT then lists/detail
   await screen.findByRole('heading', { name: 'New Fixture' });
   expect(screen.getAllByText('Nháp').length).toBeGreaterThan(0);
 });
-it('validates required identity locally and keeps inputs after duplicate-code/network errors', async () => {
+it('validates required identity locally and keeps inputs after server errors', async () => {
   const { requests } = mount('/horses/new', { create: async () => failure(409, 'Duplicate code') });
   await screen.findByRole('heading', { name: 'Thêm ngựa' });
   fireEvent.click(screen.getByRole('button', { name: 'Lưu nháp & tiếp tục' }));
-  expect(screen.getByText('Nhập tên ngựa.')).toBeInTheDocument(); expect(requests).toHaveLength(0);
+  expect(screen.getByText('Nhập tên ngựa.')).toBeInTheDocument(); expect(requests.filter(r => r.method === 'POST')).toHaveLength(0);
   fireEvent.change(screen.getByLabelText('Tên ngựa *'), { target: { value: 'Keep my edits' } });
-  fireEvent.change(screen.getByLabelText('Mã ngựa *'), { target: { value: 'DUPLICATE' } });
   fireEvent.click(screen.getByRole('button', { name: 'Lưu nháp & tiếp tục' }));
   await screen.findByText('Duplicate code');
   expect(screen.getByLabelText('Tên ngựa *')).toHaveValue('Keep my edits');
-  expect(screen.getByLabelText('Mã ngựa *')).toHaveValue('DUPLICATE');
+  expect(screen.getByLabelText('Mã ngựa')).toHaveValue('RH-005');
 });
 it('sends only one pending create request despite repeated submit', async () => {
   let finish!: (r: Response) => void;
   const { requests } = mount('/horses/new', { create: () => new Promise((resolve) => { finish = resolve; }) });
   await screen.findByRole('heading', { name: 'Thêm ngựa' });
   fireEvent.change(screen.getByLabelText('Tên ngựa *'), { target: { value: 'One request' } });
-  fireEvent.change(screen.getByLabelText('Mã ngựa *'), { target: { value: 'ONE' } });
   const form = screen.getByRole('button', { name: 'Lưu nháp & tiếp tục' }).closest('form')!;
   fireEvent.submit(form); fireEvent.submit(form);
   await waitFor(() => expect(requests.filter((r) => r.method === 'POST')).toHaveLength(1));

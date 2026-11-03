@@ -95,6 +95,10 @@ export async function requestApi<T>(path: string, init: RequestInit = {}, option
     const { sampleRequest } = await import('../data/sampleTransport');
     return sampleRequest<T>(path, init, actor);
   }
+  return readEnvelope<T>(path, await sendRequest(path, init, options), options);
+}
+
+async function sendRequest(path: string, init: RequestInit, options: RequestOptions): Promise<Response> {
   // A protected-Preview test identity carries no server authority and is never sent to the backend.
   if (isTestIdentityToken(options.token))
     throw new ApiError(503, 'SERVER_UNAVAILABLE', 'Không thực hiện được thao tác: đăng nhập thử không có quyền truy cập máy chủ. Hãy đăng nhập bằng tài khoản thật khi hệ thống sẵn sàng.');
@@ -102,14 +106,15 @@ export async function requestApi<T>(path: string, init: RequestInit = {}, option
   if (init.body && !(init.body instanceof FormData) && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
   if (options.token) headers.set('Authorization', `Bearer ${options.token}`);
 
-  let response: Response;
   try {
     const baseUrl = (options.baseUrl ?? API_BASE_URL).replace(/\/$/, '');
-    response = await (options.fetcher ?? fetch)(`${baseUrl}${path}`, { ...init, headers });
+    return await (options.fetcher ?? fetch)(`${baseUrl}${path}`, { ...init, headers });
   } catch {
     throw new ApiError(0, 'NETWORK_ERROR', 'Không kết nối được máy chủ. Hãy kiểm tra kết nối và thử lại.');
   }
+}
 
+async function readEnvelope<T>(path: string, response: Response, options: RequestOptions): Promise<T> {
   if (response.status === 204) return undefined as T;
 
   let envelope: ApiEnvelope<T>;
@@ -135,6 +140,18 @@ export async function requestApi<T>(path: string, init: RequestInit = {}, option
   }
 
   return envelope.data as T;
+}
+
+/** Authenticated image endpoint. A 204 response means the horse has no uploaded photo. */
+export async function requestHorsePhoto(path: string, token: string, signal: AbortSignal): Promise<Blob | null> {
+  const response = await sendRequest(path, { method: 'GET', signal, cache: 'no-store', redirect: 'error' }, { token });
+  if (response.status === 204) return null;
+  if (!response.ok) await readEnvelope<never>(path, response, {});
+  const mime = response.headers.get('Content-Type')?.split(';', 1)[0];
+  if (!mime || !['image/jpeg', 'image/png', 'image/webp'].includes(mime)) {
+    throw new ApiError(response.status, 'INVALID_RESPONSE', 'Dữ liệu ảnh không hợp lệ.');
+  }
+  return response.blob();
 }
 
 export interface AuthApi {

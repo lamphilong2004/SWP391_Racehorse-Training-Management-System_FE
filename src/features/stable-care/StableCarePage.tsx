@@ -49,7 +49,7 @@ export function StableCarePage() {
   const inventory = pathname === '/inventory'; const daily = pathname === '/care/daily';
   return <AppShell designSystem="v2" user={{ fullName: auth.user.fullName, role }} breadcrumb={[{ label: 'Chăm sóc chuồng' }, { label: inventory ? 'Kho vật tư' : daily ? 'Công việc theo ngày' : 'Kế hoạch' }]}>
     <section key={`${auth.user.id}:${token}`} className={styles.stack}>
-      <header className={styles.header}><div><p className={styles.eyebrow}>Vận hành chuồng · Flow 4</p><h1>{inventory ? 'Kho & bổ sung vật tư' : daily ? 'Chăm sóc hằng ngày' : 'Kế hoạch chăm sóc & dinh dưỡng'}</h1></div>
+      <header data-page-banner className={styles.header}><div><p className={styles.eyebrow}>Vận hành chuồng · Flow 4</p><h1>{inventory ? 'Kho & bổ sung vật tư' : daily ? 'Chăm sóc hằng ngày' : 'Kế hoạch chăm sóc & dinh dưỡng'}</h1></div>
         <nav aria-label="Chăm sóc chuồng" className={styles.actions}>
           {role !== 'GROOM' && <Link to="/stable" aria-current={!inventory && !daily ? 'page' : undefined}>Kế hoạch</Link>}<Link to="/care/daily" aria-current={daily ? 'page' : undefined}>Công việc theo ngày</Link>{role !== 'HEAD_TRAINER' && <Link to="/inventory" aria-current={inventory ? 'page' : undefined}>Kho vật tư</Link>}
         </nav></header>
@@ -113,6 +113,7 @@ function Plans({ api, role }: { api: StableCareApi; role: RoleCode }) {
   const horses = useSupportingLoad(api.horses, [api]); const [horseId, setHorseId] = useState(''); const [nutrition, setNutrition] = useState(false); const [editing, setEditing] = useState(false);
   return <><ReadState loading={!horses.data} error={horses.error} retry={horses.retry} /><div className={styles.grid}><SelectField label="Ngựa" disabled={editing} value={horseId} onChange={e => setHorseId(e.target.value)} options={[{ value: '', label: 'Chọn ngựa' }, ...(horses.data ?? []).map(h => ({ value: String(h.id), label: `${h.name} · ${h.horseCode}` }))]} />
     <SelectField label="Loại kế hoạch" disabled={editing} value={nutrition ? 'nutrition' : 'care'} onChange={e => setNutrition(e.target.value === 'nutrition')} options={[{ value: 'care', label: 'Chăm sóc' }, { value: 'nutrition', label: 'Dinh dưỡng' }]} /></div>
+    {!horseId && horses.data && <Card><EmptyState title="Chọn một con ngựa để xem kế hoạch" description={role === 'CLUB_MANAGER' || role === 'HEAD_TRAINER' ? 'Chọn ngựa và loại kế hoạch ở trên để xem lịch chăm sóc hoặc khẩu phần dinh dưỡng đang áp dụng, hoặc lập kế hoạch mới.' : 'Chọn ngựa và loại kế hoạch ở trên để xem lịch chăm sóc hoặc khẩu phần dinh dưỡng đang áp dụng.'} /></Card>}
     {horseId && <HorsePlans key={`${horseId}:${nutrition}`} api={api} horseId={Number(horseId)} nutrition={nutrition} canWrite={role === 'CLUB_MANAGER' || nutrition && role === 'HEAD_TRAINER'} onEditing={setEditing} />}</>;
 }
 function HorsePlans({ api, horseId, nutrition, canWrite, onEditing }: { api: StableCareApi; horseId: number; nutrition: boolean; canWrite: boolean; onEditing: (value: boolean) => void }) {

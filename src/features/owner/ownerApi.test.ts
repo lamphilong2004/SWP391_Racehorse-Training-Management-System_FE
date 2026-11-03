@@ -41,6 +41,12 @@ describe('CORE-056 pinned CORE-004 HTTP contract', () => {
     const { service } = setup({ profile: { ...profile, diagnosis: 'SECRET', otherOwners: ['SECRET'], stable: 'SECRET' }, health: { ...health, findings: 'SECRET', prescription: 'SECRET', restrictionReason: 'SECRET' }, training: { ...training, trainer: 'SECRET', nextSession: 'SECRET', recentSessions: [{ ...training.recentSessions[0], feedback: 'SECRET', evaluationLabel: 'SECRET', distance: 1200 }] } });
     expect(JSON.stringify(await service.detail(7, { actorId: 17 }))).not.toMatch(/SECRET|diagnosis|prescription|feedback|otherOwners|restrictionReason/);
   });
+  it.each(['MET', 'PARTIALLY_MET', 'NOT_MET'])('keeps the contracted evaluation result %s while ignoring report details', async (evaluationLabel) => {
+    const { service } = setup({ training: { ...training, recentSessions: [{ ...training.recentSessions[0], evaluationLabel, evaluationNotes: 'SECRET' }] } });
+    const horse = await service.detail(7, { actorId: 17 });
+    expect(horse.sessions[0]).toMatchObject({ evaluationResult: evaluationLabel });
+    expect(JSON.stringify(horse)).not.toContain('SECRET');
+  });
   it('shows only the owned profile current box projection, including its persisted date', async () => {
     const { service } = setup({ profile: { ...profile, currentBoxCode: 'PRESENT-04', stableEffectiveFrom: '2026-10-21' } });
     expect(await service.detail(7, { actorId: 17 })).toMatchObject({ stable: 'PRESENT-04', stableSince: '2026-10-21' });

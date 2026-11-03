@@ -64,6 +64,14 @@ function DetailsForm({ session, busy, save }: { session: TrainingSession; busy: 
       <PresetField label="Mặt sân tập" maxLength={50} value={surface} options={SURFACE_PRESETS} onValueChange={setSurface} />
       <TextField label="Trọng tâm buổi tập" maxLength={200} value={focus} onChange={(event) => setFocus(event.target.value)} />
     </div>
+    <div className={styles.row}>
+      <Button type="button" variant="secondary" onClick={() => {
+        const start = Math.ceil(Date.now() / 60000) * 60000 + 2 * 60000;
+        setWhen(clubDateTime(new Date(start)));
+        setError('');
+      }}>Chọn giờ sau khoảng 2 phút</Button>
+      <span className="text-caption">Kiểm tra thời lượng rồi bấm Lưu thông tin để áp dụng lịch mới.</span>
+    </div>
     {error && <AlertBanner type="danger" title="Chưa lưu được thông tin">{error}</AlertBanner>}
     <div className={styles.row}><Button type="submit">{busy ? 'Đang lưu…' : 'Lưu thông tin'}</Button><span className="text-caption">Giữ nguyên Work Rider; hệ thống sẽ từ chối nếu trùng lịch.</span></div>
   </div></fieldset></form></Card>;

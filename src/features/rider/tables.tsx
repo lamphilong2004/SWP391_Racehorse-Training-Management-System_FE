@@ -79,7 +79,7 @@ export function AssignmentsTable({ api }: { api: RiderApi }) {
   const state = tab === 'completed' ? completed : active;
   return (
     <div className={styles.stack}>
-      <div className={styles.header}>
+      <div data-page-banner className={styles.header}>
         <div><h1 className={styles.heading}>Lịch cưỡi của tôi</h1><p className={styles.muted}>{user?.fullName} · chỉ lịch của bạn</p></div>
         <Tabs label="Khoảng thời gian" value={tab} onChange={(value) => setTab(value as typeof tab)} items={[
           { value: 'today', label: `Hôm nay · ${active.data ? todayRides.length : '–'}` },
@@ -131,7 +131,7 @@ export function HistoryTable({ api }: { api: RiderApi }) {
   ];
   return (
     <div className={styles.stack}>
-      <div className={styles.header}>
+      <div data-page-banner className={styles.header}>
         <div><h1 className={styles.heading}>Lịch sử cưỡi của tôi</h1><p className={styles.muted}>{user?.fullName} · mọi ngựa và chương trình</p></div>
         <Tabs label="Bộ lọc lịch sử" value={tab} onChange={(value) => setTab(value as typeof tab)} items={[
           { value: 'recent', label: 'Gần đây' }, { value: 'COMPLETED', label: 'Đã hoàn thành' }, { value: 'INTERRUPTED', label: 'Bị gián đoạn' },

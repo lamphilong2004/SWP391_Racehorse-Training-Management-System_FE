@@ -18,12 +18,21 @@ export interface MetricInput { recordedAt: string; heartRate: number | null; spe
 export interface IssueInput { incidentType: 'OFF_FEED' | 'COLIC_SIGNS' | 'FEVER' | 'HOOF_OR_LEG_PROBLEM' | 'OTHER'; observedSeverity: 'LOW' | 'MEDIUM' | 'HIGH'; description: string; observedAt?: string }
 export interface IssueResult { incidentId: number; incidentCode: string; sessionStatus: RiderSession['status'] }
 export const isTerminal = (status: RiderSession['status']) => status === 'COMPLETED' || status === 'INTERRUPTED';
+export const EXPIRED_START_MESSAGE = 'Buổi tập đã hết khung giờ bắt đầu. Hãy nhờ Trainer dời lịch và tải lại lịch phân công.';
+
+export function startWindowExpired(session: RiderSession, now: number): boolean {
+  // Match the server's 12-hour window when a scheduled end was not supplied.
+  const latestStart = session.scheduledEnd ? Date.parse(session.scheduledEnd) : Date.parse(session.scheduledStart) + 12 * 60 * 60 * 1000;
+  return session.status === 'SCHEDULED' && now > latestStart;
+}
+
 export function startBlocks(session: RiderSession, now = Date.now()): string[] {
   const reasons = (session.blockedReasons ?? []).map((reason) => viLabel(reason));
   if (session.status !== 'SCHEDULED') reasons.push('Chỉ buổi tập đã lên lịch mới bắt đầu được.');
   if ((session.preSessionCheck?.overallResult ?? session.preCheckResult) !== 'ALL_NORMAL') reasons.push('Kết quả kiểm tra trước buổi tập của Groom phải là Tất cả bình thường.');
   if (session.trainingAvailability === 'LOCKED') reasons.push('Veterinarian đã khóa tập luyện.');
   if (!Number.isFinite(Date.parse(session.scheduledStart)) || Date.parse(session.scheduledStart) > now) reasons.push('Không được bắt đầu sớm. Trainer cần đổi lịch nếu cần.');
+  if (startWindowExpired(session, now)) reasons.push(EXPIRED_START_MESSAGE);
   if (session.blocked && reasons.length === 0) reasons.push(session.blockedMessage || 'Hệ thống đã chặn buổi tập này.');
   return [...new Set(reasons)];
 }

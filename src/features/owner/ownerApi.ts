@@ -64,8 +64,10 @@ function detail(profileValue: unknown, healthValue: unknown, trainingValue: unkn
   horse.program = programOf(training);
   horse.sessions = array(training.recentSessions, 10).map((value, index) => {
     const item = row(value);
-    // Evaluation labels are contract-allowed but their business vocabulary is not yet approved by Dung.
+    const label = item.evaluationLabel;
+    const evaluationResult = label === 'MET' || label === 'PARTIALLY_MET' || label === 'NOT_MET' ? label : undefined;
     return { id: index, date: date(item.scheduledStart, true), title: string(item.sessionCode), distanceM: null,
+      ...(evaluationResult && { evaluationResult }),
       status: enumeration(item.status, ['SCHEDULED', 'IN_PROGRESS', 'PAUSED', 'COMPLETED', 'INTERRUPTED']) };
   });
   return horse;

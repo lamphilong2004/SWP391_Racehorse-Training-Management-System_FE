@@ -8,9 +8,26 @@
 .table table { width: 100%; border-collapse: collapse; }
 .table th, .table td { padding: var(--space-md); text-align: left; border-bottom: 1px solid var(--color-border-default); vertical-align: top; }
 .table th { background: var(--color-bg-subtle); color: var(--color-text-secondary); }
-.horseChoice { display: flex; align-items: center; gap: var(--space-sm); cursor: pointer; min-width: 220px; }
+.horseFilters { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto; align-items: end; gap: var(--space-md); }
+.horseChoice { display: flex; align-items: center; gap: var(--space-sm); cursor: pointer; min-width: 150px; }
 .horseChoice small { display: block; margin-top: var(--space-xs); }
-.horseChoice input { accent-color: var(--color-primary-600); }
+.horseChoice label { position: relative; cursor: inherit; }
+.horseChoice input { position: absolute; inline-size: 1px; block-size: 1px; opacity: 0; }
+.horseChoice:has(input:focus-visible) { outline: 2px solid var(--color-border-focus); outline-offset: 4px; border-radius: var(--radius-md); }
+.horseChoice:has(input:disabled) { cursor: not-allowed; }
+.chosenHorse { color: var(--color-primary-700); font-weight: 600; }
+.horseStep { padding-bottom: var(--space-md); }
+.horseTable { overflow: visible; }
+.horseTable > [role="region"] {
+  max-block-size: clamp(12rem, 36dvh, 26rem);
+  overflow: auto;
+}
+.horseActions {
+  padding: var(--space-md);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface);
+}
 .horseSummary { width: 100%; max-width: none; }
 .profileFacts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-lg); }
 .fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg); }
@@ -25,6 +42,12 @@
 .error { color: var(--color-danger-600); }
 .summary { white-space: pre-wrap; overflow-wrap: anywhere; }
 .reasons { padding-left: var(--space-xl); color: var(--color-text-secondary); }
+.phaseList, .workloadPhase { display: grid; gap: var(--space-lg); }
+.workloadPhase { min-width: 0; padding: var(--space-lg); border: 1px solid var(--color-border-default); border-radius: var(--radius-md); }
+.phaseHeader h3 { margin: 0; }
+.phaseHeader p { margin: var(--space-xs) 0 0; color: var(--color-text-secondary); }
+.phaseGuidance { margin: 0; padding: var(--space-md); border-radius: var(--radius-md); background: var(--color-bg-subtle); overflow-wrap: anywhere; }
+.phaseGuidance strong { display: block; }
 @media (max-width: 1100px) { .columns { grid-template-columns: minmax(0, 1fr); } .candidates { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 /* V3 wizard, program detail, versioned templates and decision forms. */
@@ -36,8 +59,20 @@
 .table th { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
 .table td { padding-block: var(--space-lg); }
 @media (max-width: 767px) {
+  .horseFilters { grid-template-columns: minmax(0, 1fr); }
   .fields, .candidates, .profileFacts { grid-template-columns: minmax(0, 1fr); }
   .heading { align-items: flex-start; }
   .heading > *, .row > * { min-width: 0; max-width: 100%; }
   .footer { gap: var(--space-md); }
 }
+
+/* The horse photo replaces the radio dot: the chosen horse gets an emerald ring and a check badge. */
+.horseChoice { position: relative; }
+.horseChoice > [data-photo-state] { width: 48px; height: 48px; transition: box-shadow var(--motion-fast, 120ms) ease; }
+.horseChoice:has(input:checked) > [data-photo-state] { box-shadow: 0 0 0 2px var(--color-bg-surface), 0 0 0 4px var(--color-primary-600); }
+.horseChoice:has(input:checked)::before {
+  content: '✓'; position: absolute; left: 32px; top: -2px; z-index: 1; display: grid; place-items: center;
+  width: 20px; height: 20px; border-radius: 999px; border: 2px solid var(--color-bg-surface);
+  background: var(--color-primary-600); color: var(--color-text-on-primary); font-size: 11px; font-weight: 700;
+}
+.horseChoice:has(input:disabled) > [data-photo-state] { filter: grayscale(0.85); opacity: 0.7; }

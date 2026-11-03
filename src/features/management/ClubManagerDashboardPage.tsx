@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { ROUTES } from '../../app/routePaths';
 import { Card, EmptyState, ErrorState, LoadingState, MetricCard, StatusBadge, type StatusOf } from '../../design-system';
 import { AppShell } from '../../layout/AppShell';
+import { viLabel } from '../../shared/viLabels';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { RecentAudit } from './RecentAudit';
 import { ManagementShortcuts } from './ManagementShortcuts';
@@ -15,7 +16,7 @@ import { businessDataMode } from '../../shared/data/businessData';
 
 const total = (rows: CountByKey[]) => rows.reduce((sum, row) => sum + row.count, 0);
 const count = (rows: CountByKey[], key: string) => rows.find((row) => row.key === key)?.count ?? 0;
-const label = (key: string) => key.replaceAll('_', ' ').toLowerCase();
+const label = (key: string) => viLabel(key, key);
 // Existing CM-guarded route in the FE integration harness; do not add shared routes here.
 const pendingActivationPath = `${ROUTES.horses}/pending-activation`;
 
@@ -38,7 +39,7 @@ function DashboardContent() {
   const data = resource.status === 'ready' ? resource.data : null;
   return <AppShell designSystem="v2" user={{ fullName: auth.user!.fullName, role: 'CLUB_MANAGER' }} breadcrumb={[{ label: 'Tổng quan' }, { label: 'Tổng quan câu lạc bộ' }]} searchPlaceholder="Tìm ngựa, người dùng…">
     <div className={styles.page}>
-      <header className={styles.heading}>
+      <header data-page-banner className={styles.heading}>
         <div className={styles.title}><h1 className="text-h1">Tổng quan Club Manager</h1><p className={styles.subtitle}>Tổng quan quản lý · <time dateTime={localTime.toISOString()} title="Giờ hiện tại của máy, không phải thời điểm cập nhật dữ liệu">{new Intl.DateTimeFormat('vi-VN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).format(localTime)}</time> · tóm tắt từ từng phân hệ — mở phân hệ để thay đổi</p></div>
         <div className={styles.actions}><Link className={styles.linkButton} to={ROUTES.auditLog}>Xem nhật ký hệ thống</Link>{destinations.registerHorse === '/horses/new' && <Link className={`${styles.linkButton} ${styles.primaryLink}`} to={destinations.registerHorse}>+ Thêm ngựa</Link>}</div>
       </header>

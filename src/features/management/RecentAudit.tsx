@@ -2,6 +2,7 @@ import { EmptyState } from '../../design-system';
 import { auditActor, auditClock, auditDate, auditRole, newestAudit } from './auditPresentation';
 import type { AuditEntry } from './types';
 import styles from './Management.module.css';
+import { serverText } from '../../shared/serverText';
 
 export function RecentAudit({ entries }: { entries: AuditEntry[] }) {
   if (!entries.length) return <EmptyState title="Chưa có hoạt động gần đây" description="Hoạt động của hệ thống sẽ hiện ở đây khi có dữ liệu." />;
@@ -9,7 +10,7 @@ export function RecentAudit({ entries }: { entries: AuditEntry[] }) {
     {newestAudit(entries).map((entry) => <li key={entry.id}>
       <time dateTime={entry.occurredAt} title={entry.occurredAt}>{auditDate(entry.occurredAt)} · {auditClock(entry.occurredAt)}</time>
       <span className={styles.recentActor}>{auditActor(entry)}{entry.actorRole ? ` · ${auditRole(entry)}` : ''}</span>
-      <span>{entry.safeSummary || '—'}</span>
+      <span>{entry.safeSummary ? serverText(entry.safeSummary) : '—'}</span>
     </li>)}
   </ul>;
 }

@@ -1,3 +1,4 @@
+import { serverText } from '../../shared/serverText';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { AlertBanner, Card, DataTable, EmptyState, Icon, KeyValue, MetricCard, StatusBadge } from '../../design-system';
@@ -5,7 +6,7 @@ import { useAuth } from '../../shared/auth/AuthProvider';
 import type { RiderApi } from './api';
 import { ReadState, RiderShell } from './common';
 import { useRiderApi } from './data';
-import type { RiderSession } from './types';
+import { EXPIRED_START_MESSAGE, startWindowExpired, type RiderSession } from './types';
 import styles from './rider.module.css';
 import { AssignmentsTable, HistoryTable } from './tables';
 import { greeting } from '../../shared/greeting';
@@ -52,9 +53,10 @@ function Dashboard({ api }: { api: RiderApi }) {
   const sorted = [...(items ?? [])].sort((a, b) => a.scheduledStart.localeCompare(b.scheduledStart));
   const today = sorted.filter((ride) => sameDay(ride.scheduledStart, new Date(now)));
   const next = sorted.find((ride) => ACTIVE.includes(ride.status));
+  const nextExpired = next ? startWindowExpired(next, now) : false;
   const later = today.filter((ride) => ride.id !== next?.id && ride.status === 'SCHEDULED' && Date.parse(ride.scheduledStart) > now);
   return <div className={styles.stack}>
-    <div className={styles.header}><div><h1 className={styles.heading}>{greeting()}, {user?.fullName}</h1><p className={styles.muted}>{items ? `Hôm nay bạn có ${today.length} lượt cưỡi · ${DAY.format(new Date(now))}` : 'Chỉ hiển thị lượt cưỡi của tài khoản đang đăng nhập.'}</p></div>
+    <div data-page-banner className={styles.header}><div><h1 className={styles.heading}>{greeting()}, {user?.fullName}</h1><p className={styles.muted}>{items ? `Hôm nay bạn có ${today.length} lượt cưỡi · ${DAY.format(new Date(now))}` : 'Chỉ hiển thị lượt cưỡi của tài khoản đang đăng nhập.'}</p></div>
       <div className={styles.actions}><Link className={styles.secondaryLink} to="/rider/history">Lịch sử cưỡi</Link><Link className={styles.secondaryLink} to="/rider/assignments">Xem tất cả lịch phân công</Link></div></div>
     <div className={styles.metrics}>
       <MetricCard label="Lượt cưỡi hôm nay" value={items ? String(today.length) : '—'} />
@@ -70,9 +72,11 @@ function Dashboard({ api }: { api: RiderApi }) {
             <div className={styles.smallStack}><h2 className={styles.rideTitle}>{next.horse.name} · {next.horse.horseCode}</h2><p className={styles.muted}>{next.focus || next.sessionCode} · {next.phaseName}</p>
               <div className={styles.badges}><StatusBadge family="session" status={next.status} />{next.trainingAvailability && <StatusBadge family="availability" status={next.trainingAvailability} />}</div>
               <div className={styles.facts}><KeyValue label="Mặt sân · thời lượng" value={`${next.surface ?? 'Chưa có mặt sân'} · ${duration(next)}`} /><KeyValue label="Trainer" value={next.trainer?.fullName ?? 'Chưa cung cấp'} /></div></div></div>
-          {!next.blocked && preCheck(next) === 'ALL_NORMAL' && Date.parse(next.scheduledStart) <= now
+          {nextExpired
+            ? <AlertBanner type="warning" title="Buổi tập đã hết giờ">{EXPIRED_START_MESSAGE}</AlertBanner>
+            : !next.blocked && preCheck(next) === 'ALL_NORMAL' && Date.parse(next.scheduledStart) <= now
             ? <AlertBanner type="success" title="Sẵn sàng">Kiểm tra trước buổi tập đạt{next.preSessionCheck ? ` at ${clock(next.preSessionCheck.performedAt)}` : ''}.</AlertBanner>
-            : <AlertBanner type="warning" title="Chờ điều kiện bắt đầu">{next.blockedMessage || (preCheck(next) === 'ABNORMAL' ? 'Kiểm tra trước buổi tập phát hiện bất thường. Không được bắt đầu buổi tập.'
+            : <AlertBanner type="warning" title="Chờ điều kiện bắt đầu">{serverText(next.blockedMessage) || (preCheck(next) === 'ABNORMAL' ? 'Kiểm tra trước buổi tập phát hiện bất thường. Không được bắt đầu buổi tập.'
               : preCheck(next) === 'ALL_NORMAL' && Date.parse(next.scheduledStart) > now ? `Kiểm tra trước buổi tập đạt. Có thể bắt đầu lúc ${clock(next.scheduledStart)}.` : 'Đang chờ kiểm tra trước buổi tập.')}</AlertBanner>}
           <div className={styles.endActions}><Link className={styles.primaryLink} to={`/rider/assignments/${next.id}`}>Xem lịch phân công</Link></div></div></Card>
           : <Card><EmptyState title="Không có lượt cưỡi sắp tới" description="Bạn chưa có lượt cưỡi nào được lên lịch." /></Card>}

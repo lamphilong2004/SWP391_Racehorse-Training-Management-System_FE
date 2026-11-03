@@ -13,7 +13,7 @@ type Field = 'name' | 'horseCode' | 'foaledDate' | 'sex' | 'breed' | 'countryOfO
 type Values = Record<Field, string>;
 
 const EMPTY: Values = { name: '', horseCode: '', foaledDate: '', sex: '', breed: '', countryOfOrigin: '', registrationNo: '' };
-const REQUIRED: Field[] = ['name', 'horseCode'];
+const REQUIRED_ON_EDIT: Field[] = ['name', 'horseCode'];
 const REQUIRED_MESSAGE: Record<string, string> = {
   name: 'Nhập tên ngựa.', horseCode: 'Nhập mã ngựa.', foaledDate: 'Nhập ngày sinh.',
   sex: 'Chọn giới tính.', breed: 'Chọn giống ngựa.',
@@ -40,6 +40,7 @@ function RegisterHorsePageContent() {
   const editId = Number(useParams().id);
   const editing = Number.isSafeInteger(editId) && editId > 0;
   const [loading, setLoading] = useState(editing);
+  const [previewCode, setPreviewCode] = useState<string | null>();
   const [loadAttempt, setLoadAttempt] = useState(0);
   useBreadcrumb([{ label: 'Ngựa', to: '/horses' }, { label: editing ? 'Sửa thông tin nhận dạng' : 'Thêm ngựa' }]);
 
@@ -57,6 +58,15 @@ function RegisterHorsePageContent() {
   const [saving, setSaving] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const pending = useRef(false);
+  useEffect(() => {
+    if (editing) return;
+    let active = true;
+    api.previewHorseCode().then(
+      ({ horseCode }) => { if (active) setPreviewCode(horseCode); },
+      () => { if (active) setPreviewCode(null); },
+    );
+    return () => { active = false; };
+  }, [api, editing]);
   useEffect(() => {
     if (!editing) return;
     let active = true;
@@ -94,7 +104,7 @@ function RegisterHorsePageContent() {
     event.preventDefault();
     if (pending.current || loading) return;
     const missing: Partial<Record<Field, string>> = {};
-    for (const field of REQUIRED) {
+    for (const field of editing ? REQUIRED_ON_EDIT : ['name'] as const) {
       if (!values[field].trim()) missing[field] = REQUIRED_MESSAGE[field];
     }
     setErrors(missing);
@@ -104,11 +114,11 @@ function RegisterHorsePageContent() {
     pending.current = true; setSaving(true);
     try {
       const input = {
-        horseCode: values.horseCode.trim(), name: values.name.trim(), breed: values.breed.trim() || null, sex: values.sex.trim() || null,
+        name: values.name.trim(), breed: values.breed.trim() || null, sex: values.sex.trim() || null,
         foaledDate: values.foaledDate || null, countryOfOrigin: values.countryOfOrigin.trim() || null, registrationNo: values.registrationNo.trim() || null,
         strengths: sortStrengths(strengths),
       };
-      const horse = editing ? await api.updateHorse(editId, input) : await api.createHorse(input);
+      const horse = editing ? await api.updateHorse(editId, { ...input, horseCode: values.horseCode.trim() }) : await api.createHorse(input);
       let photoFailed = false;
       for (const photo of photos) {
         try {
@@ -146,7 +156,7 @@ function RegisterHorsePageContent() {
       <UnsavedChangesGuard dirty={dirty} />
       <button type="button" className={styles.back} onClick={() => navigate('/horses')}>{'← Quay lại danh sách ngựa'}</button>
 
-      <div className={styles.titleRow}>
+      <div data-page-banner className={styles.titleRow}>
         <div className={styles.titleBlock}>
           <h1 className={styles.title}>{editing ? 'Sửa thông tin nhận dạng ngựa' : 'Thêm ngựa'}</h1>
           <p className={styles.subtitle}>{editing ? 'Chỉ thông tin quản lý; sức khỏe và vòng đời do hệ thống quản lý.' : 'Bước 1/2 · Nhận dạng → Bước 2 · Phả hệ, quyền sở hữu và ô chuồng'}</p>
@@ -164,12 +174,16 @@ function RegisterHorsePageContent() {
           <Card>
             <div className={styles.cardBody}>
               <h2 className={styles.cardTitle}>Nhận dạng</h2>
-              <p className={styles.cardHelp}>Cần tên và mã ngựa để lưu bản Nháp. Hoàn tất các thông tin nhận dạng còn lại trước khi kích hoạt.</p>
+              <p className={styles.cardHelp}>Cần tên ngựa để lưu bản nháp. Hoàn tất các thông tin nhận dạng còn lại trước khi kích hoạt.</p>
               <div className={styles.row}>
                 <TextField label="Tên ngựa *" value={values.name} onChange={(e) => set('name')(e.target.value)}
                   error={errors.name} maxLength={150} autoComplete="off" />
-                <TextField label="Mã ngựa *" value={values.horseCode} onChange={(e) => set('horseCode')(e.target.value)}
-                  error={errors.horseCode} maxLength={20} autoComplete="off" />
+                {editing
+                  ? <TextField label="Mã ngựa *" value={values.horseCode} onChange={(e) => set('horseCode')(e.target.value)}
+                      error={errors.horseCode} maxLength={20} autoComplete="off" />
+                  : <TextField label="Mã ngựa" value={previewCode ?? ''} readOnly
+                      placeholder={previewCode === null ? 'Cấp mã khi lưu' : 'Đang lấy mã ngựa…'}
+                      helperText={previewCode === null ? 'Chưa lấy được mã dự kiến. Hệ thống vẫn cấp mã khi lưu.' : 'Mã dự kiến. Hệ thống xác nhận khi lưu.'} />}
               </div>
               <div className={styles.row}>
                 <TextField label="Ngày sinh" type="date" value={values.foaledDate}
@@ -218,11 +232,11 @@ function RegisterHorsePageContent() {
 
           <Card>
             <div className={styles.cardBody}>
-              <h2 className={styles.cardTitle}>Ảnh</h2>
-              <p className={styles.cardHelp}>Dùng trên hồ sơ ngựa và để nhận dạng.</p>
+              <h2 className={styles.cardTitle}>Ảnh hồ sơ ngựa</h2>
+              <p className={styles.cardHelp}>Không bắt buộc. Tải ảnh thật để những người có quyền xem hồ sơ nhận diện đúng ngựa. Ảnh tải lên sau cùng sẽ là ảnh đại diện.</p>
               <div className={styles.photoTiles}>
                 {photos.map((p, i) => (
-                  <PhotoAttachmentTile state="attached" key={`${p.file.name}-${i}`} fileName={p.file.name}
+                  <PhotoAttachmentTile state="attached" key={`${p.file.name}-${i}`} fileName={p.file.name} previewUrl={p.previewUrl}
                     onRemove={() => removePhoto(i)} />
                 ))}
                 <PhotoAttachmentTile state="empty" onAdd={() => fileInput.current?.click()} />

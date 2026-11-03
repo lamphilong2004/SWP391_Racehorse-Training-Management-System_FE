@@ -5,7 +5,10 @@
 .page { display: flex; flex-direction: column; gap: var(--space-xl); }
 .table { overflow-x: auto; }
 .profilePhoto { width: 160px; height: 140px; object-fit: cover; display: grid; place-items: center; background: var(--color-bg-subtle); border-radius: var(--radius-md); flex-shrink: 0; }
-.horseIdentity { display: grid; gap: 5px; color: var(--color-brand-primary); text-decoration: none; min-width: 140px; }
+.profilePhoto { overflow: hidden; }
+.profilePhoto img { width: 100%; height: 100%; object-fit: cover; }
+.horseIdentity { display: flex; align-items: center; gap: 10px; color: var(--color-brand-primary); text-decoration: none; min-width: 140px; }
+.horseIdentityText { display: grid; gap: 5px; min-width: 0; overflow-wrap: anywhere; }
 .horseIdentity:hover strong { color: var(--color-primary-700); text-decoration: underline; text-underline-offset: 3px; }
 .horseIdentity strong { font-family: var(--font-family-headline); font-size: 14px; }
 .horseIdentity span { color: var(--color-text-secondary); font-size: 12px; font-weight: 400; letter-spacing: .02em; }
@@ -140,6 +143,11 @@
 /* Declared strengths (V20261027_01) */
 .parentField, .parentPicker { display: grid; align-content: start; gap: 12px; min-width: 0; }
 .parentField > button { justify-self: start; }
+.parentSearch { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 8px; }
+.parentResults { max-height: min(17rem, 38dvh); overflow: auto; padding: 4px; }
+.parentResults [role="radiogroup"] { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.parentResults [role="radiogroup"] > label { border-radius: var(--radius-md); overflow-wrap: anywhere; }
+.parentPagination { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
 .strengthFieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .strengthFieldset legend { padding: 0; }
 .strengthHeader, .strengthFooter { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
@@ -169,3 +177,7 @@
 @media (max-width: 1100px) { .strengthGroups { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 360px) { .strengthChips { grid-template-columns: minmax(0, 1fr); } }
 @media (prefers-reduced-motion: reduce) { .strengthChip span { transition: none; } }
+
+/* 2026-11 refresh: section titles match the shared Card heading (emerald dot, navy text). */
+:global([data-ui-v3]) .cardTitle { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 700; color: var(--color-brand-primary); }
+:global([data-ui-v3]) .cardTitle::before { content: ''; width: 8px; height: 8px; flex-shrink: 0; border-radius: 999px; background: var(--color-primary-600); box-shadow: 0 0 0 4px var(--color-primary-50); }

@@ -74,6 +74,21 @@ it.each(ROLE_CODES)('loads the real unread endpoint for %s without trusting an A
   expect(pathOf(fetcher.mock.calls[0][0]!)).toBe('/api/notifications/unread-count');
 });
 
+it.each(['TRAINER', 'VETERINARIAN'] as const)('links incident notices to the appropriate screen for %s', async role => {
+  vi.stubGlobal('fetch', vi.fn<typeof fetch>(async url => pathOf(url).endsWith('/unread-count')
+    ? ok({ unread: 1 })
+    : ok({ ...page(), items: [{ ...notice, notificationType: 'INCIDENT_REPORTED', targetType: 'INCIDENT', targetId: 1 }] })));
+  mount({ ...first, roles: [role] });
+  await signIn();
+  await userEvent.click(await screen.findByRole('link', { name: 'Open center fixture' }));
+  if (role === 'TRAINER') {
+    expect(await screen.findByRole('link', { name: 'Xem hạn chế tập luyện' })).toHaveAttribute('href', '/medical/restrictions');
+    expect(screen.queryByRole('link', { name: /^Mở$/ })).not.toBeInTheDocument();
+  } else {
+    expect(await screen.findByRole('link', { name: /^Mở$/ })).toHaveAttribute('href', '/incidents/1');
+  }
+});
+
 it('synchronizes center and header only after confirmed read and read-all, then reads the authoritative count', async () => {
   let count = 3, readAt: string | null = null;
   const mutation = deferred<Response>();

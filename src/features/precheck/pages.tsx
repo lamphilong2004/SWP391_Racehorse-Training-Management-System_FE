@@ -1,3 +1,4 @@
+import { HorsePhotoImage } from '../horses/shared/HorsePhotoImage';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useParams } from 'react-router';
 import { ButtonLink, AlertBanner, Button, Card, EmptyState, ErrorState, KeyValue, LoadingState, MetricCard, RadioGroup, StatusBadge, TextField, UnsavedChangesGuard } from '../../design-system';
@@ -12,7 +13,7 @@ import { greeting } from '../../shared/greeting';
 import { viLabel } from '../../shared/viLabels';
 import { useClubToday } from '../../shared/useClubToday';
 
-function when(value: string) { return new Date(value).toLocaleString('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }); }
+function when(value: string) { return new Date(value).toLocaleString('vi-VN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Ho_Chi_Minh' }); }
 function message(error: unknown) { return error instanceof Error ? error.message : 'Không tải được dữ liệu yêu cầu.'; }
 function GroomShell({ children }: { children: ReactNode }) {
   const auth = useAuth();
@@ -49,12 +50,12 @@ function GroomToday({ api }: { api: PrecheckApi }) {
   }, [api, date, attempt, handleApiError]);
   const retry = () => { setResult(undefined); setAttempt((value) => value + 1); };
   return <div className={styles.stack}>
-    <div className={styles.header}><div><h1 className={styles.heading}>{greeting()}, {user?.fullName}</h1><p className={styles.muted}>Các buổi kiểm tra trước buổi tập, công việc điều trị và sự cố của bạn</p></div><div className={styles.actions}><ButtonLink to="/incidents">Xem sự cố</ButtonLink><ButtonLink variant="primary" to="/incidents?report=1">Báo bất thường tại chuồng</ButtonLink></div></div>
+    <div data-page-banner className={styles.header}><div><h1 className={styles.heading}>{greeting()}, {user?.fullName}</h1><p className={styles.muted}>Các buổi kiểm tra trước buổi tập, công việc điều trị và sự cố của bạn</p></div><div className={styles.actions}><ButtonLink to="/incidents">Xem sự cố</ButtonLink><ButtonLink variant="primary" to="/incidents?report=1">Báo bất thường tại chuồng</ButtonLink></div></div>
     <div className={styles.dateToolbar}><TextField label="Ngày tập" type="date" value={date} onChange={(event) => { setResult(undefined); setDate(event.target.value || undefined); }} /><Button variant="secondary" onClick={() => { setDate(undefined); retry(); }}>Hôm nay (giờ Việt Nam)</Button></div>
     <div className={styles.metrics}><MetricCard label="Kiểm tra trước buổi tập" value={sessions ? String(sessions.length) : '—'} /><MetricCard label="Công việc điều trị chưa xong" value={summary.tasks === undefined ? '—' : String(summary.tasks)} /><MetricCard label="Sự cố tôi đã báo" value={summary.incidents === undefined ? '—' : String(summary.incidents)} /></div>
     {summary.unavailable && <AlertBanner type="warning" title="Một số tóm tắt không tải được">Mở màn hình điều trị hoặc sự cố để thử lại. Kiểm tra trước buổi tập vẫn dùng được.</AlertBanner>}
     <div className={styles.columns}><Card title="Kiểm tra trước buổi tập">
-      {error ? <ErrorState title={error instanceof ApiError && error.status === 403 ? 'Không có quyền truy cập' : 'Không tải được buổi tập của bạn'} description={message(error)} onRetry={retry} /> : !sessions ? <LoadingState label="Đang tải buổi tập được giao…" /> : sessions.length === 0 ? <EmptyState title="Không có buổi kiểm tra nào được giao" description="Bạn không có buổi tập nào trong ngày này." /> : [...sessions].sort((a, b) => a.scheduledStart.localeCompare(b.scheduledStart)).map((session) => <article key={session.id} className={styles.session}>
+      {error ? <ErrorState title={error instanceof ApiError && error.status === 403 ? 'Không có quyền truy cập' : 'Không tải được buổi tập của bạn'} description={message(error)} onRetry={retry} /> : !sessions ? <LoadingState label="Đang tải buổi tập được giao…" /> : sessions.length === 0 ? <EmptyState title="Không có buổi kiểm tra nào được giao" description="Chọn đúng ngày tập. Buổi tập chỉ hiện sau khi Trainer lưu phân công Groom cho tài khoản của bạn." /> : [...sessions].sort((a, b) => a.scheduledStart.localeCompare(b.scheduledStart)).map((session) => <article key={session.id} className={styles.session}>
         <div className={styles.sessionInfo}><h3>{session.horse.name} · {session.horse.horseCode}</h3><p>Mã buổi: {session.sessionCode} · {when(session.scheduledStart)} · {session.focus || session.phaseName}</p><p className={styles.muted}>Work Rider {session.workRider.fullName}{session.trainer ? ` · Trainer ${session.trainer.fullName}` : ''}</p><StatusBadge family="session" status={session.status} /> <span>{session.preCheckResult ? session.preCheckResult === 'ALL_NORMAL' ? 'Kiểm tra đạt' : 'Bất thường — chặn bắt đầu' : 'Chưa kiểm tra'}</span></div>
         <ButtonLink variant="primary" to={`/training/my-sessions/${session.id}/pre-check`}>{session.preCheckResult ? 'Xem kiểm tra trước buổi tập' : 'Bắt đầu kiểm tra trước buổi tập'}</ButtonLink>
       </article>)}
@@ -68,10 +69,10 @@ export function PrecheckPage({ api: suppliedApi }: { api?: PrecheckApi }) {
   const { id = '' } = useParams();
   const api = useMemo(() => suppliedApi ?? createPrecheckApi({ handleApiError: auth.handleApiError }), [suppliedApi, auth.handleApiError]);
   if (!/^\d+$/.test(id) || !Number.isSafeInteger(Number(id)) || Number(id) < 1) return <GroomShell><EmptyState title="Không tìm thấy buổi tập" /></GroomShell>;
-  return <GroomShell><PrecheckContent key={`${auth.user?.id}:${id}`} id={Number(id)} api={api} /></GroomShell>;
+  return <GroomShell><PrecheckContent key={`${auth.user?.id}:${id}`} id={Number(id)} api={api} showPhoto={!suppliedApi} /></GroomShell>;
 }
 
-function PrecheckContent({ id, api }: { id: number; api: PrecheckApi }) {
+function PrecheckContent({ id, api, showPhoto }: { id: number; api: PrecheckApi; showPhoto: boolean }) {
   const { handleApiError } = useAuth();
   const [session, setSession] = useState<PrecheckSession>();
   const [check, setCheck] = useState<PreSessionCheck>();
@@ -119,7 +120,13 @@ function PrecheckContent({ id, api }: { id: number; api: PrecheckApi }) {
     } catch (cause) {
       if (!handleApiError(cause)) {
         if (cause instanceof ApiError && (cause.status === 409 || cause.code === 'INVALID_RESPONSE')) setConflict(true);
-        setActionError(cause instanceof ApiError && cause.status === 409 ? 'Có thể đã có kết quả kiểm tra. Hãy tải lại buổi tập trước khi tiếp tục; các quan sát của bạn vẫn được giữ.' : message(cause));
+        const timingConflict = cause instanceof ApiError && (
+          cause.rawMessage === 'The pre-session check opens 12 hours before the scheduled start.' ||
+          cause.rawMessage === 'The scheduled time has passed; the Trainer must reschedule before a pre-session check.'
+        );
+        setActionError(cause instanceof ApiError && cause.status === 409 && !timingConflict
+          ? 'Có thể đã có kết quả kiểm tra. Hãy tải lại buổi tập trước khi tiếp tục; các quan sát của bạn vẫn được giữ.'
+          : message(cause));
       }
     } finally { pending.current = false; setBusy(false); }
   }
@@ -133,11 +140,12 @@ function PrecheckContent({ id, api }: { id: number; api: PrecheckApi }) {
   return <div className={styles.stack}>
     <UnsavedChangesGuard dirty={dirty} />
     <ButtonLink to="/groom/today">← Quay lại hôm nay</ButtonLink>
-    <div className={styles.header}><div><h1 className={styles.heading}>Kiểm tra trước buổi tập · {session.horse.name}</h1><p className={styles.muted}>{session.horse.horseCode} · {session.sessionCode} · {when(session.scheduledStart)} · Work Rider {session.workRider.fullName}</p></div><StatusBadge family="session" status={session.status} /></div>
+    <div data-page-banner className={styles.header}><div><h1 className={styles.heading}>Kiểm tra trước buổi tập · {session.horse.name}</h1><p className={styles.muted}>{session.horse.horseCode} · {session.sessionCode} · {when(session.scheduledStart)} · Work Rider {session.workRider.fullName}</p></div><StatusBadge family="session" status={session.status} /></div>
     {incidentCode && <AlertBanner type="success" title={`Đã gửi sự cố ${incidentCode}`}>Veterinarian có thể xem xét báo cáo này. Việc kiểm tra không thay đổi khả năng tập luyện.</AlertBanner>}
     <div className={styles.columns}><Card title="Danh mục quan sát"><p className={styles.muted}>Ghi lại những gì bạn quan sát. Chọn Bất thường cho mọi dấu hiệu lạ — bạn không cần xác định nguyên nhân.</p>
+      {!check && session.status === 'SCHEDULED' && <p className={styles.muted}>Có thể gửi kiểm tra từ 12 giờ trước giờ bắt đầu đến khi hết khung giờ của buổi tập.</p>}
       <div ref={checklist}>{CHECK_ITEMS.map(({ key, label, hint }) => <div key={key} className={`${styles.item} ${draft[key]?.result === 'ABNORMAL' ? styles.abnormal : ''}`}><RadioGroup label={label} helperText={hint} value={draft[key]?.result ?? ''} onChange={(result) => update(key, { result: result as 'NORMAL' | 'ABNORMAL' })} options={[{ value: 'NORMAL', label: 'Bình thường' }, { value: 'ABNORMAL', label: 'Bất thường' }]} disabled={locked} className={styles.checkRow} /><TextField label={`Quan sát ${label} (không bắt buộc)`} placeholder="Quan sát" value={draft[key]?.observation ?? ''} maxLength={1000} disabled={locked} onChange={(event) => update(key, { observation: event.target.value })} className={styles.observation} /></div>)}</div>
-    </Card><aside className={styles.stack}><Card title="Thông tin sẵn sàng (chỉ xem)"><div className={styles.summary}><KeyValue label="Khả năng tập luyện" value={viLabel(session.trainingAvailability, 'Chưa cung cấp')} /><KeyValue label="Điều kiện bắt đầu" value={startGate} /><KeyValue label="Trainer" value={session.trainer?.fullName ?? 'Chưa cung cấp'} /></div></Card><AlertBanner type="info" title="Chỉ quan sát">Chẩn đoán, tình trạng sức khỏe, khả năng tập luyện và hạn chế do Veterinarian quyết định.</AlertBanner></aside></div>
+    </Card><aside className={styles.stack}><Card title="Thông tin sẵn sàng (chỉ xem)">{showPhoto && <HorsePhotoImage path={`/api/training-sessions/${id}/horse-photo`} name={session.horse.name} />}<div className={styles.summary}><KeyValue label="Khả năng tập luyện" value={viLabel(session.trainingAvailability, 'Chưa cung cấp')} /><KeyValue label="Điều kiện bắt đầu" value={startGate} /><KeyValue label="Trainer" value={session.trainer?.fullName ?? 'Chưa cung cấp'} /></div></Card><AlertBanner type="info" title="Chỉ quan sát">Chẩn đoán, tình trạng sức khỏe, khả năng tập luyện và hạn chế do Veterinarian quyết định.</AlertBanner></aside></div>
     {check ? <AlertBanner type={check.overallResult === 'ABNORMAL' ? 'danger' : 'success'} title={check.overallResult === 'ABNORMAL' ? 'BẤT THƯỜNG — không được bắt đầu buổi tập này' : 'TẤT CẢ BÌNH THƯỜNG — đã ghi kiểm tra trước buổi tập'}>Đã kiểm tra {when(check.performedAt)} bởi {check.performedBy.fullName}. {check.overallResult === 'ABNORMAL' ? 'Hãy báo cáo sự cố để bác sĩ thú y xem xét. Sự cố chỉ được tạo khi bạn gửi báo cáo.' : 'Work Rider có thể bắt đầu từ lịch phân công khi các điều kiện còn lại đều đạt.'} Buổi tập vẫn ở trạng thái {viLabel(session.status)}.</AlertBanner> : abnormal ? <AlertBanner type="danger" title="Ngựa này hiện chưa đủ điều kiện tập. Hãy báo cáo sự cố để bác sĩ thú y xem xét.">Ghi kết quả bất thường trước khi báo cáo. Buổi tập vẫn giữ lịch và bị chặn; hệ thống không tự tạo sự cố.</AlertBanner> : <AlertBanner type="info" title="Hoàn tất cả năm mục quan sát">Kiểm tra bình thường sẽ mở điều kiện này; việc này không tự bắt đầu buổi tập.</AlertBanner>}
     {actionError && <AlertBanner type="danger" title="Chưa xác nhận được kết quả kiểm tra">{actionError}</AlertBanner>}
     <div className={styles.actions}><ButtonLink to="/groom/today">Quay lại hôm nay</ButtonLink><div className={styles.actions}>{conflict && <Button variant="secondary" onClick={reload} disabled={busy}>Tải lại buổi tập</Button>}{check?.overallResult === 'ABNORMAL' && !incidentCode ? <Button onClick={() => setReportOpen(true)}>Báo cáo sự cố</Button> : !check && !conflict && session.status === 'SCHEDULED' ? <Button disabled={busy} onClick={save}>{busy ? 'Đang ghi…' : abnormal ? 'Báo cáo sự cố' : 'Hoàn tất kiểm tra trước buổi tập'}</Button> : null}</div></div>

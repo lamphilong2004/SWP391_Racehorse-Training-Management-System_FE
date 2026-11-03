@@ -14,25 +14,19 @@
 .summary { display: grid; gap: var(--space-lg); }
 .link { color: var(--color-primary-600); }
 @media (max-width: 900px) { .columns, .metrics { grid-template-columns: 1fr; } }
-/* Figma 248:667: one compact row per check, label and hint on the left, Normal / Abnormal segmented on the right. */
-.checkRow { position: relative; padding-right: 252px; min-height: 40px; }
-.checkRow [role="radiogroup"] { position: absolute; top: 0; right: 0; width: 236px; gap: 0; }
-.checkRow [role="radiogroup"] > label { padding: 6px var(--space-md); border-radius: 0; }
-.checkRow [role="radiogroup"] > label:first-child { border-radius: var(--radius-md) 0 0 var(--radius-md); }
-.checkRow [role="radiogroup"] > label:last-child { border-radius: 0 var(--radius-md) var(--radius-md) 0; margin-left: -1px; }
+.checkRow { gap: var(--space-sm); }
+.checkRow > legend { margin-bottom: var(--space-xs); }
+.checkRow > p { order: -1; margin: 0; }
+.checkRow [role="radiogroup"] { max-inline-size: 360px; }
+.checkRow [role="radiogroup"] > label { min-height: 44px; }
 .observation label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-/* Design System v2 §I narrow web: text links are 44px touch targets; check rows keep the segmented control usable. */
+/* Keep narrow-web session links usable as touch targets. */
 @media (max-width: 767px) {
   .link { display: inline-flex; align-items: center; min-height: 44px; }
   .sessionInfo { min-width: 0; flex-basis: 100%; }
-  .checkRow { padding-right: 0; }
-  .checkRow [role="radiogroup"] { position: static; width: 100%; margin-top: var(--space-sm); }
-  .checkRow [role="radiogroup"] > label { min-height: 44px; flex: 1; }
 }
 
 .heading { font-family: var(--font-family-headline); font-weight: 700; letter-spacing: -.025em; }
 .stack, .columns > *, .metrics > * { min-width: 0; }
 .session { padding: var(--space-lg); border: 1px solid var(--color-border-default); border-radius: var(--card-radius); background: var(--color-bg-surface); box-shadow: var(--elev-1); }
-.checkRow { border-bottom: 1px solid var(--color-border-default); padding-block: var(--space-lg); }
-.checkRow [role="radiogroup"] { top: var(--space-lg); }

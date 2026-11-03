@@ -1,3 +1,4 @@
+@reference '../design-system/styles/tailwind.css';
 .shell {
   position: relative;
   display: flex;
@@ -62,4 +63,12 @@
     border: 0;
     background: color-mix(in srgb, var(--color-text-primary) 40%, transparent);
   }
+}
+
+/* 2026-11 bold refresh: soft emerald/sky light at the top of every workspace instead of a flat grey page. */
+:global([data-ui-v3]) .shell {
+  background:
+    radial-gradient(1100px 420px at 78% -160px, rgb(16 185 129 / 13%), transparent 70%),
+    radial-gradient(900px 380px at 18% -180px, rgb(14 165 233 / 10%), transparent 70%),
+    var(--color-bg-page);
 }

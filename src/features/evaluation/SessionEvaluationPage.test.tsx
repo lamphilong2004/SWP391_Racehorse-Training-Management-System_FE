@@ -28,6 +28,17 @@ const evaluationCalls = () => fetcher.mock.calls.filter(([url]) => String(url).e
 async function openForm() { await userEvent.click(await screen.findByRole('tab', { name: 'Đánh giá & khuyến nghị' })); }
 async function chooseAssessment() { await userEvent.click(screen.getByRole('radio', { name: 'Không đạt mục tiêu' })); }
 
+it('offers the next action on the result screen and focuses the assessment form without saving', async () => {
+  current = result('COMPLETED');
+  const router = renderAt();
+  await userEvent.click(await screen.findByRole('button', { name: 'Chốt đánh giá' }));
+  const panel = screen.getByRole('tabpanel', { name: 'Đánh giá & khuyến nghị' });
+  expect(panel).toHaveFocus();
+  expect(within(panel).getByRole('button', { name: 'Lưu đánh giá' })).toBeEnabled();
+  expect(router.state.location.search).toBe('?view=evaluation');
+  expect(evaluationCalls()).toHaveLength(0);
+});
+
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); current = result(); });
 afterEach(() => { vi.unstubAllGlobals(); });
 

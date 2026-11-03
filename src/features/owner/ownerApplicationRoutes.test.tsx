@@ -27,6 +27,7 @@ function mount(path = '/owner/horses', options: { role?: RoleCode; anonymous?: b
     if (url.pathname.endsWith('/profile')) return ok({ horse, pedigree: { sire: { name: 'Ngựa cha' }, dam: {} }, myOwnership: { sharePercentage: 60, effectiveFrom: '2026-01-01', isManagingOwner: true }, diagnosis: 'CLINICAL-SECRET' });
     if (url.pathname.endsWith('/health-summary')) return ok({ healthStatus: null, trainingAvailability: 'AVAILABLE', weights: [], diagnosis: 'CLINICAL-SECRET' });
     if (url.pathname.endsWith('/training-summary')) return ok({ currentProgram: null, recentSessions: [], feedback: 'CLINICAL-SECRET' });
+    if (url.pathname === '/api/owner/horses/7/photo') return new Response(null, { status: 204 });
     throw new Error(`Unapproved request ${url.pathname}`);
   });
   vi.stubGlobal('fetch', fetcher);
@@ -46,7 +47,7 @@ describe('CORE-056 actual application HTTP route mounting', () => {
     await screen.findByText('Bản tóm tắt dành cho chủ ngựa, do Veterinarian của câu lạc bộ cập nhật.');
     await userEvent.click(screen.getByRole('tab', { name: 'Huấn luyện & thành tích' }));
     await screen.findByRole('heading', { name: 'Buổi tập gần đây' });
-    expect(requests).toEqual(['/api/owner/horses', '/api/owner/horses/7/training-summary', '/api/owner/horses/7/profile', '/api/owner/horses/7/health-summary', '/api/owner/horses/7/training-summary']);
+    expect(requests).toEqual(['/api/owner/horses', '/api/owner/horses/7/training-summary', '/api/owner/horses/7/photo', '/api/owner/horses/7/profile', '/api/owner/horses/7/health-summary', '/api/owner/horses/7/training-summary', '/api/owner/horses/7/photo']);
     expect(document.body).not.toHaveTextContent('CLINICAL-SECRET');
     expect(localStorage.getItem('racehorse.business-samples.v1')).toBeNull();
     expect(screen.queryByRole('button', { name: /Save|Edit|Activate/ })).not.toBeInTheDocument();

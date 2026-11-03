@@ -41,6 +41,13 @@
   color: var(--color-text-disabled);
 }
 
+.preview {
+  display: block;
+  width: 100%;
+  height: 62px;
+  object-fit: contain;
+}
+
 .fileName {
   max-width: 88px;
   overflow: hidden;

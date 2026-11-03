@@ -46,3 +46,6 @@
   .ancestors { flex: 1 1 180px; }
   .pagination { justify-content: flex-start; }
 }
+
+/* 2026-11 refresh: history section titles use the shared emerald dot heading. */
+:global([data-ui-v3]) .sectionTitle::before { width: 8px; height: 8px; border-radius: 999px; background: var(--color-primary-600); box-shadow: 0 0 0 4px var(--color-primary-50); }

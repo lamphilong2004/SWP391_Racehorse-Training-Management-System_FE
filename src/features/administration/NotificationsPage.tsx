@@ -13,6 +13,10 @@ import { dateTime } from '../evaluation/models';
 
 const CATEGORY_LABELS: Record<string, string> = { ALERTS: 'Cảnh báo', MEDICAL: 'Y tế', SCHEDULE: 'Lịch' };
 interface Notice { id: number; category: 'ALERTS' | 'MEDICAL' | 'SCHEDULE'; notificationType: string; title: string; message: string; readAt: string | null; targetType: string | null; targetId: number | null; isSimulated: boolean; createdAt: string }
+function isIncidentSummary(notice: Notice, roles: RoleCode[]) {
+  return notice.targetType === 'INCIDENT' && notice.notificationType === 'INCIDENT_REPORTED'
+    && roles.some(role => role === 'TRAINER' || role === 'WORK_RIDER' || role === 'GROOM');
+}
 /** Fixed local routes only; never navigate to a URL supplied by notification content. The target retains its own RBAC. */
 function destination(notice: Notice, roles: RoleCode[]): string | undefined {
   const id = notice.targetId;
@@ -66,9 +70,10 @@ function NotificationContent({ role, roles, compact = false }: { role: RoleCode;
     {error && <AlertBanner type="danger" title="Cập nhật thông báo thất bại">{error}</AlertBanner>}
     {resource.pending && <LoadingState label="Đang tải thông báo…" />}{resource.error && <ErrorState title="Không tải được thông báo" description={resource.error} onRetry={resource.reload} />}
     {resource.data && <><Card>{resource.data.items.length === 0 && <EmptyState title="Không có thông báo phù hợp" />}
-      {resource.data.items.map((notice) => { const target = destination(notice, roles); return <div key={notice.id} className={styles.notice}>
+      {resource.data.items.map((notice) => { const summaryOnly = isIncidentSummary(notice, roles); const target = summaryOnly ? undefined : destination(notice, roles); return <div key={notice.id} className={styles.notice}>
         <NotificationItem title={serverText(notice.title)} body={serverText(notice.message)} context={`${CATEGORY_LABELS[notice.category] ?? notice.category}${notice.isSimulated ? ' · DỮ LIỆU MÔ PHỎNG' : ''}`} time={dateTime(notice.createdAt)} read={Boolean(notice.readAt)} />
-        <div className={styles.actions}>{!notice.readAt && <Button variant="tertiary" size="sm" disabled={busy} onClick={() => { void mark(notice.id); }}>Đánh dấu đã đọc</Button>}{target && <ButtonLink size="sm" to={target}>Mở</ButtonLink>}</div>
+        {summaryOnly && <p className="text-caption">Thông báo để nắm tình hình. Chi tiết sự cố giới hạn theo quyền truy cập.</p>}
+        <div className={styles.actions}>{!notice.readAt && <Button variant="tertiary" size="sm" disabled={busy} onClick={() => { void mark(notice.id); }}>Đánh dấu đã đọc</Button>}{target && <ButtonLink size="sm" to={target}>Mở</ButtonLink>}{summaryOnly && roles.includes('TRAINER') && <ButtonLink size="sm" variant="secondary" to="/medical/restrictions">Xem hạn chế tập luyện</ButtonLink>}</div>
       </div>; })}</Card><div className={styles.actions}><Button variant="secondary" disabled={page === 0} onClick={() => setPage(page - 1)}>Trước</Button><span>Trang {page + 1} · {resource.data.totalItems} thông báo</span><Button variant="secondary" disabled={page + 1 >= resource.data.totalPages} onClick={() => setPage(page + 1)}>Sau</Button></div></>}
     </div>;
   return compact ? content : <FlowShell title="Thông báo" section="Không gian làm việc" role={role} description="Thông báo trong ứng dụng của tài khoản bạn. Mở thông báo không làm thay đổi dữ liệu nghiệp vụ hay quyền hạn.">{content}</FlowShell>;

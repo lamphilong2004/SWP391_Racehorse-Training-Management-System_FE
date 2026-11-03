@@ -1,3 +1,4 @@
+@reference '../design-system/styles/tailwind.css';
 .page { display: flex; flex-direction: column; gap: var(--space-xl); max-width: 1600px; margin: 0 auto; }
 .heading { display: flex; align-items: center; justify-content: space-between; gap: var(--space-xl); flex-wrap: wrap; }
 .heading h1 { margin: var(--space-sm) 0; }
@@ -37,3 +38,8 @@
 .welcome, .actionGrid > *, .metrics > * { min-width: 0; }
 .actionCard { border-radius: var(--card-radius); }
 .identity { overflow-wrap: anywhere; }
+
+/* 2026-11 Tailwind refresh: the page banner carries the navy identity; quick-action cards lift on hover. */
+:global([data-ui-v3]) .actionCard { @apply transition-[transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:shadow-rh-raised; }
+:global([data-ui-v3]) .actionIcon { @apply ring-1 ring-emerald-200/70; }
+@media (prefers-reduced-motion: reduce) { :global([data-ui-v3]) .actionCard { @apply transition-none hover:translate-y-0; } }

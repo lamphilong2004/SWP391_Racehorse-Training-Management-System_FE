@@ -1,0 +1,153 @@
+/*
+ * Tailwind CSS v4 on top of the Racehorse design tokens (tokens.css stays the single source of colour, radius and
+ * elevation). Preflight is NOT imported: global.css remains the base layer, so existing screens keep their resets.
+ * Utilities and `@apply` (CSS modules use `@reference` to this file) resolve to the token variables, so the
+ * [data-ui-v3] navy/emerald scope still switches every value.
+ */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+@theme inline {
+  --color-rh-page: var(--color-bg-page);
+  --color-rh-surface: var(--color-bg-surface);
+  --color-rh-subtle: var(--color-bg-subtle);
+  --color-rh-border: var(--color-border-default);
+  --color-rh-border-strong: var(--color-border-strong);
+  --color-rh-field: var(--color-field-border, var(--color-border-strong));
+  --color-rh-field-hover: var(--color-field-hover-border, var(--color-border-strong));
+  --color-rh-text: var(--color-text-primary);
+  --color-rh-muted: var(--color-text-secondary);
+  --color-rh-disabled: var(--color-text-disabled);
+  --color-rh-navy: var(--color-brand-primary, var(--color-text-primary));
+  --color-rh-primary: var(--color-primary-600);
+  --color-rh-primary-hover: var(--color-primary-700);
+  --color-rh-primary-soft: var(--color-primary-50);
+  --color-rh-success: var(--color-success-600);
+  --color-rh-success-soft: var(--color-success-50);
+  --color-rh-warning: var(--color-warning-600);
+  --color-rh-warning-soft: var(--color-warning-50);
+  --color-rh-danger: var(--color-danger-600);
+  --color-rh-danger-soft: var(--color-danger-50);
+  --color-rh-info: var(--color-info-600);
+  --color-rh-table-head: var(--color-table-header, var(--color-bg-subtle));
+  --color-rh-row-hover: var(--color-row-hover, var(--color-bg-subtle));
+
+  --font-rh: var(--font-family);
+  --font-rh-head: var(--font-family-headline, var(--font-family));
+
+  --radius-rh-control: 10px;
+  --radius-rh-card: 16px;
+
+  --shadow-rh-card: 0 1px 2px rgb(11 19 43 / 4%), 0 8px 24px -12px rgb(11 19 43 / 10%);
+  --shadow-rh-raised: 0 2px 4px rgb(11 19 43 / 6%), 0 16px 32px -16px rgb(11 19 43 / 18%);
+  --shadow-rh-control: inset 0 1px 1px rgb(11 19 43 / 4%);
+  --shadow-rh-focus: 0 0 0 4px color-mix(in srgb, var(--color-primary-600) 18%, transparent);
+  --shadow-rh-button: 0 1px 2px rgb(4 120 87 / 20%), 0 4px 12px -4px rgb(4 120 87 / 35%);
+}
+
+/*
+ * 2026-11 visual refresh tokens (unlayered, same selectors as tokens.css, loaded after it). Every feature surface that
+ * already uses these variables — 12 card-radius and 23 elevation users — picks up the softer, rounder look at once.
+ */
+[data-ui-v3],
+:root[data-ui-v3] [data-design-system='v2'],
+[data-app-shell]:has([data-ui-v3]),
+[data-app-shell]:has([data-ui-v3]) [data-design-system='v2'],
+[data-design-system='v3'] {
+  --color-bg-page: #f2f5f9;
+  --color-table-header: #f6f8fb;
+  --color-row-hover: #effaf5;
+  --card-radius: 16px;
+  --dialog-radius: 16px;
+  --radius-lg: 14px;
+  --elev-1: 0 1px 2px rgb(11 19 43 / 4%), 0 8px 24px -12px rgb(11 19 43 / 10%);
+  --elev-2: 0 2px 4px rgb(11 19 43 / 6%), 0 16px 32px -16px rgb(11 19 43 / 18%);
+  --elev-focus: 0 0 0 4px rgb(5 150 105 / 18%);
+}
+
+/* 2026-11 bold refresh: taller controls (fields and buttons share this height), bolder page titles. */
+[data-ui-v3],
+:root[data-ui-v3] [data-design-system='v2'],
+[data-app-shell]:has([data-ui-v3]),
+[data-app-shell]:has([data-ui-v3]) [data-design-system='v2'],
+[data-design-system='v3'] {
+  --control-height-md: 44px;
+  /* Captions reuse the disabled ink; keep it at 4.5:1 on the tinted row-card surface (#f8fafc). */
+  --color-text-disabled: #66666e;
+  --color-field-border: #c3cfdb;
+  --color-field-hover-border: #7f9ab0;
+}
+:where([data-ui-v3], [data-app-shell]:has([data-ui-v3])) main :is(h1, .text-h1) {
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 800;
+  color: var(--color-brand-primary, var(--color-text-primary));
+}
+
+/*
+ * Page banner (design direction A, approved 2026-11-03): every page title row carries data-page-banner and becomes a
+ * navy → emerald hero with white title. Layout (flex, gaps, actions) stays with each page's own module.
+ */
+[data-ui-v3] [data-page-banner],
+[data-app-shell]:has([data-ui-v3]) [data-page-banner] {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 26px 30px;
+  border-radius: 20px;
+  color: #ffffff;
+  background:
+    radial-gradient(120% 160% at 100% 0%, rgb(16 185 129 / 42%), transparent 55%),
+    linear-gradient(120deg, #0b132b 0%, #12305a 55%, #065f46 100%);
+  box-shadow: 0 20px 40px -24px rgb(11 19 43 / 55%);
+}
+[data-ui-v3] [data-page-banner]::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  right: -60px;
+  bottom: -110px;
+  width: 280px;
+  height: 280px;
+  border-radius: 999px;
+  border: 36px solid rgb(255 255 255 / 6%);
+  pointer-events: none;
+}
+[data-ui-v3] [data-page-banner] :is(h1, .text-h1) { color: #ffffff !important; }
+[data-ui-v3] [data-page-banner] p { color: rgb(226 232 240 / 88%) !important; }
+[data-ui-v3] [data-page-banner] p:first-child:not(:only-child)[class*='eyebrow'] { color: #6ee7b7 !important; }
+[data-ui-v3] [data-page-banner] a:not([class]) { color: #a7f3d0; }
+[data-ui-v3] [data-page-banner] :is(a, button)[class*='tertiary'] { color: #a7f3d0; }
+[data-ui-v3] [data-page-banner] :is(a, button)[class*='secondary'] { border-color: rgb(255 255 255 / 70%); }
+[data-ui-v3] [data-page-banner] :is(h1, .text-h1)[tabindex='-1']:focus { outline: none; }
+[data-ui-v3] [data-page-banner] :is(h1, .text-h1) + p { margin-top: 6px; }
+
+/* Standalone back links and links inside table cells get a 24px minimum target (WCAG 2.2 target size). */
+[data-ui-v3] main :is(a, button)[class*='back'],
+[data-ui-v3] main td a:not([class*='button']) { display: inline-flex; align-items: center; min-height: 24px; }
+
+/* Section navigation inside a page banner (e.g. Kế hoạch · Công việc theo ngày · Kho vật tư): a segmented control on
+   the dark banner — the current page is a white pill with navy text, the others light text. */
+[data-ui-v3] [data-page-banner] nav {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: rgb(255 255 255 / 8%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%);
+}
+[data-ui-v3] [data-page-banner] nav a:not([aria-current='page']), [data-ui-v3] [data-page-banner] nav a[aria-current='page'] {
+  padding: 8px 14px;
+  border-radius: 9px;
+  color: rgb(241 245 249 / 92%);
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: none;
+}
+[data-ui-v3] [data-page-banner] nav a:not([aria-current='page']):hover { background: rgb(255 255 255 / 12%); color: #ffffff; }
+[data-ui-v3] [data-page-banner] nav a[aria-current='page'] { background: #ffffff; color: var(--color-brand-primary, #0b132b); box-shadow: 0 2px 8px -2px rgb(0 0 0 / 30%); }
+[data-ui-v3] [data-page-banner] nav a:focus-visible { outline: 2px solid #6ee7b7; outline-offset: 2px; }
+/* Plain text links (no class) in content: 3.5px block padding lifts the hit area to >= 24px (17px inline, 20px block
+   measured) without changing line boxes of inline links. */
+[data-ui-v3] main a:not([class]) { padding-block: 3.5px; }

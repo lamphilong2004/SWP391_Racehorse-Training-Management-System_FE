@@ -113,14 +113,16 @@ describe('HorseCard and CandidateCard', () => {
     expect(screen.getByText('None — blocked')).toBeInTheDocument();
   });
 
-  it('lists candidate reasons as label/value pairs without scores', () => {
+  it('lists candidate reasons and accepts clicks on the card without duplicating its button action', async () => {
+    const select = vi.fn();
     render(
       <CandidateCard
         name="Tran Minh Khoa"
         subtitle="Trainer · 6 yrs experience"
         tags={['Sprint']}
         facts={[{ label: 'Chương trình đang hoạt động', value: '2' }]}
-        actions={<Button>Chọn</Button>}
+        onSelect={select}
+        actions={<Button onClick={select}>Chọn</Button>}
       />,
     );
     expect(screen.getByText('TK')).toBeInTheDocument();
@@ -128,6 +130,9 @@ describe('HorseCard and CandidateCard', () => {
     expect(screen.getByRole('term')).toHaveTextContent('Chương trình đang hoạt động');
     expect(screen.getByRole('definition')).toHaveTextContent('2');
     expect(screen.getByRole('button', { name: 'Chọn' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('heading', { name: 'Tran Minh Khoa' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Chọn' }));
+    expect(select).toHaveBeenCalledTimes(2);
   });
 });
 

@@ -49,3 +49,14 @@
 :global([data-ui-v3]) .badge { box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 18%, transparent); }
 :global([data-ui-v3]) .info { background: var(--color-info-50); color: var(--color-info-600); }
 :global([data-ui-v3]) .simulated { box-shadow: none; }
+
+/* 2026-11 critique: sentence-case badges. Uppercase plus tracking hurts Vietnamese diacritics and adds noise when a
+   row shows three statuses (Primer/Polaris use sentence-case status labels). */
+:global([data-ui-v3]) .label { font-size: 12px; letter-spacing: 0; text-transform: none; font-weight: 600; }
+
+/* WCAG AA for 12px badge text: darker ink on the tinted fills (audit measured 3.86-4.11 with the 600 inks). */
+:global([data-ui-v3]) .success { color: #065f46; }
+:global([data-ui-v3]) .warning { color: #92400e; }
+:global([data-ui-v3]) .danger { color: #991b1b; }
+:global([data-ui-v3]) .info { color: #075985; }
+:global([data-ui-v3]) .neutral { color: #334155; }

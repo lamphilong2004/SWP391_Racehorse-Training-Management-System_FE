@@ -8,7 +8,7 @@ import { metricInput, startBlocks, type RiderResult, type RiderSession } from '.
 
 const auth = vi.hoisted(() => ({ user: { id: 9, fullName: 'Test Rider', roles: ['WORK_RIDER'], accountStatus: 'ACTIVE' }, handleApiError: vi.fn(() => false) }));
 vi.mock('../../shared/auth/AuthProvider', () => ({ useAuth: () => auth }));
-const base: RiderSession = { id: 50, sessionCode: 'SES-0050', horse: { id: 7, name: 'Thunder Bolt', horseCode: 'TB-001' }, programId: 2, phaseName: 'Foundation', scheduledStart: '2020-10-17T01:00:00Z', status: 'SCHEDULED', workRider: { id: 9, fullName: 'Test Rider' }, trainer: { id: 3, fullName: 'Test Trainer' }, preCheckResult: 'ALL_NORMAL', blocked: false, blockedReasons: [], trainingAvailability: 'AVAILABLE', surface: 'Turf', exercises: [{ id: 1, exerciseDefinitionId: 1, exerciseOrder: 1, exerciseName: 'Trot', distanceM: 400, repetitions: 1, durationMin: null }] };
+const base: RiderSession = { id: 50, sessionCode: 'SES-0050', horse: { id: 7, name: 'Thunder Bolt', horseCode: 'TB-001' }, programId: 2, phaseName: 'Foundation', scheduledStart: new Date(Date.now() - 60000).toISOString(), status: 'SCHEDULED', workRider: { id: 9, fullName: 'Test Rider' }, trainer: { id: 3, fullName: 'Test Trainer' }, preCheckResult: 'ALL_NORMAL', blocked: false, blockedReasons: [], trainingAvailability: 'AVAILABLE', surface: 'Turf', exercises: [{ id: 1, exerciseDefinitionId: 1, exerciseOrder: 1, exerciseName: 'Trot', distanceM: 400, repetitions: 1, durationMin: null }] };
 function result(session: RiderSession): RiderResult { return { session, actual: { totalDistanceM: null, durationMin: null, simulated: false }, samples: [{ recordedAt: '2020-10-17T01:01:00Z', speedKmh: 0, heartRate: null, distanceM: null, source: 'MANUAL' }], alerts: [], riderFeedback: null }; }
 function api(session = base): RiderApi {
   return { assignments: vi.fn().mockResolvedValue([session]), history: vi.fn().mockResolvedValue({ items: [], page: 0, size: 20, totalItems: 0, totalPages: 0 }), session: vi.fn().mockResolvedValue(session), result: vi.fn().mockResolvedValue(result(session)), start: vi.fn().mockResolvedValue({ ...session, status: 'IN_PROGRESS' }), complete: vi.fn().mockResolvedValue({ ...session, status: 'COMPLETED' }), issue: vi.fn().mockResolvedValue({ incidentId: 90, incidentCode: 'INC-0090', sessionStatus: 'INTERRUPTED' }), feedback: vi.fn().mockResolvedValue({ id: 91, sessionId: 50, responses: {}, submittedBy: session.workRider, submittedAt: '2020-10-17T01:30:00Z' }), metric: vi.fn().mockResolvedValue({ sampleId: 92, realtimeState: 'NORMAL' }) };
@@ -54,6 +54,15 @@ it('requires six readiness confirmations and starts once on the dedicated endpoi
   fireEvent.click(within(dialog).getByRole('button', { name: 'Bắt đầu buổi tập' }));
   await waitFor(() => expect(router.state.location.pathname).toBe('/rider/sessions/50/active'));
   expect(client.start).toHaveBeenCalledExactlyOnceWith(50);
+});
+it('keeps an expired session blocked after all Rider confirmations even when precheck passed', async () => {
+  const client = api({ ...base, scheduledEnd: new Date(Date.now() - 1000).toISOString() });
+  mount(client, '/rider/assignments/50/start');
+  const dialog = await screen.findByRole('dialog');
+  within(dialog).getAllByRole('checkbox').forEach((checkbox) => fireEvent.click(checkbox));
+  expect(within(dialog).getByText(/Buổi tập đã hết khung giờ bắt đầu/)).toBeVisible();
+  expect(within(dialog).getByRole('button', { name: 'Bắt đầu buổi tập' })).toBeDisabled();
+  expect(client.start).not.toHaveBeenCalled();
 });
 it('shows PAUSED from server without Finish or Trainer Pause/Resume/Stop controls; manual metrics remain possible', async () => {
   const client = api({ ...base, status: 'PAUSED' }); mount(client, '/rider/sessions/50/active');

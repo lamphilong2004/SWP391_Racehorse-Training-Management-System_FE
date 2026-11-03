@@ -1,5 +1,6 @@
 import type { CurrentUser } from '../../shared/auth/authApi';
 import type { StatusOf } from '../../design-system';
+import type { EvaluationResult } from '../evaluation/models';
 
 /** View projection of CORE-004 Owner schemas, pinned at f8e7895 (BE PR #9).
  * Presentation-only missing fields stay null; they are never added to the HTTP DTO.
@@ -13,7 +14,7 @@ export interface OwnerHorse {
   healthSummary?: { reviewDate: string | null; recovery: 'NOT_RECOVERED' | 'IMPROVING' | 'RECOVERED' | null; examinedAt: string | null; weights: { weightKg: number; recordedAt: string }[] };
   /** undefined: the list projection could not load the training summary (shown as unknown, never as "no program"). */
   program?: { name: string; phase: string | null; from: string | null; to: string | null; trainer: string | null; completed?: number; planned?: number } | null;
-  sessions: { id: number; date: string; title: string | null; distanceM: number | null; status: StatusOf<'session'> }[];
+  sessions: { id: number; date: string; title: string | null; distanceM: number | null; status: StatusOf<'session'>; evaluationResult?: EvaluationResult }[];
   nextSession: { date: string; end: string | null; title: string | null; phase: string | null } | null;
 }
 export interface OwnerContext { actorId: number; signal?: AbortSignal }

@@ -18,6 +18,8 @@ export interface CandidateCardProps {
   facts?: CandidateFact[];
   /** Footer actions: "View profile" (tertiary) left, "Select" (primary) right. */
   actions?: ReactNode;
+  /** Makes the card body clickable. Keep a native selection button in actions for keyboard access. */
+  onSelect?: () => void;
   className?: string;
 }
 
@@ -25,9 +27,13 @@ export interface CandidateCardProps {
  * Figma Candidate Card (75:418), shared by Trainer recommendation (SCR-TRAIN-022) and Work Rider recommendation
  * (SCR-TRAIN-023). Recommendations warn, they never block.
  */
-export function CandidateCard({ name, subtitle, tags = [], facts = [], actions, className }: CandidateCardProps) {
+export function CandidateCard({ name, subtitle, tags = [], facts = [], actions, onSelect, className }: CandidateCardProps) {
   return (
-    <article className={cx(styles.card, className)}>
+    <article className={cx(styles.card, onSelect && styles.selectable, className)}
+      onClick={onSelect ? event => {
+        if (event.target instanceof Element && event.target.closest('a, button, input, label, select, textarea')) return;
+        onSelect();
+      } : undefined}>
       <div className={styles.identity}>
         <span className={styles.avatar} aria-hidden="true">
           {initials(name)}

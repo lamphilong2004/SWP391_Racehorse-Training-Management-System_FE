@@ -18,3 +18,13 @@ it('renders an honest empty state without invented rows', () => {
     columns={[{ key: 'name', header: 'Horse', render: () => 'must not render' }]} />);
   expect(screen.getByText('Không có kết quả')).toBeInTheDocument(); expect(screen.queryByText('must not render')).not.toBeInTheDocument();
 });
+
+it('keeps nested controls independent of row clicks', async () => {
+  const user = userEvent.setup(), openRow = vi.fn(), pick = vi.fn();
+  render(<DataTable rows={[1]} rowKey={row => row} onRowClick={openRow}
+    columns={[{ key: 'action', header: 'Choice', render: () => <button onClick={pick}>Chọn</button> }]} />);
+  await user.click(screen.getByRole('button', { name: 'Chọn' }));
+  await user.keyboard('{Enter}');
+  expect(pick).toHaveBeenCalledTimes(2);
+  expect(openRow).not.toHaveBeenCalled();
+});

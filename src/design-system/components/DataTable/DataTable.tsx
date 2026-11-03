@@ -20,6 +20,9 @@ export interface DataTableProps<T> {
   rowKey: (row: T) => string | number;
   caption?: string;
   onRowClick?: (row: T) => void;
+  isRowClickable?: (row: T) => boolean;
+  /** Set false when a native button or radio already provides keyboard access. */
+  focusableRows?: boolean;
   selectedKey?: string | number;
   /** Rendered across all columns when `rows` is empty (use EmptyState). */
   empty?: ReactNode;
@@ -33,12 +36,14 @@ export function DataTable<T>({
   rowKey,
   caption,
   onRowClick,
+  isRowClickable,
+  focusableRows = true,
   selectedKey,
   empty,
   className,
 }: DataTableProps<T>) {
   const onRowKeyDown = (event: KeyboardEvent<HTMLTableRowElement>, row: T) => {
-    if (event.key === 'Enter' || event.key === ' ') {
+    if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
       event.preventDefault();
       onRowClick?.(row);
     }
@@ -73,14 +78,18 @@ export function DataTable<T>({
           rows.map((row) => {
             const key = rowKey(row);
             const selected = selectedKey !== undefined && key === selectedKey;
+            const clickable = Boolean(onRowClick) && (isRowClickable?.(row) ?? true);
             return (
               <tr
                 key={key}
-                className={cx(styles.row, onRowClick && styles.clickable, selected && styles.selected)}
-                aria-selected={onRowClick ? selected : undefined}
-                tabIndex={onRowClick ? 0 : undefined}
-                onClick={onRowClick ? () => onRowClick(row) : undefined}
-                onKeyDown={onRowClick ? (event) => onRowKeyDown(event, row) : undefined}
+                className={cx(styles.row, clickable && styles.clickable, selected && styles.selected)}
+                aria-selected={clickable ? selected : undefined}
+                tabIndex={clickable && focusableRows ? 0 : undefined}
+                onClick={clickable ? event => {
+                  if (event.target instanceof Element && event.target.closest('a, button, input, label, select, textarea, [role="button"], [role="link"]')) return;
+                  onRowClick?.(row);
+                } : undefined}
+                onKeyDown={clickable && focusableRows ? (event) => onRowKeyDown(event, row) : undefined}
               >
                 {columns.map((column) => (
                   <td key={column.key} className={cx(styles.cell, column.align === 'right' && styles.right, column.nowrap && styles.nowrap)}>
