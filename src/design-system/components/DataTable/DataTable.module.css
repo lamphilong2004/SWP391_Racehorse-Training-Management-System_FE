@@ -120,3 +120,32 @@
   @apply bg-rh-primary-soft;
   box-shadow: inset 4px 0 0 var(--color-primary-600);
 }
+
+/* 2026-11 bold refresh: emerald-tinted heading band and stronger first column. */
+:global([data-ui-v3]) .headerRow, :global([data-ui-v3]) .headerCell {
+  background: linear-gradient(180deg, #f0faf6, #e8f5ef);
+}
+:global([data-ui-v3]) .headerCell { @apply text-[12.5px] font-bold text-[#0f3d32]; border-bottom: 1px solid #cfe8dd; }
+:global([data-ui-v3]) .row .cell:first-child { @apply font-semibold text-rh-navy; }
+
+/* Design direction A (2026-11-03): each row is a rounded card on the surface; small uppercase column labels. */
+:global([data-ui-v3]) .scroll { @apply rounded-none border-0 bg-transparent px-0.5 shadow-none; }
+:global([data-ui-v3]) .table { border-collapse: separate; border-spacing: 0 8px; background: transparent; margin-top: -8px; }
+:global([data-ui-v3]) .headerRow, :global([data-ui-v3]) .headerCell { background: var(--color-bg-surface); }
+:global([data-ui-v3]) .headerRow { border: 0; height: 36px; }
+:global([data-ui-v3]) .headerCell { @apply border-0 py-2 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500; }
+:global([data-ui-v3]) .row, :global([data-ui-v3]) .row:nth-child(even):not(.selected) { background: transparent; box-shadow: none; }
+:global([data-ui-v3]) .row > .cell {
+  background: #f8fafc;
+  border-top: 1px solid #e9eef4;
+  border-bottom: 1px solid #e9eef4;
+  transition: background-color var(--motion-fast, 120ms) ease, border-color var(--motion-fast, 120ms) ease;
+}
+:global([data-ui-v3]) .row > .cell:first-child { border-left: 1px solid #e9eef4; border-radius: 14px 0 0 14px; }
+:global([data-ui-v3]) .row > .cell:last-child { border-right: 1px solid #e9eef4; border-radius: 0 14px 14px 0; }
+:global([data-ui-v3]) .row > .cell:only-child { border-radius: 14px; }
+:global([data-ui-v3]) .row:hover:not(.selected) > .cell, :global([data-ui-v3]) .row:focus-within:not(.selected) > .cell { background: #f1faf6; border-color: #cfeadf; }
+:global([data-ui-v3]) .selected, :global([data-ui-v3]) .selected:hover, :global([data-ui-v3]) .selected:focus-within { background: transparent; box-shadow: none; }
+:global([data-ui-v3]) .selected > .cell { background: #ecfdf5; border-color: #a7f3d0; }
+:global([data-ui-v3]) .selected > .cell:first-child { box-shadow: inset 4px 0 0 #059669; }
+@media (prefers-reduced-motion: reduce) { :global([data-ui-v3]) .row > .cell { transition: none; } }

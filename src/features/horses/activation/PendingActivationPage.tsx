@@ -72,7 +72,7 @@ function PendingActivationPageContent() {
     <div className={shared.page}>
       <button type="button" className={shared.back} onClick={() => navigate('/horses')}>{'← Quay lại danh sách ngựa'}</button>
 
-      <div className={shared.titleBlock}>
+      <div data-page-banner className={shared.titleBlock}>
         <h1 className={shared.title}>Chờ kích hoạt</h1>
         <p className={shared.subtitle}>
           {`Ngựa ở trạng thái Nháp và những gì còn thiếu trước khi chuyển sang Hoạt động${pending ? ` · ${metadata.totalItems} con ngựa` : ''}`}

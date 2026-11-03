@@ -37,7 +37,7 @@ function History({ horse }: { horse: HorseDetail }) {
   if (!current?.timeline) return <LoadingState label="Đang tải lịch sử ngựa…" />;
   return <div className={styles.page}>
     <ButtonLink to={`/horses/${horse.id}?tab=overview`} className={styles.back}>← Quay lại hồ sơ ngựa</ButtonLink>
-    <div><h1 className={styles.title}>Phả hệ &amp; lịch sử</h1><p className={styles.subtitle}>{horse.horseCode} · {horse.name} · {horse.breed ?? missing} · {sexLabel(horse.sex) ?? missing} · sinh {formatDate(horse.foaledDate)} · Chủ ngựa {ownerNames}</p></div>
+    <div data-page-banner><h1 className={styles.title}>Phả hệ &amp; lịch sử</h1><p className={styles.subtitle}>{horse.horseCode} · {horse.name} · {horse.breed ?? missing} · {sexLabel(horse.sex) ?? missing} · sinh {formatDate(horse.foaledDate)} · Chủ ngựa {ownerNames}</p></div>
     {service.source === 'sample' && <AlertBanner title="Lịch sử mẫu">Chỉ hiển thị dữ liệu mẫu dùng chung. Bản xem trước không có thêm lịch sử.</AlertBanner>}
     <h2 className={styles.sectionTitle}>Xuất xứ &amp; phả hệ</h2>
     <Card className={styles.section}><h3>Xuất xứ &amp; nhận dạng</h3><div className={styles.identityGrid}>

@@ -179,7 +179,7 @@ function PedigreeOwnershipPageContent() {
       <UnsavedChangesGuard dirty={dirty} />
       <button type="button" className={styles.back} onClick={() => navigate(-1)}>{'← Quay lại'}</button>
 
-      <div className={styles.titleRow}>
+      <div data-page-banner className={styles.titleRow}>
         <div className={styles.titleBlock}>
           <h1 className={styles.title}>{`Phả hệ & quyền sở hữu · ${horse.name}`}</h1>
           <p className={styles.subtitle}>{`Bước 2/2 · ${facts}`}</p>

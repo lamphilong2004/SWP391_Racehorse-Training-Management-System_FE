@@ -38,7 +38,7 @@ function PerformanceWorkspace({ api, loadHorses, assignedToMe }: { api: Evaluati
   const selected = requested === null ? state.horses?.[0] : state.horses?.find((horse) => /^[1-9]\d*$/.test(requested) && horse.id === Number(requested));
   const retry = () => { setState({}); setAttempt((value) => value + 1); };
   return <div className="evaluation-stack">
-    <div className="evaluation-actions"><div><h1 className="text-h1"><Icon name="trending-up" size={24} /> Lịch sử thành tích</h1><p className="text-body">Dữ liệu theo buổi tập của các ngựa trong chương trình bạn được phép xem.</p></div></div>
+    <div data-page-banner className="evaluation-actions"><div><h1 className="text-h1"><Icon name="trending-up" size={24} /> Lịch sử thành tích</h1><p className="text-body">Dữ liệu theo buổi tập của các ngựa trong chương trình bạn được phép xem.</p></div></div>
     {state.error ? state.error instanceof ApiError && state.error.status === 403
       ? <AlertBanner type="danger" title="Không có quyền truy cập">Các chương trình này nằm ngoài phạm vi được phép của bạn. Phiên đăng nhập vẫn còn hiệu lực.</AlertBanner>
       : <ErrorState title="Không mở được trang thành tích" description={state.error instanceof Error ? state.error.message : 'Không tải được danh sách chương trình.'} onRetry={retry} />

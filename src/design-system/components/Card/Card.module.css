@@ -61,3 +61,8 @@
 :global([data-ui-v3]) .title { @apply flex items-center gap-2.5 border-l-0 pl-0 text-[15px] font-bold text-rh-navy; }
 :global([data-ui-v3]) .title::before { content: ''; @apply size-2 shrink-0 rounded-full bg-rh-primary; box-shadow: 0 0 0 4px var(--color-primary-50); }
 @media (max-width: 600px) { :global([data-ui-v3]) .header { @apply -mx-4 -mt-4 px-4; } }
+
+/* 2026-11 bold refresh: a thin emerald → sky accent line across the top of every card (background layer, no clipping). */
+:global([data-ui-v3]) .card {
+  background: linear-gradient(90deg, #10b981, #0ea5e9 60%, transparent) top / 100% 3px no-repeat, var(--color-bg-surface);
+}

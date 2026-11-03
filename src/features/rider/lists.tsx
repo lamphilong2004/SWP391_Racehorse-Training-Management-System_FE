@@ -55,7 +55,7 @@ function Dashboard({ api }: { api: RiderApi }) {
   const nextExpired = next ? startWindowExpired(next, now) : false;
   const later = today.filter((ride) => ride.id !== next?.id && ride.status === 'SCHEDULED' && Date.parse(ride.scheduledStart) > now);
   return <div className={styles.stack}>
-    <div className={styles.header}><div><h1 className={styles.heading}>{greeting()}, {user?.fullName}</h1><p className={styles.muted}>{items ? `Hôm nay bạn có ${today.length} lượt cưỡi · ${DAY.format(new Date(now))}` : 'Chỉ hiển thị lượt cưỡi của tài khoản đang đăng nhập.'}</p></div>
+    <div data-page-banner className={styles.header}><div><h1 className={styles.heading}>{greeting()}, {user?.fullName}</h1><p className={styles.muted}>{items ? `Hôm nay bạn có ${today.length} lượt cưỡi · ${DAY.format(new Date(now))}` : 'Chỉ hiển thị lượt cưỡi của tài khoản đang đăng nhập.'}</p></div>
       <div className={styles.actions}><Link className={styles.secondaryLink} to="/rider/history">Lịch sử cưỡi</Link><Link className={styles.secondaryLink} to="/rider/assignments">Xem tất cả lịch phân công</Link></div></div>
     <div className={styles.metrics}>
       <MetricCard label="Lượt cưỡi hôm nay" value={items ? String(today.length) : '—'} />

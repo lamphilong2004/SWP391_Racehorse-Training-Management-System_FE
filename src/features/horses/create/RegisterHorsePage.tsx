@@ -156,7 +156,7 @@ function RegisterHorsePageContent() {
       <UnsavedChangesGuard dirty={dirty} />
       <button type="button" className={styles.back} onClick={() => navigate('/horses')}>{'← Quay lại danh sách ngựa'}</button>
 
-      <div className={styles.titleRow}>
+      <div data-page-banner className={styles.titleRow}>
         <div className={styles.titleBlock}>
           <h1 className={styles.title}>{editing ? 'Sửa thông tin nhận dạng ngựa' : 'Thêm ngựa'}</h1>
           <p className={styles.subtitle}>{editing ? 'Chỉ thông tin quản lý; sức khỏe và vòng đời do hệ thống quản lý.' : 'Bước 1/2 · Nhận dạng → Bước 2 · Phả hệ, quyền sở hữu và ô chuồng'}</p>

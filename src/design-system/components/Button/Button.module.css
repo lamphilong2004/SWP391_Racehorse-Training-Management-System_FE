@@ -134,3 +134,7 @@
 :global([data-ui-v3]) .secondary:not(:disabled) { @apply bg-rh-surface shadow-[0_1px_2px_rgb(11_19_43/6%)]; }
 :global([data-ui-v3]) .secondary:hover:not(:disabled) { @apply border-rh-primary text-rh-primary-hover; }
 @media (prefers-reduced-motion: reduce) { :global([data-ui-v3]) .primary:hover:not(:disabled) { transform: none; } }
+
+/* 2026-11 bold refresh: gradient emerald primary action. */
+:global([data-ui-v3]) .primary:not(:disabled) { background: linear-gradient(180deg, #059669 0%, #047857 100%); }
+:global([data-ui-v3]) .primary:hover:not(:disabled) { background: linear-gradient(180deg, #047857 0%, #065f46 100%); }

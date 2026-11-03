@@ -86,7 +86,7 @@ function EvaluationContent({ sessionId, api }: { sessionId: number; api: Evaluat
   const selected = ['result', 'comparison', 'evaluation'].includes(tab) ? tab : 'result';
   return <div className="evaluation-stack">
     <UnsavedChangesGuard dirty={dirty && !saved} allowSameRoute />
-    <div className="evaluation-actions"><div className="evaluation-stack-sm"><h1 className="text-h1">Đánh giá buổi tập · {session.focus || session.sessionCode}</h1><p>{session.horse.name} · {session.horse.horseCode} · {session.sessionCode}</p></div><StatusBadge family="session" status={session.status} />
+    <div data-page-banner className="evaluation-actions"><div className="evaluation-stack-sm"><h1 className="text-h1">Đánh giá buổi tập · {session.focus || session.sessionCode}</h1><p>{session.horse.name} · {session.horse.horseCode} · {session.sessionCode}</p></div><StatusBadge family="session" status={session.status} />
       {SESSION_DETAIL_ROLES.some((role) => user?.roles.includes(role)) && <Link className="evaluation-link-button" to={`/training/session/${session.id}`}>Chi tiết buổi tập</Link>}
       {canHistory && <Button variant="secondary" disabled={submitting} onClick={() => changeTab(tab === 'history' ? 'result' : 'history')}>{tab === 'history' ? 'Quay lại đánh giá' : 'Lịch sử thành tích'}</Button>}
       <Button variant="secondary" disabled={submitting} onClick={requestReload}>Tải lại buổi tập</Button>

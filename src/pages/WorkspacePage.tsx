@@ -84,7 +84,7 @@ export function WorkspacePage() {
   const role = user.roles[0], workspace = WORKSPACES[role];
   return <AppShell designSystem="v2" user={{ fullName: user.fullName, role }} breadcrumb={[{ label: 'Tổng quan' }]}>
     <div className={styles.page}>
-      <header className={styles.heading}>
+      <header data-page-banner className={styles.heading}>
         <div><p className={styles.eyebrow}>KHÔNG GIAN CỦA BẠN</p><h1 className="text-h1">{NAVIGATION[role].workspaceLabel}</h1><p className={styles.description}>{workspace.description}</p></div>
         <ButtonLink variant="primary" to={workspace.primary.to}><Icon name={workspace.primary.icon} size={18} />{workspace.primary.label}</ButtonLink>
       </header>

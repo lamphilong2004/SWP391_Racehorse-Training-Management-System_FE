@@ -65,3 +65,58 @@
   --elev-2: 0 2px 4px rgb(11 19 43 / 6%), 0 16px 32px -16px rgb(11 19 43 / 18%);
   --elev-focus: 0 0 0 4px rgb(5 150 105 / 18%);
 }
+
+/* 2026-11 bold refresh: taller controls (fields and buttons share this height), bolder page titles. */
+[data-ui-v3],
+:root[data-ui-v3] [data-design-system='v2'],
+[data-app-shell]:has([data-ui-v3]),
+[data-app-shell]:has([data-ui-v3]) [data-design-system='v2'],
+[data-design-system='v3'] {
+  --control-height-md: 44px;
+  --color-field-border: #c3cfdb;
+  --color-field-hover-border: #7f9ab0;
+}
+:where([data-ui-v3], [data-app-shell]:has([data-ui-v3])) main :is(h1, .text-h1) {
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 800;
+  color: var(--color-brand-primary, var(--color-text-primary));
+}
+
+/*
+ * Page banner (design direction A, approved 2026-11-03): every page title row carries data-page-banner and becomes a
+ * navy → emerald hero with white title. Layout (flex, gaps, actions) stays with each page's own module.
+ */
+[data-ui-v3] [data-page-banner],
+[data-app-shell]:has([data-ui-v3]) [data-page-banner] {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 26px 30px;
+  border-radius: 20px;
+  color: #ffffff;
+  background:
+    radial-gradient(120% 160% at 100% 0%, rgb(16 185 129 / 42%), transparent 55%),
+    linear-gradient(120deg, #0b132b 0%, #12305a 55%, #065f46 100%);
+  box-shadow: 0 20px 40px -24px rgb(11 19 43 / 55%);
+}
+[data-ui-v3] [data-page-banner]::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  right: -60px;
+  bottom: -110px;
+  width: 280px;
+  height: 280px;
+  border-radius: 999px;
+  border: 36px solid rgb(255 255 255 / 6%);
+  pointer-events: none;
+}
+[data-ui-v3] [data-page-banner] :is(h1, .text-h1) { color: #ffffff !important; }
+[data-ui-v3] [data-page-banner] p { color: rgb(226 232 240 / 88%) !important; }
+[data-ui-v3] [data-page-banner] p:first-child:not(:only-child)[class*='eyebrow'] { color: #6ee7b7 !important; }
+[data-ui-v3] [data-page-banner] a:not([class]) { color: #a7f3d0; }
+[data-ui-v3] [data-page-banner] :is(a, button)[class*='tertiary'] { color: #a7f3d0; }
+[data-ui-v3] [data-page-banner] :is(a, button)[class*='secondary'] { border-color: rgb(255 255 255 / 70%); }
+[data-ui-v3] [data-page-banner] :is(h1, .text-h1)[tabindex='-1']:focus { outline: none; }
+[data-ui-v3] [data-page-banner] :is(h1, .text-h1) + p { margin-top: 6px; }

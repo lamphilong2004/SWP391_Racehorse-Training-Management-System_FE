@@ -50,7 +50,7 @@ function GroomToday({ api }: { api: PrecheckApi }) {
   }, [api, date, attempt, handleApiError]);
   const retry = () => { setResult(undefined); setAttempt((value) => value + 1); };
   return <div className={styles.stack}>
-    <div className={styles.header}><div><h1 className={styles.heading}>{greeting()}, {user?.fullName}</h1><p className={styles.muted}>Các buổi kiểm tra trước buổi tập, công việc điều trị và sự cố của bạn</p></div><div className={styles.actions}><ButtonLink to="/incidents">Xem sự cố</ButtonLink><ButtonLink variant="primary" to="/incidents?report=1">Báo bất thường tại chuồng</ButtonLink></div></div>
+    <div data-page-banner className={styles.header}><div><h1 className={styles.heading}>{greeting()}, {user?.fullName}</h1><p className={styles.muted}>Các buổi kiểm tra trước buổi tập, công việc điều trị và sự cố của bạn</p></div><div className={styles.actions}><ButtonLink to="/incidents">Xem sự cố</ButtonLink><ButtonLink variant="primary" to="/incidents?report=1">Báo bất thường tại chuồng</ButtonLink></div></div>
     <div className={styles.dateToolbar}><TextField label="Ngày tập" type="date" value={date} onChange={(event) => { setResult(undefined); setDate(event.target.value || undefined); }} /><Button variant="secondary" onClick={() => { setDate(undefined); retry(); }}>Hôm nay (giờ Việt Nam)</Button></div>
     <div className={styles.metrics}><MetricCard label="Kiểm tra trước buổi tập" value={sessions ? String(sessions.length) : '—'} /><MetricCard label="Công việc điều trị chưa xong" value={summary.tasks === undefined ? '—' : String(summary.tasks)} /><MetricCard label="Sự cố tôi đã báo" value={summary.incidents === undefined ? '—' : String(summary.incidents)} /></div>
     {summary.unavailable && <AlertBanner type="warning" title="Một số tóm tắt không tải được">Mở màn hình điều trị hoặc sự cố để thử lại. Kiểm tra trước buổi tập vẫn dùng được.</AlertBanner>}
@@ -140,7 +140,7 @@ function PrecheckContent({ id, api, showPhoto }: { id: number; api: PrecheckApi;
   return <div className={styles.stack}>
     <UnsavedChangesGuard dirty={dirty} />
     <ButtonLink to="/groom/today">← Quay lại hôm nay</ButtonLink>
-    <div className={styles.header}><div><h1 className={styles.heading}>Kiểm tra trước buổi tập · {session.horse.name}</h1><p className={styles.muted}>{session.horse.horseCode} · {session.sessionCode} · {when(session.scheduledStart)} · Work Rider {session.workRider.fullName}</p></div><StatusBadge family="session" status={session.status} /></div>
+    <div data-page-banner className={styles.header}><div><h1 className={styles.heading}>Kiểm tra trước buổi tập · {session.horse.name}</h1><p className={styles.muted}>{session.horse.horseCode} · {session.sessionCode} · {when(session.scheduledStart)} · Work Rider {session.workRider.fullName}</p></div><StatusBadge family="session" status={session.status} /></div>
     {incidentCode && <AlertBanner type="success" title={`Đã gửi sự cố ${incidentCode}`}>Veterinarian có thể xem xét báo cáo này. Việc kiểm tra không thay đổi khả năng tập luyện.</AlertBanner>}
     <div className={styles.columns}><Card title="Danh mục quan sát"><p className={styles.muted}>Ghi lại những gì bạn quan sát. Chọn Bất thường cho mọi dấu hiệu lạ — bạn không cần xác định nguyên nhân.</p>
       {!check && session.status === 'SCHEDULED' && <p className={styles.muted}>Có thể gửi kiểm tra từ 12 giờ trước giờ bắt đầu đến khi hết khung giờ của buổi tập.</p>}

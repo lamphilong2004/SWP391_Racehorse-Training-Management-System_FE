@@ -49,7 +49,7 @@ export function StableCarePage() {
   const inventory = pathname === '/inventory'; const daily = pathname === '/care/daily';
   return <AppShell designSystem="v2" user={{ fullName: auth.user.fullName, role }} breadcrumb={[{ label: 'Chăm sóc chuồng' }, { label: inventory ? 'Kho vật tư' : daily ? 'Công việc theo ngày' : 'Kế hoạch' }]}>
     <section key={`${auth.user.id}:${token}`} className={styles.stack}>
-      <header className={styles.header}><div><p className={styles.eyebrow}>Vận hành chuồng · Flow 4</p><h1>{inventory ? 'Kho & bổ sung vật tư' : daily ? 'Chăm sóc hằng ngày' : 'Kế hoạch chăm sóc & dinh dưỡng'}</h1></div>
+      <header data-page-banner className={styles.header}><div><p className={styles.eyebrow}>Vận hành chuồng · Flow 4</p><h1>{inventory ? 'Kho & bổ sung vật tư' : daily ? 'Chăm sóc hằng ngày' : 'Kế hoạch chăm sóc & dinh dưỡng'}</h1></div>
         <nav aria-label="Chăm sóc chuồng" className={styles.actions}>
           {role !== 'GROOM' && <Link to="/stable" aria-current={!inventory && !daily ? 'page' : undefined}>Kế hoạch</Link>}<Link to="/care/daily" aria-current={daily ? 'page' : undefined}>Công việc theo ngày</Link>{role !== 'HEAD_TRAINER' && <Link to="/inventory" aria-current={inventory ? 'page' : undefined}>Kho vật tư</Link>}
         </nav></header>

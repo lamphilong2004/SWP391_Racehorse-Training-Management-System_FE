@@ -125,3 +125,8 @@
 :global([data-ui-v3]) .control:focus, :global([data-ui-v3]) .control:focus-within { @apply border-rh-primary bg-rh-surface shadow-rh-focus; }
 :global([data-ui-v3]) .control.controlError { @apply bg-rh-danger-soft/40; }
 :global([data-ui-v3]) .errorMessage { @apply font-medium; }
+
+/* 2026-11 bold refresh: filled fields that turn white with an emerald ring while editing. */
+:global([data-ui-v3]) .control:not(:disabled):not(:has(:disabled)):not([readonly]):not(:has([readonly])) { background: #f7f9fc; }
+:global([data-ui-v3]) .control:focus, :global([data-ui-v3]) .control:focus-within { background: var(--color-bg-surface) !important; }
+:global([data-ui-v3]) .label { @apply text-[13px] font-semibold text-rh-navy; }

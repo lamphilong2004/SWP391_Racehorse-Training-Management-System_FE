@@ -95,7 +95,7 @@ export function ProgramCreationPage() {
 
   return <AppShell designSystem="v2" user={{ fullName: user.fullName, role: 'HEAD_TRAINER' }} breadcrumb={[{ label: 'Chương trình huấn luyện' }, { label: 'Tạo chương trình' }]}>
     <div className={styles.page}>
-      <div className={styles.heading}><div><h1 ref={heading} tabIndex={-1} className="text-h1">Tạo chương trình huấn luyện</h1>
+      <div data-page-banner className={styles.heading}><div><h1 ref={heading} tabIndex={-1} className="text-h1">Tạo chương trình huấn luyện</h1>
         <p> {flow.created ? 'Đã tạo và kích hoạt chương trình' : `Bước ${step + 1}/7 · ${STEP_TITLES[step]}`}</p></div>
         <Button type="button" variant="secondary" disabled={busy} onClick={() => navigate(ROUTES.dashboard)}>{flow.created ? 'Quay lại không gian làm việc' : 'Hủy'}</Button>
       </div>
