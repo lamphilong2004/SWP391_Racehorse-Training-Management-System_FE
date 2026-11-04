@@ -6,8 +6,9 @@ import { authSession } from '../../shared/auth/authSession';
 import { ApiError } from '../../shared/auth/authApi';
 import { GroomTasks } from './GroomTasks';
 import type { GroomService, GroomTreatmentTask } from './groomService';
+import { clubDate } from '../../shared/clubCalendar';
 
-const now = new Date(), today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+const today = clubDate();
 const task: GroomTreatmentTask = { id: 12, horseId: 14, assignedGroomUserId: 6, instruction: 'Cold compress', taskDate: today, status: 'PENDING' };
 const page = (items: unknown[]) => ({ items, page: 0, size: 100, totalElements: items.length });
 const ok = (data: unknown) => new Response(JSON.stringify({ success: true, data }), { status: 200 });
@@ -78,6 +79,20 @@ it('provides empty state and completed/upcoming/horse filters without adding API
   expect(await screen.findByRole('checkbox', { name: 'Hoàn thành công việc 13' })).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Ngựa'), { target: { value: '14' } });
   expect(await screen.findByText('Không có công việc nào với bộ lọc này')).toBeInTheDocument();
+  expect(list).toHaveBeenCalledOnce();
+});
+it('includes only unfinished past work in Today and labels it overdue', async () => {
+  const list = vi.fn().mockResolvedValue(page([
+    task,
+    { ...task, id: 13, taskDate: '2026-01-01', instruction: 'Past pending' },
+    { ...task, id: 14, taskDate: '2026-01-01', status: 'COMPLETED', instruction: 'Past completed' },
+    { ...task, id: 15, taskDate: '2099-01-01', instruction: 'Future pending' },
+  ]));
+  render(<GroomTasks service={{ list, complete: vi.fn() }} />);
+  expect(await screen.findByText('Past pending')).toBeInTheDocument();
+  expect(screen.getByText('Quá hạn')).toBeInTheDocument();
+  expect(screen.queryByText('Past completed')).not.toBeInTheDocument();
+  expect(screen.queryByText('Future pending')).not.toBeInTheDocument();
   expect(list).toHaveBeenCalledOnce();
 });
 it('drops a delayed read when the task screen unmounts', async () => {

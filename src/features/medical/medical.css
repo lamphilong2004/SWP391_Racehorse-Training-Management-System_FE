@@ -109,6 +109,7 @@
 .medical-map { border-radius: var(--card-radius); }
 .medical-instruction { background: var(--color-accent-violet-surface); border-left: 3px solid var(--color-accent-violet); padding: 14px 16px; line-height: 1.6; }
 .medical-slot { background: var(--color-accent-sky-surface); color: var(--color-accent-sky-ink); }
+.medical-task-overdue { background: var(--color-warning-50); color: var(--color-warning-600); font-weight: 600; }
 .medical-groom-task-row { border-left: 3px solid var(--color-accent-violet); }
 .medical-form fieldset legend { color: var(--color-brand-primary); font-weight: 600; padding-inline: 8px; }
 @media (max-width: 767px) {
