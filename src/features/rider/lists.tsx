@@ -1,4 +1,5 @@
 import { serverText } from '../../shared/serverText';
+import { viLabel } from '../../shared/viLabels';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { AlertBanner, Card, DataTable, EmptyState, Icon, KeyValue, MetricCard, StatusBadge } from '../../design-system';
@@ -71,7 +72,7 @@ function Dashboard({ api }: { api: RiderApi }) {
           <div className={styles.nextRide}><div className={styles.timeTile}><strong>{clock(next.scheduledStart)}</strong><span>{relative(next.scheduledStart, now)}</span></div>
             <div className={styles.smallStack}><h2 className={styles.rideTitle}>{next.horse.name} · {next.horse.horseCode}</h2><p className={styles.muted}>{next.focus || next.sessionCode} · {next.phaseName}</p>
               <div className={styles.badges}><StatusBadge family="session" status={next.status} />{next.trainingAvailability && <StatusBadge family="availability" status={next.trainingAvailability} />}</div>
-              <div className={styles.facts}><KeyValue label="Mặt sân · thời lượng" value={`${next.surface ?? 'Chưa có mặt sân'} · ${duration(next)}`} /><KeyValue label="Trainer" value={next.trainer?.fullName ?? 'Chưa cung cấp'} /></div></div></div>
+              <div className={styles.facts}><KeyValue label="Mặt sân · thời lượng" value={`${viLabel(next.surface, 'Chưa có mặt sân')} · ${duration(next)}`} /><KeyValue label="Trainer" value={next.trainer?.fullName ?? 'Chưa cung cấp'} /></div></div></div>
           {nextExpired
             ? <AlertBanner type="warning" title="Buổi tập đã hết giờ">{EXPIRED_START_MESSAGE}</AlertBanner>
             : !next.blocked && preCheck(next) === 'ALL_NORMAL' && Date.parse(next.scheduledStart) <= now

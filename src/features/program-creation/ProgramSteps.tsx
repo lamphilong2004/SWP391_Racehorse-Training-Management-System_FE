@@ -157,10 +157,10 @@ export function ProgramResult({ flow, reload, reloading, readError }: { flow: Pr
       <ButtonLink to={`/training/programs/${program.id}`}>Mở chi tiết chương trình</ButtonLink>
     <Card title={program.name}><div className={styles.stack}>
       <StatusBadge family="program" status={program.status} /><KeyValue label="Ngựa" value={`${program.horse.name} · ${program.horse.horseCode}`} />
-      <KeyValue label="Thời gian" value={`${program.periodStart} — ${program.periodEnd}`} /><KeyValue label="Phiên bản mẫu" value={`v${program.sourceTemplateVersion}`} />
+      <KeyValue label="Thời gian" value={`${formatDate(program.periodStart)} — ${formatDate(program.periodEnd)}`} /><KeyValue label="Phiên bản mẫu" value={`v${program.sourceTemplateVersion}`} />
       <KeyValue label="Trainer" value={program.currentTrainer?.fullName ?? 'Không có trong dữ liệu trả về'} />
       <KeyValue label="Kích hoạt lúc" value={<time dateTime={program.activatedAt} title={program.activatedAt}>{dateTime(program.activatedAt)}</time>} />
-      {program.phases.map((phase) => <p key={phase.id}>{phase.phaseOrder}. {phase.name} · {phase.startDate} — {phase.endDate}</p>)}
+      {program.phases.map((phase) => <p key={phase.id}>{phase.phaseOrder}. {phase.name} · {formatDate(phase.startDate)} — {formatDate(phase.endDate)}</p>)}
       <Button type="button" variant="secondary" disabled={reloading} onClick={reload}>{reloading ? 'Đang tải lại…' : 'Tải lại chương trình đã lưu'}</Button>
       {readError && <AlertBanner feedback type="danger" title="Không đọc lại được">{readError}</AlertBanner>}
     </div></Card>

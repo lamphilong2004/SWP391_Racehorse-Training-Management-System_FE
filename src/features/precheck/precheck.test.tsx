@@ -32,6 +32,16 @@ it('renders assigned Groom sessions and navigation without optional care modules
   expect(screen.getByRole('link', { name: 'Xem công việc điều trị' })).toHaveAttribute('href', '/medical/my-tasks');
   expect(screen.queryByText('Chăm sóc phòng ngừa')).not.toBeInTheDocument();
 });
+it('includes unfinished overdue treatment work in the Groom dashboard count', async () => {
+  const client = api();
+  vi.mocked(client.treatmentTasks).mockResolvedValue([
+    { id: 1, horseId: 7, assignedGroomUserId: 8, instruction: 'Past pending', taskDate: '2026-01-01', status: 'PENDING' },
+    { id: 2, horseId: 7, assignedGroomUserId: 8, instruction: 'Past completed', taskDate: '2026-01-01', status: 'COMPLETED' },
+  ]);
+  mount(client, '/groom/today');
+  const metric = await screen.findByText('Công việc điều trị chưa xong');
+  await waitFor(() => expect(metric.parentElement?.nextElementSibling).toHaveTextContent(/^1$/));
+});
 it('denies other roles before any feature request', async () => {
   actor.user.roles = ['WORK_RIDER']; const client = api(); mount(client);
   expect(screen.getByText('Chỉ Groom được phân công mới được kiểm tra trước buổi tập.')).toBeInTheDocument();
@@ -40,7 +50,11 @@ it('denies other roles before any feature request', async () => {
 it('requires all five results before submitting', async () => {
   const client = api(); mount(client); await screen.findByRole('heading', { name: 'Danh mục quan sát' });
   fireEvent.click(screen.getByRole('button', { name: 'Hoàn tất kiểm tra trước buổi tập' }));
-  expect(screen.getByText('Chọn Bình thường hoặc Bất thường cho cả năm mục kiểm tra.')).toBeInTheDocument(); expect(client.submit).not.toHaveBeenCalled();
+  const feedback = within(screen.getByLabelText('Thông báo thao tác'));
+  expect(feedback.getByRole('alert')).toHaveTextContent('Chọn Bình thường hoặc Bất thường cho cả năm mục kiểm tra.');
+  fireEvent.click(feedback.getByRole('button', { name: /Ẩn thông báo/ }));
+  expect(feedback.queryByRole('alert')).not.toBeInTheDocument();
+  expect(client.submit).not.toHaveBeenCalled();
 });
 it('records all normal without starting the session or creating an incident', async () => {
   const client = api(); mount(client); await chooseAll();

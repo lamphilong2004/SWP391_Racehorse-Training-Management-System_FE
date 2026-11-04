@@ -27,6 +27,7 @@ const LABELS: Record<string, string> = {
   // Training exercise and surface codes stay unchanged on the wire.
   WALK: 'Đi bộ', TROT: 'Nước kiệu', CANTER: 'Canter (nước kiệu nhanh)', GALLOP: 'Galop', HILL: 'Leo dốc', GATE: 'Tập xuất phát', SWIM: 'Bơi',
   SAND: 'Cát', TURF: 'Cỏ', DIRT: 'Đất', SYNTHETIC: 'Tổng hợp',
+  GLOBAL: 'Mặc định chung', HORSE_OVERRIDE: 'Ngưỡng riêng của ngựa',
   // severity / realtime
   NORMAL: 'Bình thường', WARNING: 'Cảnh báo', CRITICAL: 'Nghiêm trọng', MILD: 'Nhẹ', MODERATE: 'Vừa', SEVERE: 'Nặng',
   // recovery / incident / adjustment / registration
