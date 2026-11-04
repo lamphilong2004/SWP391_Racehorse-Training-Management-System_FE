@@ -54,8 +54,9 @@ function Feedback({ id, api }: { id: number; api: RiderApi }) {
     {interrupted && <TextAreaField label="Bạn thấy gì trước khi dừng?" value={selected.preInterruptionDescription ?? ''} disabled={locked} maxLength={1000} onChange={(event) => update('preInterruptionDescription', event.target.value)} />}
     <TextAreaField label="Ghi chú (không bắt buộc)" value={selected.notes ?? ''} disabled={locked} maxLength={1000} onChange={(event) => update('notes', event.target.value)} />
     <AlertBanner type="info" title={`Buổi tập giữ trạng thái ${viLabel(session.status)}`}>Gửi phản hồi không làm buổi tập bị gián đoạn thành hoàn thành. Trainer sẽ xem phản hồi của bạn.</AlertBanner>
-    {(saved || existing || session.hasRiderFeedback) && <AlertBanner type="success" title="Đã gửi phản hồi">{existing ? `Đã gửi lúc ${when(existing.submittedAt)}.` : 'Mỗi lượt cưỡi chỉ được gửi phản hồi một lần.'}</AlertBanner>}
-    {error && <AlertBanner type="danger" title="Chưa xác nhận được phản hồi">{error}</AlertBanner>}
+    {saved && <AlertBanner feedback type="success" title="Đã gửi phản hồi" />}
+    {!saved && (existing || session.hasRiderFeedback) && <AlertBanner type="success" title="Đã gửi phản hồi">{existing ? `Đã gửi lúc ${when(existing.submittedAt)}.` : 'Mỗi lượt cưỡi chỉ được gửi phản hồi một lần.'}</AlertBanner>}
+    {error && <AlertBanner feedback type="danger" title="Chưa xác nhận được phản hồi">{error}</AlertBanner>}
     {conflict ? <Button variant="secondary" onClick={state.reload}>Tải lại phản hồi</Button> : !saved && !existing && !session.hasRiderFeedback ? <Button type="submit" disabled={locked}>{busy ? 'Đang gửi…' : 'Gửi phản hồi'}</Button> : null}
     </form></Card><Card title={`${session.horse.name} · ${session.focus || session.phaseName}`}><p>{session.sessionCode} · {when(session.scheduledStart)}</p><StatusBadge family="session" status={session.status} /><p>Trainer {session.trainer?.fullName ?? 'Chưa cung cấp'} · Người cưỡi {session.workRider.fullName}</p>{interrupted && <p>{session.interruptionReason || 'Không có lý do gián đoạn.'}</p>}{Boolean(state.resultError) && <AlertBanner type="warning" title="Không tải được phản hồi">{errorMessage(state.resultError)} Hệ thống vẫn chỉ cho gửi một lần mỗi buổi tập.</AlertBanner>}<Link className={styles.link} to="/rider/history">Xem lịch sử cưỡi</Link></Card></div>}</div>;
 }

@@ -166,7 +166,7 @@ function RegisterHorsePageContent() {
         </div>
       </div>
 
-      {formError && (loading ? <ErrorState title="Không tải được thông tin nhận dạng ngựa" description={formError} onRetry={() => { setFormError(undefined); setLoadAttempt((value) => value + 1); }} /> : <AlertBanner type="danger" title="Chưa lưu được ngựa">{formError}</AlertBanner>)}
+      {formError && (loading ? <ErrorState title="Không tải được thông tin nhận dạng ngựa" description={formError} onRetry={() => { setFormError(undefined); setLoadAttempt((value) => value + 1); }} /> : <AlertBanner feedback type="danger" title="Chưa lưu được ngựa">{formError}</AlertBanner>)}
       {loading && !formError && <p role="status">Đang tải thông tin nhận dạng ngựa…</p>}
 
       <div className={styles.twoCol}>

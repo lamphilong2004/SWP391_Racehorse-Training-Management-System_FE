@@ -162,7 +162,7 @@ export function ProgramResult({ flow, reload, reloading, readError }: { flow: Pr
       <KeyValue label="Kích hoạt lúc" value={<time dateTime={program.activatedAt} title={program.activatedAt}>{dateTime(program.activatedAt)}</time>} />
       {program.phases.map((phase) => <p key={phase.id}>{phase.phaseOrder}. {phase.name} · {phase.startDate} — {phase.endDate}</p>)}
       <Button type="button" variant="secondary" disabled={reloading} onClick={reload}>{reloading ? 'Đang tải lại…' : 'Tải lại chương trình đã lưu'}</Button>
-      {readError && <AlertBanner type="danger" title="Không đọc lại được">{readError}</AlertBanner>}
+      {readError && <AlertBanner feedback type="danger" title="Không đọc lại được">{readError}</AlertBanner>}
     </div></Card>
   </div>;
 }

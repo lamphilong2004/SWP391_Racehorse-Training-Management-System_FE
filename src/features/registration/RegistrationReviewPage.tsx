@@ -108,7 +108,7 @@ function DecisionDialog({ decision, onClose, onSuccess, onRefresh }: { decision:
     }}>
       <KeyValue label="Người đăng ký" value={decision.request.fullName} /><KeyValue label="Email" value={decision.request.email} />
       {approving ? <><SelectField label="Vai trò được cấp" placeholder="Chọn một vai trò" required value={role} disabled={pending} options={ROLE_CODES.map((value) => ({ value, label: ROLE_LABELS[value] }))} onChange={(event) => setRole(event.target.value)} /><p className={styles.note}>Duyệt sẽ tạo tài khoản đang hoạt động với vai trò này. Người đăng ký đăng nhập bằng mật khẩu đã đặt khi đăng ký.</p></> : <TextAreaField label="Lý do từ chối (không bắt buộc)" maxLength={500} value={reason} disabled={pending} onChange={(event) => setReason(event.target.value)} helperText="Chỉ Club Manager xem được. Người đăng ký không được thông báo." />}
-      {error && <AlertBanner type="danger" title="Chưa lưu được quyết định">{error}{conflict && <Button variant="secondary" onClick={onRefresh}>Đóng và làm mới</Button>}</AlertBanner>}
+      {error && <AlertBanner feedback type="danger" title="Chưa lưu được quyết định">{error}{conflict && <Button variant="secondary" onClick={onRefresh}>Đóng và làm mới</Button>}</AlertBanner>}
     </form>
   </Modal>;
 }

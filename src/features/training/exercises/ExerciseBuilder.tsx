@@ -47,6 +47,6 @@ export function ExerciseBuilder({ api, initial, onClose, onSaved }: { api: Suppo
     <TextField label="Hướng dẫn quãng đường / thời lượng" maxLength={100} value={fields.targetMetric ?? ''} disabled={busy || conflict} error={errors.targetMetric} onChange={(event) => set('targetMetric', event.target.value)} helperText="Nhập hướng dẫn quãng đường hoặc thời lượng dạng văn bản; hệ thống không tính toán." />
     <div className={styles.fields}><TextField label="Số lần lặp" disabled value="Set per session" /><TextField label="Thời gian nghỉ" disabled value="Set per session" /></div>
     <AlertBanner type="info" title="Bài tập dùng lại được">Cường độ, mặt sân, số lần lặp và thời gian nghỉ được đặt khi lên lịch buổi tập. Thẻ mục tiêu, ghi chú riêng và hướng dẫn hồi phục chưa có ở đây.</AlertBanner>
-    {failure && <AlertBanner type="danger" title="Chưa xác nhận lưu được bài tập">{failure} Nội dung bạn nhập vẫn được giữ.</AlertBanner>}
+    {failure && <AlertBanner feedback type="danger" title="Chưa xác nhận lưu được bài tập">{failure} Nội dung bạn nhập vẫn được giữ.</AlertBanner>}
   </form></Modal>;
 }

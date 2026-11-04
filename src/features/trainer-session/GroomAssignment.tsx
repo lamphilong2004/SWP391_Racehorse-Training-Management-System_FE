@@ -19,7 +19,7 @@ export function GroomAssignment({ api, session, onSaved }: { api: ReturnType<typ
   }
   return <>
     {candidates.error && <ErrorState title="Không tải được danh sách Groom" description={candidates.error} onRetry={candidates.reload} />}
-    {error && <AlertBanner type="danger" title="Chưa xác nhận được phân công">{error}</AlertBanner>}
+    {error && <AlertBanner feedback type="danger" title="Chưa xác nhận được phân công">{error}</AlertBanner>}
     <SelectField label="Phân công Groom" placeholder="Chọn một Groom đang hoạt động" value={selected} disabled={busy || candidates.pending}
       options={(Array.isArray(candidates.data) ? candidates.data : []).map((groom) => ({ value: String(groom.id), label: groom.fullName }))}
       onChange={(event) => setSelected(event.target.value)} />

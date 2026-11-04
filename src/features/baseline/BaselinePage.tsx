@@ -51,8 +51,8 @@ function BaselineContent({ rawId }: { rawId?: string }) {
   return <FlowShell title={`Khám sức khỏe ban đầu${data ? ` · ${data.name}` : ''}`} description={data ? `${data.horseCode} · ${data.breed ?? 'Chưa ghi giống'} · ${boxLabel(data.currentBoxCode) ?? 'Chưa xếp ô chuồng'} · tiếp nhận (đăng ký ngựa)` : 'Khám ban đầu của Veterinarian'} section="Ngựa" role="VETERINARIAN" actions={data && <StatusBadge family="lifecycle" status={data.lifecycle} />}>
     {horse.pending && <LoadingState label="Đang tải thông tin ngựa…" />}
     {horse.error && <ErrorState title="Không tải được thông tin ngựa" description={horse.error} onRetry={horse.reload} />}
-    {error && <AlertBanner type="danger" title="Chưa lưu được kết quả khám ban đầu">{error}</AlertBanner>}
-    {saved && <AlertBanner type="success" title="Đã lưu kết quả khám ban đầu">{saved.weightKg} kg · {viLabel(saved.healthStatus)} · {new Date(saved.recordedAt).toLocaleString('vi-VN')}. <ButtonLink to={`/horses/${saved.horseId}`}>Tải lại hồ sơ ngựa</ButtonLink></AlertBanner>}
+    {error && <AlertBanner feedback type="danger" title="Chưa lưu được kết quả khám ban đầu">{error}</AlertBanner>}
+    {saved && <AlertBanner feedback type="success" title="Đã lưu kết quả khám ban đầu">{saved.weightKg} kg · {viLabel(saved.healthStatus)} · {new Date(saved.recordedAt).toLocaleString('vi-VN')}. <ButtonLink to={`/horses/${saved.horseId}`}>Tải lại hồ sơ ngựa</ButtonLink></AlertBanner>}
     {data && data.lifecycle !== 'DRAFT' && !saved && <AlertBanner type="info" title="Khám ban đầu chỉ dành cho ngựa ở trạng thái Nháp">Mở hồ sơ y tế của ngựa này cho các lần khám tiếp theo.</AlertBanner>}
     <form onSubmit={(event) => { event.preventDefault(); void save(); }}>
       <div className={styles.columns}><Card title="Khám ban đầu"><fieldset disabled={!data || data.lifecycle !== 'DRAFT' || saving || !!saved} className={`${styles.fieldset} ${styles.stack}`}>

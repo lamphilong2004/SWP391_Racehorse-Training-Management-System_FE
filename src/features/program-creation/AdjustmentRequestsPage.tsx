@@ -70,7 +70,7 @@ function DecisionModal({ item, approve, onClose, onDone }: { item: AdjustmentReq
       <p className={styles.muted}>Lý do: {item.reason}</p>
       {approve && <AlertBanner type="info" title="Phê duyệt chỉ ghi nhận quyết định">Trainer sẽ được thông báo. Sau đó dùng “Áp dụng vào giai đoạn” trên yêu cầu đã duyệt để thay đổi chương trình.</AlertBanner>}
       <TextAreaField label={approve ? 'Ghi chú quyết định (không bắt buộc)' : 'Lý do từ chối'} required={!approve} maxLength={2000} value={reason} disabled={busy} onChange={(event) => setReason(event.target.value)} />
-      {error && <AlertBanner type="danger" title="Chưa lưu được quyết định">{error}</AlertBanner>}
+      {error && <AlertBanner feedback type="danger" title="Chưa lưu được quyết định">{error}</AlertBanner>}
     </form>
   </Modal>;
 }

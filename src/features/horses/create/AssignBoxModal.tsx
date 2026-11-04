@@ -90,7 +90,7 @@ export function AssignBoxModal({ open, horse, onClose, onAssigned }: AssignBoxMo
       </>}>
       <div className={styles.body}>
         <p className={styles.subtitle}>{`${horse.horseCode} · ${viLabel(horse.lifecycle)} · chọn một ô trống`}</p>
-        {saveError && <AlertBanner type="danger" title="Không xếp được ô chuồng">{saveError}</AlertBanner>}
+        {saveError && <AlertBanner feedback type="danger" title="Không xếp được ô chuồng">{saveError}</AlertBanner>}
         {loadError && <ErrorState title="Không tải được danh sách ô chuồng" description="Không tải được danh sách ô chuồng." onRetry={reload} />}
         {!loadError && !boxes && <LoadingState label="Đang tải ô chuồng…" />}
         {boxes && boxes.length === 0 && <EmptyState title="Chưa có ô chuồng" description="Chưa có ô chuồng nào được đăng ký." />}

@@ -20,7 +20,7 @@ export function AlertDetail({ alert, horse, canAcknowledge, busy, error, onClose
     {alert && <div className={styles.stack}>
       <StatusBadge family="realtime" status={alert.severity} />
       {alert.simulated && <AlertBanner type="simulated" title="DỮ LIỆU MÔ PHỎNG">Máy chủ đánh dấu cảnh báo này là dữ liệu mô phỏng.</AlertBanner>}
-      {error && <AlertBanner type="danger" title="Chưa xác nhận thao tác">{error}</AlertBanner>}
+      {error && <AlertBanner feedback type="danger" title="Chưa xác nhận thao tác">{error}</AlertBanner>}
       <div className={styles.fields}>
         <KeyValue label="Ngựa" value={horse ?? 'Chưa cung cấp'} /><KeyValue label="Buổi tập" value={String(alert.sessionId)} />
         <KeyValue label="Mã cảnh báo" value={alert.id ?? 'Không có · cảnh báo tạm thời'} /><KeyValue label="Chỉ số" value={alert.metric ?? 'Chưa cung cấp'} />

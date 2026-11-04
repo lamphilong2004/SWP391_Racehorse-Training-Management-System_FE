@@ -41,7 +41,7 @@ function StatusModal({ program, action, onClose, onDone }: { program: ProgramDet
       <p>{program.horse.name} · {program.name}: {viLabel(program.status)} → {action.to}</p>
       {action.to === 'COMPLETED' && <AlertBanner type="warning" title="Kết thúc là không thể hoàn tác">Chương trình đã kết thúc không thể tiếp tục lại. Lịch sử buổi tập và đánh giá vẫn giữ nguyên.</AlertBanner>}
       <TextAreaField label="Lý do (không bắt buộc)" maxLength={500} value={reason} disabled={busy} onChange={(event) => setReason(event.target.value)} />
-      {error && <AlertBanner type="danger" title="Chưa đổi được trạng thái">{error}</AlertBanner>}
+      {error && <AlertBanner feedback type="danger" title="Chưa đổi được trạng thái">{error}</AlertBanner>}
     </form>
   </Modal>;
 }
@@ -84,7 +84,7 @@ function ReassignModal({ program, onClose, onDone }: { program: ProgramDetail; o
       <TextField label="Trainer mới phụ trách từ ngày" type="date" required value={effectiveFrom} disabled={busy} onChange={(event) => setEffectiveFrom(event.target.value)} />
       <TextAreaField label="Lý do đổi Trainer (không bắt buộc)" maxLength={500} value={reason} disabled={busy} onChange={(event) => setReason(event.target.value)} />
       {selected && selected.warnings.length > 0 && <Checkbox label="Tôi đã đọc các cảnh báo về Trainer" checked={acknowledged} disabled={busy} onChange={(event) => setAcknowledged(event.target.checked)} />}
-      {error && <AlertBanner type="danger" title="Chưa đổi được Trainer">{error}</AlertBanner>}
+      {error && <AlertBanner feedback type="danger" title="Chưa đổi được Trainer">{error}</AlertBanner>}
     </form>
   </Modal>;
 }
@@ -124,7 +124,7 @@ function AdjustmentModal({ program, onClose, onDone }: { program: ProgramDetail;
       <TextAreaField label="Nội dung đề xuất" required maxLength={1000} value={requested} disabled={busy} onChange={(event) => setRequested(event.target.value)} />
       <TextAreaField label="Lý do" required maxLength={2000} value={reason} disabled={busy} onChange={(event) => setReason(event.target.value)} />
       <TextAreaField label="Căn cứ (không bắt buộc)" maxLength={2000} value={evidence} disabled={busy} onChange={(event) => setEvidence(event.target.value)} />
-      {error && <AlertBanner type="danger" title="Chưa gửi được yêu cầu">{error}</AlertBanner>}
+      {error && <AlertBanner feedback type="danger" title="Chưa gửi được yêu cầu">{error}</AlertBanner>}
     </form>
   </Modal>;
 }
