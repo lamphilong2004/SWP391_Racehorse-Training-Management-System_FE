@@ -77,8 +77,10 @@ it('calendar changes week/month and keeps new-session action Trainer-only', asyn
 });
 it('opens the exercise detail drawer and does not invent surface/intensity/recovery fields', async () => {
   const client = api(); mount(client, '/training/exercise-library');
-  fireEvent.click(await screen.findByRole('button', { name: 'Xem Gallop Intervals' }));
+  expect(await screen.findByText('Galop')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Xem Gallop Intervals' }));
   const drawer = await screen.findByRole('dialog', { name: 'Gallop Intervals' }); await within(drawer).findByText('4 × 400 m');
+  expect(within(drawer).getByText('Galop')).toBeInTheDocument();
   expect(within(drawer).getByText('Bài tập này chưa có hướng dẫn.')).toBeInTheDocument();
   fireEvent.click(within(drawer).getByText('Đóng', { selector: 'button' })); expect(screen.queryByRole('dialog')).not.toBeInTheDocument(); expect(client.exercise).toHaveBeenCalledWith(21);
 });
@@ -117,6 +119,16 @@ it('retains entered exercise fields and locks submission after a conflict until 
   fireEvent.click(within(dialog).getByRole('button', { name: 'Lưu bài tập' })); await within(dialog).findByText(/Exercise was changed by another Trainer/);
   expect(within(dialog).getByLabelText('Tên bài tập')).toHaveValue('Keep this exercise'); expect(within(dialog).getByRole('button', { name: 'Lưu bài tập' })).toBeDisabled();
   fireEvent.click(within(dialog).getByRole('button', { name: 'Đóng và tải lại thư viện' })); expect(screen.queryByRole('dialog')).not.toBeInTheDocument(); expect(client.saveExercise).toHaveBeenCalledTimes(1);
+});
+it('shows localized exercise options and submits their canonical codes', async () => {
+  const client = api();
+  mount(client, '/training/exercise-library/new');
+  const dialog = await screen.findByRole('dialog', { name: 'Bài tập mới' });
+  expect(within(dialog).getByRole('option', { name: 'Tập xuất phát' })).toHaveValue('GATE');
+  fireEvent.change(within(dialog).getByLabelText('Tên bài tập'), { target: { value: 'Tập xuất phát' } });
+  fireEvent.change(within(dialog).getByLabelText('Dáng chạy / loại bài tập'), { target: { value: 'GATE' } });
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Lưu bài tập' }));
+  await waitFor(() => expect(client.saveExercise).toHaveBeenCalledWith(expect.objectContaining({ exerciseType: 'GATE' }), undefined));
 });
 it('limits exercise selection to the approved local session handoff without open redirects', () => {
   expect(exerciseSelectionTarget('https://external.example/training/schedule/session/new')).toBeNull(); expect(exerciseSelectionTarget('http://[')).toBeNull(); expect(exerciseSelectionTarget('/training/schedule/session/new?programId=1001')).toBe('/training/schedule/session/new?programId=1001');
