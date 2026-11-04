@@ -77,7 +77,8 @@ it('calendar changes week/month and keeps new-session action Trainer-only', asyn
 });
 it('opens the exercise detail drawer and does not invent surface/intensity/recovery fields', async () => {
   const client = api(); mount(client, '/training/exercise-library');
-  expect(await screen.findByText('Galop')).toBeInTheDocument();
+  await screen.findByRole('heading', { name: 'Gallop Intervals' });
+  expect(screen.getAllByText('Galop').some((label) => label.tagName === 'SPAN')).toBe(true);
   fireEvent.click(screen.getByRole('button', { name: 'Xem Gallop Intervals' }));
   const drawer = await screen.findByRole('dialog', { name: 'Gallop Intervals' }); await within(drawer).findByText('4 × 400 m');
   expect(within(drawer).getByText('Galop')).toBeInTheDocument();

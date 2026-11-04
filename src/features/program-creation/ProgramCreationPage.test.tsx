@@ -201,7 +201,7 @@ describe('CORE-022 UI + production router + real transport with HTTP fixtures (n
     await next(actor);
     expect(screen.getByLabelText('Ngày bắt đầu chương trình', { exact: false })).toHaveValue('');
     expect(screen.getByLabelText('Giai đoạn 1 — ngày bắt đầu', { exact: false })).toHaveValue('');
-    expect(screen.getByText('Giai đoạn gốc: 41')).toBeInTheDocument();
+    expect(screen.queryByText('Giai đoạn gốc: 41')).not.toBeInTheDocument();
     customize(); await next(actor); await next(actor);
     expect(screen.getByRole('button', { name: 'Chọn Fixture Trainer' })).toHaveAttribute('aria-pressed', 'false');
     expect(screen.queryByRole('checkbox', { name: 'Tôi đã đọc các cảnh báo về Trainer' })).not.toBeInTheDocument();

@@ -215,6 +215,9 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
   const [closing, setClosing] = useState(false);
   const [confirmClose, setConfirmClose] = useState(false);
   const closed = item.status === 'CLOSED';
+  const needsExamination = !item.examinations.length && !item.reexaminations.length;
+  const needsRecovery = (item.injuries.length > 0 || !!item.treatmentPlan) && latest(item.reexaminations)?.recoveryStatus !== 'RECOVERED';
+  const nextClinicalTab = needsExamination ? 'examination' : needsRecovery ? 'recovery' : null;
   return <><ButtonLink variant="tertiary" to={ROUTES.medical}>← Quay lại danh sách ca</ButtonLink>
     <HorseHeading title={'Ca y tế ' + item.id} horseId={item.horseId} description={'Mở lúc ' + dateTime(item.openedAt)} />
     <div className="medical-grid"><Card title="Tổng quan ca"><div className="medical-case-facts">
@@ -227,10 +230,16 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
       { value: 'recovery', label: 'Tái khám' },
     ]} />
     <div role="tabpanel" id="case-panel-record" aria-labelledby="case-tab-record" hidden={panel !== 'record'} className="medical-stack">
+      {!closed && nextClinicalTab && <AlertBanner type="info" title={needsExamination ? 'Bước tiếp theo · Ghi lần khám' : 'Bước tiếp theo · Ghi nhận tái khám'}>
+        <p>{needsExamination ? 'Ghi triệu chứng và kết quả khám trước khi quyết định điều trị.' : 'Khi đã khám lại, ghi kết quả hồi phục thực tế trước khi đóng ca.'}</p>
+        <Button onClick={() => { setPanel(nextClinicalTab); document.getElementById(`case-tab-${nextClinicalTab}`)?.focus(); }}>
+          {needsExamination ? 'Mở mục Khám' : 'Mở mục Tái khám'}
+        </Button>
+      </AlertBanner>}
       <Card title="Thể trạng hiện tại"><KeyValue label="Chẩn đoán gần nhất" value={latest(item.examinations)?.diagnosis ?? (item.examinations.length ? 'Chưa có chẩn đoán' : 'Đang chờ khám')} />
         <KeyValue label="Hồi phục" value={viLabel(latest(item.reexaminations)?.recoveryStatus, 'Chưa ghi nhận tái khám')} />
         <KeyValue label="Lần khám tiếp theo" value={item.treatmentPlan?.reexaminationDate ? formatDate(item.treatmentPlan?.reexaminationDate) : 'Chưa lên lịch'} /></Card>
-      {!closed && <Card className="medical-close-panel" title="Đóng ca y tế"><p>Cần có ít nhất một lần khám hoặc tái khám. Nếu có chấn thương hoặc phác đồ điều trị, lần tái khám gần nhất phải là Đã hồi phục. Mọi công việc điều trị phải hoàn thành, sự cố liên quan đã xử lý xong và hạn chế của ca đã được gỡ.</p>
+      {!closed && <Card className="medical-close-panel" title="Đóng ca y tế"><p>Trước khi đóng, kiểm tra lần khám, công việc điều trị, sự cố liên quan và hạn chế. Nếu ca có chấn thương hoặc điều trị, lần tái khám gần nhất cần ghi Đã hồi phục.</p>
         {closeError && <AlertBanner feedback type="danger" title={closeError} />}
         {confirmClose ? <ActionBar leading={<span>Đóng ca {item.id}?</span>}><Button variant="secondary" disabled={closing} onClick={() => setConfirmClose(false)}>Hủy</Button><Button disabled={closing} onClick={async () => {
           setClosing(true); setCloseError('');

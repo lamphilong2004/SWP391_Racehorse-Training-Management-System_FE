@@ -6,7 +6,6 @@ import { viLabel } from '../../../shared/viLabels';
 import type { Exercise, ExerciseInput, SupportingApi } from '../assigned/supportingApi';
 import { supportingError } from '../assigned/supportingHooks';
 import shared from '../assigned/supporting.module.css';
-import styles from './exercises.module.css';
 import { exerciseErrors, exercisePayload } from './exerciseValidation';
 
 export function ExerciseBuilder({ api, initial, onClose, onSaved }: { api: SupportingApi; initial?: Exercise; onClose: () => void; onSaved: (exercise: Exercise) => void }) {
@@ -44,10 +43,9 @@ export function ExerciseBuilder({ api, initial, onClose, onSaved }: { api: Suppo
   return <Modal open dismissible={!busy && !dirty} title={initial ? 'Sửa bài tập' : 'Bài tập mới'} onClose={busy ? () => undefined : onClose} footer={<><Button variant="secondary" disabled={busy} onClick={onClose}>{conflict ? 'Đóng và tải lại thư viện' : 'Hủy'}</Button><Button type="submit" form={formId} disabled={busy || conflict}>{busy ? 'Đang lưu…' : 'Lưu bài tập'}</Button></>}><form ref={formRef} id={formId} onSubmit={save} noValidate className={shared.stack}>
     <TextField label="Tên bài tập" required maxLength={150} value={fields.name} disabled={busy || conflict} error={errors.name} onChange={(event) => set('name', event.target.value)} />
     <TextAreaField label="Mục đích" maxLength={2000} value={fields.description ?? ''} disabled={busy || conflict} error={errors.description} onChange={(event) => set('description', event.target.value)} />
-    <div className={styles.fields}><div className={shared.smallStack}><SelectField label="Dáng chạy / loại bài tập" value={customGait ? '__custom__' : fields.exerciseType ?? ''} placeholder="Chưa xác định" disabled={busy || conflict} onChange={(event) => { const custom = event.target.value === '__custom__'; setCustomGait(custom); set('exerciseType', custom ? '' : event.target.value); }} options={[...knownGaits.map((value) => ({ value, label: viLabel(value) })), { value: '__custom__', label: 'Khác…' }]} error={errors.exerciseType} />{customGait && <TextField label="Dáng chạy / loại bài tập khác" maxLength={50} value={fields.exerciseType ?? ''} disabled={busy || conflict} onChange={(event) => set('exerciseType', event.target.value)} />}</div></div>
+    <div className={shared.smallStack}><SelectField label="Dáng chạy / loại bài tập" value={customGait ? '__custom__' : fields.exerciseType ?? ''} placeholder="Chưa xác định" disabled={busy || conflict} onChange={(event) => { const custom = event.target.value === '__custom__'; setCustomGait(custom); set('exerciseType', custom ? '' : event.target.value); }} options={[...knownGaits.map((value) => ({ value, label: viLabel(value) })), { value: '__custom__', label: 'Khác…' }]} error={errors.exerciseType} />{customGait && <TextField label="Dáng chạy / loại bài tập khác" maxLength={50} value={fields.exerciseType ?? ''} disabled={busy || conflict} onChange={(event) => set('exerciseType', event.target.value)} />}</div>
     <TextField label="Hướng dẫn quãng đường / thời lượng" maxLength={100} value={fields.targetMetric ?? ''} disabled={busy || conflict} error={errors.targetMetric} onChange={(event) => set('targetMetric', event.target.value)} helperText="Nhập hướng dẫn quãng đường hoặc thời lượng dạng văn bản; hệ thống không tính toán." />
-    <div className={styles.fields}><TextField label="Số lần lặp" disabled value="Set per session" /><TextField label="Thời gian nghỉ" disabled value="Set per session" /></div>
-    <AlertBanner type="info" title="Bài tập dùng lại được">Cường độ, mặt sân, số lần lặp và thời gian nghỉ được đặt khi lên lịch buổi tập. Thẻ mục tiêu, ghi chú riêng và hướng dẫn hồi phục chưa có ở đây.</AlertBanner>
+    <AlertBanner type="info" title="Bài tập dùng lại được">Cường độ, mặt sân, số lần lặp và thời gian nghỉ được đặt khi lên lịch buổi tập. </AlertBanner>
     {failure && <AlertBanner feedback type="danger" title="Chưa xác nhận lưu được bài tập">{failure} Nội dung bạn nhập vẫn được giữ.</AlertBanner>}
   </form></Modal>;
 }

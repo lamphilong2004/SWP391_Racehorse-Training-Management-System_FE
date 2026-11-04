@@ -11,10 +11,8 @@
 .details { display: flex; justify-content: space-between; gap: var(--space-md); flex-wrap: wrap; }
 .actions { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--color-border-default); display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); }
 .gait { display: inline-flex; align-items: center; gap: var(--space-xs); padding: var(--space-xs) var(--space-sm); background: var(--color-bg-subtle); border-radius: var(--radius-sm); font-size: 12px; }
-.fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-lg); }
 .selected { outline: 2px solid var(--color-primary-600); }
 .sectionTitle { margin: 0 0 var(--space-sm); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-secondary); }
-@media (max-width: 900px) { .fields { grid-template-columns: 1fr; } }
 
 .exercise h2 { font-family: var(--font-family-headline); letter-spacing: -.02em; }
 .gait { border: 1px solid var(--color-border-default); }

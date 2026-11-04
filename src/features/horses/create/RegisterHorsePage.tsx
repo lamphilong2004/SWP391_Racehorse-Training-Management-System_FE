@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { flushSync } from 'react-dom';
 import { useNavigate, useParams } from 'react-router';
-import { AlertBanner, Button, Card, StatusBadge, ErrorState, Icon, PhotoAttachmentTile, SelectField, TextField, PresetField, DesignSystemScope, UnsavedChangesGuard, focusFirstInvalid } from '../../../design-system';
+import { AlertBanner, Button, Card, StatusBadge, ErrorState, Icon, OptionalFields, PhotoAttachmentTile, SelectField, TextField, PresetField, DesignSystemScope, UnsavedChangesGuard, focusFirstInvalid } from '../../../design-system';
 import { COUNTRY_PRESETS } from '../../../shared/formPresets';
 import { ApiRequestError } from '../api/horsesApi';
 import { useHorsesApi } from '../api/HorsesApiContext';
@@ -159,7 +159,7 @@ function RegisterHorsePageContent() {
       <div data-page-banner className={styles.titleRow}>
         <div className={styles.titleBlock}>
           <h1 className={styles.title}>{editing ? 'Sửa thông tin nhận dạng ngựa' : 'Thêm ngựa'}</h1>
-          <p className={styles.subtitle}>{editing ? 'Chỉ thông tin quản lý; sức khỏe và vòng đời do hệ thống quản lý.' : 'Bước 1/2 · Nhận dạng → Bước 2 · Phả hệ, quyền sở hữu và ô chuồng'}</p>
+          <p className={styles.subtitle}>{editing ? 'Chỉ thông tin quản lý; sức khỏe và vòng đời do hệ thống quản lý.' : 'Bước 1/2 · Điền thông tin nhận dạng. Sau khi lưu nháp, chọn chủ ngựa và ô chuồng ở bước tiếp theo.'}</p>
         </div>
         <div className={styles.startsAs}>
           {!editing && <>Bắt đầu ở trạng thái <StatusBadge family="lifecycle" status="DRAFT" /></>}
@@ -198,9 +198,11 @@ function RegisterHorsePageContent() {
               <PresetField label="Quốc gia xuất xứ" options={COUNTRY_PRESETS}
                 value={values.countryOfOrigin} onValueChange={set('countryOfOrigin')} maxLength={100} error={errors.countryOfOrigin}
                 helperText="Nơi ngựa được sinh ra. Chọn quốc gia hoặc nhập thêm nếu chưa có trong danh sách." />
-              <TextField label="Số vi mạch / số đăng ký" placeholder="Nhập số vi mạch hoặc số đăng ký"
+              <OptionalFields label="Thêm số vi mạch hoặc số đăng ký" reveal={Boolean(values.registrationNo || errors.registrationNo)}>
+                <TextField label="Số vi mạch / số đăng ký" placeholder="Nhập số vi mạch hoặc số đăng ký"
                 value={values.registrationNo} onChange={(e) => set('registrationNo')(e.target.value)} maxLength={50}
                 error={errors.registrationNo} helperText="Phải là duy nhất — hệ thống kiểm tra khi bạn lưu." />
+              </OptionalFields>
             </div>
           </Card>
 
