@@ -19,4 +19,8 @@ describe('Vietnamese presentation without changing wire data', () => {
     expect(serverText('This task is cancelled and cannot be completed.')).toContain('không thể đánh dấu hoàn thành');
     expect(serverText('Completed or past tasks cannot be cancelled or reassigned.')).toContain('đã qua ngày');
   });
+  it('shows the Vietnamese label when the server sends a bare reason code as the message', () => {
+    expect(serverText('PRE_CHECK_ABNORMAL')).toBe(viLabel('PRE_CHECK_ABNORMAL'));
+    expect(serverText('PRE_CHECK_ABNORMAL')).not.toContain('PRE_CHECK');
+  });
 });

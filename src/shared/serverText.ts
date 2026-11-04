@@ -1,9 +1,11 @@
 /**
  * Vietnamese display text for fixed English strings the Backend returns (activation checklist, horse timeline,
  * notifications, audit summaries).
- * The Backend is unchanged; any text not listed here is shown exactly as the server sent it.
+ * The Backend is unchanged; a bare reason code (e.g. PRE_CHECK_ABNORMAL) uses its viLabel, any other text not listed
+ * here is shown exactly as the server sent it.
  */
 import { SERVER_ERROR_PATTERNS, SERVER_ERROR_TEXT } from './serverErrors';
+import { viLabel } from './viLabels';
 
 const TEXT: Record<string, string> = {
   ...SERVER_ERROR_TEXT,
@@ -146,5 +148,6 @@ export function serverText(text: string | null | undefined): string {
   if (!text) return '';
   if (TEXT[text]) return TEXT[text];
   for (const [pattern, render] of PATTERNS) { const match = text.match(pattern); if (match) return render(...match.slice(1)); }
+  if (/^[A-Z][A-Z0-9_]+$/.test(text)) return viLabel(text);
   return text;
 }
