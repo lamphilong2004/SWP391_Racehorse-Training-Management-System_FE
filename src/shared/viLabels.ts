@@ -43,5 +43,7 @@ const LABELS: Record<string, string> = {
 
 export function viLabel(value: string | null | undefined, fallback = ''): string {
   if (value == null || value === '') return fallback;
-  return LABELS[value] ?? LABELS[value.toUpperCase()] ?? value;
+  if (Object.hasOwn(LABELS, value)) return LABELS[value];
+  const code = value.toUpperCase();
+  return Object.hasOwn(LABELS, code) ? LABELS[code] : value;
 }

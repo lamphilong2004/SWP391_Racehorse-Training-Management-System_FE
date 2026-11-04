@@ -6,6 +6,12 @@ describe('Vietnamese presentation without changing wire data', () => {
   it('translates intensity and surface codes but preserves unknown supplied values', () => {
     expect(viLabel('SAND')).toBe('Cát');expect(viLabel('LOW')).toBe('Thấp');expect(viLabel('New surface')).toBe('New surface');
   });
+  it('uses Vietnamese labels for exercise types and preserves custom labels verbatim', () => {
+    expect(viLabel('WALK')).toBe('Đi bộ');
+    expect(viLabel('Canter')).toBe('Canter (nước kiệu nhanh)');
+    expect(viLabel('Custom hill intervals')).toBe('Custom hill intervals');
+    expect(viLabel('constructor')).toBe('constructor');
+  });
   it('explains a concurrent plan edit and a stale stock balance without pretending success', () => {
     expect(serverText('The plan changed while completing this task. Refresh your assignments and review before trying again.')).toContain('Kế hoạch vừa thay đổi');
     expect(serverText('Stock changed, item is inactive, or quantity is insufficient. Refresh and review before submitting again.')).toContain('Hãy tải lại tồn kho');
