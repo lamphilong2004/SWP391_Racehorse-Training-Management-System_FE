@@ -75,7 +75,7 @@ function Dashboard({ api }: { api: RiderApi }) {
           {nextExpired
             ? <AlertBanner type="warning" title="Buổi tập đã hết giờ">{EXPIRED_START_MESSAGE}</AlertBanner>
             : !next.blocked && preCheck(next) === 'ALL_NORMAL' && Date.parse(next.scheduledStart) <= now
-            ? <AlertBanner type="success" title="Sẵn sàng">Kiểm tra trước buổi tập đạt{next.preSessionCheck ? ` at ${clock(next.preSessionCheck.performedAt)}` : ''}.</AlertBanner>
+            ? <AlertBanner type="success" title="Sẵn sàng">Kiểm tra trước buổi tập đạt{next.preSessionCheck ? ` lúc ${clock(next.preSessionCheck.performedAt)}` : ''}.</AlertBanner>
             : <AlertBanner type="warning" title="Chờ điều kiện bắt đầu">{serverText(next.blockedMessage) || (preCheck(next) === 'ABNORMAL' ? 'Kiểm tra trước buổi tập phát hiện bất thường. Không được bắt đầu buổi tập.'
               : preCheck(next) === 'ALL_NORMAL' && Date.parse(next.scheduledStart) > now ? `Kiểm tra trước buổi tập đạt. Có thể bắt đầu lúc ${clock(next.scheduledStart)}.` : 'Đang chờ kiểm tra trước buổi tập.')}</AlertBanner>}
           <div className={styles.endActions}><Link className={styles.primaryLink} to={`/rider/assignments/${next.id}`}>Xem lịch phân công</Link></div></div></Card>
