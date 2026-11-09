@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import { ApplyAdjustmentModal } from './ApplyAdjustmentModal';
 import { viLabel } from '../../shared/viLabels';
-import { AlertBanner, Button, Card, DataTable, EmptyState, ErrorState, LoadingState, Modal, SelectField, StatusBadge, TextAreaField } from '../../design-system';
+import { AlertBanner, Button, Card, DataTable, EmptyState, ErrorState, LoadingState, Modal, NextStep, SelectField, StatusBadge, TextAreaField } from '../../design-system';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { dateTime } from '../evaluation/models';
 import { FlowShell } from '../main-flows/FlowShell';
@@ -25,6 +25,10 @@ export function AdjustmentRequestsPage() {
   return <FlowShell title="Yêu cầu điều chỉnh chương trình" description={headTrainer ? 'Xem xét các thay đổi chiến lược do Trainer đề xuất. Phê duyệt chỉ ghi nhận quyết định; hãy chủ động áp dụng thay đổi đã duyệt vào chương trình.' : 'Các yêu cầu thay đổi chiến lược của bạn và quyết định của Head Trainer.'}
     section="Chương trình huấn luyện ngựa" role={headTrainer ? 'HEAD_TRAINER' : 'TRAINER'}>
     {applied && <AlertBanner feedback type="success" title="Đã áp dụng điều chỉnh">{applied.programName} đã dùng các giai đoạn mới điều chỉnh. <Link to={`/training/programs/${applied.item.programId}`}>Mở chương trình</Link></AlertBanner>}
+    {applied && <NextStep title="Lên lịch buổi tập theo giai đoạn mới" owner={`Trainer · ${applied.item.requestedBy.fullName}`}
+      action={{ label: 'Mở chương trình', to: `/training/programs/${applied.item.programId}` }}>
+      <p>Trainer đã gửi đề xuất này sẽ tạo hoặc đổi các buổi tập sắp tới cho khớp giai đoạn đã điều chỉnh. Buổi đã diễn ra giữ nguyên.</p>
+    </NextStep>}
     <Card><div className={styles.row}>
       <SelectField label="Trạng thái" value={status} onChange={(event) => { setStatus(event.target.value as AdjustmentStatus | ''); setPage(0); }}
         options={[{ value: '', label: 'Tất cả' }, { value: 'PENDING', label: 'Chờ duyệt' }, { value: 'APPROVED', label: 'Đã duyệt' }, { value: 'REJECTED', label: 'Từ chối' }]} />

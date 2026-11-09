@@ -2,7 +2,7 @@ import { useCallback, useContext, useEffect, useId, useMemo, useRef, useState } 
 import { Link, useSearchParams } from 'react-router';
 import { RequireAuth } from '../../app/RequireAuth';
 import { ROUTES } from '../../app/routePaths';
-import { ButtonLink, AlertBanner, Button, Card, DataTable, EmptyState, ErrorState, KeyValue, LoadingState, Modal, SelectField, TextAreaField } from '../../design-system';
+import { ButtonLink, AlertBanner, Button, Card, DataTable, EmptyState, ErrorState, KeyValue, LoadingState, Modal, NextStep, SelectField, TextAreaField } from '../../design-system';
 import { AppShell } from '../../layout/AppShell';
 import { PageHeader } from '../../layout/PageHeader';
 import { useAuth } from '../../shared/auth/AuthProvider';
@@ -51,7 +51,7 @@ function ReviewResults({ query, revision, onRefresh, onPage }: { query: Registra
   const token = authSession.read()?.accessToken ?? '';
   const [result, setResult] = useState<{ source?: object; data?: RegistrationPage; error?: string; forbidden?: boolean }>({});
   const [decision, setDecision] = useState<Decision | null>(null);
-  const [notice, setNotice] = useState('');
+  const [notice, setNotice] = useState(''); const [decided, setDecided] = useState<RegistrationRequest | null>(null);
   const source = useMemo(() => ({ service, query, token, revision }), [service, query, token, revision]);
   useEffect(() => {
     let active = true; const controller = new AbortController();
@@ -63,9 +63,12 @@ function ReviewResults({ query, revision, onRefresh, onPage }: { query: Registra
   }, [source, service, handleApiError]);
   const current = result.source === source ? result : {};
   const data = current.data;
-  const approved = useCallback((request: RegistrationRequest) => { setDecision(null); setNotice(`Đã ${request.status === 'APPROVED' ? 'duyệt' : 'từ chối'} yêu cầu ${request.id}.`); onRefresh(); }, [onRefresh]);
+  const approved = useCallback((request: RegistrationRequest) => { setDecision(null); setDecided(request); setNotice(`Đã ${request.status === 'APPROVED' ? 'duyệt' : 'từ chối'} yêu cầu của ${request.fullName}.`); onRefresh(); }, [onRefresh]);
   return <>
     {notice && <AlertBanner feedback type="success" title={notice} />}
+    {notice && decided?.status === 'APPROVED' && <NextStep title="Đăng nhập lần đầu" owner={`${decided.fullName} · ${decided.email}`} action={{ label: 'Mở danh sách người dùng', to: '/admin/users' }}>
+      <p>Tài khoản đã hoạt động. Người dùng đăng nhập bằng email và mật khẩu đã đăng ký; vai trò bạn vừa gán quyết định màn hình họ thấy.</p>
+    </NextStep>}
     {!data ? current.error ? <ErrorState title={current.forbidden ? 'Không có quyền truy cập' : 'Không tải được yêu cầu đăng ký'} description={current.error} onRetry={current.forbidden ? undefined : onRefresh} /> : <LoadingState label="Đang tải yêu cầu đăng ký…" /> : <Card title="Yêu cầu truy cập">
       <div className={styles.tableScroll}><DataTable<RegistrationRequest> caption="Yêu cầu đăng ký" rows={data.items} rowKey={(row) => row.id} empty={<EmptyState title="Không có yêu cầu đăng ký" description="Không có yêu cầu phù hợp với trạng thái và trang này." />} columns={[
         { key: 'applicant', header: 'Người đăng ký', render: (row) => <div><strong>{row.fullName}</strong><span className={styles.secondary}>{row.email}</span></div> },

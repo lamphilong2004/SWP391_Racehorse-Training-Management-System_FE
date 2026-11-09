@@ -10,6 +10,7 @@ export { TextField, type TextFieldProps } from './components/TextField/TextField
 export { TextAreaField, type TextAreaFieldProps } from './components/TextAreaField/TextAreaField';
 export { SelectField, type SelectFieldProps, type SelectOption } from './components/SelectField/SelectField';
 export { OptionalFields } from './components/OptionalFields/OptionalFields';
+export { NextStep, type NextStepProps, type NextStepAction } from './components/NextStep/NextStep';
 export { PresetField } from './components/PresetField/PresetField';
 export { RadioGroup, type RadioGroupProps, type RadioOption } from './components/RadioGroup/RadioGroup';
 export { StatusBadge, type StatusBadgeProps } from './components/StatusBadge/StatusBadge';

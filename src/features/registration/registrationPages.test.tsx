@@ -127,7 +127,7 @@ describe('CORE-048 review access and lifecycle', () => {
     expect(await screen.findByText('Hãy chọn đúng một vai trò trước khi duyệt.')).toBeInTheDocument(); expect(selected.approve).not.toHaveBeenCalled();
     await userEvent.selectOptions(screen.getByLabelText('Vai trò được cấp'), 'GROOM');
     await userEvent.click(screen.getByRole('button', { name: 'Xác nhận duyệt' }));
-    await screen.findByText('Đã duyệt yêu cầu 5.'); await screen.findByText('Đã đánh giá');
+    await screen.findByText('Đã duyệt yêu cầu của Applicant fixture.'); await screen.findByText('Đã đánh giá'); expect(screen.getByRole('region', { name: 'Bước tiếp theo: Đăng nhập lần đầu' })).toBeInTheDocument();
     expect(selected.approve).toHaveBeenCalledWith(5, 'GROOM', { token: 'test-only-session' });
     expect(screen.queryByRole('button', { name: 'Duyệt yêu cầu 5' })).not.toBeInTheDocument();
   });
@@ -138,7 +138,7 @@ describe('CORE-048 review access and lifecycle', () => {
     mount(undefined, { selected }); await userEvent.click(await screen.findByRole('button', { name: 'Từ chối yêu cầu 5' }));
     fireEvent.change(screen.getByLabelText('Lý do từ chối (không bắt buộc)'), { target: { value: 'Not eligible' } });
     await userEvent.click(screen.getByRole('button', { name: 'Xác nhận từ chối' }));
-    await screen.findByText('Đã từ chối yêu cầu 5.'); await screen.findByText('Not eligible');
+    await screen.findByText('Đã từ chối yêu cầu của Applicant fixture.'); await screen.findByText('Not eligible'); expect(screen.queryByRole('region', { name: 'Bước tiếp theo: Đăng nhập lần đầu' })).not.toBeInTheDocument();
     expect(selected.reject).toHaveBeenCalledWith(5, 'Not eligible', { token: 'test-only-session' });
   });
   it('cancels a review without writing or selecting a default role', async () => {
@@ -162,7 +162,7 @@ describe('CORE-048 review access and lifecycle', () => {
     await userEvent.selectOptions(screen.getByLabelText('Vai trò được cấp'), 'GROOM'); await userEvent.click(screen.getByRole('button', { name: 'Xác nhận duyệt' }));
     await screen.findByText('Không xử lý được yêu cầu này. Hãy làm mới danh sách rồi quyết định lại.');
     expect(screen.getByLabelText('Vai trò được cấp')).toHaveValue('GROOM'); expect(screen.getByRole('button', { name: 'Xác nhận duyệt' })).toBeDisabled();
-    expect(screen.queryByText('Đã duyệt yêu cầu 5.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Đã duyệt yêu cầu của Applicant fixture.')).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Đóng và làm mới' })); await screen.findByText('Applicant fixture');
     expect(selected.list).toHaveBeenCalledTimes(2);
   });
@@ -170,7 +170,7 @@ describe('CORE-048 review access and lifecycle', () => {
     const selected = service(); vi.mocked(selected.list).mockResolvedValueOnce(page()).mockRejectedValue(new Error('Readback failed'));
     mount(undefined, { selected }); await userEvent.click(await screen.findByRole('button', { name: 'Duyệt yêu cầu 5' }));
     await userEvent.selectOptions(screen.getByLabelText('Vai trò được cấp'), 'GROOM'); await userEvent.click(screen.getByRole('button', { name: 'Xác nhận duyệt' }));
-    await screen.findByText('Đã duyệt yêu cầu 5.'); await screen.findByText('Readback failed');
+    await screen.findByText('Đã duyệt yêu cầu của Applicant fixture.'); await screen.findByText('Readback failed');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument(); expect(screen.queryByRole('button', { name: 'Duyệt yêu cầu 5' })).not.toBeInTheDocument();
   });
   it('keeps a rejected API decision editable without claiming success', async () => {
@@ -178,7 +178,7 @@ describe('CORE-048 review access and lifecycle', () => {
     mount(undefined, { selected }); await userEvent.click(await screen.findByRole('button', { name: 'Từ chối yêu cầu 5' }));
     fireEvent.change(screen.getByLabelText('Lý do từ chối (không bắt buộc)'), { target: { value: 'Original reason' } });
     await userEvent.click(screen.getByRole('button', { name: 'Xác nhận từ chối' })); await screen.findByText('Reason invalid');
-    expect(screen.getByLabelText('Lý do từ chối (không bắt buộc)')).toHaveValue('Original reason'); expect(screen.queryByText('Đã từ chối yêu cầu 5.')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Lý do từ chối (không bắt buộc)')).toHaveValue('Original reason'); expect(screen.queryByText('Đã từ chối yêu cầu của Applicant fixture.')).not.toBeInTheDocument();
   });
   it.each([401, 403])('delegates HTTP %s correctly to shared authentication', async (status) => {
     const selected = service(); vi.mocked(selected.list).mockRejectedValue(new ApiError(status, status === 401 ? 'UNAUTHORIZED' : 'FORBIDDEN', 'Not allowed'));

@@ -1,6 +1,6 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router';
-import { AlertBanner, Button, Card, EmptyState, OptionalFields, RadioGroup, StatusBadge, TextAreaField, UnsavedChangesGuard } from '../../design-system';
+import { AlertBanner, Button, Card, EmptyState, NextStep, OptionalFields, RadioGroup, StatusBadge, TextAreaField, UnsavedChangesGuard } from '../../design-system';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { ApiError } from '../../shared/auth/authApi';
 import type { RiderApi } from './api';
@@ -57,6 +57,10 @@ function Feedback({ id, api }: { id: number; api: RiderApi }) {
     </OptionalFields>}
     <AlertBanner type="info" title={`Buổi tập giữ trạng thái ${viLabel(session.status)}`}>{interrupted ? 'Trainer sẽ đọc phản hồi để đánh giá buổi tập bị gián đoạn.' : 'Trainer sẽ xem phản hồi trước khi chốt đánh giá.'}</AlertBanner>
     {saved && <AlertBanner feedback type="success" title="Đã gửi phản hồi" />}
+    {(saved || existing || session.hasRiderFeedback) && <NextStep title="Đánh giá buổi tập" owner={session.trainer?.fullName ? `Trainer · ${session.trainer.fullName}` : 'Trainer phụ trách'}
+      action={{ label: 'Về lượt cưỡi của tôi', to: '/rider' }}>
+      <p>Trainer đọc phản hồi của bạn cùng kết quả buổi tập rồi chốt đánh giá. Bạn không cần làm thêm gì cho lượt cưỡi này.</p>
+    </NextStep>}
     {!saved && (existing || session.hasRiderFeedback) && <AlertBanner type="success" title="Đã gửi phản hồi">{existing ? `Đã gửi lúc ${when(existing.submittedAt)}.` : 'Mỗi lượt cưỡi chỉ được gửi phản hồi một lần.'}</AlertBanner>}
     {error && <AlertBanner feedback type="danger" title="Chưa xác nhận được phản hồi">{error}</AlertBanner>}
     {conflict ? <Button variant="secondary" onClick={state.reload}>Tải lại phản hồi</Button> : !saved && !existing && !session.hasRiderFeedback ? <Button type="submit" disabled={locked}>{busy ? 'Đang gửi…' : 'Gửi phản hồi'}</Button> : null}

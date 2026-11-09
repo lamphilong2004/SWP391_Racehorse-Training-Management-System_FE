@@ -1,7 +1,7 @@
 import { boxLabel } from '../../../shared/stableBox';
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { AlertBanner, Button, Card, EmptyState, ErrorState, StatusBadge, Icon, LoadingState, type IconName, DesignSystemScope } from '../../../design-system';
+import { AlertBanner, Button, Card, EmptyState, ErrorState, StatusBadge, Icon, LoadingState, type IconName, DesignSystemScope, NextStep } from '../../../design-system';
 import { useHorsesApi } from '../api/HorsesApiContext';
 import type { ActivationItem, ActivationStatus, HorseDetail } from '../api/types';
 import { ageInYears, formatDate } from '../shared/format';
@@ -85,6 +85,11 @@ function PendingActivationPageContent() {
             ? 'Đã ghi phả hệ, chủ ngựa và ô chuồng. Yêu cầu còn lại là khám sức khỏe ban đầu của Veterinarian.'
             : 'Đã ghi phả hệ, chủ ngựa và ô chuồng.'}
         </AlertBanner>
+      )}
+      {completed && completed.horse.currentBoxCode && missingItems(completed.status).length === 1 && missingItems(completed.status)[0] === 'VETERINARIAN_BASELINE' && (
+        <NextStep title="Khám sức khỏe ban đầu" owner="Veterinarian">
+          <p>{completed.horse.name} hiện ở mục Ngựa mới đến trên trang Tổng quan của Veterinarian, kèm nút Ghi khám ban đầu. Sau khi Veterinarian lưu kết quả khám, hệ thống tự kích hoạt ngựa và Head Trainer có thể lập chương trình.</p>
+        </NextStep>
       )}
 
       <div className={shared.twoCol}>

@@ -2,7 +2,7 @@ import { clubDateTime, parseClubDateTime } from '../../shared/clubCalendar';
 import { boxLabel } from '../../shared/stableBox';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { ActionBar, AlertBanner, ButtonLink, Button, Card, DataTable, EmptyState, Icon, KeyValue, MetricCard, StatusBadge, TableToolbar, SelectField, TextField, Tabs } from '../../design-system';
+import { ActionBar, AlertBanner, ButtonLink, Button, Card, DataTable, EmptyState, Icon, KeyValue, MetricCard, NextStep, StatusBadge, TableToolbar, SelectField, TextField, Tabs } from '../../design-system';
 import { PageHeader } from '../../layout/PageHeader';
 import { MEDICAL_ROUTES as ROUTES } from './paths';
 import { MedicalForm } from './MedicalForm';
@@ -343,6 +343,10 @@ export function TreatmentPlanPage() {
   return <><ButtonLink variant="tertiary" to={casePath(id)}>← Quay lại ca y tế</ButtonLink>
     <HorseHeading title="Phác đồ điều trị" horseId={medicalCase.horseId} description={'Ca y tế ' + id} />
     {saved && <AlertBanner feedback type="success" title="Đã lưu phác đồ điều trị" />}
+    {saved && <NextStep title="Thực hiện công việc điều trị" owner={tasks.length ? 'Groom được giao' : 'Veterinarian (bạn) · chưa giao Groom'}
+      action={{ label: 'Quay lại ca y tế', to: casePath(id) }}>
+      <p>{tasks.length ? `${tasks.length} công việc đã giao cho Groom, hiện trong mục Công việc chăm sóc của họ.` : 'Phác đồ chưa có công việc nào cho Groom. Thêm công việc nếu ngựa cần chăm sóc hoặc cho thuốc.'} Khi ngựa ổn, tái khám ghi Đã hồi phục rồi gỡ hạn chế và đóng ca.</p>
+    </NextStep>}
     <div className="medical-grid medical-treatment-layout"><div className="medical-stack">
       {medicalCase.status === 'CLOSED' ? <AlertBanner type="danger" title="Không thể sửa ca y tế đã đóng" /> :
         <TreatmentPlanEditor key={medicalCase.treatmentPlan?.id ?? 'new'} openedAt={medicalCase.openedAt} initial={initial} retainedTaskCount={tasks.length} onCancel={() => navigate(casePath(id))} onSave={async (input) => { await service.saveTreatment(id, input); setSaved(true); reload(); }} />}

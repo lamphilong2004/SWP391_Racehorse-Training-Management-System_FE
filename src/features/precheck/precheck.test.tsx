@@ -59,7 +59,7 @@ it('requires all five results before submitting', async () => {
 it('records all normal without starting the session or creating an incident', async () => {
   const client = api(); mount(client); await chooseAll();
   fireEvent.click(screen.getByRole('button', { name: 'Hoàn tất kiểm tra trước buổi tập' }));
-  expect(await screen.findByText('TẤT CẢ BÌNH THƯỜNG — đã ghi kiểm tra trước buổi tập')).toBeInTheDocument();
+  expect(await screen.findByText('TẤT CẢ BÌNH THƯỜNG — đã ghi kiểm tra trước buổi tập')).toBeInTheDocument(); expect(screen.getByRole('region', { name: 'Bước tiếp theo: Bắt đầu buổi tập đúng giờ' })).toHaveTextContent(/Work Rider · /);
   expect(client.submit).toHaveBeenCalledWith(40, checks); expect(client.reportIncident).not.toHaveBeenCalled();
   expect(screen.getByText(/Buổi tập vẫn ở trạng thái Đã lên lịch/)).toBeInTheDocument();
 });

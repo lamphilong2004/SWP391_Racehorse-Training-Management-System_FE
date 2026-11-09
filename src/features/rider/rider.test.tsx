@@ -131,7 +131,7 @@ it('keeps interrupted feedback input for retry, submits only approved fields and
   const submit = screen.getByRole('button', { name: 'Gửi phản hồi' }); fireEvent.click(submit); fireEvent.click(submit);
   expect(client.feedback).toHaveBeenCalledTimes(1); reject(new ApiError(0, 'NETWORK_ERROR', 'Network unavailable'));
   await screen.findByText('Network unavailable'); expect(screen.getByLabelText('Ghi chú (không bắt buộc)')).toHaveValue('  Settled slowly  ');
-  fireEvent.click(screen.getByRole('button', { name: 'Gửi phản hồi' })); await screen.findByText('Đã gửi phản hồi');
+  fireEvent.click(screen.getByRole('button', { name: 'Gửi phản hồi' })); await screen.findByText('Đã gửi phản hồi'); expect(screen.getByRole('region', { name: 'Bước tiếp theo: Đánh giá buổi tập' })).toBeInTheDocument();
   expect(client.feedback).toHaveBeenLastCalledWith(50, { responses: { preInterruptionDescription: 'Breathing hard', notes: 'Settled slowly' } });
   expect(screen.getByText('Buổi tập giữ trạng thái Gián đoạn')).toBeInTheDocument(); expect(client.complete).not.toHaveBeenCalled();
 });

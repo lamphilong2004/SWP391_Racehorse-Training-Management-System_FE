@@ -1,5 +1,5 @@
-import { ButtonLink,
-  AlertBanner, Button, CandidateCard, Card, Checkbox, EmptyState, HorseCard, KeyValue, OptionalFields,
+import {
+  AlertBanner, Button, CandidateCard, Card, Checkbox, EmptyState, HorseCard, KeyValue, NextStep, OptionalFields,
   SelectField, StatusBadge, TextAreaField, TextField,
 } from '../../design-system';
 import type { ProgramCreationFlow } from './useProgramCreation';
@@ -157,7 +157,10 @@ export function ProgramResult({ flow, reload, reloading, readError }: { flow: Pr
   const program = flow.created!;
   return <div className={styles.stack}>
     <AlertBanner feedback type="success" title="Đã tạo chương trình">Mã chương trình: {program.id}</AlertBanner>
-      <ButtonLink to={`/training/programs/${program.id}`}>Mở chi tiết chương trình</ButtonLink>
+    <NextStep title="Lên lịch buổi tập đầu tiên" owner={program.currentTrainer ? `Trainer · ${program.currentTrainer.fullName}` : 'Trainer được phân công'}
+      action={{ label: 'Mở chi tiết chương trình', to: `/training/programs/${program.id}` }} secondary={{ label: 'Tạo chương trình khác', to: '/training/programs/new' }}>
+      <p>Trainer đã nhận thông báo và tạo buổi tập trong giai đoạn {program.phases[0]?.name ?? 'đầu tiên'}. Groom kiểm tra trước mỗi buổi, Work Rider thực hiện.</p>
+    </NextStep>
     <Card title={program.name}><div className={styles.stack}>
       <StatusBadge family="program" status={program.status} /><KeyValue label="Ngựa" value={`${program.horse.name} · ${program.horse.horseCode}`} />
       <KeyValue label="Thời gian" value={`${formatDate(program.periodStart)} — ${formatDate(program.periodEnd)}`} /><KeyValue label="Phiên bản mẫu" value={`v${program.sourceTemplateVersion}`} />

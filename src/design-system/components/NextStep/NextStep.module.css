@@ -1,0 +1,64 @@
+/* Hand-off panel: same 4px left accent as AlertBanner, brand colour instead of a status colour. */
+.step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--color-primary-600);
+  background: var(--color-primary-50);
+}
+
+.icon {
+  flex: none;
+  color: var(--color-primary-600);
+}
+
+.text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-xs);
+  min-width: 0;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--color-primary-700);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.owner {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.body {
+  color: var(--color-text-primary);
+}
+
+.body p {
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
