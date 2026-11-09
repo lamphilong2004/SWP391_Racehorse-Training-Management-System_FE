@@ -207,7 +207,7 @@ function IncidentDetail({ id, service, role, actorId, horse, reporter }: { id: n
             <section className="medical-incident-option"><h3>Đóng sự cố</h3><p>Không cần theo dõi y tế, ví dụ ngựa đã ổn khi bạn kiểm tra.</p><Button variant="secondary" disabled={busy} onClick={() => setConfirmResolve(true)}>Đóng sự cố</Button></section>
           </div>
           : item.status === 'UNDER_REVIEW' ? <div className="medical-stack">
-            <p>Sự cố đang được xử lý trong ca y tế. Khám, điều trị và hạn chế tập ghi trong ca.</p>
+            <p>Sự cố đang được xử lý trong ca y tế. Khi bạn đóng ca, sự cố này tự đóng theo.</p>
             {item.medicalCaseId && <ButtonLink variant="primary" to={casePath(item.medicalCaseId)}>Mở ca y tế #{item.medicalCaseId}</ButtonLink>}
             <Button variant="secondary" disabled={busy} onClick={() => setConfirmResolve(true)}>Đóng sự cố</Button>
             <p className="text-caption">Đóng sự cố không đóng ca y tế và không gỡ hạn chế tập luyện.</p>

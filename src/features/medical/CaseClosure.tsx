@@ -44,12 +44,6 @@ export function CaseClosure({ item, needsExamination, needsRecovery, openTab, re
     return () => { active = false; };
   }, [read, revision]);
 
-  async function resolveIncident(incident: Incident) {
-    if (!incidents) return;
-    setBusy(true); setError('');
-    try { await incidents.review(incident.id, 'RESOLVE'); refresh(); }
-    catch (failure) { setError(medicalErrorMessage(failure, 'Không đóng được sự cố.')); } finally { setBusy(false); }
-  }
   async function close() {
     setBusy(true); setError('');
     try { await service.closeCase(item.id); reload(); }
@@ -65,11 +59,10 @@ export function CaseClosure({ item, needsExamination, needsRecovery, openTab, re
     ...(item.treatmentPlan ? [{ key: 'tasks', ok: blockers ? blockers.pendingTasks === 0 : undefined, label: 'Groom hoàn thành mọi công việc điều trị',
       detail: !blockers ? 'Đang kiểm tra…' : blockers.pendingTasks ? `Còn ${blockers.pendingTasks} công việc chưa hoàn thành. Groom đánh dấu trong mục Công việc chăm sóc.` : 'Đã hoàn thành',
       action: blockers?.pendingTasks ? <Button size="sm" variant="secondary" onClick={() => openTab('treatment')}>Xem công việc điều trị</Button> : null }] : []),
-    { key: 'incidents', ok: blockers ? blockers.incidents.length === 0 : undefined, label: 'Sự cố liên quan đã đóng',
-      detail: !blockers ? 'Đang kiểm tra…' : item.incidentIds.length === 0 ? 'Ca không gắn sự cố nào.' : blockers.incidents.length ? `${blockers.incidents.length} sự cố chưa đóng.` : 'Đã đóng hết',
-      action: blockers?.incidents.length ? <div className="medical-closure-items">{blockers.incidents.map((incident) => <span key={incident.id}>
-        <ButtonLink size="sm" variant="tertiary" to={`/incidents/${incident.id}`}>{viLabel(incident.incidentType)} · {incident.incidentCode}</ButtonLink>
-        <Button size="sm" disabled={busy} onClick={() => void resolveIncident(incident)}>Đóng sự cố</Button></span>)}</div> : null },
+    // DEC-014: open linked incidents no longer block closing; the close resolves them.
+    ...(item.incidentIds.length ? [{ key: 'incidents', ok: blockers ? true : undefined, label: 'Sự cố liên quan',
+      detail: !blockers ? 'Đang kiểm tra…' : blockers.incidents.length ? `${blockers.incidents.length} sự cố sẽ được đóng cùng ca.` : 'Đã đóng hết',
+      action: blockers?.incidents.length ? <div className="medical-closure-items">{blockers.incidents.map((incident) => <ButtonLink key={incident.id} size="sm" variant="tertiary" to={`/incidents/${incident.id}`}>{viLabel(incident.incidentType)} · {incident.incidentCode}</ButtonLink>)}</div> : null }] : []),
     { key: 'restrictions', ok: blockers ? blockers.restrictions.length === 0 : undefined, label: 'Hạn chế tập luyện của ca đã gỡ',
       detail: !blockers ? 'Đang kiểm tra…' : blockers.restrictions.length ? `Còn hạn chế ${blockers.restrictions.map((r) => viLabel(r.level)).join(', ')} đang hiệu lực.` : 'Không còn hạn chế của ca',
       action: blockers?.restrictions.length ? <ButtonLink size="sm" to={`/medical/restrictions?horseId=${item.horseId}`}>Gỡ hạn chế</ButtonLink> : null },
@@ -77,7 +70,7 @@ export function CaseClosure({ item, needsExamination, needsRecovery, openTab, re
   const ready = rows.every((row) => row.ok === true);
   const remaining = rows.filter((row) => row.ok === false).length;
   return <Card className="medical-close-panel" title="Đóng ca y tế">
-    <p className="text-caption">{ready ? 'Ca đã đủ điều kiện đóng.' : remaining ? `Còn ${remaining} điều kiện cần xử lý trước khi đóng ca.` : 'Đang kiểm tra điều kiện đóng ca…'}</p>
+    <p className="text-caption">{ready ? 'Ca đã đủ điều kiện đóng.' : remaining ? `Còn ${remaining} điều kiện cần xử lý trước khi đóng ca.` : 'Đang kiểm tra điều kiện đóng ca…'} Tối thiểu chỉ cần một lần khám; chấn thương, phác đồ, tái khám và hạn chế chỉ dùng khi ngựa có vấn đề.</p>
     {loadError && <AlertBanner type="warning" title={loadError}><Button size="sm" variant="secondary" onClick={refresh}>Kiểm tra lại</Button></AlertBanner>}
     {error && <AlertBanner feedback type="danger" title={error} />}
     <ul className="medical-closure-list" aria-label="Điều kiện đóng ca">{rows.map((row) => <li key={row.key} className={row.ok === false ? 'medical-closure-todo' : row.ok ? 'medical-closure-done' : ''}>
@@ -86,7 +79,7 @@ export function CaseClosure({ item, needsExamination, needsRecovery, openTab, re
       {row.action && <div className="medical-closure-action">{row.action}</div>}
     </li>)}</ul>
     <div className="medical-actions">{confirm
-      ? <><span>Đóng ca {item.id}? Hồ sơ được giữ lại, không xóa.</span><Button variant="secondary" disabled={busy} onClick={() => setConfirm(false)}>Hủy</Button><Button disabled={busy} onClick={() => void close()}>{busy ? 'Đang đóng…' : 'Xác nhận đóng ca'}</Button></>
+      ? <><span>Đóng ca {item.id}?{blockers?.incidents.length ? ` ${blockers.incidents.length} sự cố liên quan cũng được đóng.` : ''} Hồ sơ được giữ lại, không xóa.</span><Button variant="secondary" disabled={busy} onClick={() => setConfirm(false)}>Hủy</Button><Button disabled={busy} onClick={() => void close()}>{busy ? 'Đang đóng…' : 'Xác nhận đóng ca'}</Button></>
       : <Button disabled={!ready || busy} onClick={() => setConfirm(true)}>Đóng ca</Button>}</div>
   </Card>;
 }
