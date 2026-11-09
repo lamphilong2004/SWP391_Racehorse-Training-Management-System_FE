@@ -85,6 +85,8 @@ it('clears an old incident immediately on a direct-link change and ignores its l
 it('rejects another Groom report and any clinical fields before disclosure', () => {
   expect(() => readIncident({ ...incident, reportedByUserId: 99 }, groom)).toThrow('Tài khoản của bạn không xem được báo cáo này.');
   expect(() => readIncident({ ...incident, diagnosis: 'secret' }, vet)).toThrow('Dữ liệu sự cố không có hoặc không hợp lệ.');
+  expect(readIncident({ ...incident, incidentType: 'LAMENESS', reportedByName: 'Võ Thanh Tùng' }, vet)).toMatchObject({ incidentType: 'LAMENESS', reportedByName: 'Võ Thanh Tùng' });
+  expect(() => readIncident({ ...incident, incidentType: 'TIRED' }, vet)).toThrow('Dữ liệu sự cố không có hoặc không hợp lệ.');
 });
 it('uses only approved incident DTOs, checks identities and does not fall back on 403', async () => {
   const fetcher = vi.fn().mockResolvedValueOnce(ok({ ...incident, id: 2 })).mockResolvedValueOnce(new Response(JSON.stringify({ success: false, error: { code: 'FORBIDDEN', message: 'Denied', details: [] } }), { status: 403 }));

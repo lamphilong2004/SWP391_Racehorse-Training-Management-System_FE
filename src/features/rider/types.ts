@@ -1,4 +1,5 @@
 import type { SessionDetail, SessionResultView, UserRef } from '../evaluation/models';
+import type { IncidentType } from '../../shared/incidents/incidentTypes';
 import { viLabel } from '../../shared/viLabels';
 export interface RiderSession extends SessionDetail {
   blocked: boolean; blockedReasons: string[]; blockedMessage?: string | null;
@@ -15,7 +16,7 @@ export interface RiderFeedbackInput { responses: {
 } }
 export interface RiderFeedback extends RiderFeedbackInput { id: number; sessionId: number; submittedBy: UserRef; submittedAt: string }
 export interface MetricInput { recordedAt: string; heartRate: number | null; speedKmh: number | null; distanceM: number | null }
-export interface IssueInput { incidentType: 'OFF_FEED' | 'COLIC_SIGNS' | 'FEVER' | 'HOOF_OR_LEG_PROBLEM' | 'OTHER'; observedSeverity: 'LOW' | 'MEDIUM' | 'HIGH'; description: string; observedAt?: string }
+export interface IssueInput { incidentType: IncidentType; observedSeverity: 'LOW' | 'MEDIUM' | 'HIGH'; description: string; observedAt?: string }
 export interface IssueResult { incidentId: number; incidentCode: string; sessionStatus: RiderSession['status'] }
 export const isTerminal = (status: RiderSession['status']) => status === 'COMPLETED' || status === 'INTERRUPTED';
 export const EXPIRED_START_MESSAGE = 'Buổi tập đã hết khung giờ bắt đầu. Hãy nhờ Trainer dời lịch và tải lại lịch phân công.';

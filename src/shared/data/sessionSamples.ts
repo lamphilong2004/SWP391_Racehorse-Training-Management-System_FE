@@ -1,4 +1,5 @@
 import { ApiError, type CurrentUser } from '../auth/authApi';
+import { INCIDENT_TYPE_CODES } from '../incidents/incidentTypes';
 import { CHECK_ITEMS, type Checklist } from '../../features/precheck/types';
 import { readSamples, saveSamples, type SampleData } from './sampleStore';
 import type { SessionDetail } from '../../features/evaluation/models';
@@ -57,7 +58,7 @@ export function handleSessionSample(path: string, init: RequestInit, actor: Curr
   if (action === 'report-issue') {
     allow('WORK_RIDER', 'TRAINER');
     if (!['IN_PROGRESS', 'PAUSED'].includes(session.status)) fail(409, 'Report an in-session issue only while the session is active or paused.');
-    if (!input.description?.trim() || input.description.length > 1000 || !['LOW', 'MEDIUM', 'HIGH'].includes(input.observedSeverity) || !['OFF_FEED', 'COLIC_SIGNS', 'FEVER', 'HOOF_OR_LEG_PROBLEM', 'OTHER'].includes(input.incidentType)) fail(400, 'Describe the observation and select the type and severity.');
+    if (!input.description?.trim() || input.description.length > 1000 || !['LOW', 'MEDIUM', 'HIGH'].includes(input.observedSeverity) || ![...INCIDENT_TYPE_CODES].includes(input.incidentType)) fail(400, 'Describe the observation and select the type and severity.');
     const id = data.nextId++, incidentCode = `INC-${id}`;
     data.incidents.push({ id, incidentCode, horseId: session.horse.id, trainingSessionId: session.id, reportedByUserId: actor.id, description: input.description, incidentType: input.incidentType, observedSeverity: input.observedSeverity, observedAt: input.observedAt ?? now, reportedAt: now, status: 'REPORTED' });
     session.status = 'INTERRUPTED'; session.actualEnd = now; session.interruptionReason = input.description;

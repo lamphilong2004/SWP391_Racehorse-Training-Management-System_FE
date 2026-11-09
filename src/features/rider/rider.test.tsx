@@ -89,13 +89,12 @@ it('records explicit issue enum/severity/description then refreshes the server i
   const dialog = await screen.findByRole('dialog', { name: 'Báo cáo vấn đề' });
   expect(within(dialog).queryByLabelText('Bỏ ăn')).not.toBeInTheDocument();
   fireEvent.click(within(dialog).getByLabelText('Khập khiễng, bước không đều'));
-  expect(within(dialog).getByText(/Ghi vào hồ sơ sự cố là: Vấn đề móng hoặc chân/)).toBeInTheDocument();
   fireEvent.change(within(dialog).getByLabelText('Mức độ quan sát'), { target: { value: 'HIGH' } });
   fireEvent.change(within(dialog).getByLabelText('Mô tả những gì bạn thấy'), { target: { value: 'Uneven gait on the left hind' } });
   vi.mocked(client.session).mockResolvedValue({ ...active, status: 'INTERRUPTED' });
   fireEvent.click(within(dialog).getByRole('button', { name: 'Gửi báo cáo' }));
   await screen.findByRole('heading', { name: 'Buổi tập đã bị gián đoạn' });
-  expect(client.issue).toHaveBeenCalledWith(50, { incidentType: 'HOOF_OR_LEG_PROBLEM', observedSeverity: 'HIGH', description: 'Khập khiễng, bước không đều: Uneven gait on the left hind', observedAt: expect.any(String) });
+  expect(client.issue).toHaveBeenCalledWith(50, { incidentType: 'LAMENESS', observedSeverity: 'HIGH', description: 'Uneven gait on the left hind', observedAt: expect.any(String) });
   expect(screen.getByRole('link', { name: 'Theo dõi báo cáo' })).toHaveAttribute('href', '/incidents/90');
   expect(screen.getByText('Đã gửi báo cáo · Chờ thú y tiếp nhận')).toBeInTheDocument();
 });

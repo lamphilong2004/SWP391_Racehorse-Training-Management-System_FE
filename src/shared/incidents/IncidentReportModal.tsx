@@ -3,7 +3,8 @@ import { useId, useRef, useState, type FormEvent } from 'react';
 import { AlertBanner, Button, Icon, Modal, SelectField, StatusBadge, TextField } from '../../design-system';
 import styles from './IncidentReportModal.module.css';
 
-export type IncidentType = 'OFF_FEED' | 'COLIC_SIGNS' | 'FEVER' | 'HOOF_OR_LEG_PROBLEM' | 'OTHER';
+import type { IncidentType } from './incidentTypes';
+export type { IncidentType };
 export type ObservedSeverity = 'LOW' | 'MEDIUM' | 'HIGH';
 
 /** Matches CORE-006 IncidentCreateRequest. No reporter, status, photo, or session-state fields are client supplied. */
@@ -43,6 +44,8 @@ const groomTypes: { value: IncidentType; label: string }[] = [
   { value: 'COLIC_SIGNS', label: 'Dấu hiệu đau bụng' },
   { value: 'FEVER', label: 'Sốt' },
   { value: 'HOOF_OR_LEG_PROBLEM', label: 'Vấn đề móng hoặc chân' },
+  { value: 'LAMENESS', label: 'Khập khiễng, bước không đều' },
+  { value: 'INJURY', label: 'Chấn thương (va chạm, vết thương)' },
   { value: 'OTHER', label: 'Khác' },
 ];
 

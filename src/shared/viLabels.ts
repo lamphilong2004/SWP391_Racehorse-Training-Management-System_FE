@@ -10,7 +10,7 @@ const LABELS: Record<string, string> = {
   RECOMMENDED: 'Được gợi ý', SUITABLE: 'Phù hợp', SUITABLE_WITH_CAUTION: 'Phù hợp — cần lưu ý', NOT_RECOMMENDED: 'Không khuyến nghị',
   DRAFT: 'Nháp', ACTIVE: 'Đang hoạt động', INACTIVE: 'Ngừng hoạt động', PAUSED: 'Tạm dừng', COMPLETED: 'Hoàn thành',
   // incident types (same wording as the report forms)
-  OFF_FEED: 'Bỏ ăn', COLIC_SIGNS: 'Dấu hiệu đau bụng', FEVER: 'Sốt', HOOF_OR_LEG_PROBLEM: 'Vấn đề móng hoặc chân',
+  OFF_FEED: 'Bỏ ăn', COLIC_SIGNS: 'Dấu hiệu đau bụng', FEVER: 'Sốt', HOOF_OR_LEG_PROBLEM: 'Vấn đề móng hoặc chân', LAMENESS: 'Khập khiễng, bước không đều', INJURY: 'Chấn thương', BREATHING_PROBLEM: 'Thở khó, chảy máu mũi', BEHAVIOUR_PROBLEM: 'Hoảng sợ, khó kiểm soát', EXHAUSTION: 'Mệt bất thường',
   // training availability
   AVAILABLE: 'Sẵn sàng', LIMITED: 'Hạn chế', LOCKED: 'Khóa',
   // health status
