@@ -59,13 +59,13 @@ export function HorseListPage() {
           {businessDataMode() === 'api' && <HorsePhotoImage thumbnail name={h.name} path={`/api/horses/${h.id}/photos/primary`} />}
           <div className={styles.horseIdentityText}><strong>{h.name}</strong><span>{h.horseCode}</span></div>
         </Link> },
-        { key: 'breed', header: 'Giống · tuổi', render: (h) => <div className={styles.horseFacts}><span>{h.breed ?? 'Chưa ghi nhận'}</span><small>{ageInYears(h.foaledDate) ?? '—'} tuổi · {sexLabel(h.sex)}</small></div> },
+        { key: 'breed', header: 'Giống · tuổi', render: (h) => <div className={styles.horseFacts}><span>{h.breed ?? 'Chưa ghi nhận'}</span><small className={styles.nowrap}>{ageInYears(h.foaledDate) ?? '—'} tuổi · {sexLabel(h.sex)}</small></div> },
         { key: 'lifecycle', header: 'Vòng đời', render: (h) => <StatusBadge family="lifecycle" status={h.lifecycle} /> },
         { key: 'health', header: 'Sức khỏe', render: (h) => h.healthStatus ? <StatusBadge family="health" status={h.healthStatus} /> : <span className={styles.pendingPill}>Chờ khám ban đầu</span> },
         { key: 'availability', header: 'Tập luyện', render: (h) => h.lifecycle === 'DRAFT' ? <span className={styles.mutedValue}>Chưa kích hoạt</span> : <StatusBadge family="availability" status={h.trainingAvailability} /> },
         { key: 'box', header: 'Ô chuồng', nowrap: true, render: (h) => boxLabel(h.currentBoxCode) ?? <span className={styles.mutedValue}>Chưa xếp chuồng</span> },
         { key: 'action', header: 'Thao tác', nowrap: true, render: (h) => canManage && h.lifecycle === 'DRAFT'
-          ? (h.currentBoxCode ? <ButtonLink size="sm" variant="secondary" to="/horses/pending-activation">Việc còn thiếu</ButtonLink> : <ButtonLink size="sm" variant="primary" to={`/horses/${h.id}/edit`}>Hoàn tất hồ sơ</ButtonLink>)
+          ? (h.currentBoxCode ? <ButtonLink size="sm" variant="secondary" to="/horses/pending-activation">Còn thiếu</ButtonLink> : <ButtonLink size="sm" variant="primary" to={`/horses/${h.id}/edit`}>Hoàn tất</ButtonLink>)
           : <ButtonLink size="sm" variant="secondary" to={`/horses/${h.id}`}>{canManage ? 'Quản lý' : 'Xem'}</ButtonLink> },
       ]} /></div><nav className={styles.registryPagination} aria-label="Phân trang danh sách ngựa"><span role="status">Trang {data.page + 1} / {Math.max(1, data.totalPages)}</span><div><Button variant="secondary" disabled={!query.page} onClick={() => setQuery({ ...query, page: query.page - 1 })}>Trước</Button><Button variant="secondary" disabled={query.page + 1 >= data.totalPages} onClick={() => setQuery({ ...query, page: query.page + 1 })}>Sau</Button></div></nav></Card>
       <p className="text-caption">Sức khỏe và khả năng tập luyện chỉ xem ở đây (Veterinarian cập nhật). Ngựa Nháp tự chuyển sang Hoạt động khi đủ nhận dạng, phả hệ, chủ ngựa, ô chuồng và khám ban đầu.</p>
