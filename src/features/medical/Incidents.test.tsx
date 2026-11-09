@@ -44,12 +44,14 @@ it('locks duplicate handling and updates state only after the response and readb
   const resolve = screen.getByRole('button', { name: 'Đóng sự cố' }); fireEvent.click(resolve); fireEvent.click(resolve);
   expect(value.review).toHaveBeenCalledTimes(1); expect(resolve).toBeDisabled();
   await act(async () => { finish({ ...incident, status: 'RESOLVED' }); });
-  expect(await screen.findByText(/Sự cố đã được xử lý xong\. Không còn thao tác nào khác\./)).toBeInTheDocument();
+  expect(await screen.findByText(/Sự cố đã được xử lý xong\. Điều kiện tập luyện/)).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Mở ca y tế' })).not.toBeInTheDocument();
 });
 it('validates case linking and retains input on a conflict without false success', async () => {
   const value = service(); vi.mocked(value.review).mockRejectedValue(new ApiError(409, 'CONFLICT', 'private diagnosis'));
   detail(value); await screen.findByText('Limp after exercise');
+  expect(screen.getByLabelText('Mã ca y tế đang mở')).not.toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: 'Liên kết với ca y tế có sẵn' }));
   const input = screen.getByLabelText('Mã ca y tế đang mở'); fireEvent.change(input, { target: { value: '-1' } });
   fireEvent.click(screen.getByRole('button', { name: 'Liên kết ca y tế' }));
   expect(await screen.findByText('Nhập mã ca y tế là số dương hợp lệ.')).toBeInTheDocument(); expect(value.review).not.toHaveBeenCalled();

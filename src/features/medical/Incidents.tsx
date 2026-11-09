@@ -2,13 +2,13 @@ import { boxLabel } from '../../shared/stableBox';
 import { UiPreviewNotice } from './UiPreviewNotice';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
-import { AlertBanner, ButtonLink, Button, Card, DataTable, EmptyState, ErrorState, KeyValue, LoadingState, SelectField, StatusBadge, TableToolbar, TextField } from '../../design-system';
+import { AlertBanner, ButtonLink, Button, Card, DataTable, EmptyState, ErrorState, KeyValue, LoadingState, OptionalFields, SelectField, StatusBadge, TableToolbar, TextField } from '../../design-system';
 import { AppShell } from '../../layout/AppShell';
 import { PageHeader } from '../../layout/PageHeader';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { authSession } from '../../shared/auth/authSession';
 import type { RoleCode } from '../../shared/auth/roles';
-import { IncidentReportModal, type IncidentCreateRequest } from '../../shared/incidents';
+import { IncidentReportModal, IncidentReportReceipt, type IncidentCreateRequest } from '../../shared/incidents';
 import { MEDICAL_ROUTES } from './paths';
 import { createIncidentService, type IncidentService } from './incidentService';
 import { readHorseIdentity } from './horseRead';
@@ -67,17 +67,17 @@ type UserReader = (id: number) => Promise<string>;
 export function IncidentListPage({ service, role, actorId, horse, reporter, stableHorses }: { service: IncidentService; role: RoleCode; actorId: number; horse?: HorseReader; reporter?: UserReader; stableHorses?: () => Promise<{ id: number; label: string }[]> }) {
   const [page, setPage] = useState(0), [query, setQuery] = useState(''), [status, setStatus] = useState(''), [horseFilter, setHorseFilter] = useState('');
   const [params] = useSearchParams();
-  const [report, setReport] = useState(role === 'GROOM' && params.get('report') === '1'), [success, setSuccess] = useState('');
+  const [report, setReport] = useState(role === 'GROOM' && params.get('report') === '1'), [success, setSuccess] = useState<Incident>();
   const [stable, setStable] = useState<{ id: number; label: string }[]>();
   useEffect(() => { let active = true; if (stableHorses && !stable) stableHorses().then((items) => { if (active) setStable(items); }, () => { if (active) setStable([]); }); return () => { active = false; }; }, [stableHorses, stable]);
   const load = useCallback(() => service.list(page), [service, page]);
   const state = useIncidentRead(load);
   const horses = [...new Set(state.data?.items.map((item) => item.horseId) ?? [])];
   const rows = state.data?.items.filter((item) => (!status || item.status === status) && (!horseFilter || String(item.horseId) === horseFilter) && [item.incidentCode, item.horseId, item.description].join(' ').toLowerCase().includes(query.toLowerCase())) ?? [];
-  async function submit(input: IncidentCreateRequest) { try { const created = await service.report(input); setSuccess(`Đã gửi sự cố ${created.incidentCode}.`); state.reload(); } catch (error) { throw new Error(safeError(error), { cause: error }); } }
+  async function submit(input: IncidentCreateRequest) { try { const created = await service.report(input); setSuccess(created); state.reload(); } catch (error) { throw new Error(safeError(error), { cause: error }); } }
   return <div className="medical-stack">
     <PageHeader title="Sự cố" description={['GROOM', 'TRAINER', 'WORK_RIDER'].includes(role) ? 'Sự cố bạn đã báo' : 'Báo cáo sự cố'} actions={role === 'GROOM' ? <Button onClick={() => setReport(true)}>Báo cáo sự cố</Button> : undefined} />
-    {success && <AlertBanner feedback type="success" title={success}>Đã ghi nhận báo cáo. Chỉ Veterinarian được thay đổi trạng thái xử lý.</AlertBanner>}
+    {success && <IncidentReportReceipt incidentId={success.id} incidentCode={success.incidentCode} />}
     <TableToolbar label="Bộ lọc sự cố" scope="page" resultCount={state.data ? rows.length : undefined} hasFilters={Boolean(query || status || horseFilter)} onClear={() => { setQuery(''); setStatus(''); setHorseFilter(''); }}><TextField label="Tìm trên trang hiện tại" placeholder="Tìm mã sự cố hoặc mã ngựa…" value={query} onChange={(event) => setQuery(event.target.value)} />
       <SelectField label="Ngựa (trang hiện tại)" value={horseFilter} placeholder="Tất cả ngựa" options={horses.map((id) => ({ value: String(id), label: stable?.find((item) => item.id === id)?.label.split(' · ').slice(0, 2).join(' · ') ?? `Ngựa ${id}` }))} onChange={(event) => setHorseFilter(event.target.value)} />
       <SelectField label="Trạng thái (trang hiện tại)" value={status} placeholder="Tất cả trạng thái" options={['REPORTED', 'UNDER_REVIEW', 'RESOLVED'].map((value) => ({ value, label: viLabel(value) }))} onChange={(event) => setStatus(event.target.value)} />
@@ -136,16 +136,22 @@ function IncidentDetail({ id, service, role, actorId, horse, reporter }: { id: n
       {role === 'TRAINER' && <ButtonLink variant="secondary" to="/medical/restrictions">Xem hạn chế tập luyện</ButtonLink>}
     </AlertBanner> : <State error={state.error} reload={state.reload} /> : <>
       <PageHeader title={item.incidentCode} description={`${labelType(item.incidentType)} · ${displayDate(item.reportedAt)}`} actions={<StatusBadge family="incident" status={item.status} />} />
+      {item.status === 'RESOLVED' && (item.preSessionCheckId || item.trainingSessionId) && <AlertBanner type="info" title="Bước tiếp theo · Trainer xem lại lịch tập">
+        <p>{item.preSessionCheckId
+          ? 'Kết quả kiểm tra bất thường vẫn gắn với buổi cũ. Trainer chuẩn bị buổi tập tiếp theo sau khi ngựa đủ điều kiện.'
+          : 'Buổi đã gián đoạn được giữ trong lịch sử. Trainer đánh giá phần đã thực hiện và chuẩn bị lịch tập tiếp theo khi ngựa đủ điều kiện.'}</p>
+      </AlertBanner>}
       <div className="medical-progress" aria-label="Trạng thái xử lý">{(['REPORTED', 'UNDER_REVIEW', 'RESOLVED'] as const).map((status) => <span key={status} className={status === item.status ? 'medical-progress-active' : ''}><StatusBadge family="incident" status={status} /></span>)}<p>Chỉ Veterinarian được chuyển trạng thái này.</p></div>
       <div className="medical-grid medical-treatment-layout"><div className="medical-stack">
         <Card title="Báo cáo"><div className="medical-incident-details"><KeyValue label="Ngựa" value={<IncidentHorse horseId={item.horseId} read={horse} />} /><KeyValue label="Thời điểm phát hiện" value={<time dateTime={item.observedAt}>{displayDate(item.observedAt)}</time>} /><KeyValue label="Loại" value={labelType(item.incidentType)} /><KeyValue label="Mức độ (người báo)" value={viLabel(item.observedSeverity)} /><KeyValue label="Mô tả" value={item.description || 'Không có mô tả.'} /><KeyValue label="Người báo" value={<IncidentReporter userId={item.reportedByUserId} actorId={actorId ?? 0} read={reporter} />} /></div></Card>
         <Card title="Nguồn"><p>{item.preSessionCheckId ? `Kiểm tra trước buổi tập ${item.preSessionCheckId}` : item.trainingSessionId ? `Buổi tập ${item.trainingSessionId}` : item.careTaskId ? `Công việc chăm sóc ${item.careTaskId}` : 'Báo cáo trực tiếp'}</p></Card>
         <Card title="Diễn biến"><p><time dateTime={item.reportedAt}>{displayDate(item.reportedAt)}</time> · Đã báo cáo</p><p>Trạng thái hiện tại: {viLabel(item.status)}</p></Card>
-      </div><aside className="medical-stack"><IncidentHorseStatus horseId={item.horseId} read={horse} /><Card title="Xử lý">
-        {item.medicalCaseId && role === 'VETERINARIAN' && <ButtonLink to={casePath(item.medicalCaseId)}>Ca y tế {item.medicalCaseId}</ButtonLink>}
-        {role !== 'VETERINARIAN' ? <p>Chế độ chỉ xem cho người báo. Hồ sơ y tế chỉ dành cho đội thú y.</p> : item.status === 'RESOLVED' ? <p>Sự cố đã được xử lý xong. Không còn thao tác nào khác.</p> : <div className="medical-stack">
+      </div><aside className="medical-stack"><IncidentHorseStatus horseId={item.horseId} read={horse} /><Card title={role === 'VETERINARIAN' ? 'Bước xử lý tiếp theo' : 'Theo dõi xử lý'}>
+        {item.medicalCaseId && role === 'VETERINARIAN' && <ButtonLink variant="primary" to={casePath(item.medicalCaseId)}>Ca y tế {item.medicalCaseId}</ButtonLink>}
+        {role !== 'VETERINARIAN' ? <p>{item.status === 'REPORTED' ? 'Báo cáo đã được ghi nhận, đang chờ Veterinarian tiếp nhận.' : item.status === 'UNDER_REVIEW' ? 'Veterinarian đang xử lý báo cáo. Theo dõi phân công và hướng dẫn được giao cho bạn.' : 'Veterinarian đã đóng sự cố. Điều kiện của buổi tập vẫn được kiểm tra riêng trước khi bắt đầu.'}</p> : item.status === 'RESOLVED' ? <p>Sự cố đã được xử lý xong. Điều kiện tập luyện, ca y tế và kết quả kiểm tra trước buổi tập được quản lý riêng.</p> : <div className="medical-stack">
           {error && <AlertBanner feedback type="danger" title={error} />}
-          {item.status === 'REPORTED' && !item.medicalCaseId && <><Button disabled={busy} onClick={() => review('OPEN_CASE')}>Mở ca y tế</Button><TextField label="Mã ca y tế đang mở" type="number" min={1} step={1} value={caseId} onChange={(event) => setCaseId(event.target.value)} /><Button variant="secondary" disabled={busy || !caseId} onClick={() => review('LINK_CASE')}>Liên kết ca y tế</Button></>}
+          {item.status === 'REPORTED' && !item.medicalCaseId && <><Button disabled={busy} onClick={() => review('OPEN_CASE')}>Mở ca y tế</Button><OptionalFields label="Liên kết với ca y tế có sẵn" reveal={Boolean(caseId)}><TextField label="Mã ca y tế đang mở" type="number" min={1} step={1} value={caseId} onChange={(event) => setCaseId(event.target.value)} /><Button variant="secondary" disabled={busy || !caseId} onClick={() => review('LINK_CASE')}>Liên kết ca y tế</Button></OptionalFields></>}
+          <p className="text-caption">Sau khi xử lý xong báo cáo, chọn Đóng sự cố. Thao tác này không đóng ca y tế, gỡ hạn chế hoặc đổi kết quả kiểm tra trước buổi tập.</p>
           <Button variant="secondary" disabled={busy} onClick={() => review('RESOLVE')}>Đóng sự cố</Button>
         </div>}
       </Card></aside></div>

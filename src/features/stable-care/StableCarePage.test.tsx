@@ -114,6 +114,22 @@ describe('Flow 4 API-only UI', () => {
     expect(fetcher.mock.calls.some(([url, init]) => String(url).endsWith('/api/stable-care/tasks/10/complete') && init?.method === 'POST')).toBe(true);
     expect(fetcher.mock.calls.every(([url]) => !String(url).includes('/movements'))).toBe(true);
   });
+  it('offers a receipt for a care incident only after the server confirms it', async () => {
+    const fetcher = vi.fn(async (_url: unknown, init?: RequestInit) => init?.method === 'POST'
+      ? ok({ id: 21, incidentCode: 'INC-0021' }) : ok([task()]));
+    vi.stubGlobal('fetch', fetcher);
+    mount('/care/daily');
+    fireEvent.click(await screen.findByRole('button', { name: 'Báo bất thường' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Báo cáo sự cố' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Bỏ ăn' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Thấp' }));
+    fireEvent.change(within(dialog).getByLabelText('Mô tả *'), { target: { value: 'Chưa ăn phần được giao' } });
+    expect(screen.queryByRole('link', { name: 'Theo dõi báo cáo' })).not.toBeInTheDocument();
+    fireEvent.submit(dialog.querySelector('form')!);
+    expect(await screen.findByRole('link', { name: 'Theo dõi báo cáo' })).toHaveAttribute('href', '/incidents/21');
+    const post = fetcher.mock.calls.find(([, init]) => init?.method === 'POST');
+    expect(JSON.parse(String(post?.[1]?.body))).toMatchObject({ careTaskId: 10, horseId: 1, incidentType: 'OFF_FEED' });
+  });
   it('does not fake completion when API fails and permits retry', async () => {
     vi.stubGlobal('fetch', vi.fn(async (_url, init) => init?.method === 'POST' ? fail() : ok([task()])));
     mount('/care/daily'); await screen.findByText('Sao Mai');fireEvent.click(screen.getByRole('button', { name: 'Hoàn thành' }));

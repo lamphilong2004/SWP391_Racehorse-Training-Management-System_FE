@@ -1,9 +1,9 @@
 .form { display: flex; flex-direction: column; gap: 16px; }
 .groomModal { position: relative; width: min(560px, calc(100vw - 32px)); }
-.groomModal header { height: 78px; align-items: flex-start; padding-top: 20px; }
+.groomModal header { min-height: 68px; align-items: center; padding-block: 20px; }
 .groomModal header h2 { font-size: 18px; line-height: 24px; }
 .groomModal header + div { padding: 20px 24px; }
-.groomModal .subtitle { position: absolute; top: 46px; left: 24px; }
+.groomModal .subtitle { position: static; margin: 0; line-height: 1.5; }
 .subtitle { margin: -6px 0 0; color: var(--color-text-secondary); font-size: 13px; }
 .context { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-md); background: var(--color-bg-subtle); color: var(--color-text-primary); font-size: 13px; }
 .context [data-icon] { flex: none; }
@@ -20,12 +20,10 @@
 .severity button { min-width: 74px; min-height: 32px; border: 0; background: var(--color-bg-surface); color: var(--color-text-primary); font: inherit; font-size: 13px; cursor: pointer; }
 .severity .selectedSeverity { background: var(--color-primary-50); color: var(--color-primary-600); font-weight: 600; }
 .textarea { width: 100%; min-height: 96px; padding: 10px 12px; resize: vertical; border: 1px solid var(--color-border-strong); border-radius: 6px; background: var(--color-bg-surface); color: var(--color-text-primary); font: inherit; font-size: 14px; line-height: 20px; }
-.photoNotice { display: flex; align-items: center; gap: 8px; padding: 12px; border: 1px dashed var(--color-border-strong); border-radius: var(--radius-md); color: var(--color-text-secondary); font-size: 13px; }
 .lifecycle { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: var(--radius-md); background: var(--color-primary-50); color: var(--color-text-primary); font-size: 13px; }
 .lifecycle > [data-icon] { flex: none; color: var(--color-info-600); }
 .lifecycle p { margin: 6px 0 0; }
 .statusLine { display: flex; align-items: center; gap: 8px; }
-.hint { margin: 0; color: var(--color-text-secondary); font-size: 12px; }
 @media (max-width: 600px) { .twoColumns { grid-template-columns: 1fr; } }
 
 .label { font-size: 12px; font-weight: 600; }
