@@ -1,0 +1,24 @@
+@reference '../../../design-system/styles/tailwind.css';
+
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; align-items: start; gap: 24px; min-width: 0; }
+.sidebar { @apply grid min-w-0 gap-5; }
+.steps { display: flex; flex-wrap: wrap; list-style: none; padding: 0; margin: 0; border: 1px solid var(--color-border-default); border-radius: var(--radius-lg); background: var(--color-bg-surface); overflow: hidden; }
+.steps li { display: flex; flex: 1 1 240px; align-items: center; gap: 12px; padding: 16px 22px; color: var(--color-text-secondary); }
+.steps li[aria-current] { background: var(--color-primary-50); color: var(--color-primary-700); }
+.steps li > span { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; border: 1px solid var(--color-border-strong); border-radius: 50%; font-size: 13px; font-weight: 700; }
+.steps li[aria-current] > span { color: var(--color-text-on-primary); background: var(--color-primary-600); border-color: var(--color-primary-600); }
+.steps li > div { display: grid; gap: 3px; }
+.steps strong { font: 600 14px/20px var(--font-family); }
+.steps small { font: 400 12px/18px var(--font-family); }
+.sectionHeading { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 4px; }
+.sectionHeading > span { display: grid; place-items: center; width: 38px; height: 38px; flex-shrink: 0; background: var(--color-primary-50); border: 1px solid var(--color-border-default); color: var(--color-primary-700); border-radius: 11px; }
+.sectionHeading h2 { margin: 0; font: 700 16px/24px var(--font-family-headline); color: var(--color-brand-primary); }
+.sectionHeading p { margin: 4px 0 0; color: var(--color-text-secondary); font: 400 12px/18px var(--font-family); }
+.identityTriple { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; gap: 16px; }
+.photoTiles { display: flex; flex-wrap: wrap; gap: 10px; }
+@media (max-width: 1199px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .sidebar { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .sidebar > :last-child { grid-column: 1 / -1; }
+}
+@media (max-width: 600px) { .identityTriple, .sidebar { grid-template-columns: minmax(0, 1fr); } }

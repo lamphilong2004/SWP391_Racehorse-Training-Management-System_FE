@@ -209,6 +209,27 @@ it('renders the approved six checklist rows without a manual activation action',
   expect(screen.getByText('Nên làm trước khi tập — không chặn việc kích hoạt')).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: /Activate|Approve/ })).not.toBeInTheDocument();
 });
+it('shows server checklist progress and opens the missing setup directly without a write', async () => {
+  const { requests } = mount('/horses/pending-activation', { setup: true });
+  await screen.findByRole('heading', { name: 'Fixture Draft · FIX-81' });
+  const progress = screen.getByRole('progressbar', { name: 'Hồ sơ Fixture Draft' });
+  expect(progress).toHaveAttribute('aria-valuenow', '1');
+  expect(progress).toHaveAttribute('aria-valuemax', '5');
+  expect(screen.getByText('PEDIGREE')).not.toBeVisible();
+  await userEvent.click(screen.getByText('Xem danh mục điều kiện'));
+  expect(screen.getByText('PEDIGREE')).toBeVisible();
+  expect(screen.queryByRole('button', { name: 'Yêu cầu khám ban đầu' })).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole('button', { name: 'Hoàn tất hồ sơ' }));
+  await screen.findByRole('heading', { name: 'Phả hệ & quyền sở hữu · Fixture Draft' });
+  expect(requests.every((request) => request.method === 'GET')).toBe(true);
+});
+it('opens a pending horse profile directly instead of sending the user back to the registry', async () => {
+  const { requests } = mount('/horses/pending-activation', { setup: true });
+  await screen.findByRole('heading', { name: 'Fixture Draft · FIX-81' });
+  await userEvent.click(screen.getByRole('button', { name: 'Xem hồ sơ' }));
+  await screen.findByRole('heading', { name: 'Fixture Draft' });
+  expect(requests.every((request) => request.method === 'GET')).toBe(true);
+});
 it.each(['HEAD_TRAINER', 'TRAINER', 'WORK_RIDER', 'VETERINARIAN', 'GROOM', 'HORSE_OWNER'] as const)('denies %s creating horses before business requests', async (role) => {
   const { requests } = mount('/horses/new', { role }); await screen.findByText('Không có quyền truy cập'); expect(requests).toHaveLength(0);
 });
