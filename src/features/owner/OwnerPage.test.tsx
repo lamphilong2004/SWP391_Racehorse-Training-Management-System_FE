@@ -89,16 +89,31 @@ describe('CORE-056 read-only Owner journey', () => {
   it('uses approved Health/Weight layout and real contract values without inventing progress metrics', async () => {
     const source = createOwnerSampleTransport({ readSamples: canonicalFixture, getBusinessActor: () => ownerA }, () => new Date('2026-10-18T00:00:00Z'));
     const horse = await source.detail(7, { actorId: 17 });
-    const service: OwnerService = { list: source.list, async detail() { return { ...horse, healthSummary: { reviewDate: '2026-10-25', recovery: 'IMPROVING', examinedAt: '2026-10-17T06:00:00Z', weights: [{ weightKg: 501.25, recordedAt: '2026-10-18T06:00:00Z' }] }, program: { ...horse.program!, completed: 3, planned: 8 } }; } };
+    const service: OwnerService = { list: source.list, async detail() { return { ...horse, healthSummary: { reviewDate: '2026-10-25', recovery: 'IMPROVING', examinedAt: '2026-10-17T06:00:00Z', weights: [{ weightKg: 501.25, recordedAt: '2026-10-18T06:00:00Z' }, { weightKg: 499.5, recordedAt: '2026-10-16T06:00:00Z' }] }, program: { ...horse.program!, completed: 3, planned: 8 } }; } };
     mount('/owner/horses/7?tab=health', { service });
     await screen.findByText('25 thg 10, 2026');
     expect(screen.getByText('501.25 kg')).toBeInTheDocument();
     expect(screen.getByText(/ghi gần nhất/)).toHaveTextContent('18 thg 10, 2026');
+    expect(screen.getByText('Lịch sử cân nặng')).toBeInTheDocument();
+    expect(document.querySelector('svg[aria-label="Cân nặng (kg): 499.5, 501.25"]')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Lưu cân nặng' })).not.toBeInTheDocument();
     expect(screen.queryByText('Hồi phục')).not.toBeInTheDocument(); expect(screen.queryByText('Last examined')).not.toBeInTheDocument();
     expect(screen.queryByRole('list', { name: 'Weight history' })).not.toBeInTheDocument();
     expect(document.querySelector('time[datetime="2026-10-18T06:00:00Z"]')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('tab', { name: 'Huấn luyện & thành tích' }));
     expect(screen.getByText('3 / 8 buổi tập đã hoàn thành')).toBeInTheDocument(); expect(screen.queryByText('58%')).not.toBeInTheDocument();
+  });
+  it('displays the latest weight timestamp in Vietnam time across a UTC day boundary', async () => {
+    const source = createOwnerSampleTransport({ readSamples: canonicalFixture, getBusinessActor: () => ownerA }, () => new Date('2026-10-18T00:00:00Z'));
+    const horse = await source.detail(7, { actorId: 17 });
+    const service: OwnerService = { list: source.list, async detail() { return { ...horse, healthSummary: { reviewDate: '2026-11-09', recovery: null, examinedAt: null, weights: [{ weightKg: 467, recordedAt: '2026-11-09T18:32:00.000Z' }] } }; } };
+    mount('/owner/horses/7?tab=health', { service });
+
+    await screen.findByText('467 kg');
+    const time = document.querySelector('time[datetime="2026-11-09T18:32:00.000Z"]');
+    expect(time).toHaveTextContent('01:32 10 thg 11, 2026');
+    expect(screen.getByText('9 thg 11, 2026')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Lưu cân nặng' })).not.toBeInTheDocument();
   });
   it('supports direct-link health and keeps the selected tab in URL', async () => {
     const { router } = mount('/owner/horses/7?tab=health');

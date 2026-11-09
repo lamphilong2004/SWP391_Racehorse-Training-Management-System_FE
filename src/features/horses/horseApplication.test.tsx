@@ -21,7 +21,7 @@ function SessionProbe() {
   const auth = useAuth();
   return <><button onClick={() => void auth.logout()}>Fixture logout</button><button onClick={() => void auth.login('second@fixture.test', 'fixture-only', false)}>Fixture switch</button></>;
 }
-function mount(path = '/horses', options: { role?: RoleCode; anonymous?: boolean; status?: number; offline?: boolean; setup?: boolean; store?: HorseDetail[]; list?: (url: URL) => unknown; create?: () => Promise<Response> } = {}) {
+function mount(path = '/horses', options: { role?: RoleCode; anonymous?: boolean; status?: number; offline?: boolean; setup?: boolean; store?: HorseDetail[]; list?: (url: URL) => unknown; create?: () => Promise<Response>; getHorse?: () => Promise<Response>; weights?: (method: string, init?: RequestInit) => Promise<Response> } = {}) {
   const actor = { ...manager, roles: [options.role ?? 'CLUB_MANAGER'] };
   const store = options.store ?? [horse()];
   const requests: { method: string; path: string; body?: unknown }[] = [];
@@ -42,7 +42,8 @@ function mount(path = '/horses', options: { role?: RoleCode; anonymous?: boolean
       const saved = { ...horse(82), horseCode: 'RH-006', ...JSON.parse(String(init?.body)), lifecycle: 'DRAFT' as const }; store.push(saved); return ok(saved, 201);
     }
     if (path === '/api/horses' && method === 'GET') return ok(options.list ? options.list(url) : { items: store, page: 0, size: 20, totalItems: store.length, totalPages: 1 });
-    if (/^\/api\/horses\/\d+$/.test(path)) return ok(store.find((h) => h.id === Number(path.split('/')[3])) ?? horse());
+    if (/^\/api\/horses\/\d+$/.test(path)) return options.getHorse ? options.getHorse() : ok(store.find((h) => h.id === Number(path.split('/')[3])) ?? horse());
+    if (/^\/api\/horses\/\d+\/weights$/.test(path)) return options.weights ? options.weights(method, init) : ok({ items: [] });
     if (path === '/api/stable-boxes') return ok([
       { id: 32, boxCode: 'B-02', yard: 'Full fixture yard', status: 'OCCUPIED', currentHorse: { id: 91, name: 'Other fixture', horseCode: 'FIX-91' } },
       { id: 31, boxCode: 'B-01', yard: 'Free fixture yard', status: 'FREE', currentHorse: null },
@@ -62,6 +63,103 @@ function mount(path = '/horses', options: { role?: RoleCode; anonymous?: boolean
 }
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); });
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); localStorage.clear(); sessionStorage.clear(); });
+
+it('shows periodic recording only to veterinarians and keeps the weight history read-only for trainers', async () => {
+  const activeHorse = { ...horse(81), lifecycle: 'ACTIVE' as const };
+  const vet = mount('/horses/81', { role: 'VETERINARIAN', store: [activeHorse] });
+  await screen.findByText('Chưa có bản ghi cân nặng');
+  const overviewPanel = screen.getByRole('tabpanel');
+  expect(overviewPanel).toContainElement(screen.getByRole('region', { name: 'Lịch sử cân nặng' }));
+  expect(screen.getByRole('button', { name: 'Lưu cân nặng' })).toBeInTheDocument();
+  expect(vet.requests.some((request) => request.path === '/api/horses/81/weights?page=0&size=20')).toBe(true);
+  cleanup();
+
+  mount('/horses/81', { role: 'TRAINER', store: [activeHorse] });
+  await screen.findByText('Chưa có bản ghi cân nặng');
+  expect(screen.queryByRole('button', { name: 'Lưu cân nặng' })).not.toBeInTheDocument();
+});
+
+it('refreshes horse detail and weight history only after a confirmed weight write', async () => {
+  const oldWeight = { id: 1, horseId: 81, weightKg: 465, recordedAt: '2026-01-01T03:00:00.000Z' };
+  const newWeight = { id: 2, horseId: 81, weightKg: 467, recordedAt: '2026-01-02T03:00:00.000Z' };
+  let saved = false;
+  let resolvePost!: (response: Response) => void;
+  const post = new Promise<Response>((resolve) => { resolvePost = resolve; });
+  const { requests } = mount('/horses/81', {
+    role: 'VETERINARIAN',
+    getHorse: async () => ok({ ...horse(), lifecycle: 'ACTIVE', latestWeight: saved ? newWeight : oldWeight }),
+    weights: async (method) => method === 'POST' ? post : ok({ items: saved ? [newWeight, oldWeight] : [oldWeight] }),
+  });
+  const card = (await screen.findByRole('heading', { name: 'Nhận dạng & sở hữu' })).closest('section')!;
+  await screen.findByRole('list', { name: 'Lịch sử cân nặng' });
+  expect(within(card).getByText('465 kg')).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Ngày giờ ghi nhận'), { target: { value: '2026-01-02T10:00' } });
+  fireEvent.change(screen.getByLabelText('Cân nặng (kg)'), { target: { value: '467' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Lưu cân nặng' }));
+  await screen.findByRole('button', { name: 'Đang lưu…' });
+  expect(requests.filter((entry) => entry.path === '/api/horses/81')).toHaveLength(1);
+  expect(within(card).getByText('465 kg')).toBeInTheDocument();
+
+  saved = true;
+  await act(async () => { resolvePost(ok(newWeight, 201)); });
+  await waitFor(() => expect(within(card).getByText('467 kg')).toBeInTheDocument());
+  expect(within(screen.getByRole('list', { name: 'Lịch sử cân nặng' })).getByText('467 kg')).toBeInTheDocument();
+  expect(screen.getByText('Đã ghi nhận cân nặng')).toBeInTheDocument();
+  expect(requests.filter((entry) => entry.path === '/api/horses/81')).toHaveLength(2);
+  expect(requests.filter((entry) => entry.path === '/api/horses/81/weights?page=0&size=20')).toHaveLength(2);
+});
+
+it('does not refresh the horse or report success after a failed weight write', async () => {
+  const oldWeight = { id: 1, horseId: 81, weightKg: 465, recordedAt: '2026-01-01T03:00:00.000Z' };
+  const { requests } = mount('/horses/81', {
+    role: 'VETERINARIAN',
+    getHorse: async () => ok({ ...horse(), lifecycle: 'ACTIVE', latestWeight: oldWeight }),
+    weights: async (method) => method === 'POST' ? failure(409, 'Weight save failed') : ok({ items: [oldWeight] }),
+  });
+  const card = (await screen.findByRole('heading', { name: 'Nhận dạng & sở hữu' })).closest('section')!;
+  await screen.findByRole('list', { name: 'Lịch sử cân nặng' });
+  fireEvent.change(screen.getByLabelText('Ngày giờ ghi nhận'), { target: { value: '2026-01-02T10:00' } });
+  fireEvent.change(screen.getByLabelText('Cân nặng (kg)'), { target: { value: '467' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Lưu cân nặng' }));
+  await screen.findByText('Chưa ghi nhận được cân nặng');
+  expect(within(card).getByText('465 kg')).toBeInTheDocument();
+  expect(screen.queryByText('Đã ghi nhận cân nặng')).not.toBeInTheDocument();
+  expect(requests.filter((entry) => entry.path === '/api/horses/81')).toHaveLength(1);
+  expect(requests.filter((entry) => entry.path === '/api/horses/81/weights?page=0&size=20')).toHaveLength(1);
+});
+
+it('hides the old summary while a profile refresh fails and lets the user retry', async () => {
+  const oldWeight = { id: 1, horseId: 81, weightKg: 465, recordedAt: '2026-01-01T03:00:00.000Z' };
+  const newWeight = { id: 2, horseId: 81, weightKg: 467, recordedAt: '2026-01-02T03:00:00.000Z' };
+  let reads = 0, saved = false;
+  let resolveRefresh!: (response: Response) => void;
+  const refreshResponse = new Promise<Response>((resolve) => { resolveRefresh = resolve; });
+  mount('/horses/81', {
+    role: 'VETERINARIAN',
+    getHorse: async () => {
+      reads += 1;
+      if (reads === 2) return refreshResponse;
+      return ok({ ...horse(), lifecycle: 'ACTIVE', latestWeight: saved ? newWeight : oldWeight });
+    },
+    weights: async (method) => {
+      if (method === 'POST') { saved = true; return ok(newWeight, 201); }
+      return ok({ items: saved ? [newWeight, oldWeight] : [oldWeight] });
+    },
+  });
+  const card = (await screen.findByRole('heading', { name: 'Nhận dạng & sở hữu' })).closest('section')!;
+  await screen.findByRole('list', { name: 'Lịch sử cân nặng' });
+  fireEvent.change(screen.getByLabelText('Ngày giờ ghi nhận'), { target: { value: '2026-01-02T10:00' } });
+  fireEvent.change(screen.getByLabelText('Cân nặng (kg)'), { target: { value: '467' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Lưu cân nặng' }));
+  await within(card).findByText('Đang tải lại cân nặng…');
+  expect(within(card).queryByText('465 kg')).not.toBeInTheDocument();
+  await act(async () => { resolveRefresh(failure(500, 'Profile refresh failed')); });
+  await within(card).findByText('Không tải lại được hồ sơ ngựa');
+  expect(within(card).queryByText('465 kg')).not.toBeInTheDocument();
+  expect(within(card).getByText('Không tải được cân nặng mới')).toBeInTheDocument();
+  fireEvent.click(within(card).getByRole('button', { name: 'Thử lại' }));
+  await within(card).findByText('467 kg');
+});
 
 it.each([0, 1])('shows an honest compact registry summary for %s returned rows', async (count) => {
   mount('/horses', { store: count ? [horse()] : [] });
