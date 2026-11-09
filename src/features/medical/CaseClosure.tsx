@@ -23,33 +23,37 @@ export function CaseClosure({ item, needsExamination, needsRecovery, openTab, re
   const incidents = useMemo(() => token && actor ? createIncidentService(token, actor, auth.handleApiError) : null, [token, actor, auth.handleApiError]);
   const [blockers, setBlockers] = useState<Blockers>(), [loadError, setLoadError] = useState('');
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [confirm, setConfirm] = useState(false);
-  const load = useCallback(async () => {
-    setLoadError('');
-    try {
-      const [tasks, linked, restrictionPage] = await Promise.all([
-        item.treatmentPlan ? service.listCaseTasks(item.id) : Promise.resolve({ items: [] }),
-        incidents ? Promise.all(item.incidentIds.map((id) => incidents.get(id))) : Promise.resolve([]),
-        requestApi<{ items: { id: number; level: string; medicalCaseId?: number | null; liftedAt?: string | null }[] }>('/api/medical/restrictions?page=0&size=100', { method: 'GET' }, { token }),
-      ]);
-      setBlockers({
-        pendingTasks: tasks.items.filter((task) => task.status !== 'COMPLETED').length,
-        incidents: linked.filter((incident) => incident.status !== 'RESOLVED'),
-        restrictions: restrictionPage.items.filter((r) => r.medicalCaseId === item.id && !r.liftedAt),
-      });
-    } catch (failure) { setLoadError(medicalErrorMessage(failure, 'Không kiểm tra được điều kiện đóng ca.')); }
+  const [revision, setRevision] = useState(0);
+  const refresh = () => setRevision((value) => value + 1);
+  const read = useCallback(async (): Promise<Blockers> => {
+    const [tasks, linked, restrictionPage] = await Promise.all([
+      item.treatmentPlan ? service.listCaseTasks(item.id) : Promise.resolve({ items: [] }),
+      incidents ? Promise.all(item.incidentIds.map((id) => incidents.get(id))) : Promise.resolve([]),
+      requestApi<{ items: { id: number; level: string; medicalCaseId?: number | null; liftedAt?: string | null }[] }>('/api/medical/restrictions?page=0&size=100', { method: 'GET' }, { token }),
+    ]);
+    return {
+      pendingTasks: tasks.items.filter((task) => task.status !== 'COMPLETED').length,
+      incidents: linked.filter((incident) => incident.status !== 'RESOLVED'),
+      restrictions: restrictionPage.items.filter((r) => r.medicalCaseId === item.id && !r.liftedAt),
+    };
   }, [item, service, incidents, token]);
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    let active = true;
+    read().then((value) => { if (active) { setBlockers(value); setLoadError(''); } },
+      (failure) => { if (active) setLoadError(medicalErrorMessage(failure, 'Không kiểm tra được điều kiện đóng ca.')); });
+    return () => { active = false; };
+  }, [read, revision]);
 
   async function resolveIncident(incident: Incident) {
     if (!incidents) return;
     setBusy(true); setError('');
-    try { await incidents.review(incident.id, 'RESOLVE'); await load(); }
+    try { await incidents.review(incident.id, 'RESOLVE'); refresh(); }
     catch (failure) { setError(medicalErrorMessage(failure, 'Không đóng được sự cố.')); } finally { setBusy(false); }
   }
   async function close() {
     setBusy(true); setError('');
     try { await service.closeCase(item.id); reload(); }
-    catch (failure) { setError(medicalErrorMessage(failure, 'Không đóng được ca y tế.')); await load(); } finally { setBusy(false); setConfirm(false); }
+    catch (failure) { setError(medicalErrorMessage(failure, 'Không đóng được ca y tế.')); refresh(); } finally { setBusy(false); setConfirm(false); }
   }
 
   const needsPlanRecovery = item.injuries.length > 0 || !!item.treatmentPlan;
@@ -74,7 +78,7 @@ export function CaseClosure({ item, needsExamination, needsRecovery, openTab, re
   const remaining = rows.filter((row) => row.ok === false).length;
   return <Card className="medical-close-panel" title="Đóng ca y tế">
     <p className="text-caption">{ready ? 'Ca đã đủ điều kiện đóng.' : remaining ? `Còn ${remaining} điều kiện cần xử lý trước khi đóng ca.` : 'Đang kiểm tra điều kiện đóng ca…'}</p>
-    {loadError && <AlertBanner type="warning" title={loadError}><Button size="sm" variant="secondary" onClick={() => void load()}>Kiểm tra lại</Button></AlertBanner>}
+    {loadError && <AlertBanner type="warning" title={loadError}><Button size="sm" variant="secondary" onClick={refresh}>Kiểm tra lại</Button></AlertBanner>}
     {error && <AlertBanner feedback type="danger" title={error} />}
     <ul className="medical-closure-list" aria-label="Điều kiện đóng ca">{rows.map((row) => <li key={row.key} className={row.ok === false ? 'medical-closure-todo' : row.ok ? 'medical-closure-done' : ''}>
       <Icon name={row.ok ? 'check-circle' : row.ok === false ? 'alert-triangle' : 'clock'} size={20} />
