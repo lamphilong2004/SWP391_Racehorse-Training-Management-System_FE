@@ -1,11 +1,11 @@
 import { HorsePhotoImage } from '../horses/shared/HorsePhotoImage';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useParams } from 'react-router';
-import { ButtonLink, AlertBanner, Button, Card, EmptyState, ErrorState, KeyValue, LoadingState, MetricCard, RadioGroup, StatusBadge, TextField, UnsavedChangesGuard } from '../../design-system';
+import { ButtonLink, AlertBanner, Button, Card, EmptyState, ErrorState, KeyValue, LoadingState, MetricCard, NextStep, RadioGroup, StatusBadge, TextField, UnsavedChangesGuard } from '../../design-system';
 import { AppShell } from '../../layout/AppShell';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { ApiError } from '../../shared/auth/authApi';
-import { IncidentReportModal } from '../../shared/incidents';
+import { IncidentReportModal, IncidentReportReceipt } from '../../shared/incidents';
 import { createPrecheckApi, type PrecheckApi } from './api';
 import { CHECK_ITEMS, type CheckKey, type Checklist, type PrecheckSession, type PreSessionCheck } from './types';
 import styles from './precheck.module.css';
@@ -85,12 +85,25 @@ function PrecheckContent({ id, api, showPhoto }: { id: number; api: PrecheckApi;
   const pending = useRef(false);
   const [conflict, setConflict] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
-  const [incidentCode, setIncidentCode] = useState('');
+  const [incident, setIncident] = useState<{ id: number; incidentCode: string; status?: 'REPORTED' | 'UNDER_REVIEW' | 'RESOLVED' }>();
+  const [reportLookupError, setReportLookupError] = useState(false);
   useEffect(() => {
     let active = true;
-    api.session(id).then((data) => {
+    api.session(id).then(async (data) => {
       if (!active) return;
       if (data.id !== id) throw new ApiError(200, 'INVALID_RESPONSE', 'Máy chủ trả về một buổi tập khác.');
+      if (data.preSessionCheck?.overallResult === 'ABNORMAL') {
+        try {
+          const reports = await api.incidents();
+          if (!active) return;
+          setIncident(reports.find((report) => report.preSessionCheckId === data.preSessionCheck?.id));
+          setReportLookupError(false);
+        } catch (cause) {
+          if (!active || handleApiError(cause)) return;
+          setReportLookupError(true);
+        }
+      }
+      if (!active) return;
       setSession(data); setCheck(data.preSessionCheck ?? undefined);
       setConflict(false); setActionError('');
       if (data.preSessionCheck) setDraft(data.preSessionCheck.checks);
@@ -100,7 +113,7 @@ function PrecheckContent({ id, api, showPhoto }: { id: number; api: PrecheckApi;
   const reload = () => { setSession(undefined); setError(undefined); setAttempt((value) => value + 1); };
   const abnormal = CHECK_ITEMS.some(({ key }) => draft[key]?.result === 'ABNORMAL');
   const locked = busy || Boolean(check) || conflict || session?.status !== 'SCHEDULED';
-  const startGate = check ? 'Tải lại buổi tập để xác nhận các điều kiện bắt đầu còn lại.' : session?.blocked ? session.blockedMessage || session.blockedReasons.map((reason) => viLabel(reason)).join(', ') || 'Bị chặn' : 'Không có điểm chặn';
+  const startGate = check?.overallResult === 'ABNORMAL' ? 'Buổi tập bị chặn do kiểm tra trước buổi tập bất thường.' : check ? 'Tải lại buổi tập để xác nhận các điều kiện bắt đầu còn lại.' : session?.blocked ? viLabel(session.blockedMessage) || session.blockedReasons.map((reason) => viLabel(reason)).join(', ') || 'Bị chặn' : 'Không có điểm chặn';
   async function save() {
     if (pending.current || check || conflict) return;
     if (CHECK_ITEMS.some(({ key }) => !draft[key]?.result)) {
@@ -141,14 +154,21 @@ function PrecheckContent({ id, api, showPhoto }: { id: number; api: PrecheckApi;
     <UnsavedChangesGuard dirty={dirty} />
     <ButtonLink to="/groom/today">← Quay lại hôm nay</ButtonLink>
     <div data-page-banner className={styles.header}><div><h1 className={styles.heading}>Kiểm tra trước buổi tập · {session.horse.name}</h1><p className={styles.muted}>{session.horse.horseCode} · {session.sessionCode} · {when(session.scheduledStart)} · Work Rider {session.workRider.fullName}</p></div><StatusBadge family="session" status={session.status} /></div>
-    {incidentCode && <AlertBanner feedback type="success" title={`Đã gửi sự cố ${incidentCode}`}>Veterinarian có thể xem xét báo cáo này. Việc kiểm tra không thay đổi khả năng tập luyện.</AlertBanner>}
+    {incident && <IncidentReportReceipt incidentId={incident.id} incidentCode={incident.incidentCode} status={incident.status} />}
+    {reportLookupError && <ErrorState title="Không kiểm tra được báo cáo đã gửi" description="Hãy tải lại để kiểm tra báo cáo của lần kiểm tra này trước khi gửi thêm." onRetry={reload} />}
+    {check?.overallResult === 'ABNORMAL' && !incident && !reportLookupError && <AlertBanner type="warning" title="Đã lưu kiểm tra bất thường · Còn bước gửi báo cáo">
+      <p>Buổi tập này đang bị chặn. Hãy gửi mô tả cho Veterinarian tiếp nhận. Nếu vừa đóng biểu mẫu, bấm Báo cáo sự cố để tiếp tục.</p>
+    </AlertBanner>}
     <div className={styles.columns}><Card title="Danh mục quan sát"><p className={styles.muted}>Ghi lại những gì bạn quan sát. Chọn Bất thường cho mọi dấu hiệu lạ — bạn không cần xác định nguyên nhân.</p>
       {!check && session.status === 'SCHEDULED' && <p className={styles.muted}>Có thể gửi kiểm tra từ 12 giờ trước giờ bắt đầu đến khi hết khung giờ của buổi tập.</p>}
       <div ref={checklist}>{CHECK_ITEMS.map(({ key, label, hint }) => <div key={key} className={`${styles.item} ${draft[key]?.result === 'ABNORMAL' ? styles.abnormal : ''}`}><RadioGroup label={label} helperText={hint} value={draft[key]?.result ?? ''} onChange={(result) => update(key, { result: result as 'NORMAL' | 'ABNORMAL' })} options={[{ value: 'NORMAL', label: 'Bình thường' }, { value: 'ABNORMAL', label: 'Bất thường' }]} disabled={locked} className={styles.checkRow} /><TextField label={`Quan sát ${label} (không bắt buộc)`} placeholder="Quan sát" value={draft[key]?.observation ?? ''} maxLength={1000} disabled={locked} onChange={(event) => update(key, { observation: event.target.value })} className={styles.observation} /></div>)}</div>
-    </Card><aside className={styles.stack}><Card title="Thông tin sẵn sàng (chỉ xem)">{showPhoto && <HorsePhotoImage path={`/api/training-sessions/${id}/horse-photo`} name={session.horse.name} />}<div className={styles.summary}><KeyValue label="Khả năng tập luyện" value={viLabel(session.trainingAvailability, 'Chưa cung cấp')} /><KeyValue label="Điều kiện bắt đầu" value={startGate} /><KeyValue label="Trainer" value={session.trainer?.fullName ?? 'Chưa cung cấp'} /></div></Card><AlertBanner type="info" title="Chỉ quan sát">Chẩn đoán, tình trạng sức khỏe, khả năng tập luyện và hạn chế do Veterinarian quyết định.</AlertBanner></aside></div>
-    {check ? <AlertBanner type={check.overallResult === 'ABNORMAL' ? 'danger' : 'success'} title={check.overallResult === 'ABNORMAL' ? 'BẤT THƯỜNG — không được bắt đầu buổi tập này' : 'TẤT CẢ BÌNH THƯỜNG — đã ghi kiểm tra trước buổi tập'}>Đã kiểm tra {when(check.performedAt)} bởi {check.performedBy.fullName}. {check.overallResult === 'ABNORMAL' ? 'Hãy báo cáo sự cố để bác sĩ thú y xem xét. Sự cố chỉ được tạo khi bạn gửi báo cáo.' : 'Work Rider có thể bắt đầu từ lịch phân công khi các điều kiện còn lại đều đạt.'} Buổi tập vẫn ở trạng thái {viLabel(session.status)}.</AlertBanner> : abnormal ? <AlertBanner type="danger" title="Ngựa này hiện chưa đủ điều kiện tập. Hãy báo cáo sự cố để bác sĩ thú y xem xét.">Ghi kết quả bất thường trước khi báo cáo. Buổi tập vẫn giữ lịch và bị chặn; hệ thống không tự tạo sự cố.</AlertBanner> : <AlertBanner type="info" title="Hoàn tất cả năm mục quan sát">Kiểm tra bình thường sẽ mở điều kiện này; việc này không tự bắt đầu buổi tập.</AlertBanner>}
-    {actionError && <AlertBanner type="danger" title="Chưa xác nhận được kết quả kiểm tra">{actionError}</AlertBanner>}
-    <div className={styles.actions}><ButtonLink to="/groom/today">Quay lại hôm nay</ButtonLink><div className={styles.actions}>{conflict && <Button variant="secondary" onClick={reload} disabled={busy}>Tải lại buổi tập</Button>}{check?.overallResult === 'ABNORMAL' && !incidentCode ? <Button onClick={() => setReportOpen(true)}>Báo cáo sự cố</Button> : !check && !conflict && session.status === 'SCHEDULED' ? <Button disabled={busy} onClick={save}>{busy ? 'Đang ghi…' : abnormal ? 'Báo cáo sự cố' : 'Hoàn tất kiểm tra trước buổi tập'}</Button> : null}</div></div>
-    {reportOpen && check?.overallResult === 'ABNORMAL' && <IncidentReportModal open source={{ kind: 'groom', horseId: session.horse.id, horseLabel: `${session.horse.name} · ${session.horse.horseCode}`, preSessionCheckId: check.id, contextLabel: `Từ kiểm tra trước buổi tập #${check.id} · ${session.sessionCode}` }} onClose={() => setReportOpen(false)} onSubmit={async (body) => { const incident = await api.reportIncident(body); setIncidentCode(incident.incidentCode); setReportOpen(false); }} />}
+    </Card><aside className={styles.stack}><Card title="Tình trạng ngựa và điều kiện buổi tập">{showPhoto && <HorsePhotoImage path={`/api/training-sessions/${id}/horse-photo`} name={session.horse.name} />}<div className={styles.summary}><KeyValue label="Khả năng tập luyện" value={viLabel(session.trainingAvailability, 'Chưa cung cấp')} /><KeyValue label="Điều kiện bắt đầu" value={startGate} /><KeyValue label="Trainer" value={session.trainer?.fullName ?? 'Chưa cung cấp'} /></div></Card><AlertBanner type="info" title="Chỉ quan sát">Chẩn đoán, tình trạng sức khỏe, khả năng tập luyện và hạn chế do Veterinarian quyết định.</AlertBanner></aside></div>
+    {check ? <AlertBanner type={check.overallResult === 'ABNORMAL' ? 'danger' : 'success'} title={check.overallResult === 'ABNORMAL' ? 'BẤT THƯỜNG — không được bắt đầu buổi tập này' : 'TẤT CẢ BÌNH THƯỜNG — đã ghi kiểm tra trước buổi tập'}>Đã kiểm tra {when(check.performedAt)} bởi {check.performedBy.fullName}. {check.overallResult === 'ABNORMAL' ? 'Kết quả bất thường của lần kiểm tra này vẫn được giữ. Theo dõi báo cáo để xem tiến trình xử lý của Veterinarian.' : 'Work Rider có thể bắt đầu từ lịch phân công khi các điều kiện còn lại đều đạt.'} Buổi tập vẫn ở trạng thái {viLabel(session.status)}.</AlertBanner> : abnormal ? <AlertBanner type="danger" title="Ngựa này hiện chưa đủ điều kiện tập. Hãy báo cáo sự cố để bác sĩ thú y xem xét.">Ghi kết quả bất thường trước khi báo cáo. Buổi tập vẫn giữ lịch và bị chặn; hệ thống không tự tạo sự cố.</AlertBanner> : <AlertBanner type="info" title="Hoàn tất cả năm mục quan sát">Kiểm tra bình thường sẽ mở điều kiện này; việc này không tự bắt đầu buổi tập.</AlertBanner>}
+    {check?.overallResult === 'ALL_NORMAL' && <NextStep title="Bắt đầu buổi tập đúng giờ" owner={`Work Rider · ${session.workRider.fullName}`}>
+      <p>Work Rider bắt đầu được từ {when(session.scheduledStart)} đến khi hết khung giờ của buổi. Bạn không cần làm thêm gì cho buổi này.</p>
+    </NextStep>}
+    {actionError && <AlertBanner feedback type="danger" title="Chưa xác nhận được kết quả kiểm tra">{actionError}</AlertBanner>}
+    <div className={styles.actions}><ButtonLink to="/groom/today">Quay lại hôm nay</ButtonLink><div className={styles.actions}>{conflict && <Button variant="secondary" onClick={reload} disabled={busy}>Tải lại buổi tập</Button>}{check?.overallResult === 'ABNORMAL' && !incident && !reportLookupError ? <Button onClick={() => setReportOpen(true)}>Báo cáo sự cố</Button> : !check && !conflict && session.status === 'SCHEDULED' ? <Button disabled={busy} onClick={save}>{busy ? 'Đang ghi…' : abnormal ? 'Lưu kiểm tra & báo bất thường' : 'Hoàn tất kiểm tra trước buổi tập'}</Button> : null}</div></div>
+    {reportOpen && check?.overallResult === 'ABNORMAL' && <IncidentReportModal open source={{ kind: 'groom', horseId: session.horse.id, horseLabel: `${session.horse.name} · ${session.horse.horseCode}`, preSessionCheckId: check.id, contextLabel: `Từ kiểm tra trước buổi tập #${check.id} · ${session.sessionCode}`, initialDescription: CHECK_ITEMS.filter(({ key }) => check.checks[key].result === 'ABNORMAL').map(({ key, label }) => `${label}: ${check.checks[key].observation || 'Bất thường'}`).join('\n') }} onClose={() => setReportOpen(false)} onSubmit={async (body) => { const result = await api.reportIncident(body); setIncident(result); setReportOpen(false); }} />}
   </div>;
 }

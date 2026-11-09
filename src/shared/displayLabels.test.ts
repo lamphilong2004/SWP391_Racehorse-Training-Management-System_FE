@@ -6,6 +6,12 @@ describe('Vietnamese presentation without changing wire data', () => {
   it('translates intensity and surface codes but preserves unknown supplied values', () => {
     expect(viLabel('SAND')).toBe('Cát');expect(viLabel('LOW')).toBe('Thấp');expect(viLabel('New surface')).toBe('New surface');
   });
+  it('uses Vietnamese labels for exercise types and preserves custom labels verbatim', () => {
+    expect(viLabel('WALK')).toBe('Đi bộ');
+    expect(viLabel('Canter')).toBe('Canter (nước kiệu nhanh)');
+    expect(viLabel('Custom hill intervals')).toBe('Custom hill intervals');
+    expect(viLabel('constructor')).toBe('constructor');
+  });
   it('explains a concurrent plan edit and a stale stock balance without pretending success', () => {
     expect(serverText('The plan changed while completing this task. Refresh your assignments and review before trying again.')).toContain('Kế hoạch vừa thay đổi');
     expect(serverText('Stock changed, item is inactive, or quantity is insufficient. Refresh and review before submitting again.')).toContain('Hãy tải lại tồn kho');
@@ -18,5 +24,9 @@ describe('Vietnamese presentation without changing wire data', () => {
     expect(serverText('Task assignment changed. Refresh before trying again.')).toContain('Phân công vừa thay đổi');
     expect(serverText('This task is cancelled and cannot be completed.')).toContain('không thể đánh dấu hoàn thành');
     expect(serverText('Completed or past tasks cannot be cancelled or reassigned.')).toContain('đã qua ngày');
+  });
+  it('shows the Vietnamese label when the server sends a bare reason code as the message', () => {
+    expect(serverText('PRE_CHECK_ABNORMAL')).toBe(viLabel('PRE_CHECK_ABNORMAL'));
+    expect(serverText('PRE_CHECK_ABNORMAL')).not.toContain('PRE_CHECK');
   });
 });

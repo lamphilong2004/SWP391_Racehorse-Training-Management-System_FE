@@ -26,9 +26,10 @@
 .summaryDone { --metric-accent: var(--color-success-600); --metric-surface: var(--color-success-50); }
 .summaryCancelled { --metric-accent: var(--color-neutral-600); --metric-surface: var(--color-bg-subtle); }
 .guidance { font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; }
-.rowActions { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; width: max-content; max-width: 100%; min-width: 248px; }
+.rowActions { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; width: max-content; max-width: 100%; min-width: 116px; }
 .rowMutations { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .rowActions button { gap: 6px; }
+.rowActions button[aria-expanded="true"] [data-icon] { transform: rotate(180deg); }
 .stateCell { display: grid; justify-items: start; gap: 6px; min-width: 145px; }
 .stateCell p { margin: 0; overflow-wrap: anywhere; }
 .stateCell small { color: var(--color-text-secondary); }

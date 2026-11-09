@@ -21,7 +21,7 @@ it('opens a report from the list using its keyboard-accessible canonical link an
   const value = service(); render(<MemoryRouter><IncidentListPage service={value} role="GROOM" actorId={6} /></MemoryRouter>);
   expect(await screen.findByRole('link', { name: 'INC-001' })).toHaveAttribute('href', '/incidents/1');
   expect(screen.getByText('Bạn')).toBeInTheDocument();
-  fireEvent.change(screen.getByLabelText('Tìm trên trang hiện tại'), { target: { value: 'no match' } });
+  fireEvent.change(screen.getByLabelText('Tìm sự cố'), { target: { value: 'no match' } });
   expect(screen.getByText('Không có sự cố')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Sau' })).toBeDisabled();
   expect(screen.queryByText(/submitted/)).not.toBeInTheDocument();
@@ -41,21 +41,29 @@ it('locks duplicate handling and updates state only after the response and readb
   vi.mocked(value.review).mockReturnValue(new Promise((resolve) => { finish = resolve; }));
   vi.mocked(value.get).mockResolvedValueOnce(incident).mockResolvedValueOnce({ ...incident, status: 'RESOLVED' });
   detail(value); await screen.findByText('Limp after exercise');
-  const resolve = screen.getByRole('button', { name: 'Đóng sự cố' }); fireEvent.click(resolve); fireEvent.click(resolve);
-  expect(value.review).toHaveBeenCalledTimes(1); expect(resolve).toBeDisabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Đóng sự cố' }));
+  const confirm = await screen.findByRole('button', { name: 'Xác nhận đóng sự cố' }); fireEvent.click(confirm); fireEvent.click(confirm);
+  expect(value.review).toHaveBeenCalledTimes(1); expect(value.review).toHaveBeenCalledWith(incident.id, 'RESOLVE', undefined);
   await act(async () => { finish({ ...incident, status: 'RESOLVED' }); });
-  expect(await screen.findByText(/Sự cố đã được xử lý xong\. Không còn thao tác nào khác\./)).toBeInTheDocument();
+  expect(await screen.findByText(/Sự cố đã đóng\./)).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Mở ca y tế' })).not.toBeInTheDocument();
 });
-it('validates case linking and retains input on a conflict without false success', async () => {
-  const value = service(); vi.mocked(value.review).mockRejectedValue(new ApiError(409, 'CONFLICT', 'private diagnosis'));
+it("links to an open case chosen from the horse's cases and keeps the choice on a conflict", async () => {
+  const value = { ...service(), openCases: vi.fn().mockResolvedValue([{ id: 9, openedAt: '2026-11-02T05:00:00Z', reason: 'Theo dõi chân sau' }]) };
+  vi.mocked(value.review).mockRejectedValue(new ApiError(409, 'CONFLICT', 'private diagnosis'));
   detail(value); await screen.findByText('Limp after exercise');
-  const input = screen.getByLabelText('Mã ca y tế đang mở'); fireEvent.change(input, { target: { value: '-1' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Liên kết ca y tế' }));
-  expect(await screen.findByText('Nhập mã ca y tế là số dương hợp lệ.')).toBeInTheDocument(); expect(value.review).not.toHaveBeenCalled();
-  fireEvent.change(input, { target: { value: '9' } }); fireEvent.click(screen.getByRole('button', { name: 'Liên kết ca y tế' }));
+  expect(value.openCases).toHaveBeenCalledWith(incident.horseId);
+  const select = await screen.findByLabelText('Ca y tế của ngựa này');
+  expect(screen.getByRole('button', { name: 'Gắn vào ca' })).toBeDisabled();
+  fireEvent.change(select, { target: { value: '9' } }); fireEvent.click(screen.getByRole('button', { name: 'Gắn vào ca' }));
+  expect(value.review).toHaveBeenCalledWith(incident.id, 'LINK_CASE', 9);
   await screen.findByText(/Sự cố đã thay đổi hoặc xung đột với thao tác này\. Hãy làm mới và thử lại\./);
-  expect(input).toHaveValue(9); expect(screen.queryByText('private diagnosis')).not.toBeInTheDocument();
+  expect(select).toHaveValue('9'); expect(screen.queryByText('private diagnosis')).not.toBeInTheDocument();
+});
+it('says so when the horse has no open case to link', async () => {
+  const value = { ...service(), openCases: vi.fn().mockResolvedValue([]) };
+  detail(value); expect(await screen.findByText('Ngựa này không có ca y tế đang mở.')).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Gắn vào ca' })).not.toBeInTheDocument();
 });
 it('opens the returned medical case and never invents the case ID', async () => {
   const value = service(); vi.mocked(value.review).mockResolvedValue({ ...incident, status: 'UNDER_REVIEW', medicalCaseId: 91 });
@@ -66,7 +74,7 @@ it('opens the returned medical case and never invents the case ID', async () => 
 it.each(['RESOLVED', 'UNDER_REVIEW'] as const)('prevents re-opening/linking a %s incident', async (status) => {
   const value = service(); vi.mocked(value.get).mockResolvedValue({ ...incident, status, medicalCaseId: 9 });
   detail(value); await screen.findByText('Limp after exercise');
-  expect(screen.queryByRole('button', { name: 'Mở ca y tế' })).not.toBeInTheDocument(); expect(screen.queryByRole('button', { name: 'Liên kết ca y tế' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Mở ca y tế' })).not.toBeInTheDocument(); expect(screen.queryByRole('button', { name: 'Gắn vào ca' })).not.toBeInTheDocument();
   if (status === 'RESOLVED') expect(screen.queryByRole('button', { name: 'Đóng sự cố' })).not.toBeInTheDocument();
 });
 it('renders a Groom detail as read-only without linking to the clinical case', async () => {
@@ -83,6 +91,8 @@ it('clears an old incident immediately on a direct-link change and ignores its l
 it('rejects another Groom report and any clinical fields before disclosure', () => {
   expect(() => readIncident({ ...incident, reportedByUserId: 99 }, groom)).toThrow('Tài khoản của bạn không xem được báo cáo này.');
   expect(() => readIncident({ ...incident, diagnosis: 'secret' }, vet)).toThrow('Dữ liệu sự cố không có hoặc không hợp lệ.');
+  expect(readIncident({ ...incident, incidentType: 'LAMENESS', reportedByName: 'Võ Thanh Tùng' }, vet)).toMatchObject({ incidentType: 'LAMENESS', reportedByName: 'Võ Thanh Tùng' });
+  expect(() => readIncident({ ...incident, incidentType: 'TIRED' }, vet)).toThrow('Dữ liệu sự cố không có hoặc không hợp lệ.');
 });
 it('uses only approved incident DTOs, checks identities and does not fall back on 403', async () => {
   const fetcher = vi.fn().mockResolvedValueOnce(ok({ ...incident, id: 2 })).mockResolvedValueOnce(new Response(JSON.stringify({ success: false, error: { code: 'FORBIDDEN', message: 'Denied', details: [] } }), { status: 403 }));
@@ -135,7 +145,7 @@ it('shows the reporter name when a directory reader is available and keeps the i
   expect(await screen.findByText('Demo GROOM')).toBeInTheDocument(); expect(reporter).toHaveBeenCalledWith(6);
   unmount();
   render(<MemoryRouter><IncidentListPage service={service()} role="VETERINARIAN" actorId={7} /></MemoryRouter>);
-  expect(await screen.findByText('Người dùng 6')).toBeInTheDocument();
+  expect(await screen.findByText('Mã người dùng 6')).toBeInTheDocument();
 });
 it('names the signed-in reporter "You" on the detail page', async () => {
   const value = service();

@@ -66,7 +66,7 @@ it('keeps an expired session blocked after all Rider confirmations even when pre
 });
 it('shows PAUSED from server without Finish or Trainer Pause/Resume/Stop controls; manual metrics remain possible', async () => {
   const client = api({ ...base, status: 'PAUSED' }); mount(client, '/rider/sessions/50/active');
-  await screen.findByRole('heading', { name: 'SESSION PAUSED — BY YOUR TRAINER' });
+  await screen.findByRole('heading', { name: 'Buổi tập đang tạm dừng' });
   expect(screen.queryByRole('button', { name: 'Kết thúc buổi tập' })).not.toBeInTheDocument();
   for (const name of ['Pause', 'Resume', 'Stop']) expect(screen.queryByRole('button', { name })).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Thêm số đo' })).toBeEnabled();
@@ -79,7 +79,7 @@ it('finishes only IN_PROGRESS and routes to feedback after server COMPLETED conf
 });
 it('INTERRUPTED remains terminal and only offers feedback', async () => {
   const client = api({ ...base, status: 'INTERRUPTED', interruptionReason: 'Trainer stopped for safety' }); mount(client, '/rider/sessions/50/active');
-  await screen.findByRole('heading', { name: 'SESSION INTERRUPTED — NOT COMPLETED' });
+  await screen.findByRole('heading', { name: 'Buổi tập đã bị gián đoạn' });
   expect(screen.getByRole('link', { name: 'Gửi phản hồi người cưỡi' })).toHaveAttribute('href', '/rider/sessions/50/feedback');
   expect(screen.queryByRole('button', { name: 'Kết thúc buổi tập' })).not.toBeInTheDocument(); expect(client.complete).not.toHaveBeenCalled();
 });
@@ -87,13 +87,30 @@ it('records explicit issue enum/severity/description then refreshes the server i
   const active = { ...base, status: 'IN_PROGRESS' as const }; const client = api(active); mount(client, '/rider/sessions/50/active');
   fireEvent.click(await screen.findByRole('button', { name: 'Báo cáo vấn đề' }));
   const dialog = await screen.findByRole('dialog', { name: 'Báo cáo vấn đề' });
-  fireEvent.change(within(dialog).getByLabelText('Bạn đã thấy gì?'), { target: { value: 'HOOF_OR_LEG_PROBLEM' } });
+  expect(within(dialog).queryByLabelText('Bỏ ăn')).not.toBeInTheDocument();
+  fireEvent.click(within(dialog).getByLabelText('Khập khiễng, bước không đều'));
   fireEvent.change(within(dialog).getByLabelText('Mức độ quan sát'), { target: { value: 'HIGH' } });
   fireEvent.change(within(dialog).getByLabelText('Mô tả những gì bạn thấy'), { target: { value: 'Uneven gait on the left hind' } });
   vi.mocked(client.session).mockResolvedValue({ ...active, status: 'INTERRUPTED' });
   fireEvent.click(within(dialog).getByRole('button', { name: 'Gửi báo cáo' }));
-  await screen.findByRole('heading', { name: 'SESSION INTERRUPTED — NOT COMPLETED' });
-  expect(client.issue).toHaveBeenCalledWith(50, { incidentType: 'HOOF_OR_LEG_PROBLEM', observedSeverity: 'HIGH', description: 'Uneven gait on the left hind', observedAt: expect.any(String) });
+  await screen.findByRole('heading', { name: 'Buổi tập đã bị gián đoạn' });
+  expect(client.issue).toHaveBeenCalledWith(50, { incidentType: 'LAMENESS', observedSeverity: 'HIGH', description: 'Uneven gait on the left hind', observedAt: expect.any(String) });
+  expect(screen.getByRole('link', { name: 'Theo dõi báo cáo' })).toHaveAttribute('href', '/incidents/90');
+  expect(screen.getByText('Đã gửi báo cáo · Chờ thú y tiếp nhận')).toBeInTheDocument();
+});
+it('does not show an interruption receipt when the response does not confirm interruption', async () => {
+  const client = api({ ...base, status: 'IN_PROGRESS' });
+  vi.mocked(client.issue).mockResolvedValue({ incidentId: 90, incidentCode: 'INC-0090', sessionStatus: 'IN_PROGRESS' });
+  mount(client, '/rider/sessions/50/active');
+  fireEvent.click(await screen.findByRole('button', { name: 'Báo cáo vấn đề' }));
+  const dialog = await screen.findByRole('dialog', { name: 'Báo cáo vấn đề' });
+  fireEvent.click(within(dialog).getByLabelText('Vấn đề khác'));
+  fireEvent.change(within(dialog).getByLabelText('Mức độ quan sát'), { target: { value: 'LOW' } });
+  fireEvent.change(within(dialog).getByLabelText('Mô tả những gì bạn thấy'), { target: { value: 'Observed concern' } });
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Gửi báo cáo' }));
+  expect(await within(dialog).findByText('Chưa xác nhận được báo cáo vấn đề', { exact: true })).toBeInTheDocument();
+  expect(screen.queryByRole('link', { name: 'Theo dõi báo cáo' })).not.toBeInTheDocument();
+  expect(within(dialog).getByLabelText('Mô tả những gì bạn thấy')).toHaveValue('Observed concern');
 });
 it('sends metric zero unchanged and nullable blank values without inventing distance', async () => {
   expect(metricInput({ heartRate: '', speedKmh: '0', distanceM: '' }, '2020-01-01T00:00:00Z')).toEqual({ recordedAt: '2020-01-01T00:00:00Z', heartRate: null, speedKmh: 0, distanceM: null });
@@ -115,7 +132,7 @@ it('keeps interrupted feedback input for retry, submits only approved fields and
   const submit = screen.getByRole('button', { name: 'Gửi phản hồi' }); fireEvent.click(submit); fireEvent.click(submit);
   expect(client.feedback).toHaveBeenCalledTimes(1); reject(new ApiError(0, 'NETWORK_ERROR', 'Network unavailable'));
   await screen.findByText('Network unavailable'); expect(screen.getByLabelText('Ghi chú (không bắt buộc)')).toHaveValue('  Settled slowly  ');
-  fireEvent.click(screen.getByRole('button', { name: 'Gửi phản hồi' })); await screen.findByText('Đã gửi phản hồi');
+  fireEvent.click(screen.getByRole('button', { name: 'Gửi phản hồi' })); await screen.findByText('Đã gửi phản hồi'); expect(screen.getByRole('region', { name: 'Bước tiếp theo: Đánh giá buổi tập' })).toBeInTheDocument();
   expect(client.feedback).toHaveBeenLastCalledWith(50, { responses: { preInterruptionDescription: 'Breathing hard', notes: 'Settled slowly' } });
   expect(screen.getByText('Buổi tập giữ trạng thái Gián đoạn')).toBeInTheDocument(); expect(client.complete).not.toHaveBeenCalled();
 });

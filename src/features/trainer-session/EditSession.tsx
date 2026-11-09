@@ -72,7 +72,7 @@ function DetailsForm({ session, busy, save }: { session: TrainingSession; busy: 
       }}>Chọn giờ sau khoảng 2 phút</Button>
       <span className="text-caption">Kiểm tra thời lượng rồi bấm Lưu thông tin để áp dụng lịch mới.</span>
     </div>
-    {error && <AlertBanner type="danger" title="Chưa lưu được thông tin">{error}</AlertBanner>}
+    {error && <AlertBanner feedback type="danger" title="Chưa lưu được thông tin">{error}</AlertBanner>}
     <div className={styles.row}><Button type="submit">{busy ? 'Đang lưu…' : 'Lưu thông tin'}</Button><span className="text-caption">Giữ nguyên Work Rider; hệ thống sẽ từ chối nếu trùng lịch.</span></div>
   </div></fieldset></form></Card>;
 }
@@ -101,7 +101,7 @@ function ExercisesForm({ api, session, busy, save }: { api: Api; session: Traini
       <SelectField label="Cường độ" value={item.intensity ?? ''} options={[{ value: '', label: 'Chưa xác định' }, ...INTENSITIES.map((value) => ({ value, label: viLabel(value) }))]} onChange={(event) => patch(index, { intensity: (event.target.value || null) as Intensity | null })} />
       <PresetField label="Mặt sân" maxLength={50} value={item.surface ?? ''} options={SURFACE_PRESETS} onValueChange={surface => patch(index, { surface })} /></div>
       <TextAreaField label="Xác nhận / lý do giữ lại" maxLength={1000} value={item.acknowledgementNote ?? ''} onChange={(event) => patch(index, { acknowledgementNote: event.target.value })} helperText="Bắt buộc với loại C hoặc D. Không thể bỏ qua chặn bắt buộc do y tế." /></div></Card>)}
-    {error && <AlertBanner type="danger" title="Chưa lưu được bài tập">{error}</AlertBanner>}
+    {error && <AlertBanner feedback type="danger" title="Chưa lưu được bài tập">{error}</AlertBanner>}
     <div className={styles.row}><Button type="submit">{busy ? 'Đang kiểm tra…' : 'Kiểm tra & lưu bài tập'}</Button><span className="text-caption">Mức phù hợp được kiểm tra trước khi lưu và kiểm tra lại trên máy chủ.</span></div>
   </div></fieldset></form></Card>;
 }

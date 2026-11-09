@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { AlertBanner, Button, Card, ErrorState, KeyValue, LoadingState, Modal, TextAreaField, TextField } from '../../design-system';
+import { viLabel } from '../../shared/viLabels';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { dateTime } from '../evaluation/models';
 import { errorMessage, useFlowRequest } from '../main-flows/api';
@@ -38,7 +39,7 @@ function VetThresholdOverride({ horseId }: { horseId: number }) {
     {resource.pending && <LoadingState label="Đang tải ngưỡng đang áp dụng…" />}
     {resource.error && <ErrorState title="Không tải được ngưỡng" description={resource.error} onRetry={resource.reload} />}
     {message && <AlertBanner feedback type="success" title="Đã xác nhận yêu cầu ngưỡng">{message}</AlertBanner>}
-    <KeyValue label="Ngưỡng nhịp tim nghiêm trọng đang áp dụng" value={current ? `${current.thresholdValue} bpm · ${current.scope}` : 'Chưa cung cấp'} />
+    <KeyValue label="Ngưỡng nhịp tim nghiêm trọng đang áp dụng" value={current ? `${current.thresholdValue} bpm · ${viLabel(current.scope)}` : 'Chưa cung cấp'} />
     <Button variant="secondary" disabled={resource.pending || !!resource.error} onClick={() => { setError(''); setMessage(''); setStage('edit'); setOpen(true); }}>Ngưỡng riêng</Button>
     <Modal open={open} onClose={close} title={stage === 'edit' ? `Ngưỡng riêng · Ngựa ${horseId}` : stage === 'set' ? 'Xác nhận đặt ngưỡng riêng' : 'Xác nhận kết thúc ngưỡng riêng'} footer={<>
       <Button variant="secondary" disabled={busy} onClick={close}>Hủy</Button>
@@ -46,8 +47,8 @@ function VetThresholdOverride({ horseId }: { horseId: number }) {
         : <><Button variant="secondary" disabled={busy} onClick={() => { setStage('edit'); setError(''); }}>Quay lại chỉnh sửa</Button><Button disabled={busy || resource.pending || !!resource.error || (stage === 'set' ? !canSet : !canEnd)} onClick={() => void confirm()}>{busy ? 'Đang lưu…' : stage === 'set' ? 'Xác nhận ngưỡng riêng' : 'Xác nhận kết thúc'}</Button></>}
     </>}><div className={styles.stack}>
       <AlertBanner type="danger" title="Chỉ Veterinarian có quyền">Thao tác này đổi ngưỡng nhịp tim nghiêm trọng của ngựa. Trainer và Head Trainer không sửa được.</AlertBanner>
-      {error && <AlertBanner type="danger" title="Chưa xác nhận được ngưỡng">{error}</AlertBanner>}
-      <KeyValue label="Chỉ số" value="Nhịp tim · ngưỡng nghiêm trọng" /><KeyValue label="Giá trị đang áp dụng" value={current ? `${current.thresholdValue} bpm · ${current.scope}` : 'Chưa cung cấp'} />
+      {error && <AlertBanner feedback type="danger" title="Chưa xác nhận được ngưỡng">{error}</AlertBanner>}
+      <KeyValue label="Chỉ số" value="Nhịp tim · ngưỡng nghiêm trọng" /><KeyValue label="Giá trị đang áp dụng" value={current ? `${current.thresholdValue} bpm · ${viLabel(current.scope)}` : 'Chưa cung cấp'} />
       <KeyValue label="Mặc định chung" value={current?.scope === 'GLOBAL' ? `${current.thresholdValue} bpm` : 'Hệ thống chưa cung cấp'} />
       {stage === 'edit' ? <fieldset disabled={busy} className={`${styles.fieldset} ${styles.stack}`}>
         <TextField label="Ngưỡng riêng (bpm)" type="number" min="0.01" max="99999.99" step="0.01" value={value} onChange={(event) => setValue(event.target.value)} helperText="Giá trị dương, tối đa hai chữ số thập phân. Không có giá trị mặc định." />

@@ -1,5 +1,5 @@
-import { ButtonLink,
-  AlertBanner, Button, CandidateCard, Card, Checkbox, EmptyState, HorseCard, KeyValue,
+import {
+  AlertBanner, Button, CandidateCard, Card, Checkbox, EmptyState, HorseCard, KeyValue, NextStep, OptionalFields,
   SelectField, StatusBadge, TextAreaField, TextField,
 } from '../../design-system';
 import type { ProgramCreationFlow } from './useProgramCreation';
@@ -52,8 +52,10 @@ export function DraftSteps({ step, flow, issues, update, edit }: {
           <TextField label="Ngày bắt đầu chương trình" type="date" required min={clubDate()} helperText="Từ hôm nay trở đi, theo giờ Việt Nam." value={draft.periodStart} error={error('periodStart')} onChange={(event) => update({ periodStart: event.target.value })} />
           <TextField label="Ngày kết thúc chương trình" type="date" required min={draft.periodStart || clubDate()} value={draft.periodEnd} error={error('periodEnd')} onChange={(event) => update({ periodEnd: event.target.value })} />
         </div>
-        <TextAreaField label="Chỉ số mục tiêu" maxLength={1000} value={draft.targetMetrics ?? ''} error={error('targetMetrics')} onChange={(event) => update({ targetMetrics: event.target.value })} />
-        <TextAreaField label="Ghi chú" maxLength={2000} value={draft.notes ?? ''} error={error('notes')} onChange={(event) => update({ notes: event.target.value })} />
+        <OptionalFields label="Chỉ số mục tiêu và ghi chú" reveal={Boolean(draft.targetMetrics || draft.notes || error('targetMetrics') || error('notes'))}>
+          <TextAreaField label="Chỉ số mục tiêu" maxLength={1000} value={draft.targetMetrics ?? ''} error={error('targetMetrics')} onChange={(event) => update({ targetMetrics: event.target.value })} />
+          <TextAreaField label="Ghi chú" maxLength={2000} value={draft.notes ?? ''} error={error('notes')} onChange={(event) => update({ notes: event.target.value })} />
+        </OptionalFields>
       </div></Card>
       <p className={styles.stepHint}>Chọn ngày cho từng giai đoạn trong thời gian chương trình. Các giai đoạn không được chồng lấn.</p>
       <div className={styles.phaseSettings}>
@@ -61,14 +63,15 @@ export function DraftSteps({ step, flow, issues, update, edit }: {
         const prefix = `phases[${index}]`;
         const label = `Giai đoạn ${index + 1}`;
         return <Card key={index} title={label}><div className={styles.stack}>
-          <p className={styles.muted}>Giai đoạn gốc: {phase.templateVersionPhaseId ?? 'Không có'}</p>
           <div className={styles.fields}>
             <TextField label={`${label} — thứ tự`} type="number" min={1} step={1} required value={phase.phaseOrder} error={error(`${prefix}.phaseOrder`)} onChange={(event) => phaseUpdate(index, { phaseOrder: Number(event.target.value) })} />
             <TextField label={`${label} — tên`} required maxLength={150} value={phase.name} error={error(`${prefix}.name`)} onChange={(event) => phaseUpdate(index, { name: event.target.value })} />
             <TextField label={`${label} — ngày bắt đầu`} type="date" required min={draft.periodStart || clubDate()} max={draft.periodEnd || undefined} value={phase.startDate} error={error(`${prefix}.startDate`)} onChange={(event) => phaseUpdate(index, { startDate: event.target.value })} />
             <TextField label={`${label} — ngày kết thúc`} type="date" required min={phase.startDate || draft.periodStart || clubDate()} max={draft.periodEnd || undefined} value={phase.endDate} error={error(`${prefix}.endDate`)} onChange={(event) => phaseUpdate(index, { endDate: event.target.value })} />
           </div>
-          <TextAreaField label={`${label} — mục tiêu`} maxLength={1000} value={phase.objective ?? ''} error={error(`${prefix}.objective`)} onChange={(event) => phaseUpdate(index, { objective: event.target.value })} />
+          <OptionalFields label="Mục tiêu giai đoạn" reveal={Boolean(phase.objective || error(`${prefix}.objective`))}>
+            <TextAreaField label={`${label} — mục tiêu`} maxLength={1000} value={phase.objective ?? ''} error={error(`${prefix}.objective`)} onChange={(event) => phaseUpdate(index, { objective: event.target.value })} />
+          </OptionalFields>
         </div></Card>;
       })}
       </div>
@@ -154,15 +157,18 @@ export function ProgramResult({ flow, reload, reloading, readError }: { flow: Pr
   const program = flow.created!;
   return <div className={styles.stack}>
     <AlertBanner feedback type="success" title="Đã tạo chương trình">Mã chương trình: {program.id}</AlertBanner>
-      <ButtonLink to={`/training/programs/${program.id}`}>Mở chi tiết chương trình</ButtonLink>
+    <NextStep title="Lên lịch buổi tập đầu tiên" owner={program.currentTrainer ? `Trainer · ${program.currentTrainer.fullName}` : 'Trainer được phân công'}
+      action={{ label: 'Mở chi tiết chương trình', to: `/training/programs/${program.id}` }} secondary={{ label: 'Tạo chương trình khác', to: '/training/programs/new' }}>
+      <p>Trainer đã nhận thông báo và tạo buổi tập trong giai đoạn {program.phases[0]?.name ?? 'đầu tiên'}. Groom kiểm tra trước mỗi buổi, Work Rider thực hiện.</p>
+    </NextStep>
     <Card title={program.name}><div className={styles.stack}>
       <StatusBadge family="program" status={program.status} /><KeyValue label="Ngựa" value={`${program.horse.name} · ${program.horse.horseCode}`} />
-      <KeyValue label="Thời gian" value={`${program.periodStart} — ${program.periodEnd}`} /><KeyValue label="Phiên bản mẫu" value={`v${program.sourceTemplateVersion}`} />
+      <KeyValue label="Thời gian" value={`${formatDate(program.periodStart)} — ${formatDate(program.periodEnd)}`} /><KeyValue label="Phiên bản mẫu" value={`v${program.sourceTemplateVersion}`} />
       <KeyValue label="Trainer" value={program.currentTrainer?.fullName ?? 'Không có trong dữ liệu trả về'} />
       <KeyValue label="Kích hoạt lúc" value={<time dateTime={program.activatedAt} title={program.activatedAt}>{dateTime(program.activatedAt)}</time>} />
-      {program.phases.map((phase) => <p key={phase.id}>{phase.phaseOrder}. {phase.name} · {phase.startDate} — {phase.endDate}</p>)}
+      {program.phases.map((phase) => <p key={phase.id}>{phase.phaseOrder}. {phase.name} · {formatDate(phase.startDate)} — {formatDate(phase.endDate)}</p>)}
       <Button type="button" variant="secondary" disabled={reloading} onClick={reload}>{reloading ? 'Đang tải lại…' : 'Tải lại chương trình đã lưu'}</Button>
-      {readError && <AlertBanner type="danger" title="Không đọc lại được">{readError}</AlertBanner>}
+      {readError && <AlertBanner feedback type="danger" title="Không đọc lại được">{readError}</AlertBanner>}
     </div></Card>
   </div>;
 }

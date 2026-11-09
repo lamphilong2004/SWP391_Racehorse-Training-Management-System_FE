@@ -20,6 +20,14 @@ async function fill(description = 'Swelling on left hind fetlock.') {
 function submit() { fireEvent.submit(screen.getByRole('dialog').querySelector('form') as HTMLFormElement); }
 
 describe('IncidentReportModal', () => {
+  it('keeps supplied observations editable and requires an explicit send', () => {
+    const { onSubmit, onClose } = mount({ ...groom, initialDescription: 'Chân trái: bước đi khác thường' });
+    expect(screen.getByLabelText('Mô tả *')).toHaveValue('Chân trái: bước đi khác thường');
+    fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }));
+    expect(onClose).not.toHaveBeenCalled();
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.queryByText('Ảnh')).not.toBeInTheDocument();
+  });
   it('requires horse, type, severity and description', async () => {
     const { onSubmit } = mount({ kind: 'groom' });
     submit();

@@ -1,5 +1,6 @@
 /** CORE-006, docs/api/flow3-medical.openapi.yaml. Reporter-safe fields only. */
-export type IncidentType = 'OFF_FEED' | 'COLIC_SIGNS' | 'FEVER' | 'HOOF_OR_LEG_PROBLEM' | 'OTHER';
+import type { IncidentType } from '../../shared/incidents/incidentTypes';
+export type { IncidentType };
 export type ObservedSeverity = 'LOW' | 'MEDIUM' | 'HIGH';
 export type IncidentStatus = 'REPORTED' | 'UNDER_REVIEW' | 'RESOLVED';
 
@@ -46,5 +47,7 @@ export const INCIDENT_TYPES: { value: IncidentType; label: string }[] = [
   { value: 'COLIC_SIGNS', label: 'Dấu hiệu đau bụng' },
   { value: 'FEVER', label: 'Sốt' },
   { value: 'HOOF_OR_LEG_PROBLEM', label: 'Vấn đề móng hoặc chân' },
+  { value: 'LAMENESS', label: 'Khập khiễng, bước không đều' },
+  { value: 'INJURY', label: 'Chấn thương (va chạm, vết thương)' },
   { value: 'OTHER', label: 'Khác' },
 ];

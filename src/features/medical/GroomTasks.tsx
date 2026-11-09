@@ -69,8 +69,9 @@ export function GroomTasks({ service }: { service: GroomService }) {
   // Date-only taskDate is a calendar day; do not shift it by interpreting it as a UTC timestamp.
   const today = useClubToday();
   const tasks = useMemo(() => state.tasks ?? [], [state.tasks]);
+  const isOverdue = (task: GroomTreatmentTask) => task.status === 'PENDING' && task.taskDate < today;
   const filtered = tasks.filter((t) => (!horse || t.horseId === Number(horse)) &&
-    (filter === 'completed' ? t.status === 'COMPLETED' : filter === 'upcoming' ? t.status === 'PENDING' && t.taskDate > today : filter === 'all' ? true : t.taskDate === today));
+    (filter === 'completed' ? t.status === 'COMPLETED' : filter === 'upcoming' ? t.status === 'PENDING' && t.taskDate > today : filter === 'all' ? true : t.taskDate === today || isOverdue(t)));
   const horseIds = [...new Set(tasks.map((t) => t.horseId))];
   const names = identities.source === state.tasks ? identities.rows : {};
   const handleComplete = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
@@ -107,7 +108,7 @@ export function GroomTasks({ service }: { service: GroomService }) {
                 <Checkbox className={task.status === 'COMPLETED' ? 'medical-completed-checkbox' : undefined} label="" aria-label={`Hoàn thành công việc ${task.id}`} value={task.id} checked={task.status === 'COMPLETED'} disabled={busy !== null || task.status === 'COMPLETED'} onChange={handleComplete} />
                 <div><strong>{task.instruction}</strong><p className="text-caption">Ngày thực hiện {formatDate(task.taskDate)}</p></div>
                 {task.scheduledSlot && <span className="medical-slot"><Icon name="clock" size={14} />{task.scheduledSlot}</span>}
-                <p className="text-caption">{task.completedAt ? <>Đã hoàn thành <time dateTime={task.completedAt}>{dateTime(task.completedAt)}</time></> : busy === task.id ? 'Đang hoàn thành…' : 'Chưa hoàn thành'}</p>
+                <p className="text-caption">{task.completedAt ? <>Đã hoàn thành <time dateTime={task.completedAt}>{dateTime(task.completedAt)}</time></> : busy === task.id ? 'Đang hoàn thành…' : isOverdue(task) ? <span className="medical-slot medical-task-overdue"><Icon name="clock" size={14} />Quá hạn</span> : 'Chưa hoàn thành'}</p>
               </div>
             </article>)}</div>
           </Card>)}

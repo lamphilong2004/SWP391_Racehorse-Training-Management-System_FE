@@ -1,6 +1,6 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router';
-import { AlertBanner, Button, Card, EmptyState, RadioGroup, StatusBadge, TextAreaField, UnsavedChangesGuard } from '../../design-system';
+import { AlertBanner, Button, Card, EmptyState, NextStep, OptionalFields, RadioGroup, StatusBadge, TextAreaField, UnsavedChangesGuard } from '../../design-system';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { ApiError } from '../../shared/auth/authApi';
 import type { RiderApi } from './api';
@@ -48,14 +48,21 @@ function Feedback({ id, api }: { id: number; api: RiderApi }) {
   return <div className={styles.stack}><UnsavedChangesGuard dirty={dirty} /><Link className={styles.link} to={`/rider/assignments/${id}`}>← Lịch phân công</Link><div data-page-banner><h1 className={styles.heading}>Phản hồi của người cưỡi</h1><p className={styles.muted}>Hãy gửi khi an toàn — từ máy cạnh đường đua hoặc văn phòng.</p></div>{!isTerminal(session.status) ? <AlertBanner type="warning" title="Chưa thể gửi phản hồi">Hãy hoàn thành buổi tập hoặc chờ kết quả gián đoạn. Trạng thái hiện tại: {viLabel(session.status)}.</AlertBanner> : <div className={styles.columns}><Card><form onSubmit={submit} className={styles.stack}>
     <RadioGroup label={interrupted ? 'Phản ứng của ngựa trước khi dừng' : 'Ngựa phản ứng thế nào?'} value={selected.horseResponse ?? ''} onChange={(text) => update('horseResponse', text)} disabled={locked} options={['Strong', 'Normal', 'Sluggish'].map((text) => ({ value: text, label: viLabel(text) }))} />
     <RadioGroup label={interrupted ? 'Thăng bằng và điều khiển trước khi dừng' : 'Thăng bằng và điều khiển'} value={selected.balance ?? ''} onChange={(text) => update('balance', text)} disabled={locked} options={['Good', 'Some issues', 'Difficult'].map((text) => ({ value: text, label: viLabel(text) }))} />
-    <TextAreaField label="Quan sát hô hấp" value={selected.breathing ?? ''} disabled={locked} maxLength={500} onChange={(event) => update('breathing', event.target.value)} />
-    <TextAreaField label="Cảm nhận sải bước" value={selected.strideFeeling ?? ''} disabled={locked} maxLength={500} onChange={(event) => update('strideFeeling', event.target.value)} />
     <TextAreaField label="Có gì bất thường không?" value={selected.abnormalBehavior ?? ''} disabled={locked} maxLength={500} onChange={(event) => update('abnormalBehavior', event.target.value)} />
     {interrupted && <TextAreaField label="Bạn thấy gì trước khi dừng?" value={selected.preInterruptionDescription ?? ''} disabled={locked} maxLength={1000} onChange={(event) => update('preInterruptionDescription', event.target.value)} />}
-    <TextAreaField label="Ghi chú (không bắt buộc)" value={selected.notes ?? ''} disabled={locked} maxLength={1000} onChange={(event) => update('notes', event.target.value)} />
-    <AlertBanner type="info" title={`Buổi tập giữ trạng thái ${viLabel(session.status)}`}>Gửi phản hồi không làm buổi tập bị gián đoạn thành hoàn thành. Trainer sẽ xem phản hồi của bạn.</AlertBanner>
-    {(saved || existing || session.hasRiderFeedback) && <AlertBanner type="success" title="Đã gửi phản hồi">{existing ? `Đã gửi lúc ${when(existing.submittedAt)}.` : 'Mỗi lượt cưỡi chỉ được gửi phản hồi một lần.'}</AlertBanner>}
-    {error && <AlertBanner type="danger" title="Chưa xác nhận được phản hồi">{error}</AlertBanner>}
+    {(!locked || selected.breathing || selected.strideFeeling || selected.notes) && <OptionalFields label="Thêm quan sát chi tiết" reveal={Boolean(selected.breathing || selected.strideFeeling || selected.notes)}>
+      <TextAreaField label="Quan sát hô hấp" value={selected.breathing ?? ''} disabled={locked} maxLength={500} onChange={(event) => update('breathing', event.target.value)} />
+      <TextAreaField label="Cảm nhận sải bước" value={selected.strideFeeling ?? ''} disabled={locked} maxLength={500} onChange={(event) => update('strideFeeling', event.target.value)} />
+      <TextAreaField label="Ghi chú (không bắt buộc)" value={selected.notes ?? ''} disabled={locked} maxLength={1000} onChange={(event) => update('notes', event.target.value)} />
+    </OptionalFields>}
+    <AlertBanner type="info" title={`Buổi tập giữ trạng thái ${viLabel(session.status)}`}>{interrupted ? 'Trainer sẽ đọc phản hồi để đánh giá buổi tập bị gián đoạn.' : 'Trainer sẽ xem phản hồi trước khi chốt đánh giá.'}</AlertBanner>
+    {saved && <AlertBanner feedback type="success" title="Đã gửi phản hồi" />}
+    {(saved || existing || session.hasRiderFeedback) && <NextStep title="Đánh giá buổi tập" owner={session.trainer?.fullName ? `Trainer · ${session.trainer.fullName}` : 'Trainer phụ trách'}
+      action={{ label: 'Về lượt cưỡi của tôi', to: '/rider' }}>
+      <p>Trainer đọc phản hồi của bạn cùng kết quả buổi tập rồi chốt đánh giá. Bạn không cần làm thêm gì cho lượt cưỡi này.</p>
+    </NextStep>}
+    {!saved && (existing || session.hasRiderFeedback) && <AlertBanner type="success" title="Đã gửi phản hồi">{existing ? `Đã gửi lúc ${when(existing.submittedAt)}.` : 'Mỗi lượt cưỡi chỉ được gửi phản hồi một lần.'}</AlertBanner>}
+    {error && <AlertBanner feedback type="danger" title="Chưa xác nhận được phản hồi">{error}</AlertBanner>}
     {conflict ? <Button variant="secondary" onClick={state.reload}>Tải lại phản hồi</Button> : !saved && !existing && !session.hasRiderFeedback ? <Button type="submit" disabled={locked}>{busy ? 'Đang gửi…' : 'Gửi phản hồi'}</Button> : null}
     </form></Card><Card title={`${session.horse.name} · ${session.focus || session.phaseName}`}><p>{session.sessionCode} · {when(session.scheduledStart)}</p><StatusBadge family="session" status={session.status} /><p>Trainer {session.trainer?.fullName ?? 'Chưa cung cấp'} · Người cưỡi {session.workRider.fullName}</p>{interrupted && <p>{session.interruptionReason || 'Không có lý do gián đoạn.'}</p>}{Boolean(state.resultError) && <AlertBanner type="warning" title="Không tải được phản hồi">{errorMessage(state.resultError)} Hệ thống vẫn chỉ cho gửi một lần mỗi buổi tập.</AlertBanner>}<Link className={styles.link} to="/rider/history">Xem lịch sử cưỡi</Link></Card></div>}</div>;
 }

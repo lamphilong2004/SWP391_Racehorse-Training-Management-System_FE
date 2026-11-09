@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActionBar, AlertBanner, Button, Card, RadioGroup, TextAreaField, focusFirstInvalid } from '../../design-system';
+import { ActionBar, AlertBanner, Button, Card, OptionalFields, RadioGroup, TextAreaField, focusFirstInvalid } from '../../design-system';
 import { ApiError } from '../../shared/auth/authApi';
 import { RESULT_LABELS, type EvaluationRequest, type EvaluationResult } from './models';
 
@@ -41,10 +41,12 @@ export function EvaluationForm({ onSave, interrupted, onPendingChange, onDirtyCh
       <div className="evaluation-stack">
         <RadioGroup label="Kết quả đánh giá" required options={Object.entries(RESULT_LABELS).map(([value, label]) => ({ value, label }))} value={result} onChange={setResult} error={errors.result} disabled={saving || conflict} />
         <TextAreaField label="Tóm tắt đánh giá" value={evaluatedSummary} onChange={(event) => setSummary(event.target.value)} error={errors.evaluatedSummary} disabled={saving || conflict} helperText="Không bắt buộc · tối đa 2000 ký tự" />
-        <TextAreaField label="Ghi chú chuyên môn" value={evaluationNotes} onChange={(event) => setNotes(event.target.value)} error={errors.evaluationNotes} disabled={saving || conflict} helperText="Không bắt buộc · tối đa 2000 ký tự" rows={4} />
+        <OptionalFields label="Thêm ghi chú hoặc khuyến nghị" reveal={Boolean(evaluationNotes || recommendation || errors.evaluationNotes || errors.recommendation)}>
+          <TextAreaField label="Ghi chú chuyên môn" value={evaluationNotes} onChange={(event) => setNotes(event.target.value)} error={errors.evaluationNotes} disabled={saving || conflict} helperText="Không bắt buộc · tối đa 2000 ký tự" rows={4} />
+          <TextAreaField label="Ghi chú khuyến nghị" value={recommendation} onChange={(event) => setRecommendation(event.target.value)} error={errors.recommendation} disabled={saving || conflict} helperText="Chỉ khuyến nghị ở cấp buổi tập. Thay đổi chiến lược cần Head Trainer phê duyệt." rows={4} />
+        </OptionalFields>
       </div>
     </Card>
-    <Card title="Khuyến nghị — các buổi tập tiếp theo"><TextAreaField label="Ghi chú khuyến nghị" value={recommendation} onChange={(event) => setRecommendation(event.target.value)} error={errors.recommendation} disabled={saving || conflict} helperText="Chỉ khuyến nghị ở cấp buổi tập. Thay đổi chiến lược cần Head Trainer phê duyệt." rows={4} /></Card>
     {failure && <AlertBanner feedback type="danger" title={failure} children={conflict ? 'Máy chủ từ chối lần gửi này. Hãy tải lại buổi tập để xem trạng thái hiện tại trước khi tiếp tục.' : 'Nội dung bạn nhập vẫn được giữ. Bạn có thể thử lại.'} />}
     <ActionBar className="evaluation-save-bar" leading={<p>{interrupted && 'Buổi tập giữ trạng thái Bị gián đoạn. '}Horse Owner xem nhãn kết quả sau khi lưu.</p>}>
       <Button type="submit" disabled={saving || conflict}>{saving ? 'Đang lưu…' : 'Lưu đánh giá'}</Button>

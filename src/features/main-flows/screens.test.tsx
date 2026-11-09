@@ -85,7 +85,7 @@ it('preserves existing restriction rules when neither read response includes the
     return { horseId: 7, availability: 'LIMITED', reason: 'Walk only', activeRestrictionId: 12 };
   });
   render(<MemoryRouter initialEntries={['/medical/restrictions?horseId=7']}><RestrictionsPage /></MemoryRouter>);
-  expect(await screen.findByRole('button', { name: 'Lưu khả năng tập luyện' })).toBeDisabled();
+  expect(await screen.findByRole('button', { name: 'Lưu quy tắc bài tập' })).toBeDisabled();
   expect(screen.getByText('Không tải được quy tắc bài tập')).toBeInTheDocument();
   expect(state.request.mock.calls.some(([, init]) => init?.method === 'PUT')).toBe(false);
 });

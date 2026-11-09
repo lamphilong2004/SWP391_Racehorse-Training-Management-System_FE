@@ -26,7 +26,7 @@ it('requires valid input and confirmation before PUT, then reloads only after a 
   expect(state.request.mock.calls.some(([, init]) => init?.method === 'PUT')).toBe(false);
   fireEvent.click(screen.getByRole('button', { name: 'Xác nhận ngưỡng riêng' }));
   await waitFor(() => expect(state.request).toHaveBeenCalledWith('/api/horses/7/medical-thresholds', { method: 'PUT', body: JSON.stringify({ metricType: 'HEART_RATE', thresholdValue: 185.25, effectiveFrom: new Date('2026-10-20T08:00').toISOString(), reason: 'Per-horse clinical plan' }) }));
-  expect(await screen.findByText('185.25 bpm · HORSE_OVERRIDE')).toBeInTheDocument();
+  expect(await screen.findByText('185.25 bpm · Ngưỡng riêng của ngựa')).toBeInTheDocument();
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });
 it('ends an existing override through confirmed POST /end and never assumes a global value', async () => {
@@ -38,7 +38,7 @@ it('ends an existing override through confirmed POST /end and never assumes a gl
   expect(state.request.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(false);
   fireEvent.click(screen.getByRole('button', { name: 'Xác nhận kết thúc' }));
   await waitFor(() => expect(state.request).toHaveBeenCalledWith('/api/horses/7/medical-thresholds/end', { method: 'POST', body: JSON.stringify({ effectiveTo: new Date('2026-10-20T08:00').toISOString() }) }));
-  expect(await screen.findByText('175.5 bpm · GLOBAL')).toBeInTheDocument();
+  expect(await screen.findByText('175.5 bpm · Mặc định chung')).toBeInTheDocument();
 });
 it('keeps a failed write unconfirmed and retains the draft for retry', async () => {
   state.request.mockImplementation(async (_path: string, init?: RequestInit) => { if (init?.method === 'PUT') throw new ApiError(409, 'CONFLICT', 'Effective interval overlaps'); return [globalThreshold]; });

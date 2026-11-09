@@ -23,6 +23,8 @@ describe('Flow 4 API-only UI', () => {
     const fetcher = vi.fn<typeof fetch>(async () => ok([task()]));
     vi.stubGlobal('fetch', fetcher); mount('/care/daily');
     const group = await screen.findByRole('group', { name: 'Thao tác cho Sao Mai' });
+    expect(within(group).queryByRole('button', { name: 'Hủy công việc' })).not.toBeInTheDocument();
+    fireEvent.click(within(group).getByRole('button', { name: 'Thao tác' }));
     const cancel = within(group).getByRole('button', { name: 'Hủy công việc' });
     expect(within(group).getByRole('button', { name: 'Đổi Groom' })).toBeEnabled();
     expect(within(group).getByRole('button', { name: 'Lịch sử' })).toBeEnabled();
@@ -74,7 +76,7 @@ describe('Flow 4 API-only UI', () => {
       if (init?.method === 'POST') { assigned = true; return ok({ ...task(), groomUserId: 3 }); }
       return String(url).endsWith('/grooms') ? ok([{ id: 2, fullName: 'Groom fixture' }, { id: 3, fullName: 'Groom dự phòng' }]) : ok([{ ...task(), groomName: assigned ? 'Groom dự phòng' : 'Groom fixture' }]);
     });
-    vi.stubGlobal('fetch', fetcher); mount('/care/daily');fireEvent.click(await screen.findByRole('button', { name: 'Đổi Groom' }));
+    vi.stubGlobal('fetch', fetcher); mount('/care/daily');fireEvent.click(await screen.findByRole('button', { name: 'Thao tác' }));fireEvent.click(screen.getByRole('button', { name: 'Đổi Groom' }));
     expect(screen.getByLabelText('Ngày công việc (giờ Việt Nam)')).toBeDisabled();
     await screen.findByRole('option', { name: 'Groom dự phòng' });expect(screen.queryByRole('option', { name: 'Groom fixture' })).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Groom thay thế'), { target: { value: '3' } });fireEvent.change(screen.getByLabelText('Lý do thay đổi'), { target: { value: 'Đổi ca trực' } });fireEvent.click(screen.getByRole('button', { name: 'Lưu phân công' }));
@@ -83,7 +85,7 @@ describe('Flow 4 API-only UI', () => {
   });
   it('preserves cancellation reason and shows no success after a conflict', async () => {
     state.role = 'CLUB_MANAGER';vi.stubGlobal('fetch', vi.fn(async (_url, init) => init?.method === 'POST' ? fail() : ok([task()])));
-    mount('/care/daily');fireEvent.click(await screen.findByRole('button', { name: 'Hủy công việc' }));fireEvent.change(screen.getByLabelText('Lý do thay đổi'), { target: { value: 'Giữ lý do' } });fireEvent.click(screen.getByRole('button', { name: 'Xác nhận hủy công việc' }));
+    mount('/care/daily');fireEvent.click(await screen.findByRole('button', { name: 'Thao tác' }));fireEvent.click(screen.getByRole('button', { name: 'Hủy công việc' }));fireEvent.change(screen.getByLabelText('Lý do thay đổi'), { target: { value: 'Giữ lý do' } });fireEvent.click(screen.getByRole('button', { name: 'Xác nhận hủy công việc' }));
     await screen.findByText('Stock changed.');expect(screen.getByLabelText('Lý do thay đổi')).toHaveValue('Giữ lý do');expect(screen.queryByText(/Máy chủ đã xác nhận hủy/)).not.toBeInTheDocument();
   });
   it('does not offer mutations on cancelled/completed/past work and filters cancellation separately', async () => {
@@ -97,7 +99,7 @@ describe('Flow 4 API-only UI', () => {
   });
   it('Head Trainer can change nutrition tasks but cannot change care tasks', async () => {
     state.role = 'HEAD_TRAINER';vi.stubGlobal('fetch', vi.fn(async () => ok([task('Chăm sóc'), { ...task('Khẩu phần'), id: 11, source: 'NUTRITION' }])));
-    mount('/care/daily');await screen.findByText('Khẩu phần');expect(screen.getAllByRole('button', { name: 'Đổi Groom' })).toHaveLength(1);expect(screen.getAllByRole('button', { name: 'Hủy công việc' })).toHaveLength(1);
+    mount('/care/daily');await screen.findByText('Khẩu phần');expect(screen.getAllByRole('button', { name: 'Thao tác' })).toHaveLength(1);fireEvent.click(screen.getByRole('button', { name: 'Thao tác' }));expect(screen.getAllByRole('button', { name: 'Đổi Groom' })).toHaveLength(1);expect(screen.getAllByRole('button', { name: 'Hủy công việc' })).toHaveLength(1);
   });
   it('completes only after server confirmation and reports incident through the existing route', async () => {
     let completed = false;
@@ -111,6 +113,22 @@ describe('Flow 4 API-only UI', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'Hoàn thành' })).toBeDisabled());
     expect(fetcher.mock.calls.some(([url, init]) => String(url).endsWith('/api/stable-care/tasks/10/complete') && init?.method === 'POST')).toBe(true);
     expect(fetcher.mock.calls.every(([url]) => !String(url).includes('/movements'))).toBe(true);
+  });
+  it('offers a receipt for a care incident only after the server confirms it', async () => {
+    const fetcher = vi.fn(async (_url: unknown, init?: RequestInit) => init?.method === 'POST'
+      ? ok({ id: 21, incidentCode: 'INC-0021' }) : ok([task()]));
+    vi.stubGlobal('fetch', fetcher);
+    mount('/care/daily');
+    fireEvent.click(await screen.findByRole('button', { name: 'Báo bất thường' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Báo cáo sự cố' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Bỏ ăn' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Thấp' }));
+    fireEvent.change(within(dialog).getByLabelText('Mô tả *'), { target: { value: 'Chưa ăn phần được giao' } });
+    expect(screen.queryByRole('link', { name: 'Theo dõi báo cáo' })).not.toBeInTheDocument();
+    fireEvent.submit(dialog.querySelector('form')!);
+    expect(await screen.findByRole('link', { name: 'Theo dõi báo cáo' })).toHaveAttribute('href', '/incidents/21');
+    const post = fetcher.mock.calls.find(([, init]) => init?.method === 'POST');
+    expect(JSON.parse(String(post?.[1]?.body))).toMatchObject({ careTaskId: 10, horseId: 1, incidentType: 'OFF_FEED' });
   });
   it('does not fake completion when API fails and permits retry', async () => {
     vi.stubGlobal('fetch', vi.fn(async (_url, init) => init?.method === 'POST' ? fail() : ok([task()])));

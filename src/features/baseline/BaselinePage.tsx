@@ -2,7 +2,7 @@ import { clubDateTime, parseClubDateTime } from '../../shared/clubCalendar';
 import { boxLabel } from '../../shared/stableBox';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router';
-import { ButtonLink, AlertBanner, Button, Card, ErrorState, Icon, LoadingState, StatusBadge, TextAreaField, TextField } from '../../design-system';
+import { ButtonLink, AlertBanner, Button, Card, ErrorState, Icon, LoadingState, NextStep, StatusBadge, TextAreaField, TextField } from '../../design-system';
 import type { HealthStatus, HorseDetail } from '../horses/api/types';
 import { FlowShell } from '../main-flows/FlowShell';
 import { errorMessage, idOf, useFlowRequest } from '../main-flows/api';
@@ -51,8 +51,15 @@ function BaselineContent({ rawId }: { rawId?: string }) {
   return <FlowShell title={`Khám sức khỏe ban đầu${data ? ` · ${data.name}` : ''}`} description={data ? `${data.horseCode} · ${data.breed ?? 'Chưa ghi giống'} · ${boxLabel(data.currentBoxCode) ?? 'Chưa xếp ô chuồng'} · tiếp nhận (đăng ký ngựa)` : 'Khám ban đầu của Veterinarian'} section="Ngựa" role="VETERINARIAN" actions={data && <StatusBadge family="lifecycle" status={data.lifecycle} />}>
     {horse.pending && <LoadingState label="Đang tải thông tin ngựa…" />}
     {horse.error && <ErrorState title="Không tải được thông tin ngựa" description={horse.error} onRetry={horse.reload} />}
-    {error && <AlertBanner type="danger" title="Chưa lưu được kết quả khám ban đầu">{error}</AlertBanner>}
-    {saved && <AlertBanner type="success" title="Đã lưu kết quả khám ban đầu">{saved.weightKg} kg · {viLabel(saved.healthStatus)} · {new Date(saved.recordedAt).toLocaleString('vi-VN')}. <ButtonLink to={`/horses/${saved.horseId}`}>Tải lại hồ sơ ngựa</ButtonLink></AlertBanner>}
+    {error && <AlertBanner feedback type="danger" title="Chưa lưu được kết quả khám ban đầu">{error}</AlertBanner>}
+    {saved && <AlertBanner feedback type="success" title="Đã lưu kết quả khám ban đầu">{saved.weightKg} kg · {viLabel(saved.healthStatus)} · {new Date(saved.recordedAt).toLocaleString('vi-VN')}. <ButtonLink to={`/horses/${saved.horseId}`}>Tải lại hồ sơ ngựa</ButtonLink></AlertBanner>}
+    {saved && (saved.healthStatus === 'INJURED' || saved.healthStatus === 'QUARANTINED'
+      ? <NextStep title="Đặt hạn chế tập luyện cho ngựa" owner="Veterinarian (bạn)" action={{ label: 'Đặt khả năng tập luyện', to: `/medical/restrictions?horseId=${saved.horseId}` }}>
+        <p>Ngựa {viLabel(saved.healthStatus).toLowerCase()} chưa được lập chương trình hay lên lịch tập. Đặt mức Hạn chế hoặc Khóa để Head Trainer và Trainer thấy lý do.</p>
+      </NextStep>
+      : <NextStep title="Lập chương trình huấn luyện" owner="Head Trainer" secondary={{ label: 'Mở hồ sơ ngựa', to: `/horses/${saved.horseId}` }}>
+        <p>Hệ thống tự kích hoạt ngựa khi hồ sơ đủ điều kiện (nhận dạng, phả hệ, chủ sở hữu, ô chuồng, khám ban đầu). Sau đó Head Trainer chọn mẫu và phân công Trainer.</p>
+      </NextStep>)}
     {data && data.lifecycle !== 'DRAFT' && !saved && <AlertBanner type="info" title="Khám ban đầu chỉ dành cho ngựa ở trạng thái Nháp">Mở hồ sơ y tế của ngựa này cho các lần khám tiếp theo.</AlertBanner>}
     <form onSubmit={(event) => { event.preventDefault(); void save(); }}>
       <div className={styles.columns}><Card title="Khám ban đầu"><fieldset disabled={!data || data.lifecycle !== 'DRAFT' || saving || !!saved} className={`${styles.fieldset} ${styles.stack}`}>

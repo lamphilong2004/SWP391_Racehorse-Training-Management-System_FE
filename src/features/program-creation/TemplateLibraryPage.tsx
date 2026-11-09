@@ -59,7 +59,7 @@ function TemplateDrawer({ id, api, onClose, onEdit, onChanged }: { id: number; a
       <p>Kỹ năng Trainer cần có: {data.version.requiredSkills.map((skill) => skill.name).join(', ') || 'Không yêu cầu'}</p>
     </div>}
     <Modal open={!!confirm} title={confirm === 'archive' ? 'Lưu trữ mẫu?' : 'Sao chép mẫu'} dismissible={!busy} onClose={() => { if (!busy) setConfirm(undefined); }} footer={<><Button variant="secondary" disabled={busy} onClick={() => setConfirm(undefined)}>Hủy</Button><Button disabled={busy || confirm === 'duplicate' && !name.trim()} onClick={() => void action()}>{confirm === 'archive' ? 'Xác nhận lưu trữ' : 'Tạo bản sao'}</Button></>}>
-      {error && <AlertBanner type="danger" title="Chưa xác nhận được thao tác">{error}</AlertBanner>}
+      {error && <AlertBanner feedback type="danger" title="Chưa xác nhận được thao tác">{error}</AlertBanner>}
       {confirm === 'duplicate' ? <TextField label="Tên mẫu sao chép" required maxLength={150} value={name} onChange={(event) => setName(event.target.value)} /> : <p>Lưu trữ sẽ ẩn mẫu này khỏi lựa chọn khi tạo chương trình mới. Các chương trình hiện có và lịch sử phiên bản vẫn còn.</p>}
     </Modal>
   </Drawer>;
@@ -87,7 +87,7 @@ function TemplateEditor({ api, initial, onClose, onSaved }: { api: Api; initial?
   }
   return <><UnsavedChangesGuard dirty={dirty || busy} /><Modal open size="lg" title={initial ? 'Lưu phiên bản mẫu mới' : 'Tạo mẫu chương trình'} dismissible={!dirty && !busy} onClose={onClose} footer={<><Button variant="secondary" disabled={busy} onClick={() => dirty ? setDiscard(true) : onClose()}>Hủy</Button><Button type="submit" form={formId} disabled={busy}>{busy ? 'Đang lưu…' : initial ? 'Lưu phiên bản mới' : 'Lưu mẫu'}</Button></>}>
     <form id={formId} className={styles.stack} onSubmit={(event) => { event.preventDefault(); void save(); }}>
-      {error && <AlertBanner type="danger" title="Chưa xác nhận lưu được mẫu">{error} Bản nháp của bạn vẫn được giữ.</AlertBanner>}
+      {error && <AlertBanner feedback type="danger" title="Chưa xác nhận lưu được mẫu">{error} Bản nháp của bạn vẫn được giữ.</AlertBanner>}
       <TextField label="Tên mẫu" required maxLength={150} value={input.name} disabled={busy} onChange={(event) => set('name', event.target.value)} />
       <div className={styles.fields}>{fields.map(([key, label, max]) => <TextAreaField key={key} label={label} maxLength={max} value={input[key] ?? ''} disabled={busy} onChange={(event) => set(key, event.target.value)} />)}</div>
       <fieldset disabled={busy} className={styles.stack}><legend>Chuyên môn Trainer cần có</legend>

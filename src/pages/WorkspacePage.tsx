@@ -120,7 +120,7 @@ function VeterinaryArrivals() {
         { key: 'box', header: 'Chuồng', render: (horse) => boxLabel(horse.currentBoxCode) ?? 'Chưa phân công' },
         { key: 'status', header: 'Trạng thái', render: (horse) => <StatusBadge family="lifecycle" status={horse.lifecycle} /> },
         { key: 'health', header: 'Sức khỏe', render: (horse) => horse.healthStatus ? <StatusBadge family="health" status={horse.healthStatus} /> : 'Chưa ghi nhận' },
-        { key: 'actions', header: 'Thao tác', render: (horse) => <div className={styles.rowActions}><ButtonLink size="sm" to={`/horses/${horse.id}`}>Xem hồ sơ</ButtonLink>{!horse.healthStatus && <ButtonLink size="sm" to={`/horses/${horse.id}/baseline`}>Ghi khám ban đầu</ButtonLink>}</div> },
+        { key: 'actions', header: 'Thao tác', render: (horse) => <div className={styles.rowActions}><ButtonLink size="sm" to={`/horses/${horse.id}`}>Xem hồ sơ</ButtonLink>{!horse.healthStatus && <ButtonLink size="sm" variant="primary" to={`/horses/${horse.id}/baseline`}>Ghi khám ban đầu</ButtonLink>}</div> },
       ]} /></div></Card></>}
   </section>;
 }

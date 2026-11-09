@@ -26,6 +26,7 @@ function useHorseResource<T>(load: () => Promise<T>) {
 function HorseState({ error, retry }: { error?: string; retry: () => void }) {
   return error ? <ErrorState title="Không tải được dữ liệu ngựa" description={error} onRetry={retry} /> : <LoadingState label="Đang tải danh sách ngựa…" />;
 }
+const LIFECYCLE_TABS = [{ value: '', label: 'Tất cả' }, { value: 'DRAFT', label: 'Nháp' }, { value: 'ACTIVE', label: 'Hoạt động' }, { value: 'INACTIVE', label: 'Ngừng hoạt động' }];
 export function HorseListPage() {
   useBreadcrumb([{ label: 'Ngựa' }, { label: 'Tất cả ngựa' }]);
   const api = useHorsesApi();
@@ -35,31 +36,38 @@ export function HorseListPage() {
   const [query, setQuery] = useState({ q: '', lifecycle: '', availability: '', page: 0, size: 20 });
   const load = useCallback(() => api.listHorses(query), [api, query]);
   const { data, error, reload } = useHorseResource(load);
+  const loadCounts = useCallback(async () => Object.fromEntries(await Promise.all(LIFECYCLE_TABS.map(async ({ value }) => [value, (await api.listHorses({ lifecycle: value || undefined, page: 0, size: 1 })).totalItems] as const))) as Record<string, number>, [api]);
+  const [counts, setCounts] = useState<Record<string, number>>();
+  const listed = Boolean(data);
+  // Counts are read only after the list itself loaded, so a failing list stays a single request.
+  useEffect(() => { if (!listed || counts) return; let active = true; loadCounts().then((value) => { if (active) setCounts(value); }, () => undefined); return () => { active = false; }; }, [listed, counts, loadCounts]);
+  const apply = (next: Partial<typeof query>) => setQuery({ ...query, ...next, page: 0 });
   return <div className={styles.page} data-ui-v3>
     <div data-page-banner className={styles.titleRow}><div className={styles.titleBlock}><h1 className="text-h1">Danh sách ngựa</h1><p>Danh sách ngựa của câu lạc bộ · nhận dạng, phả hệ, sở hữu và ô chuồng</p></div>{canManage && <><ButtonLink to="/horses/pending-activation">Chờ kích hoạt</ButtonLink><ButtonLink variant="primary" to="/horses/new">Thêm ngựa</ButtonLink></>}</div>
     <TableToolbar label="Bộ lọc danh sách ngựa" scope="server" resultCount={data?.totalItems}
       hasFilters={Boolean(search || lifecycle || availability || query.q || query.lifecycle || query.availability)}
       onClear={() => { setSearch(''); setLifecycle(''); setAvailability(''); setQuery({ q: '', lifecycle: '', availability: '', page: 0, size: query.size }); }}
-      onSubmit={(e) => { e.preventDefault(); setQuery({ ...query, q: search, lifecycle, availability, page: 0 }); }}>
-      <TextField label="Tìm ngựa" type="search" value={search} onChange={(e) => setSearch(e.target.value)} />
-      <SelectField label="Vòng đời" value={lifecycle} options={[{ value: '', label: 'Tất cả' }, ...['DRAFT', 'ACTIVE', 'INACTIVE'].map((value) => ({ value, label: viLabel(value) }))]} onChange={(e) => setLifecycle(e.target.value)} />
-      <SelectField label="Khả năng tập luyện" value={availability} options={[{ value: '', label: 'Tất cả' }, ...['AVAILABLE', 'LIMITED', 'LOCKED'].map((value) => ({ value, label: viLabel(value) }))]} onChange={(e) => setAvailability(e.target.value)} />
-      <Button type="submit" variant="secondary">Áp dụng bộ lọc</Button>
+      onSubmit={(e) => { e.preventDefault(); apply({ q: search.trim() }); }}>
+      <TextField label="Tìm ngựa" type="search" placeholder="Tên hoặc mã ngựa, nhấn Enter" value={search} onChange={(e) => { setSearch(e.target.value); if (!e.target.value) apply({ q: '' }); }} />
+      <SelectField label="Khả năng tập luyện" value={availability} options={[{ value: '', label: 'Tất cả' }, ...['AVAILABLE', 'LIMITED', 'LOCKED'].map((value) => ({ value, label: viLabel(value) }))]} onChange={(e) => { setAvailability(e.target.value); apply({ availability: e.target.value }); }} />
     </TableToolbar>
+    <div className={styles.lifecycleTabs} role="group" aria-label="Lọc theo vòng đời">{LIFECYCLE_TABS.map((tab) => <button key={tab.value} type="button" aria-pressed={query.lifecycle === tab.value}
+      onClick={() => { setLifecycle(tab.value); apply({ lifecycle: tab.value }); }}><span>{tab.label}</span><strong>{counts?.[tab.value] ?? '…'}</strong></button>)}</div>
     {!data ? <HorseState error={error} retry={reload} /> : <>
       <Card><div className={styles.registryHeading}><h2>Hồ sơ ngựa</h2><span>{data.items.length} ngựa trên trang này</span></div><div className={styles.table}><DataTable<HorseDetail> caption="Danh sách ngựa" rows={data.items} rowKey={(h) => h.id} empty={<EmptyState title="Không có ngựa phù hợp" />} columns={[
-        { key: 'name', header: 'Ngựa', width: '22%', render: (h) => <Link className={styles.horseIdentity} to={`/horses/${h.id}`}>
+        { key: 'name', header: 'Ngựa', width: '26%', render: (h) => <Link className={styles.horseIdentity} to={`/horses/${h.id}`}>
           {businessDataMode() === 'api' && <HorsePhotoImage thumbnail name={h.name} path={`/api/horses/${h.id}/photos/primary`} />}
-          <div className={styles.horseIdentityText}><strong>{h.name}</strong><span>{h.horseCode}</span></div>
+          <div className={styles.horseIdentityText}><strong>{h.name}</strong><span>{h.horseCode}</span><small>{h.breed ?? 'Chưa ghi giống'} · {ageInYears(h.foaledDate) ?? '—'} tuổi · {sexLabel(h.sex)}</small></div>
         </Link> },
-        { key: 'breed', header: 'Giống · tuổi', render: (h) => <div className={styles.horseFacts}><span>{h.breed ?? 'Chưa ghi nhận'}</span><small>{ageInYears(h.foaledDate) ?? '—'} tuổi · {sexLabel(h.sex)}</small></div> },
         { key: 'lifecycle', header: 'Vòng đời', render: (h) => <StatusBadge family="lifecycle" status={h.lifecycle} /> },
-        { key: 'health', header: 'Sức khỏe', render: (h) => h.healthStatus ? <StatusBadge family="health" status={h.healthStatus} /> : 'Chờ khám ban đầu' },
-        { key: 'availability', header: 'Tập luyện', render: (h) => <div className={styles.horseFacts}><StatusBadge family="availability" status={h.trainingAvailability} />{h.lifecycle === 'DRAFT' && <small title="Chưa kích hoạt · chưa đủ điều kiện vận hành" aria-label="Chưa kích hoạt · chưa đủ điều kiện vận hành">Chờ kích hoạt</small>}</div> },
-        { key: 'box', header: 'Ô chuồng', nowrap: true, render: (h) => boxLabel(h.currentBoxCode) ?? 'Chưa phân công' },
-        { key: 'action', header: 'Thao tác', nowrap: true, render: (h) => <ButtonLink size="sm" variant="secondary" to={`/horses/${h.id}`}>{canManage ? 'Quản lý' : 'Xem'} →</ButtonLink> },
+        { key: 'health', header: 'Sức khỏe', render: (h) => h.healthStatus ? <StatusBadge family="health" status={h.healthStatus} /> : <span className={styles.pendingPill}>Chờ khám ban đầu</span> },
+        { key: 'availability', header: 'Tập luyện', render: (h) => h.lifecycle === 'DRAFT' ? <span className={styles.mutedValue}>Chưa kích hoạt</span> : <StatusBadge family="availability" status={h.trainingAvailability} /> },
+        { key: 'box', header: 'Ô chuồng', render: (h) => boxLabel(h.currentBoxCode) ?? <span className={styles.mutedValue}>Chưa xếp chuồng</span> },
+        { key: 'action', header: 'Thao tác', nowrap: true, render: (h) => canManage && h.lifecycle === 'DRAFT'
+          ? (h.currentBoxCode ? <ButtonLink size="sm" variant="secondary" to="/horses/pending-activation">Còn thiếu</ButtonLink> : <ButtonLink size="sm" variant="primary" to={`/horses/${h.id}/edit`}>Hoàn tất</ButtonLink>)
+          : <ButtonLink size="sm" variant="secondary" to={`/horses/${h.id}`}>{canManage ? 'Quản lý' : 'Xem'}</ButtonLink> },
       ]} /></div><nav className={styles.registryPagination} aria-label="Phân trang danh sách ngựa"><span role="status">Trang {data.page + 1} / {Math.max(1, data.totalPages)}</span><div><Button variant="secondary" disabled={!query.page} onClick={() => setQuery({ ...query, page: query.page - 1 })}>Trước</Button><Button variant="secondary" disabled={query.page + 1 >= data.totalPages} onClick={() => setQuery({ ...query, page: query.page + 1 })}>Sau</Button></div></nav></Card>
-      <p className="text-caption">Sức khỏe và khả năng tập luyện chỉ xem ở đây. Ngựa Nháp vẫn chờ kích hoạt dù khả năng tập luyện là Sẵn sàng. Ngựa tự kích hoạt khi đủ mọi yêu cầu bắt buộc.</p>
+      <p className="text-caption">Sức khỏe và khả năng tập luyện chỉ xem ở đây (Veterinarian cập nhật). Ngựa Nháp tự chuyển sang Hoạt động khi đủ nhận dạng, phả hệ, chủ ngựa, ô chuồng và khám ban đầu.</p>
     </>}
   </div>;
 }

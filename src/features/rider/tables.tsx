@@ -1,3 +1,4 @@
+import { viLabel } from '../../shared/viLabels';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ButtonLink, Card, DataTable, EmptyState, Icon, MetricCard, StatusBadge, Tabs, type DataTableColumn } from '../../design-system';
@@ -65,7 +66,7 @@ export function AssignmentsTable({ api }: { api: RiderApi }) {
     { key: 'when', header: 'Thời gian', width: 126, render: (ride) => <span className={styles.strong}>{today ? time(ride.scheduledStart) : dayTime(ride.scheduledStart)}</span> },
     { key: 'horse', header: 'Ngựa', width: 180, render: (ride) => <HorseCell ride={ride} /> },
     { key: 'session', header: 'Buổi tập', render: sessionLabel },
-    { key: 'surface', header: 'Mặt sân · thời lượng', width: 160, render: (ride) => <span className={styles.muted}>{[ride.surface, minutes(ride.scheduledStart, ride.scheduledEnd) !== null ? `${minutes(ride.scheduledStart, ride.scheduledEnd)} phút` : null].filter(Boolean).join(' · ') || '—'}</span> },
+    { key: 'surface', header: 'Mặt sân · thời lượng', width: 160, render: (ride) => <span className={styles.muted}>{[viLabel(ride.surface), minutes(ride.scheduledStart, ride.scheduledEnd) !== null ? `${minutes(ride.scheduledStart, ride.scheduledEnd)} phút` : null].filter(Boolean).join(' · ') || '—'}</span> },
     { key: 'trainer', header: 'Trainer', width: 110, render: (ride) => <span className={styles.muted}>{ride.trainer?.fullName ?? '—'}</span> },
     { key: 'status', header: 'Trạng thái', width: 110, render: (ride) => <StatusBadge family="session" status={ride.status} /> },
     { key: 'precheck', header: 'Pre-check', width: 128, render: (ride) => preCheck(ride, today) },
@@ -124,7 +125,7 @@ export function HistoryTable({ api }: { api: RiderApi }) {
     { key: 'horse', header: 'Ngựa', width: 130, render: (ride) => <span className={styles.strong}>{ride.horse.name}</span> },
     { key: 'session', header: 'Buổi tập', render: sessionLabel },
     { key: 'trainer', header: 'Trainer', width: 110, render: (ride) => <span className={styles.muted}>{ride.trainer?.fullName ?? '—'}</span> },
-    { key: 'surface', header: 'Mặt sân', width: 100, render: (ride) => <span className={styles.muted}>{ride.surface ?? '—'}</span> },
+    { key: 'surface', header: 'Mặt sân', width: 100, render: (ride) => <span className={styles.muted}>{viLabel(ride.surface, '—')}</span> },
     { key: 'duration', header: 'Thời lượng', width: 80, render: (ride) => <span className={styles.muted}>{minutes(ride.actualStart, ride.actualEnd) !== null ? `${minutes(ride.actualStart, ride.actualEnd)} phút` : '—'}</span> },
     { key: 'feedback', header: 'Phản hồi', width: 80, render: (ride) => (ride.hasRiderFeedback ? <span className={styles.toneSuccess}>Đã gửi</span> : <span className={styles.toneWarning}>Chưa gửi</span>) },
     chevron,

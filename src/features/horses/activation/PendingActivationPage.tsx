@@ -1,7 +1,7 @@
 import { boxLabel } from '../../../shared/stableBox';
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { AlertBanner, Button, Card, EmptyState, ErrorState, StatusBadge, Icon, LoadingState, type IconName, DesignSystemScope } from '../../../design-system';
+import { AlertBanner, Button, Card, EmptyState, ErrorState, StatusBadge, Icon, LoadingState, type IconName, DesignSystemScope, NextStep } from '../../../design-system';
 import { useHorsesApi } from '../api/HorsesApiContext';
 import type { ActivationItem, ActivationStatus, HorseDetail } from '../api/types';
 import { ageInYears, formatDate } from '../shared/format';
@@ -10,6 +10,8 @@ import { useBreadcrumb } from '../shared/HorseManagementLayout';
 import shared from '../shared/horses.module.css';
 import styles from './PendingActivationPage.module.css';
 import { serverText } from '../../../shared/serverText';
+import { HorsePhotoImage } from '../shared/HorsePhotoImage';
+import { businessDataMode } from '../../../shared/data/businessData';
 
 interface PendingHorse {
   status: ActivationStatus;
@@ -35,7 +37,7 @@ const ITEMS: Record<ActivationItem, { label: string; who: 'Club Manager' | 'Vete
  */
 /** Design System v2 scope for this CORE-013 screen; the shared horse layout stays owner-neutral. */
 export function PendingActivationPage() {
-  return <DesignSystemScope><PendingActivationPageContent /></DesignSystemScope>;
+  return <DesignSystemScope data-ui-v3><PendingActivationPageContent /></DesignSystemScope>;
 }
 
 function PendingActivationPageContent() {
@@ -86,9 +88,18 @@ function PendingActivationPageContent() {
             : 'Đã ghi phả hệ, chủ ngựa và ô chuồng.'}
         </AlertBanner>
       )}
+      {completed && completed.horse.currentBoxCode && missingItems(completed.status).length === 1 && missingItems(completed.status)[0] === 'VETERINARIAN_BASELINE' && (
+        <NextStep title="Khám sức khỏe ban đầu" owner="Veterinarian">
+          <p>{completed.horse.name} hiện ở mục Ngựa mới đến trên trang Tổng quan của Veterinarian, kèm nút Ghi khám ban đầu. Sau khi Veterinarian lưu kết quả khám, hệ thống tự kích hoạt ngựa và Head Trainer có thể lập chương trình.</p>
+        </NextStep>
+      )}
 
-      <div className={shared.twoCol}>
-        <div className={shared.colMain}>
+      <div className={styles.guide}>
+        <span className={styles.guideIcon}><Icon name="info" size={20} /></span>
+        <div><h2>Hoàn tất hồ sơ, hệ thống tự kích hoạt</h2><p>Club Manager bổ sung hồ sơ và ô chuồng. Veterinarian ghi khám ban đầu. Không cần duyệt thủ công.</p></div>
+        <div className={styles.lifecycle}><StatusBadge family="lifecycle" status="DRAFT" /><Icon name="chevron-right" size={16} /><StatusBadge family="lifecycle" status="ACTIVE" /></div>
+      </div>
+
           {error && <Card><ErrorState title="Không tải được danh sách ngựa chờ kích hoạt" description="Không tải được danh sách ngựa chờ kích hoạt." onRetry={() => { setError(false); setPending(undefined); void load(); }} /></Card>}
           {!error && !pending && <Card><LoadingState label="Đang tải ngựa chờ kích hoạt…" /></Card>}
           {pending && pending.length === 0 && (
@@ -97,25 +108,10 @@ function PendingActivationPageContent() {
                 description="Không có ngựa ở trạng thái Nháp. Ngựa mới sẽ hiện ở đây khi còn thiếu yêu cầu bắt buộc." />
             </Card>
           )}
-          {pending?.map((p) => <PendingHorseCard key={p.horse.id} {...p} onViewRegister={() => navigate('/horses')} />)}
+          {!error && <div className={styles.cards}>
+            {pending?.map((p) => <PendingHorseCard key={p.horse.id} {...p} onView={() => navigate(`/horses/${p.horse.id}`)} onComplete={(identity) => navigate(`/horses/${p.horse.id}/${identity ? 'identity' : 'edit'}`)} />)}
+          </div>}
           {pending && metadata.totalPages > 1 && <div className={shared.footer}><Button variant="secondary" disabled={pageIndex === 0} onClick={() => changePage(pageIndex - 1)}>Trang trước</Button><span>Trang {pageIndex + 1}/{metadata.totalPages}</span><Button variant="secondary" disabled={pageIndex + 1 >= metadata.totalPages} onClick={() => changePage(pageIndex + 1)}>Trang sau</Button></div>}
-        </div>
-
-        <aside className={shared.colSide}>
-          <Card>
-            <div className={styles.howBody}>
-              <h2 className={shared.cardTitle}>Cách kích hoạt hoạt động</h2>
-              <p className={styles.howText}>Nháp → Hoạt động diễn ra tự động khi dữ liệu ngựa hợp lệ: nhận dạng, phả hệ và chủ ngựa, một ô chuồng trống, và kết quả khám ban đầu của Veterinarian.</p>
-              <p className={styles.howMuted}>Club Manager không thể ghi hay sửa kết quả khám ban đầu — đó là việc khám của Veterinarian.</p>
-              <div className={styles.lifecycle}>
-                <StatusBadge family="lifecycle" status="DRAFT" />
-                <Icon name="chevron-right" size={16} />
-                <StatusBadge family="lifecycle" status="ACTIVE" />
-              </div>
-            </div>
-          </Card>
-        </aside>
-      </div>
     </div>
   );
 }
@@ -124,29 +120,50 @@ function missingItems(status: ActivationStatus): ActivationItem[] {
   return status.checklist.flatMap((c) => c.requirement === 'MANDATORY' && c.state === 'PENDING' ? [c.id] : []);
 }
 
-function PendingHorseCard({ status, horse, onViewRegister }: PendingHorse & { onViewRegister: () => void }) {
+function PendingHorseCard({ status, horse, onView, onComplete }: PendingHorse & { onView: () => void; onComplete: (identity: boolean) => void }) {
   const age = ageInYears(horse.foaledDate);
   const owner = horse.currentOwnerships[0]?.owner.fullName;
-  const meta = [horse.breed, sexLabel(horse.sex), age !== null ? `${age} tuổi` : null,
-    owner ? `Chủ ngựa ${owner}` : null, horse.currentBoxCode ? `${boxLabel(horse.currentBoxCode)}` : null,
-    `đăng ký ${formatDate(horse.createdAt)}`].filter(Boolean).join(' · ');
+  const meta = [horse.breed, sexLabel(horse.sex), age !== null ? `${age} tuổi` : null].filter(Boolean).join(' · ');
   const missing = missingItems(status);
   const onlyBaseline = missing.length === 1 && missing[0] === 'VETERINARIAN_BASELINE';
+  const mandatory = status.checklist.filter((item) => item.requirement === 'MANDATORY');
+  const satisfied = mandatory.filter((item) => item.state === 'SATISFIED').length;
+  const managerAction = missing.some((item) => ITEMS[item].who === 'Club Manager');
   const reviewed = status.checklist.find((c) => c.id === 'HEAD_TRAINER_READINESS_REVIEW')?.state === 'REVIEWED';
 
   return (
-    <Card>
+    <Card className={styles.horseCard}>
       <div className={styles.horseBody}>
         <div className={styles.horseHeader}>
+          {businessDataMode() === 'api'
+            ? <HorsePhotoImage path={`/api/horses/${horse.id}/photos/primary`} name={horse.name} thumbnail className={styles.photo} />
+            : <span className={styles.photoEmpty} title="Chưa có ảnh hồ sơ"><Icon name="horseshoe" size={28} /></span>}
           <div className={styles.horseName}>
             <h2 className={styles.horseTitle}>{`${horse.name} · ${horse.horseCode}`}</h2>
             <p className={styles.horseMeta}>{meta}</p>
+            <span className={styles.registered}>Đăng ký {formatDate(horse.createdAt)}</span>
           </div>
           <StatusBadge family="lifecycle" status={status.lifecycle} />
         </div>
-        <hr className={styles.divider} />
-        <h3 className={styles.checklistTitle}>Danh mục kích hoạt</h3>
-        <ul className={styles.checklist}>
+        <div className={styles.facts}><span><Icon name="user" size={15} />{owner || 'Chưa chọn chủ ngựa'}</span><span><Icon name="info" size={15} />{horse.currentBoxCode ? boxLabel(horse.currentBoxCode) : 'Chưa xếp ô chuồng'}</span></div>
+        <div className={styles.progressHeader}><h3 className={styles.checklistTitle}>Điều kiện kích hoạt</h3><span>{satisfied}/{mandatory.length} hoàn tất</span></div>
+        <div className={styles.progress} role="progressbar" aria-label={`Hồ sơ ${horse.name}`} aria-valuemin={0} aria-valuemax={mandatory.length} aria-valuenow={satisfied}><span style={{ width: `${mandatory.length ? satisfied / mandatory.length * 100 : 0}%` }} /></div>
+        <div className={styles.nextAction} role="status">
+          <Icon name="clock" size={16} />
+          <span>
+            {onlyBaseline
+              ? 'Đang chờ khám ban đầu của Veterinarian — yêu cầu cuối cùng. '
+              : missing.length ? `Còn thiếu: ${missing.map((m) => ITEMS[m]?.label.toLowerCase() ?? m).join(', ')}. ` : 'Đã đáp ứng danh mục bắt buộc. '}
+            {`${horse.name} tự chuyển sang Hoạt động khi đủ mọi yêu cầu bắt buộc — không cần duyệt thủ công.`}
+          </span>
+        </div>
+        <div className={styles.actions}>
+          <Button variant={managerAction ? 'secondary' : 'primary'} onClick={onView}>Xem hồ sơ</Button>
+          {managerAction && <Button onClick={() => onComplete(missing.includes('IDENTITY'))}>Hoàn tất hồ sơ</Button>}
+        </div>
+        <details className={styles.details}>
+          <summary>Xem danh mục điều kiện <Icon name="chevron-down" size={16} /></summary>
+          <ul className={styles.checklist}>
           {status.checklist.map((c) => {
             if (c.requirement !== 'MANDATORY') return null;
             const spec = ITEMS[c.id];
@@ -158,23 +175,8 @@ function PendingHorseCard({ status, horse, onViewRegister }: PendingHorse & { on
           })}
           <ChecklistRow icon={reviewed ? 'check-circle' : 'circle'} tone="muted" label="Đánh giá sẵn sàng của Head Trainer"
             sub="Nên làm trước khi tập — không chặn việc kích hoạt" value={reviewed ? 'Đã đánh giá' : 'Khuyến nghị'} />
-        </ul>
-        <div className={[shared.note, shared.noteWarning, shared.noteStrong].join(' ')} role="status">
-          <Icon name="clock" size={16} />
-          <span>
-            {onlyBaseline
-              ? 'Đang chờ khám ban đầu của Veterinarian — yêu cầu cuối cùng. '
-              : `Đang chờ: ${missing.map((m) => ITEMS[m]?.label.toLowerCase() ?? m).join(', ')}. `}
-            {`${horse.name} tự chuyển sang Hoạt động khi đủ mọi yêu cầu bắt buộc — không cần duyệt thủ công.`}
-          </span>
-        </div>
-        <div className={styles.actions}>
-          {/* NEEDS CLARIFICATION: no contract operation exists for requesting the baseline (CORE-004); shown disabled. */}
-          <Button variant="secondary" disabled title="Chưa hỗ trợ — hệ thống chưa có thao tác yêu cầu này">
-            Yêu cầu khám ban đầu
-          </Button>
-          <Button variant="tertiary" onClick={onViewRegister}>Xem danh sách ngựa</Button>
-        </div>
+          </ul>
+        </details>
       </div>
     </Card>
   );

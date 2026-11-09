@@ -17,7 +17,7 @@ export function ReduceIntensity({ api, session, onSaved }: { api: ReturnType<typ
     finally { pending.current = false; setBusy(false); }
   }
   return <>
-    {error && <AlertBanner type="danger" title="Chưa đổi được cường độ">{error}</AlertBanner>}
+    {error && <AlertBanner feedback type="danger" title="Chưa đổi được cường độ">{error}</AlertBanner>}
     <SelectField label="Giảm cường độ buổi tập" value={value} placeholder="Chọn cường độ thấp hơn" disabled={busy || !lower.length || session.trainingAvailability === 'LOCKED'}
       options={lower.map((intensity) => ({ value: intensity, label: viLabel(intensity) }))} onChange={(event) => setValue(event.target.value)} />
     <Button disabled={busy || !value || !lower.includes(value as Intensity) || session.trainingAvailability === 'LOCKED'} onClick={() => void reduce()}>Giảm cường độ</Button>

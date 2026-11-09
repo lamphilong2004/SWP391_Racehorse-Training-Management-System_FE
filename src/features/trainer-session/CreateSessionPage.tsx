@@ -73,7 +73,7 @@ export function CreateSessionPage() {
   return <FlowShell title="Tạo buổi tập" description={`Bước ${step + 1}/4 · ${STEPS[step]}`} section="Lịch tập" role="TRAINER" actions={<ButtonLink to="/training/calendar">Hủy</ButtonLink>}>
     <WizardStepper steps={STEPS} currentStep={step} onStepClick={(value) => { if (!busy) setStep(value); }} />
     {program.data && <Card><div className={styles.row}><strong>{program.data.horse.name}</strong><span>{program.data.horse.horseCode} · {program.data.name} · {phase?.name ?? 'Chọn giai đoạn'}</span>{availability.data && <StatusBadge family="availability" status={availability.data.availability} />}</div></Card>}
-    {error && <AlertBanner type="danger" title="Chưa lên lịch được buổi tập">{error}</AlertBanner>}
+    {error && <AlertBanner feedback type="danger" title="Chưa lên lịch được buổi tập">{error}</AlertBanner>}
     <form onSubmit={(event) => { event.preventDefault(); void advance(); }}><fieldset disabled={busy} className={styles.fieldset}>
       {step === 0 && <div className={styles.columns}><Card title="Thông tin buổi tập"><div className={styles.stack}>
         {programs.error && <ErrorState title="Không tải được chương trình được giao" description={programs.error} onRetry={programs.reload} />}{program.pending && programId && <LoadingState label="Đang tải chương trình…" />}{program.error && <ErrorState title="Không tải được chương trình" description={program.error} onRetry={program.reload} />}

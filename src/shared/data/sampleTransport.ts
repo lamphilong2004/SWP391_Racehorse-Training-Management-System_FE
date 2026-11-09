@@ -1,4 +1,5 @@
 import { ApiError } from '../auth/authApi';
+import { INCIDENT_TYPE_CODES } from '../incidents/incidentTypes';
 import type { RoleCode } from '../auth/roles';
 import type { CreateProgramRequest } from '../../features/program-creation/programTypes';
 import { validateProgramCreation } from '../../features/program-creation/programDraft';
@@ -106,7 +107,7 @@ export async function sampleRequest<T>(path: string, init: RequestInit, user: Cu
       if (method === 'GET') return respond(page(ownReportsOnly ? data.incidents.filter((item) => item.reportedByUserId === user.id) : data.incidents));
       if (method === 'POST') {
         allow('GROOM', 'TRAINER', 'HEAD_TRAINER', 'WORK_RIDER');
-        if (body.horseId !== 7 || !['LOW', 'MEDIUM', 'HIGH'].includes(body.observedSeverity) || !['OFF_FEED', 'COLIC_SIGNS', 'FEVER', 'HOOF_OR_LEG_PROBLEM', 'OTHER'].includes(body.incidentType) || !Number.isFinite(Date.parse(body.observedAt))) fail(400, 'Choose the sample horse and valid incident fields.');
+        if (body.horseId !== 7 || !['LOW', 'MEDIUM', 'HIGH'].includes(body.observedSeverity) || ![...INCIDENT_TYPE_CODES].includes(body.incidentType) || !Number.isFinite(Date.parse(body.observedAt))) fail(400, 'Choose the sample horse and valid incident fields.');
         const id = data.nextId++;
         const incident: Incident = { horseId: 7, incidentType: body.incidentType, observedSeverity: body.observedSeverity, observedAt: body.observedAt, description: body.description,
           ...(body.careTaskId ? { careTaskId: body.careTaskId } : {}), ...(body.trainingSessionId ? { trainingSessionId: body.trainingSessionId } : {}), ...(body.preSessionCheckId ? { preSessionCheckId: body.preSessionCheckId } : {}),

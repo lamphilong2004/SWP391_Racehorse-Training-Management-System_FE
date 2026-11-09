@@ -1,13 +1,14 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { flushSync } from 'react-dom';
 import { useNavigate, useParams } from 'react-router';
-import { AlertBanner, Button, Card, StatusBadge, ErrorState, Icon, PhotoAttachmentTile, SelectField, TextField, PresetField, DesignSystemScope, UnsavedChangesGuard, focusFirstInvalid } from '../../../design-system';
+import { AlertBanner, Button, Card, StatusBadge, ErrorState, Icon, OptionalFields, PhotoAttachmentTile, SelectField, TextField, PresetField, DesignSystemScope, UnsavedChangesGuard, focusFirstInvalid } from '../../../design-system';
 import { COUNTRY_PRESETS } from '../../../shared/formPresets';
 import { ApiRequestError } from '../api/horsesApi';
 import { useHorsesApi } from '../api/HorsesApiContext';
 import { useBreadcrumb } from '../shared/HorseManagementLayout';
 import { BREED_OPTIONS, SEX_OPTIONS, STRENGTH_GROUPS, sexLabel, sortStrengths } from '../shared/options';
 import styles from '../shared/horses.module.css';
+import formStyles from './RegisterHorsePage.module.css';
 
 type Field = 'name' | 'horseCode' | 'foaledDate' | 'sex' | 'breed' | 'countryOfOrigin' | 'registrationNo';
 type Values = Record<Field, string>;
@@ -159,22 +160,23 @@ function RegisterHorsePageContent() {
       <div data-page-banner className={styles.titleRow}>
         <div className={styles.titleBlock}>
           <h1 className={styles.title}>{editing ? 'Sửa thông tin nhận dạng ngựa' : 'Thêm ngựa'}</h1>
-          <p className={styles.subtitle}>{editing ? 'Chỉ thông tin quản lý; sức khỏe và vòng đời do hệ thống quản lý.' : 'Bước 1/2 · Nhận dạng → Bước 2 · Phả hệ, quyền sở hữu và ô chuồng'}</p>
+          <p className={styles.subtitle}>{editing ? 'Chỉ thông tin quản lý; sức khỏe và vòng đời do hệ thống quản lý.' : 'Tạo hồ sơ nhận dạng và thêm ảnh thật. Chủ ngựa và ô chuồng được chọn sau khi lưu nháp.'}</p>
         </div>
         <div className={styles.startsAs}>
           {!editing && <>Bắt đầu ở trạng thái <StatusBadge family="lifecycle" status="DRAFT" /></>}
         </div>
       </div>
 
-      {formError && (loading ? <ErrorState title="Không tải được thông tin nhận dạng ngựa" description={formError} onRetry={() => { setFormError(undefined); setLoadAttempt((value) => value + 1); }} /> : <AlertBanner type="danger" title="Chưa lưu được ngựa">{formError}</AlertBanner>)}
+      {formError && (loading ? <ErrorState title="Không tải được thông tin nhận dạng ngựa" description={formError} onRetry={() => { setFormError(undefined); setLoadAttempt((value) => value + 1); }} /> : <AlertBanner feedback type="danger" title="Chưa lưu được ngựa">{formError}</AlertBanner>)}
       {loading && !formError && <p role="status">Đang tải thông tin nhận dạng ngựa…</p>}
 
-      <div className={styles.twoCol}>
+      {!editing && <ol className={formStyles.steps} aria-label="Các bước đăng ký ngựa"><li aria-current="step"><span>1</span><div><strong>Nhận dạng & ảnh</strong><small>Đang thực hiện</small></div></li><li><span>2</span><div><strong>Hoàn tất hồ sơ</strong><small>Phả hệ, chủ ngựa và ô chuồng</small></div></li></ol>}
+
+      <div className={formStyles.layout}>
         <div className={styles.colMain}>
           <Card>
             <div className={styles.cardBody}>
-              <h2 className={styles.cardTitle}>Nhận dạng</h2>
-              <p className={styles.cardHelp}>Cần tên ngựa để lưu bản nháp. Hoàn tất các thông tin nhận dạng còn lại trước khi kích hoạt.</p>
+              <div className={formStyles.sectionHeading}><span><Icon name="horseshoe" size={20} /></span><div><h2>Thông tin nhận dạng</h2><p>Nhập tên để lưu nháp. Bổ sung đủ hồ sơ trước khi kích hoạt.</p></div></div>
               <div className={styles.row}>
                 <TextField label="Tên ngựa *" value={values.name} onChange={(e) => set('name')(e.target.value)}
                   error={errors.name} maxLength={150} autoComplete="off" />
@@ -185,7 +187,7 @@ function RegisterHorsePageContent() {
                       placeholder={previewCode === null ? 'Cấp mã khi lưu' : 'Đang lấy mã ngựa…'}
                       helperText={previewCode === null ? 'Chưa lấy được mã dự kiến. Hệ thống vẫn cấp mã khi lưu.' : 'Mã dự kiến. Hệ thống xác nhận khi lưu.'} />}
               </div>
-              <div className={styles.row}>
+              <div className={formStyles.identityTriple}>
                 <TextField label="Ngày sinh" type="date" value={values.foaledDate}
                   onChange={(e) => set('foaledDate')(e.target.value)} error={errors.foaledDate} />
                 <SelectField label="Giới tính" placeholder="Chọn giới tính" options={[...SEX_OPTIONS, ...(values.sex && !customSex && !SEX_OPTIONS.some((option) => option.value === values.sex) ? [{ value: values.sex, label: `${sexLabel(values.sex)} (theo dữ liệu đã lưu)` }] : []), { value: '__CUSTOM__', label: 'Nhập giá trị khác' }]} value={customSex ? '__CUSTOM__' : values.sex}
@@ -198,9 +200,11 @@ function RegisterHorsePageContent() {
               <PresetField label="Quốc gia xuất xứ" options={COUNTRY_PRESETS}
                 value={values.countryOfOrigin} onValueChange={set('countryOfOrigin')} maxLength={100} error={errors.countryOfOrigin}
                 helperText="Nơi ngựa được sinh ra. Chọn quốc gia hoặc nhập thêm nếu chưa có trong danh sách." />
-              <TextField label="Số vi mạch / số đăng ký" placeholder="Nhập số vi mạch hoặc số đăng ký"
+              <OptionalFields label="Thêm số vi mạch hoặc số đăng ký" reveal={Boolean(values.registrationNo || errors.registrationNo)}>
+                <TextField label="Số vi mạch / số đăng ký" placeholder="Nhập số vi mạch hoặc số đăng ký"
                 value={values.registrationNo} onChange={(e) => set('registrationNo')(e.target.value)} maxLength={50}
                 error={errors.registrationNo} helperText="Phải là duy nhất — hệ thống kiểm tra khi bạn lưu." />
+              </OptionalFields>
             </div>
           </Card>
 
@@ -230,11 +234,13 @@ function RegisterHorsePageContent() {
             </fieldset>
           </Card>
 
+        </div>
+
+        <aside className={formStyles.sidebar}>
           <Card>
             <div className={styles.cardBody}>
-              <h2 className={styles.cardTitle}>Ảnh hồ sơ ngựa</h2>
-              <p className={styles.cardHelp}>Không bắt buộc. Tải ảnh thật để những người có quyền xem hồ sơ nhận diện đúng ngựa. Ảnh tải lên sau cùng sẽ là ảnh đại diện.</p>
-              <div className={styles.photoTiles}>
+              <div className={formStyles.sectionHeading}><span><Icon name="image" size={20} /></span><div><h2>Ảnh hồ sơ ngựa</h2><p>Không bắt buộc · JPG, PNG hoặc WebP</p></div></div>
+              <div className={formStyles.photoTiles}>
                 {photos.map((p, i) => (
                   <PhotoAttachmentTile state="attached" key={`${p.file.name}-${i}`} fileName={p.file.name} previewUrl={p.previewUrl}
                     onRemove={() => removePhoto(i)} />
@@ -243,17 +249,15 @@ function RegisterHorsePageContent() {
               </div>
               <input ref={fileInput} className={styles.hiddenInput} type="file" accept="image/jpeg,image/png,image/webp" multiple
                 aria-label="Thêm ảnh" onChange={(e) => { addPhotos(e.target.files); e.target.value = ''; }} />
+              <p className={styles.cardHelp}>Ảnh thật được dùng xuyên suốt hồ sơ cho các vai trò có quyền xem. Ảnh tải lên sau cùng là ảnh đại diện.</p>
             </div>
           </Card>
-        </div>
-
-        <aside className={styles.colSide}>
           <Card>
             <div className={styles.cardBody}>
-              <h2 className={styles.cardTitle}>Các bước tiếp theo</h2>
-              {['Lưu bản Nháp (bước này)', 'Khai báo phả hệ, chủ ngựa và một ô chuồng trống',
-                'Veterinarian ghi kết quả khám sức khỏe ban đầu',
-                'Ngựa tự chuyển sang Hoạt động khi đủ dữ liệu'].map((text, i) => (
+              <h2 className={styles.cardTitle}>{editing ? 'Quy trình hồ sơ' : 'Sau khi lưu nháp'}</h2>
+              {['Chọn phả hệ, chủ ngựa và ô chuồng',
+                'Thú y khám sức khỏe ban đầu',
+                'Hệ thống tự kích hoạt khi đủ điều kiện'].map((text, i) => (
                 <div key={text} className={styles.step}>
                   <span className={styles.stepNum}>{i + 1}</span>
                   <span>{text}</span>

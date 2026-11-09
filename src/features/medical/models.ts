@@ -3,7 +3,8 @@ export type RecoveryStatus = 'NOT_RECOVERED' | 'IMPROVING' | 'RECOVERED';
 export type ClinicalSeverity = 'MILD' | 'MODERATE' | 'SEVERE';
 export type HealthStatus = 'FIT' | 'MONITORING' | 'INJURED' | 'QUARANTINED';
 export type Availability = 'AVAILABLE' | 'LIMITED' | 'LOCKED';
-export type IncidentType = 'OFF_FEED' | 'COLIC_SIGNS' | 'FEVER' | 'HOOF_OR_LEG_PROBLEM' | 'OTHER';
+import type { IncidentType } from '../../shared/incidents/incidentTypes';
+export type { IncidentType };
 export type ObservedSeverity = 'LOW' | 'MEDIUM' | 'HIGH';
 export interface Page<T> { items: T[]; page: number; size: number; totalElements: number }
 export interface MedicalCaseCreateRequest { horseId: number; reason: string }
@@ -17,7 +18,7 @@ export interface Examination { id: number; caseId: number; horseId: number; exam
 export interface Injury { id: number; caseId: number; bodyRegion: string; severity: ClinicalSeverity; recoveryStatus: RecoveryStatus; position3d?: string; side?: string }
 export interface TreatmentPlan { id: number; caseId: number; treatmentMedicationInstructions: string; restInstructions?: string; careInstructions?: string; reexaminationDate?: string; createdAt: string }
 export interface Reexamination { id: number; caseId: number; horseId: number; recoveryStatus: RecoveryStatus; findings: string; examinedAt: string }
-export interface Incident { id: number; incidentCode: string; horseId: number; reportedByUserId: number; medicalCaseId?: number; preSessionCheckId?: number; trainingSessionId?: number; careTaskId?: number; incidentType: IncidentType; observedSeverity: ObservedSeverity; description?: string; observedAt: string; reportedAt: string; status: 'REPORTED' | 'UNDER_REVIEW' | 'RESOLVED' }
+export interface Incident { id: number; incidentCode: string; horseId: number; reportedByUserId: number; reportedByName?: string | null; reportedByRole?: string | null; medicalCaseId?: number; preSessionCheckId?: number; trainingSessionId?: number; careTaskId?: number; incidentType: IncidentType; observedSeverity: ObservedSeverity; description?: string; observedAt: string; reportedAt: string; status: 'REPORTED' | 'UNDER_REVIEW' | 'RESOLVED' }
 export interface CaseTreatmentTask { id: number; caseId: number; treatmentPlanId: number; horseId: number; assignedGroomUserId: number; instruction: string; taskDate: string; scheduledSlot?: string; status: 'PENDING' | 'COMPLETED'; completedAt?: string; completedByUserId?: number }
 export interface RestrictionExerciseRule { ruleType: 'ALLOWED' | 'PROHIBITED'; exerciseId?: number; exerciseTypeNote?: string }
 export interface TrainingAvailability { horseId: number; availability: Availability; reason?: string; activeRestrictionId?: number; exerciseRules?: RestrictionExerciseRule[] }

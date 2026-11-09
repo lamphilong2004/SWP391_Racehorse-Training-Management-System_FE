@@ -33,7 +33,7 @@ export function AssignBoxModal({ open, horse, onClose, onAssigned }: AssignBoxMo
 
   const apply = useCallback((all: StableBox[]) => {
     setBoxes(all);
-    setYard((current) => current || all.find((b) => b.yard)?.yard || '');
+    setYard((current) => all.some((box) => box.yard === current) ? current : '');
   }, []);
 
   // Mounted only while open (see PedigreeOwnershipPage), so every opening starts with fresh state.
@@ -90,7 +90,7 @@ export function AssignBoxModal({ open, horse, onClose, onAssigned }: AssignBoxMo
       </>}>
       <div className={styles.body}>
         <p className={styles.subtitle}>{`${horse.horseCode} · ${viLabel(horse.lifecycle)} · chọn một ô trống`}</p>
-        {saveError && <AlertBanner type="danger" title="Không xếp được ô chuồng">{saveError}</AlertBanner>}
+        {saveError && <AlertBanner feedback type="danger" title="Không xếp được ô chuồng">{saveError}</AlertBanner>}
         {loadError && <ErrorState title="Không tải được danh sách ô chuồng" description="Không tải được danh sách ô chuồng." onRetry={reload} />}
         {!loadError && !boxes && <LoadingState label="Đang tải ô chuồng…" />}
         {boxes && boxes.length === 0 && <EmptyState title="Chưa có ô chuồng" description="Chưa có ô chuồng nào được đăng ký." />}
@@ -100,7 +100,7 @@ export function AssignBoxModal({ open, horse, onClose, onAssigned }: AssignBoxMo
               {yards.length > 0 && (
                 <div className={styles.yard}>
                   <SelectField label="Khu chuồng" value={yard} onChange={(e) => { setYard(e.target.value); setSelectedId(undefined); }}
-                    options={yards.map((y) => ({ value: y, label: yardLabel(y) ?? y }))} />
+                    options={[{ value: '', label: 'Tất cả khu chuồng' }, ...yards.map((y) => ({ value: y, label: yardLabel(y) ?? y }))]} />
                 </div>
               )}
               <span className={styles.spacer} />

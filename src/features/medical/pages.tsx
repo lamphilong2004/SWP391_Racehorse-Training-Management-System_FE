@@ -2,7 +2,7 @@ import { clubDateTime, parseClubDateTime } from '../../shared/clubCalendar';
 import { boxLabel } from '../../shared/stableBox';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { ActionBar, AlertBanner, ButtonLink, Button, Card, DataTable, EmptyState, Icon, KeyValue, MetricCard, StatusBadge, TableToolbar, SelectField, TextField, Tabs } from '../../design-system';
+import { AlertBanner, ButtonLink, Button, Card, DataTable, EmptyState, Icon, KeyValue, MetricCard, NextStep, StatusBadge, TableToolbar, SelectField, TextField, Tabs } from '../../design-system';
 import { PageHeader } from '../../layout/PageHeader';
 import { MEDICAL_ROUTES as ROUTES } from './paths';
 import { MedicalForm } from './MedicalForm';
@@ -13,6 +13,7 @@ import type { ClinicalSeverity, MedicalCase, MedicalService, RecoveryStatus, Tra
 import { useMedicalRuntime } from './runtimeContext';
 import { dateTime } from '../evaluation/models';
 import { medicalErrorMessage } from './errors';
+import { CaseClosure } from './CaseClosure';
 import './medical.css';
 import { viLabel } from '../../shared/viLabels';
 import { formatDate } from '../horses/shared/format';
@@ -211,10 +212,10 @@ export function CaseDetailPage() {
 function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }) {
   const { service } = useMedicalRuntime();
   const [panel, setPanel] = useState('record');
-  const [closeError, setCloseError] = useState('');
-  const [closing, setClosing] = useState(false);
-  const [confirmClose, setConfirmClose] = useState(false);
   const closed = item.status === 'CLOSED';
+  const needsExamination = !item.examinations.length && !item.reexaminations.length;
+  const needsRecovery = (item.injuries.length > 0 || !!item.treatmentPlan) && latest(item.reexaminations)?.recoveryStatus !== 'RECOVERED';
+  const nextClinicalTab = needsExamination ? 'examination' : needsRecovery ? 'recovery' : null;
   return <><ButtonLink variant="tertiary" to={ROUTES.medical}>← Quay lại danh sách ca</ButtonLink>
     <HorseHeading title={'Ca y tế ' + item.id} horseId={item.horseId} description={'Mở lúc ' + dateTime(item.openedAt)} />
     <div className="medical-grid"><Card title="Tổng quan ca"><div className="medical-case-facts">
@@ -227,16 +228,16 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
       { value: 'recovery', label: 'Tái khám' },
     ]} />
     <div role="tabpanel" id="case-panel-record" aria-labelledby="case-tab-record" hidden={panel !== 'record'} className="medical-stack">
+      {!closed && nextClinicalTab && <AlertBanner type="info" title={needsExamination ? 'Bước tiếp theo · Ghi lần khám' : 'Bước tiếp theo · Ghi nhận tái khám'}>
+        <p>{needsExamination ? 'Ghi triệu chứng và kết quả khám trước khi quyết định điều trị.' : 'Khi đã khám lại, ghi kết quả hồi phục thực tế trước khi đóng ca.'}</p>
+        <Button onClick={() => { setPanel(nextClinicalTab); document.getElementById(`case-tab-${nextClinicalTab}`)?.focus(); }}>
+          {needsExamination ? 'Mở mục Khám' : 'Mở mục Tái khám'}
+        </Button>
+      </AlertBanner>}
       <Card title="Thể trạng hiện tại"><KeyValue label="Chẩn đoán gần nhất" value={latest(item.examinations)?.diagnosis ?? (item.examinations.length ? 'Chưa có chẩn đoán' : 'Đang chờ khám')} />
         <KeyValue label="Hồi phục" value={viLabel(latest(item.reexaminations)?.recoveryStatus, 'Chưa ghi nhận tái khám')} />
         <KeyValue label="Lần khám tiếp theo" value={item.treatmentPlan?.reexaminationDate ? formatDate(item.treatmentPlan?.reexaminationDate) : 'Chưa lên lịch'} /></Card>
-      {!closed && <Card className="medical-close-panel" title="Đóng ca y tế"><p>Cần có ít nhất một lần khám hoặc tái khám. Nếu có chấn thương hoặc phác đồ điều trị, lần tái khám gần nhất phải là Đã hồi phục. Mọi công việc điều trị phải hoàn thành, sự cố liên quan đã xử lý xong và hạn chế của ca đã được gỡ.</p>
-        {closeError && <AlertBanner feedback type="danger" title={closeError} />}
-        {confirmClose ? <ActionBar leading={<span>Đóng ca {item.id}?</span>}><Button variant="secondary" disabled={closing} onClick={() => setConfirmClose(false)}>Hủy</Button><Button disabled={closing} onClick={async () => {
-          setClosing(true); setCloseError('');
-          try { await service.closeCase(item.id); reload(); } catch (failure) { setCloseError(medicalErrorMessage(failure, 'Không đóng được ca y tế.')); } finally { setClosing(false); }
-        }}>{closing ? 'Đang đóng…' : 'Xác nhận đóng'}</Button></ActionBar> :
-          <ActionBar leading={<span>Chỉ đóng sau khi hoàn tất các điều kiện của ca.</span>}><Button variant="secondary" onClick={() => setConfirmClose(true)}>Đóng ca</Button></ActionBar>}</Card>}
+      {!closed && <CaseClosure item={item} needsExamination={needsExamination} needsRecovery={needsRecovery} reload={reload} openTab={(tab) => { setPanel(tab); document.getElementById(`case-tab-${tab}`)?.focus(); }} />}
     </div>
     <div role="tabpanel" id="case-panel-examination" aria-labelledby="case-tab-examination" hidden={panel !== 'examination'} className="medical-stack">
       <Card title="Các lần khám"><History count={item.examinations.length} empty="Chưa có lần khám nào">{item.examinations.map((exam) =>
@@ -334,6 +335,10 @@ export function TreatmentPlanPage() {
   return <><ButtonLink variant="tertiary" to={casePath(id)}>← Quay lại ca y tế</ButtonLink>
     <HorseHeading title="Phác đồ điều trị" horseId={medicalCase.horseId} description={'Ca y tế ' + id} />
     {saved && <AlertBanner feedback type="success" title="Đã lưu phác đồ điều trị" />}
+    {saved && <NextStep title="Thực hiện công việc điều trị" owner={tasks.length ? 'Groom được giao' : 'Veterinarian (bạn) · chưa giao Groom'}
+      action={{ label: 'Quay lại ca y tế', to: casePath(id) }}>
+      <p>{tasks.length ? `${tasks.length} công việc đã giao cho Groom, hiện trong mục Công việc chăm sóc của họ.` : 'Phác đồ chưa có công việc nào cho Groom. Thêm công việc nếu ngựa cần chăm sóc hoặc cho thuốc.'} Khi ngựa ổn, tái khám ghi Đã hồi phục rồi gỡ hạn chế và đóng ca.</p>
+    </NextStep>}
     <div className="medical-grid medical-treatment-layout"><div className="medical-stack">
       {medicalCase.status === 'CLOSED' ? <AlertBanner type="danger" title="Không thể sửa ca y tế đã đóng" /> :
         <TreatmentPlanEditor key={medicalCase.treatmentPlan?.id ?? 'new'} openedAt={medicalCase.openedAt} initial={initial} retainedTaskCount={tasks.length} onCancel={() => navigate(casePath(id))} onSave={async (input) => { await service.saveTreatment(id, input); setSaved(true); reload(); }} />}

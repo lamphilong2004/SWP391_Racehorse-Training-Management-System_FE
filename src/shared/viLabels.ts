@@ -10,7 +10,7 @@ const LABELS: Record<string, string> = {
   RECOMMENDED: 'Được gợi ý', SUITABLE: 'Phù hợp', SUITABLE_WITH_CAUTION: 'Phù hợp — cần lưu ý', NOT_RECOMMENDED: 'Không khuyến nghị',
   DRAFT: 'Nháp', ACTIVE: 'Đang hoạt động', INACTIVE: 'Ngừng hoạt động', PAUSED: 'Tạm dừng', COMPLETED: 'Hoàn thành',
   // incident types (same wording as the report forms)
-  OFF_FEED: 'Bỏ ăn', COLIC_SIGNS: 'Dấu hiệu đau bụng', FEVER: 'Sốt', HOOF_OR_LEG_PROBLEM: 'Vấn đề móng hoặc chân',
+  OFF_FEED: 'Bỏ ăn', COLIC_SIGNS: 'Dấu hiệu đau bụng', FEVER: 'Sốt', HOOF_OR_LEG_PROBLEM: 'Vấn đề móng hoặc chân', LAMENESS: 'Khập khiễng, bước không đều', INJURY: 'Chấn thương', BREATHING_PROBLEM: 'Thở khó, chảy máu mũi', BEHAVIOUR_PROBLEM: 'Hoảng sợ, khó kiểm soát', EXHAUSTION: 'Mệt bất thường',
   // training availability
   AVAILABLE: 'Sẵn sàng', LIMITED: 'Hạn chế', LOCKED: 'Khóa',
   // health status
@@ -24,8 +24,10 @@ const LABELS: Record<string, string> = {
   EXERCISE_MEDICAL_BLOCK: 'Bài tập đang bị hạn chế y tế chặn.',
   // intensity
   LOW: 'Thấp', MEDIUM: 'Trung bình', MEDIUM_HIGH: 'Trung bình cao', HIGH: 'Cao',
-  // Training surface codes stay unchanged on the wire.
+  // Training exercise and surface codes stay unchanged on the wire.
+  WALK: 'Đi bộ', TROT: 'Nước kiệu', CANTER: 'Canter (nước kiệu nhanh)', GALLOP: 'Galop', HILL: 'Leo dốc', GATE: 'Tập xuất phát', SWIM: 'Bơi',
   SAND: 'Cát', TURF: 'Cỏ', DIRT: 'Đất', SYNTHETIC: 'Tổng hợp',
+  GLOBAL: 'Mặc định chung', HORSE_OVERRIDE: 'Ngưỡng riêng của ngựa',
   // severity / realtime
   NORMAL: 'Bình thường', WARNING: 'Cảnh báo', CRITICAL: 'Nghiêm trọng', MILD: 'Nhẹ', MODERATE: 'Vừa', SEVERE: 'Nặng',
   // recovery / incident / adjustment / registration
@@ -41,5 +43,7 @@ const LABELS: Record<string, string> = {
 
 export function viLabel(value: string | null | undefined, fallback = ''): string {
   if (value == null || value === '') return fallback;
-  return LABELS[value] ?? LABELS[value.toUpperCase()] ?? value;
+  if (Object.hasOwn(LABELS, value)) return LABELS[value];
+  const code = value.toUpperCase();
+  return Object.hasOwn(LABELS, code) ? LABELS[code] : value;
 }

@@ -112,6 +112,7 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
         items: [
           { label: 'Y tế / sức khỏe', icon: 'stethoscope', to: ROUTES.medical },
           { label: 'Sức khỏe đàn ngựa', icon: 'activity', to: ROUTES.herdHealth },
+          { label: 'Hạn chế tập luyện', icon: 'shield-alert', to: ROUTES.restrictions },
           { label: 'Kế hoạch chăm sóc', icon: 'clipboard-list', to: ROUTES.stable },
           { label: 'Chăm sóc hằng ngày', icon: 'calendar', to: ROUTES.dailyCare },
           { label: 'Kho vật tư', icon: 'package', to: ROUTES.inventory },

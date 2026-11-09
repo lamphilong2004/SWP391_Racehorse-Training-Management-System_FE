@@ -77,6 +77,11 @@
 .templateSelected { display: inline-flex; align-items: center; gap: var(--space-xs); color: var(--color-primary-700); font-weight: 600; font-size: .875rem; }
 @media (max-width: 1200px) { .templateGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .phaseSettings { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 25rem), 1fr)); gap: var(--space-lg); }
+.phaseSettings > * { min-inline-size: 0; }
+.phaseSettings .fields { grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.25rem), 1fr)); }
+@media (min-width: 1024px) {
+  .phaseSettings:has(> :nth-child(3)) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
 .stepHint { margin: 0; color: var(--color-text-secondary); }
 .candidates { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-xl); }
 .choice { padding: var(--space-lg); border: 1px solid var(--color-border-default); border-radius: var(--radius-md); }
@@ -106,7 +111,7 @@
   .horseFilters { grid-template-columns: minmax(0, 1fr); }
   .templateSearch { grid-template-columns: minmax(0, 1fr); }
   .templateGrid { grid-template-columns: minmax(0, 1fr); }
-  .fields, .candidates, .profileFacts { grid-template-columns: minmax(0, 1fr); }
+  .fields, .candidates, .profileFacts, .phaseSettings .fields { grid-template-columns: minmax(0, 1fr); }
   .heading { align-items: flex-start; }
   .heading > *, .row > * { min-width: 0; max-width: 100%; }
   .footer { gap: var(--space-md); }

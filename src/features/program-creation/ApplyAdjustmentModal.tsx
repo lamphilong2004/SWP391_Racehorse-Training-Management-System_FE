@@ -79,7 +79,7 @@ export function ApplyAdjustmentModal({ item, onClose, onApplied }: { item: Adjus
           </fieldset>;
         })}
         <div className={styles.row}><Button variant="secondary" disabled={busy} onClick={add}>Thêm giai đoạn</Button></div>
-        {error && <AlertBanner type="danger" title="Chưa áp dụng được các giai đoạn">{error}</AlertBanner>}
+        {error && <AlertBanner feedback type="danger" title="Chưa áp dụng được các giai đoạn">{error}</AlertBanner>}
       </form>}
     </div>
   </Modal>;

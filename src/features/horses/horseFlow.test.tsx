@@ -55,7 +55,10 @@ it('keeps registration input on a duplicate registry number and can retry', asyn
   samples.horseRegistry!.records[0].registrationNo = 'CHIP-007';
   saveSamples(samples);
   open('/horses/new'); const user = userEvent.setup(); await screen.findByRole('heading', { name: 'Thêm ngựa' });
-  await user.type(screen.getByLabelText('Tên ngựa *'), 'Retry Horse'); await user.type(screen.getByLabelText('Số vi mạch / số đăng ký'), 'CHIP-007');
+  await user.type(screen.getByLabelText('Tên ngựa *'), 'Retry Horse');
+  expect(screen.getByLabelText('Số vi mạch / số đăng ký')).not.toBeVisible();
+  await user.click(screen.getByRole('button', { name: 'Thêm số vi mạch hoặc số đăng ký' }));
+  await user.type(screen.getByLabelText('Số vi mạch / số đăng ký'), 'CHIP-007');
   fireEvent.change(screen.getByLabelText('Ngày sinh'), { target: { value: '2021-03-01' } });
   await user.selectOptions(screen.getByLabelText('Giới tính'), 'Mare'); await user.selectOptions(screen.getByLabelText('Giống ngựa'), 'Arabian');
   await user.click(screen.getByRole('button', { name: 'Lưu nháp & tiếp tục' }));
