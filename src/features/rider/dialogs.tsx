@@ -12,7 +12,7 @@ import { viLabel } from '../../shared/viLabels';
  * What a Work Rider can notice in the saddle. The API keeps the five approved incident types (1_Scope!C15), so each
  * sign maps to one of them and its label is written at the start of the description for the Veterinarian.
  */
-export const RIDE_SIGNS = [
+const RIDE_SIGNS = [
   { key: 'LAMENESS', label: 'Khập khiễng, bước không đều', type: 'HOOF_OR_LEG_PROBLEM' },
   { key: 'STUMBLE', label: 'Vấp hoặc bước hụt', type: 'HOOF_OR_LEG_PROBLEM' },
   { key: 'INJURY', label: 'Chấn thương do va chạm hoặc té ngã', type: 'OTHER' },
