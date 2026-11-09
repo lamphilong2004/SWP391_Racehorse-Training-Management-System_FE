@@ -2,7 +2,7 @@ import { boxLabel } from '../../shared/stableBox';
 import { UiPreviewNotice } from './UiPreviewNotice';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
-import { AlertBanner, ButtonLink, Button, Card, DataTable, EmptyState, ErrorState, KeyValue, LoadingState, OptionalFields, SelectField, StatusBadge, TableToolbar, TextField } from '../../design-system';
+import { AlertBanner, ButtonLink, Button, Card, DataTable, EmptyState, ErrorState, KeyValue, LoadingState, Modal, NextStep, SelectField, StatusBadge, TableToolbar, TextField } from '../../design-system';
 import { AppShell } from '../../layout/AppShell';
 import { PageHeader } from '../../layout/PageHeader';
 import { useAuth } from '../../shared/auth/AuthProvider';
@@ -10,7 +10,7 @@ import { authSession } from '../../shared/auth/authSession';
 import type { RoleCode } from '../../shared/auth/roles';
 import { IncidentReportModal, IncidentReportReceipt, type IncidentCreateRequest } from '../../shared/incidents';
 import { MEDICAL_ROUTES } from './paths';
-import { createIncidentService, type IncidentService } from './incidentService';
+import { createIncidentService, type IncidentService, type OpenCase } from './incidentService';
 import { readHorseIdentity } from './horseRead';
 import type { Incident } from './models';
 import { ApiError, requestApi } from '../../shared/auth/authApi';
@@ -64,33 +64,70 @@ function useIncidentRead<T>(load: () => Promise<T>) {
 function State({ error, reload }: { error?: string; reload: () => void }) { return error ? <ErrorState title="Không tải được sự cố" description={error} onRetry={reload} /> : <LoadingState label="Đang tải sự cố…" />; }
 type HorseReader = (id: number) => ReturnType<typeof readHorseIdentity>;
 type UserReader = (id: number) => Promise<string>;
+const TRIAGE_ROLES: RoleCode[] = ['VETERINARIAN', 'HEAD_TRAINER', 'CLUB_MANAGER'];
+const ROLE_NAMES: Record<string, string> = { GROOM: 'Groom', WORK_RIDER: 'Work Rider', TRAINER: 'Trainer', HEAD_TRAINER: 'Head Trainer', VETERINARIAN: 'Veterinarian', CLUB_MANAGER: 'Club Manager', HORSE_OWNER: 'Horse Owner' };
+const STATUS_ORDER = { REPORTED: 0, UNDER_REVIEW: 1, RESOLVED: 2 } as const;
+const SEVERITY_ORDER = { HIGH: 0, MEDIUM: 1, LOW: 2 } as const;
+type IncidentFocus = '' | 'REPORTED' | 'UNDER_REVIEW' | 'RESOLVED' | 'HIGH_OPEN';
+
+/** Where the report came from, in the words the Veterinarian triages by. */
+function incidentSource(item: Pick<Incident, 'preSessionCheckId' | 'trainingSessionId' | 'careTaskId'>) {
+  if (item.preSessionCheckId) return { label: 'Kiểm tra trước buổi tập', detail: `Lần kiểm tra #${item.preSessionCheckId} · buổi tập bị chặn` };
+  if (item.trainingSessionId) return { label: 'Đang cưỡi · buổi tập đã dừng', detail: `Buổi tập #${item.trainingSessionId}` };
+  if (item.careTaskId) return { label: 'Công việc chăm sóc', detail: `Công việc #${item.careTaskId}` };
+  return { label: 'Quan sát tại chuồng', detail: 'Ngoài buổi tập' };
+}
+/** The reporter's role from the API; older responses fall back to the roles the source allows. */
+function reporterRole(item: Pick<Incident, 'reportedByRole' | 'preSessionCheckId' | 'trainingSessionId' | 'careTaskId'>) {
+  if (item.reportedByRole) return ROLE_NAMES[item.reportedByRole] ?? viLabel(item.reportedByRole);
+  return item.preSessionCheckId || item.careTaskId ? 'Groom' : item.trainingSessionId ? 'Work Rider hoặc Trainer' : 'Nhân viên';
+}
+function Severity({ value }: { value: string }) {
+  return <span className={`medical-severity medical-severity-${value.toLowerCase()}`}>{value === 'HIGH' ? 'Mức độ cao' : `Mức độ ${viLabel(value).toLowerCase()}`}</span>;
+}
+
 export function IncidentListPage({ service, role, actorId, horse, reporter, stableHorses }: { service: IncidentService; role: RoleCode; actorId: number; horse?: HorseReader; reporter?: UserReader; stableHorses?: () => Promise<{ id: number; label: string }[]> }) {
-  const [page, setPage] = useState(0), [query, setQuery] = useState(''), [status, setStatus] = useState(''), [horseFilter, setHorseFilter] = useState('');
+  const [page, setPage] = useState(0), [query, setQuery] = useState(''), [focus, setFocus] = useState<IncidentFocus>(''), [horseFilter, setHorseFilter] = useState('');
   const [params] = useSearchParams();
   const [report, setReport] = useState(role === 'GROOM' && params.get('report') === '1'), [success, setSuccess] = useState<Incident>();
   const [stable, setStable] = useState<{ id: number; label: string }[]>();
   useEffect(() => { let active = true; if (stableHorses && !stable) stableHorses().then((items) => { if (active) setStable(items); }, () => { if (active) setStable([]); }); return () => { active = false; }; }, [stableHorses, stable]);
   const load = useCallback(() => service.list(page), [service, page]);
   const state = useIncidentRead(load);
-  const horses = [...new Set(state.data?.items.map((item) => item.horseId) ?? [])];
-  const rows = state.data?.items.filter((item) => (!status || item.status === status) && (!horseFilter || String(item.horseId) === horseFilter) && [item.incidentCode, item.horseId, item.description].join(' ').toLowerCase().includes(query.toLowerCase())) ?? [];
+  const triage = TRIAGE_ROLES.includes(role);
+  const items = state.data?.items ?? [];
+  const horses = [...new Set(items.map((item) => item.horseId))];
+  const counts = { REPORTED: items.filter((item) => item.status === 'REPORTED').length, UNDER_REVIEW: items.filter((item) => item.status === 'UNDER_REVIEW').length, HIGH_OPEN: items.filter((item) => item.observedSeverity === 'HIGH' && item.status !== 'RESOLVED').length };
+  const matchesFocus = (item: Incident) => !focus || (focus === 'HIGH_OPEN' ? item.observedSeverity === 'HIGH' && item.status !== 'RESOLVED' : item.status === focus);
+  const rows = items.filter((item) => matchesFocus(item) && (!horseFilter || String(item.horseId) === horseFilter) && [item.incidentCode, item.description, item.reportedByName, labelType(item.incidentType)].join(' ').toLowerCase().includes(query.toLowerCase()))
+    .sort((a, b) => triage ? STATUS_ORDER[a.status] - STATUS_ORDER[b.status] || SEVERITY_ORDER[a.observedSeverity] - SEVERITY_ORDER[b.observedSeverity] || Date.parse(b.reportedAt) - Date.parse(a.reportedAt) : 0);
   async function submit(input: IncidentCreateRequest) { try { const created = await service.report(input); setSuccess(created); state.reload(); } catch (error) { throw new Error(safeError(error), { cause: error }); } }
+  const description = role === 'VETERINARIAN' ? 'Tiếp nhận báo cáo của Groom, Work Rider và Trainer: mở ca y tế, gắn vào ca đang mở hoặc đóng sự cố.'
+    : triage ? 'Theo dõi báo cáo sự cố của đàn ngựa. Veterinarian tiếp nhận và xử lý.' : 'Sự cố bạn đã báo và tiến trình xử lý của Veterinarian.';
+  const tiles: { key: 'REPORTED' | 'UNDER_REVIEW' | 'HIGH_OPEN'; label: string; hint: string }[] = [
+    { key: 'REPORTED', label: 'Cần tiếp nhận', hint: 'Mới báo, chưa có ca y tế' },
+    { key: 'UNDER_REVIEW', label: 'Đang xử lý', hint: 'Đã gắn ca y tế' },
+    { key: 'HIGH_OPEN', label: 'Mức độ cao chưa đóng', hint: 'Ưu tiên xem trước' },
+  ];
   return <div className="medical-stack">
-    <PageHeader title="Sự cố" description={['GROOM', 'TRAINER', 'WORK_RIDER'].includes(role) ? 'Sự cố bạn đã báo' : 'Báo cáo sự cố'} actions={role === 'GROOM' ? <Button onClick={() => setReport(true)}>Báo cáo sự cố</Button> : undefined} />
+    <PageHeader title="Sự cố" description={description} actions={role === 'GROOM' ? <Button onClick={() => setReport(true)}>Báo cáo sự cố</Button> : undefined} />
     {success && <IncidentReportReceipt incidentId={success.id} incidentCode={success.incidentCode} />}
-    <TableToolbar label="Bộ lọc sự cố" scope="page" resultCount={state.data ? rows.length : undefined} hasFilters={Boolean(query || status || horseFilter)} onClear={() => { setQuery(''); setStatus(''); setHorseFilter(''); }}><TextField label="Tìm trên trang hiện tại" placeholder="Tìm mã sự cố hoặc mã ngựa…" value={query} onChange={(event) => setQuery(event.target.value)} />
-      <SelectField label="Ngựa (trang hiện tại)" value={horseFilter} placeholder="Tất cả ngựa" options={horses.map((id) => ({ value: String(id), label: stable?.find((item) => item.id === id)?.label.split(' · ').slice(0, 2).join(' · ') ?? `Ngựa ${id}` }))} onChange={(event) => setHorseFilter(event.target.value)} />
-      <SelectField label="Trạng thái (trang hiện tại)" value={status} placeholder="Tất cả trạng thái" options={['REPORTED', 'UNDER_REVIEW', 'RESOLVED'].map((value) => ({ value, label: viLabel(value) }))} onChange={(event) => setStatus(event.target.value)} />
+    {triage && state.data && <div className="medical-incident-tiles" role="group" aria-label="Lọc nhanh sự cố">{tiles.map((tile) => <button key={tile.key} type="button" aria-pressed={focus === tile.key}
+      className={`medical-incident-tile${tile.key === 'HIGH_OPEN' ? ' medical-incident-tile-alert' : ''}`} onClick={() => setFocus(focus === tile.key ? '' : tile.key)}>
+      <strong>{counts[tile.key]}</strong><span>{tile.label}</span><small>{tile.hint}</small></button>)}</div>}
+    <TableToolbar label="Bộ lọc sự cố" scope="page" resultCount={state.data ? rows.length : undefined} hasFilters={Boolean(query || focus || horseFilter)} onClear={() => { setQuery(''); setFocus(''); setHorseFilter(''); }}><TextField label="Tìm sự cố" placeholder="Mã sự cố, người báo, vấn đề…" value={query} onChange={(event) => setQuery(event.target.value)} />
+      <SelectField label="Ngựa" value={horseFilter} placeholder="Tất cả ngựa" options={horses.map((id) => ({ value: String(id), label: stable?.find((item) => item.id === id)?.label.split(' · ').slice(0, 2).join(' · ') ?? `Ngựa ${id}` }))} onChange={(event) => setHorseFilter(event.target.value)} />
+      <SelectField label="Trạng thái" value={focus === 'HIGH_OPEN' ? '' : focus} placeholder="Tất cả trạng thái" options={['REPORTED', 'UNDER_REVIEW', 'RESOLVED'].map((value) => ({ value, label: viLabel(value) }))} onChange={(event) => setFocus(event.target.value as IncidentFocus)} />
     </TableToolbar>
-    <Card title="Danh sách sự cố">{!state.data ? <State error={state.error} reload={state.reload} /> : <div className="medical-stack"><DataTable caption="Sự cố" rows={rows} rowKey={(item) => item.id} empty={<EmptyState title="Không có sự cố" description="Không có báo cáo phù hợp với trang và bộ lọc này." />} columns={[
-      { key: 'code', header: 'SỰ CỐ', render: (item) => <Link to={incidentPath(item.id)}>{item.incidentCode}</Link> },
+    <Card title="Danh sách sự cố">{!state.data ? <State error={state.error} reload={state.reload} /> : <div className="medical-stack"><DataTable caption="Sự cố" rows={rows} rowKey={(item) => item.id} empty={<EmptyState title="Không có sự cố" description="Không có báo cáo phù hợp với bộ lọc này." />} columns={[
+      { key: 'problem', header: 'VẤN ĐỀ', render: (item) => <div className="medical-incident-problem"><strong>{labelType(item.incidentType)}</strong><Severity value={item.observedSeverity} /><Link to={incidentPath(item.id)}>{item.incidentCode}</Link></div> },
       { key: 'horse', header: 'NGỰA', render: (item) => <IncidentHorse horseId={item.horseId} read={horse} /> },
-      { key: 'observation', header: 'QUAN SÁT', render: (item) => <span>{labelType(item.incidentType)}<br /><small>{viLabel(item.observedSeverity)}</small></span> },
-      { key: 'reporter', header: 'NGƯỜI BÁO', nowrap: true, render: (item) => <IncidentReporter userId={item.reportedByUserId} actorId={actorId} read={item.reportedByName ? undefined : reporter} role={reporterRole(item)} name={item.reportedByName} /> },
+      { key: 'reporter', header: 'NGƯỜI BÁO · NGUỒN', render: (item) => <div className="medical-incident-reporter"><strong><IncidentReporter userId={item.reportedByUserId} actorId={actorId} read={item.reportedByName ? undefined : reporter} name={item.reportedByName} /></strong><span>{reporterRole(item)} · {incidentSource(item).label}</span></div> },
       { key: 'reported', header: 'THỜI ĐIỂM BÁO', nowrap: true, render: (item) => <time dateTime={item.reportedAt}>{displayDate(item.reportedAt)}</time> },
       { key: 'status', header: 'TRẠNG THÁI', render: (item) => <StatusBadge family="incident" status={item.status} /> },
+      { key: 'action', header: 'THAO TÁC', render: (item) => <ButtonLink size="sm" variant={role === 'VETERINARIAN' && item.status === 'REPORTED' ? 'primary' : 'secondary'} to={incidentPath(item.id)}>{role === 'VETERINARIAN' && item.status === 'REPORTED' ? 'Tiếp nhận' : 'Xem'}</ButtonLink> },
     ]} /><div className="medical-actions"><Button variant="secondary" disabled={!page} onClick={() => setPage(page - 1)}>Trước</Button><span>Trang {page + 1} · {state.data.totalElements} báo cáo</span><Button variant="secondary" disabled={(page + 1) * state.data.size >= state.data.totalElements} onClick={() => setPage(page + 1)}>Sau</Button></div></div>}</Card>
-    <p className="text-caption">Bộ lọc áp dụng cho trang hiện tại. Chỉ Veterinarian được chuyển trạng thái sự cố.</p>
+    {triage && <p className="text-caption">Số liệu và bộ lọc tính trên trang đang tải. Chỉ Veterinarian được chuyển trạng thái sự cố.</p>}
     {report && <IncidentReportModal open source={{ kind: 'groom', contextLabel: 'Quan sát tại chuồng (ngoài buổi tập)' }} horses={stable ?? horses.map((id) => ({ id, label: `Ngựa ${id}` }))} onClose={() => setReport(false)} onSubmit={submit} />}
   </div>;
 }
@@ -99,14 +136,10 @@ function IncidentHorse({ horseId, read }: { horseId: number; read?: HorseReader 
   const state = useIncidentRead(load);
   return state.data ? <span>{state.data.name}<br /><small>{state.data.horseCode}</small></span> : <span>Ngựa {horseId}</span>;
 }
-/** Without user-directory access the reporter is named by the role the source allows (Groom, or the session's Work Rider/Trainer). */
-function reporterRole(item: Pick<Incident, 'preSessionCheckId' | 'trainingSessionId' | 'careTaskId'>) {
-  return item.preSessionCheckId || item.careTaskId ? 'Groom' : item.trainingSessionId ? `Work Rider hoặc Trainer của buổi tập #${item.trainingSessionId}` : 'Nhân viên';
-}
-function IncidentReporter({ userId, actorId, read, role, name }: { userId: number; actorId: number; read?: UserReader; role: string; name?: string | null }) {
+function IncidentReporter({ userId, actorId, read, name }: { userId: number; actorId: number; read?: UserReader; name?: string | null }) {
   const load = useCallback(() => read ? read(userId) : Promise.reject(new Error('No user directory access')), [read, userId]);
   const state = useIncidentRead(load);
-  return <>{userId === actorId ? 'Bạn' : name || state.data || `${role} · mã người dùng ${userId}`}</>;
+  return <>{userId === actorId ? 'Bạn' : name || state.data || `Mã người dùng ${userId}`}</>;
 }
 function IncidentHorseStatus({ horseId, read }: { horseId: number; read?: HorseReader }) {
   const load = useCallback(() => read ? read(horseId) : Promise.reject(new Error('Identity unavailable')), [read, horseId]);
@@ -120,45 +153,76 @@ export function IncidentDetailPage({ service, role, actorId, horse, reporter }: 
 }
 function IncidentDetail({ id, service, role, actorId, horse, reporter }: { id: number; service: IncidentService; role: RoleCode; actorId?: number; horse?: HorseReader; reporter?: UserReader }) {
   const load = useCallback(() => service.get(id), [service, id]), state = useIncidentRead(load);
-  const [busy, setBusy] = useState(false), [caseId, setCaseId] = useState(''), [error, setError] = useState('');
+  const [busy, setBusy] = useState(false), [caseId, setCaseId] = useState(''), [error, setError] = useState(''), [confirmResolve, setConfirmResolve] = useState(false);
+  const [openCases, setOpenCases] = useState<OpenCase[]>();
   const locked = useRef(false), mounted = useRef(true), navigate = useNavigate();
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  const item: Incident | undefined = state.data;
+  const canDecide = role === 'VETERINARIAN' && item?.status === 'REPORTED' && !item.medicalCaseId;
+  const horseId = item?.horseId;
+  useEffect(() => {
+    if (!canDecide || horseId === undefined || !service.openCases) return;
+    let active = true;
+    service.openCases(horseId).then((cases) => { if (active) setOpenCases(cases); }, () => { if (active) setOpenCases([]); });
+    return () => { active = false; };
+  }, [canDecide, horseId, service]);
   async function review(action: 'OPEN_CASE' | 'LINK_CASE' | 'RESOLVE') {
     const current = state.data;
     if (locked.current || !current || role !== 'VETERINARIAN' || current.status === 'RESOLVED') return;
     if (action !== 'RESOLVE' && (current.status !== 'REPORTED' || current.medicalCaseId)) return;
     const target = Number(caseId);
-    if (action === 'LINK_CASE' && (!Number.isSafeInteger(target) || target < 1)) { setError('Nhập mã ca y tế là số dương hợp lệ.'); return; }
+    if (action === 'LINK_CASE' && (!Number.isSafeInteger(target) || target < 1)) { setError('Chọn một ca y tế đang mở.'); return; }
     locked.current = true; setBusy(true); setError('');
-    try { const updated = await service.review(id, action, action === 'LINK_CASE' ? target : undefined); if (!mounted.current) return; if (action === 'OPEN_CASE' && updated.medicalCaseId) navigate(casePath(updated.medicalCaseId)); else state.reload(); }
+    try { const updated = await service.review(id, action, action === 'LINK_CASE' ? target : undefined); if (!mounted.current) return; setConfirmResolve(false); if (action === 'OPEN_CASE' && updated.medicalCaseId) navigate(casePath(updated.medicalCaseId)); else state.reload(); }
     catch (cause) { if (mounted.current) setError(safeError(cause)); } finally { locked.current = false; if (mounted.current) setBusy(false); }
   }
-  const item: Incident | undefined = state.data;
+  const source = item ? incidentSource(item) : undefined;
   return <div className="medical-stack"><ButtonLink variant="tertiary" to={MEDICAL_ROUTES.incidents}>← Quay lại danh sách sự cố</ButtonLink>
-    {!item ? state.forbidden ? <AlertBanner type="warning" title="Không có quyền xem chi tiết sự cố">
+    {!item || !source ? state.forbidden ? <AlertBanner type="warning" title="Không có quyền xem chi tiết sự cố">
       <p>Danh sách sự cố chỉ hiển thị các báo cáo tài khoản của bạn được phép xem.</p>
       {role === 'TRAINER' && <ButtonLink variant="secondary" to="/medical/restrictions">Xem hạn chế tập luyện</ButtonLink>}
     </AlertBanner> : <State error={state.error} reload={state.reload} /> : <>
-      <PageHeader title={item.incidentCode} description={`${labelType(item.incidentType)} · ${displayDate(item.reportedAt)}`} actions={<StatusBadge family="incident" status={item.status} />} />
-      {item.status === 'RESOLVED' && (item.preSessionCheckId || item.trainingSessionId) && <AlertBanner type="info" title="Bước tiếp theo · Trainer xem lại lịch tập">
-        <p>{item.preSessionCheckId
-          ? 'Kết quả kiểm tra bất thường vẫn gắn với buổi cũ. Trainer chuẩn bị buổi tập tiếp theo sau khi ngựa đủ điều kiện.'
-          : 'Buổi đã gián đoạn được giữ trong lịch sử. Trainer đánh giá phần đã thực hiện và chuẩn bị lịch tập tiếp theo khi ngựa đủ điều kiện.'}</p>
-      </AlertBanner>}
-      <div className="medical-progress" aria-label="Trạng thái xử lý">{(['REPORTED', 'UNDER_REVIEW', 'RESOLVED'] as const).map((status) => <span key={status} className={status === item.status ? 'medical-progress-active' : ''}><StatusBadge family="incident" status={status} /></span>)}<p>Chỉ Veterinarian được chuyển trạng thái này.</p></div>
+      <PageHeader title={labelType(item.incidentType)} description={`${item.incidentCode} · báo lúc ${displayDate(item.reportedAt)}`} actions={<StatusBadge family="incident" status={item.status} />} />
+      <div className="medical-progress" aria-label="Trạng thái xử lý">{(['REPORTED', 'UNDER_REVIEW', 'RESOLVED'] as const).map((status) => <span key={status} className={status === item.status ? 'medical-progress-active' : ''}><StatusBadge family="incident" status={status} /></span>)}</div>
       <div className="medical-grid medical-treatment-layout"><div className="medical-stack">
-        <Card title="Báo cáo"><div className="medical-incident-details"><KeyValue label="Ngựa" value={<IncidentHorse horseId={item.horseId} read={horse} />} /><KeyValue label="Thời điểm phát hiện" value={<time dateTime={item.observedAt}>{displayDate(item.observedAt)}</time>} /><KeyValue label="Loại" value={labelType(item.incidentType)} /><KeyValue label="Mức độ (người báo)" value={viLabel(item.observedSeverity)} /><KeyValue label="Mô tả" value={item.description || 'Không có mô tả.'} /><KeyValue label="Người báo" value={<IncidentReporter userId={item.reportedByUserId} actorId={actorId ?? 0} read={item.reportedByName ? undefined : reporter} role={reporterRole(item)} name={item.reportedByName} />} /></div></Card>
-        <Card title="Nguồn"><p><strong>{item.preSessionCheckId ? 'Groom phát hiện khi kiểm tra trước buổi tập' : item.trainingSessionId ? 'Phát hiện khi đang cưỡi, buổi tập đã dừng' : item.careTaskId ? 'Groom phát hiện khi làm công việc chăm sóc' : 'Báo cáo trực tiếp'}</strong></p><p className="text-caption">{item.preSessionCheckId ? `Lần kiểm tra #${item.preSessionCheckId}` : item.trainingSessionId ? `Buổi tập #${item.trainingSessionId}` : item.careTaskId ? `Công việc #${item.careTaskId}` : 'Không gắn với buổi tập hay công việc nào'}</p></Card>
-        <Card title="Diễn biến"><p><time dateTime={item.reportedAt}>{displayDate(item.reportedAt)}</time> · Đã báo cáo</p><p>Trạng thái hiện tại: {viLabel(item.status)}</p></Card>
-      </div><aside className="medical-stack"><IncidentHorseStatus horseId={item.horseId} read={horse} /><Card title={role === 'VETERINARIAN' ? 'Bước xử lý tiếp theo' : 'Theo dõi xử lý'}>
-        {item.medicalCaseId && role === 'VETERINARIAN' && <ButtonLink variant="primary" to={casePath(item.medicalCaseId)}>Ca y tế {item.medicalCaseId}</ButtonLink>}
-        {role !== 'VETERINARIAN' ? <p>{item.status === 'REPORTED' ? 'Báo cáo đã được ghi nhận, đang chờ Veterinarian tiếp nhận.' : item.status === 'UNDER_REVIEW' ? 'Veterinarian đang xử lý báo cáo. Theo dõi phân công và hướng dẫn được giao cho bạn.' : 'Veterinarian đã đóng sự cố. Điều kiện của buổi tập vẫn được kiểm tra riêng trước khi bắt đầu.'}</p> : item.status === 'RESOLVED' ? <p>Sự cố đã được xử lý xong. Điều kiện tập luyện, ca y tế và kết quả kiểm tra trước buổi tập được quản lý riêng.</p> : <div className="medical-stack">
+        <Card title="Ai báo và báo từ đâu"><div className="medical-incident-who">
+          <div className="medical-incident-person"><span className="medical-incident-avatar" aria-hidden="true">{(item.reportedByName || reporterRole(item)).trim().charAt(0).toUpperCase()}</span>
+            <div><strong><IncidentReporter userId={item.reportedByUserId} actorId={actorId ?? 0} read={item.reportedByName ? undefined : reporter} name={item.reportedByName} /></strong><span>{reporterRole(item)}</span></div></div>
+          <KeyValue label="Nguồn" value={<span><strong>{source.label}</strong><br /><small>{source.detail}</small></span>} />
+          <KeyValue label="Phát hiện lúc" value={<time dateTime={item.observedAt}>{displayDate(item.observedAt)}</time>} />
+        </div></Card>
+        <Card title="Nội dung báo cáo"><div className="medical-stack">
+          <div className="medical-incident-details"><KeyValue label="Ngựa" value={<IncidentHorse horseId={item.horseId} read={horse} />} /><KeyValue label="Vấn đề" value={<span className="medical-incident-problem">{labelType(item.incidentType)}<Severity value={item.observedSeverity} /></span>} /></div>
+          <blockquote className="medical-incident-quote">{item.description || 'Người báo không ghi mô tả.'}</blockquote>
+        </div></Card>
+      </div><aside className="medical-stack">
+        {role === 'VETERINARIAN' ? <Card title={item.status === 'RESOLVED' ? 'Đã xử lý' : 'Quyết định xử lý'}>
           {error && <AlertBanner feedback type="danger" title={error} />}
-          {item.status === 'REPORTED' && !item.medicalCaseId && <><Button disabled={busy} onClick={() => review('OPEN_CASE')}>Mở ca y tế</Button><OptionalFields label="Liên kết với ca y tế có sẵn" reveal={Boolean(caseId)}><TextField label="Mã ca y tế đang mở" type="number" min={1} step={1} value={caseId} onChange={(event) => setCaseId(event.target.value)} /><Button variant="secondary" disabled={busy || !caseId} onClick={() => review('LINK_CASE')}>Liên kết ca y tế</Button></OptionalFields></>}
-          <p className="text-caption">Sau khi xử lý xong báo cáo, chọn Đóng sự cố. Thao tác này không đóng ca y tế, gỡ hạn chế hoặc đổi kết quả kiểm tra trước buổi tập.</p>
-          <Button variant="secondary" disabled={busy} onClick={() => review('RESOLVE')}>Đóng sự cố</Button>
-        </div>}
-      </Card></aside></div>
+          {canDecide ? <div className="medical-incident-options">
+            <section className="medical-incident-option medical-incident-option-primary"><h3>Mở ca y tế mới</h3><p>Khám, ghi chẩn đoán, lập phác đồ và đặt hạn chế tập nếu cần.</p><Button disabled={busy} onClick={() => review('OPEN_CASE')}>Mở ca y tế</Button></section>
+            <section className="medical-incident-option"><h3>Gắn vào ca đang mở</h3>{openCases === undefined && service.openCases ? <p className="text-caption">Đang tải ca y tế của ngựa…</p>
+              : openCases && openCases.length === 0 ? <p className="text-caption">Ngựa này không có ca y tế đang mở.</p>
+              : <><SelectField label="Ca y tế của ngựa này" value={caseId} placeholder="Chọn ca y tế" options={(openCases ?? []).map((c) => ({ value: String(c.id), label: `Ca #${c.id} · mở ${displayDate(c.openedAt)}${c.reason ? ` · ${c.reason.slice(0, 40)}` : ''}` }))} onChange={(event) => setCaseId(event.target.value)} />
+                <Button variant="secondary" disabled={busy || !caseId} onClick={() => review('LINK_CASE')}>Gắn vào ca</Button></>}</section>
+            <section className="medical-incident-option"><h3>Đóng sự cố</h3><p>Không cần theo dõi y tế, ví dụ ngựa đã ổn khi bạn kiểm tra.</p><Button variant="secondary" disabled={busy} onClick={() => setConfirmResolve(true)}>Đóng sự cố</Button></section>
+          </div>
+          : item.status === 'UNDER_REVIEW' ? <div className="medical-stack">
+            <p>Sự cố đang được xử lý trong ca y tế. Khám, điều trị và hạn chế tập ghi trong ca.</p>
+            {item.medicalCaseId && <ButtonLink variant="primary" to={casePath(item.medicalCaseId)}>Mở ca y tế #{item.medicalCaseId}</ButtonLink>}
+            <Button variant="secondary" disabled={busy} onClick={() => setConfirmResolve(true)}>Đóng sự cố</Button>
+            <p className="text-caption">Đóng sự cố không đóng ca y tế và không gỡ hạn chế tập luyện.</p>
+          </div>
+          : <div className="medical-stack"><p>Sự cố đã đóng.{item.medicalCaseId ? ' Ca y tế và hạn chế tập được quản lý riêng.' : ''}</p>{item.medicalCaseId && <ButtonLink variant="secondary" to={casePath(item.medicalCaseId)}>Ca y tế #{item.medicalCaseId}</ButtonLink>}</div>}
+        </Card> : <Card title="Theo dõi xử lý"><p>{item.status === 'REPORTED' ? 'Báo cáo đã được ghi nhận, đang chờ Veterinarian tiếp nhận.' : item.status === 'UNDER_REVIEW' ? 'Veterinarian đang xử lý trong ca y tế. Theo dõi hạn chế tập và công việc được giao cho bạn.' : 'Veterinarian đã đóng sự cố.'}</p></Card>}
+        {item.status === 'RESOLVED' && (item.preSessionCheckId || item.trainingSessionId) && <NextStep title="Lên lịch buổi tập tiếp theo khi ngựa sẵn sàng" owner="Trainer phụ trách ngựa">
+          <p>{item.preSessionCheckId ? 'Buổi tập cũ vẫn bị chặn theo kết quả kiểm tra bất thường. Trainer tạo buổi mới; Groom kiểm tra lại trước buổi.' : 'Buổi tập bị gián đoạn được giữ trong lịch sử. Trainer đánh giá phần đã tập rồi tạo buổi mới.'}</p>
+        </NextStep>}
+        <IncidentHorseStatus horseId={item.horseId} read={horse} />
+      </aside></div>
+      <Modal open={confirmResolve} title="Đóng sự cố này?" onClose={() => { if (!busy) setConfirmResolve(false); }} footer={<><Button variant="secondary" disabled={busy} onClick={() => setConfirmResolve(false)}>Quay lại</Button><Button disabled={busy} onClick={() => review('RESOLVE')}>{busy ? 'Đang đóng…' : 'Xác nhận đóng sự cố'}</Button></>}>
+        <p>{labelType(item.incidentType)} · {item.incidentCode}</p>
+        <p>Người báo sẽ thấy sự cố đã được xử lý. Ca y tế, hạn chế tập luyện và kết quả kiểm tra trước buổi tập không thay đổi.</p>
+      </Modal>
     </>}
   </div>;
 }
