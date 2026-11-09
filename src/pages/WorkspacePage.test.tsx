@@ -43,3 +43,19 @@ it('shows an error without invented arrivals and retries the live resource', asy
   expect(await screen.findByText('Test arrival')).toBeInTheDocument();
   expect(state.request).toHaveBeenCalledTimes(2);
 });
+
+it('puts today\'s care progress and overdue work first for the Groom', async () => {
+  vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-11-09T05:00:00Z'));
+  state.user.roles = ['GROOM'];
+  const task = { id: 1, horseId: 3, horseName: 'Late horse', horseCode: 'RH-3', source: 'NUTRITION', taskType: 'FEEDING', taskDate: '2026-11-09', slot: '07:00', instructions: 'HAY: 2 kg', groomUserId: 15, groomName: 'Workspace Tester', boxCode: 'A-1', completedAt: null, cancelledAt: null, cancellationReason: null };
+  state.request.mockReset().mockImplementation((path: string) => Promise.resolve(path.startsWith('/api/stable-care/tasks?date=2026-11-09') ? [task, { ...task, id: 2, slot: '18:00', horseName: 'Evening horse' }] : []));
+  try {
+    mount();
+    expect(await screen.findByRole('heading', { name: 'Chăm sóc hôm nay' })).toBeInTheDocument();
+    expect(screen.getByText('Late horse')).toBeInTheDocument();
+    expect(screen.getByText('Cỏ khô: 2 kg')).toBeInTheDocument();
+    expect(screen.queryByText('Evening horse')).not.toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /chăm sóc hằng ngày/i })[0]).toHaveAttribute('href', '/care/daily');
+    expect(state.request).not.toHaveBeenCalledWith('/api/stable-care/inventory', expect.anything());
+  } finally { vi.useRealTimers(); }
+});

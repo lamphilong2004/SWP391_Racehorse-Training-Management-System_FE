@@ -32,7 +32,7 @@ export function GroomTreatmentAccess() {
     [actor, token, auth.handleApiError]);
   if (auth.status !== 'authenticated' || actor?.accountStatus !== 'ACTIVE' || !actor.roles.includes('GROOM')) return <AlertBanner type="danger" title="Không có quyền truy cập" />;
   if (!service) return <AlertBanner type="danger" title="Đăng nhập lại để xem công việc được giao" />;
-  return <AppShell user={{ fullName: actor.fullName, role: 'GROOM' }} breadcrumb={[{ label: 'Chăm sóc chuồng trại' }, { label: 'Công việc chăm sóc' }]}>
+  return <AppShell user={{ fullName: actor.fullName, role: 'GROOM' }} breadcrumb={[{ label: 'Chăm sóc chuồng trại' }, { label: 'Công việc điều trị' }]}>
     <UiPreviewNotice />
     <GroomTasks key={`${actor.id}:${auth.expiresAt}`} service={service} />
   </AppShell>;

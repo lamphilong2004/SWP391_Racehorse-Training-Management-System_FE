@@ -53,7 +53,7 @@ describe('deferred sidebar modules', () => {
       </MemoryRouter>,
     );
     const nav = screen.getByRole('navigation', { name: 'Chính' });
-    expect(within(nav).getAllByRole('link').map((link) => link.textContent)).toEqual(['Hôm nay', 'Công việc chăm sóc', 'Chăm sóc hằng ngày', 'Kho & yêu cầu bổ sung', 'Sự cố']);
+    expect(within(nav).getAllByRole('link').map((link) => link.textContent)).toEqual(['Hôm nay', 'Công việc điều trị', 'Chăm sóc hằng ngày', 'Kho & yêu cầu bổ sung', 'Sự cố']);
     expect(within(nav).getByText('Công việc của tôi')).toBeInTheDocument();
     expect(visibleSections('CLUB_MANAGER')[2].items.map((item) => item.label)).toEqual(['Kho', 'Nhật ký hệ thống']);
   });

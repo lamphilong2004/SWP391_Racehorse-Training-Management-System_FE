@@ -85,7 +85,7 @@ it('Vet assigns treatment -> normal Groom login completes -> Vet rereads progres
     await screen.findByRole('button', { name: 'Menu tài khoản' });
   }
   await login(groom);
-  fireEvent.click(await screen.findByRole('link', { name: 'Công việc chăm sóc' }));
+  fireEvent.click(await screen.findByRole('link', { name: 'Công việc điều trị' }));
   expect(router.state.location.pathname).toBe('/care/tasks');
   fireEvent.click(await screen.findByRole('button', { name: 'Tất cả được giao' }));
   fireEvent.click(await screen.findByRole('checkbox', { name: 'Hoàn thành công việc 1' }));
