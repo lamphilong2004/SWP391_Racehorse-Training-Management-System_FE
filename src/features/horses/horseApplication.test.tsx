@@ -36,6 +36,7 @@ function mount(path = '/horses', options: { role?: RoleCode; anonymous?: boolean
     if (options.offline) throw new Error('network fixture');
     if (options.status) return failure(options.status);
     if (path === '/api/horses/next-code') return ok({ horseCode: 'RH-005' });
+    if (path.endsWith('/photos/primary')) return new Response(null, { status: 204 });
     if (path === '/api/horses' && method === 'POST') {
       if (options.create) return options.create();
       const saved = { ...horse(82), horseCode: 'RH-006', ...JSON.parse(String(init?.body)), lifecycle: 'DRAFT' as const }; store.push(saved); return ok(saved, 201);
@@ -43,8 +44,8 @@ function mount(path = '/horses', options: { role?: RoleCode; anonymous?: boolean
     if (path === '/api/horses' && method === 'GET') return ok(options.list ? options.list(url) : { items: store, page: 0, size: 20, totalItems: store.length, totalPages: 1 });
     if (/^\/api\/horses\/\d+$/.test(path)) return ok(store.find((h) => h.id === Number(path.split('/')[3])) ?? horse());
     if (path === '/api/stable-boxes') return ok([
-      { id: 31, boxCode: 'B-01', yard: 'Fixture yard', status: 'FREE', currentHorse: null },
-      { id: 32, boxCode: 'B-02', yard: 'Fixture yard', status: 'OCCUPIED', currentHorse: { id: 91, name: 'Other fixture', horseCode: 'FIX-91' } },
+      { id: 32, boxCode: 'B-02', yard: 'Full fixture yard', status: 'OCCUPIED', currentHorse: { id: 91, name: 'Other fixture', horseCode: 'FIX-91' } },
+      { id: 31, boxCode: 'B-01', yard: 'Free fixture yard', status: 'FREE', currentHorse: null },
     ]);
     if (!setupAvailable) return failure(404);
     if (path === '/api/admin/users') return ok({ items: [{ id: 17, userCode: 'FIX-OWN', fullName: 'Fixture Owner', email: 'owner@fixture.test', roles: ['HORSE_OWNER'], accountStatus: 'ACTIVE' }], totalItems: 1, page: 0, size: 100, totalPages: 1 });
@@ -194,6 +195,8 @@ it('shows FREE/OCCUPIED boxes without fabricating an assignment when its API is 
   const { requests } = mount('/horses/81/edit'); await screen.findByText('Không tải được dữ liệu thiết lập ngựa');
   await userEvent.click(screen.getByRole('button', { name: 'Xếp ô chuồng' }));
   expect(await screen.findByText('Chuồng B-02')).toBeInTheDocument();
+  expect(screen.getByLabelText('Khu chuồng')).toHaveValue('');
+  expect(screen.getByRole('option', { name: 'Tất cả khu chuồng' })).toBeInTheDocument();
   expect(screen.getByText('Đang có ngựa')).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: /B-02/ })).not.toBeInTheDocument();
   await userEvent.click(screen.getByRole('button', { name: /B-01/ }));
@@ -228,6 +231,13 @@ it('opens a pending horse profile directly instead of sending the user back to t
   await screen.findByRole('heading', { name: 'Fixture Draft · FIX-81' });
   await userEvent.click(screen.getByRole('button', { name: 'Xem hồ sơ' }));
   await screen.findByRole('heading', { name: 'Fixture Draft' });
+  expect(requests.every((request) => request.method === 'GET')).toBe(true);
+});
+it('reads the authenticated primary photo endpoint even without a primaryPhotoUrl projection', async () => {
+  const { requests } = mount('/horses/pending-activation', { setup: true });
+  await screen.findByRole('heading', { name: 'Fixture Draft · FIX-81' });
+  await waitFor(() => expect(requests).toContainEqual({ method: 'GET', path: '/api/horses/81/photos/primary' }));
+  expect(requests.some((request) => request.path === '/api/horses/81/photo')).toBe(false);
   expect(requests.every((request) => request.method === 'GET')).toBe(true);
 });
 it.each(['HEAD_TRAINER', 'TRAINER', 'WORK_RIDER', 'VETERINARIAN', 'GROOM', 'HORSE_OWNER'] as const)('denies %s creating horses before business requests', async (role) => {

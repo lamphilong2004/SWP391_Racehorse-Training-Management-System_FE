@@ -33,7 +33,7 @@ export function AssignBoxModal({ open, horse, onClose, onAssigned }: AssignBoxMo
 
   const apply = useCallback((all: StableBox[]) => {
     setBoxes(all);
-    setYard((current) => current || all.find((b) => b.yard)?.yard || '');
+    setYard((current) => all.some((box) => box.yard === current) ? current : '');
   }, []);
 
   // Mounted only while open (see PedigreeOwnershipPage), so every opening starts with fresh state.
@@ -100,7 +100,7 @@ export function AssignBoxModal({ open, horse, onClose, onAssigned }: AssignBoxMo
               {yards.length > 0 && (
                 <div className={styles.yard}>
                   <SelectField label="Khu chuồng" value={yard} onChange={(e) => { setYard(e.target.value); setSelectedId(undefined); }}
-                    options={yards.map((y) => ({ value: y, label: yardLabel(y) ?? y }))} />
+                    options={[{ value: '', label: 'Tất cả khu chuồng' }, ...yards.map((y) => ({ value: y, label: yardLabel(y) ?? y }))]} />
                 </div>
               )}
               <span className={styles.spacer} />

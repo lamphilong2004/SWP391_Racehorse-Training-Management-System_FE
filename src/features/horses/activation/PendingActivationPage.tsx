@@ -11,6 +11,7 @@ import shared from '../shared/horses.module.css';
 import styles from './PendingActivationPage.module.css';
 import { serverText } from '../../../shared/serverText';
 import { HorsePhotoImage } from '../shared/HorsePhotoImage';
+import { businessDataMode } from '../../../shared/data/businessData';
 
 interface PendingHorse {
   status: ActivationStatus;
@@ -134,8 +135,8 @@ function PendingHorseCard({ status, horse, onView, onComplete }: PendingHorse & 
     <Card className={styles.horseCard}>
       <div className={styles.horseBody}>
         <div className={styles.horseHeader}>
-          {horse.primaryPhotoUrl
-            ? <HorsePhotoImage path={`/api/horses/${horse.id}/photo`} name={horse.name} thumbnail className={styles.photo} />
+          {businessDataMode() === 'api'
+            ? <HorsePhotoImage path={`/api/horses/${horse.id}/photos/primary`} name={horse.name} thumbnail className={styles.photo} />
             : <span className={styles.photoEmpty} title="Chưa có ảnh hồ sơ"><Icon name="horseshoe" size={28} /></span>}
           <div className={styles.horseName}>
             <h2 className={styles.horseTitle}>{`${horse.name} · ${horse.horseCode}`}</h2>
