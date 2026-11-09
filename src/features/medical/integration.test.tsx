@@ -220,20 +220,46 @@ it('keeps a blocked treatment edit and shows completed task history', async () =
 
 it('does not show case closure success when the backend returns 409', async () => {
   authSession.save('jwt', 3600, false);
+  const examined = { ...medicalCase, examinations: [{ id: 1, caseId: 9, horseId: 14, examinedAt: '2026-10-16T02:00:00Z' }] };
   const fetcher = vi.fn(async (url: string, init?: RequestInit) => {
     if (url.endsWith('/api/auth/me')) return ok(vet);
-    if (url.endsWith('/api/medical/cases/9') && init?.method === 'GET') return ok(medicalCase);
+    if (url.endsWith('/api/medical/cases/9') && init?.method === 'GET') return ok(examined);
     if (url.endsWith('/api/horses/14/training-availability')) return ok({ horseId: 14, availability: 'AVAILABLE' });
     if (url.includes('/treatment-tasks')) return ok(page([]));
+    if (url.includes('/api/medical/restrictions?')) return ok(page([]));
     if (url.endsWith('/api/medical/cases/9/close')) return fail(409, 'CONFLICT', 'Linked incident remains unresolved');
     throw new Error(`Unexpected request: ${url}`);
   });
   vi.stubGlobal('fetch', fetcher);
   mount('/medical/cases/9');
-  fireEvent.click(await screen.findByRole('button', { name: 'Đóng ca' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Xác nhận đóng' }));
+  expect(await screen.findByText('Ca đã đủ điều kiện đóng.')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Đóng ca' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Xác nhận đóng ca' }));
   expect(await screen.findByText('Linked incident remains unresolved')).toBeInTheDocument();
-  expect(screen.getByText('Đóng ca 9?')).toBeInTheDocument();
+  expect(fetcher.mock.calls.filter(([url]) => String(url).endsWith('/close'))).toHaveLength(1);
+});
+
+it('lists an unresolved linked incident as a closure blocker with an inline resolve action', async () => {
+  authSession.save('jwt', 3600, false);
+  const linked = { ...medicalCase, incidentIds: [7], examinations: [{ id: 1, caseId: 9, horseId: 14, examinedAt: '2026-10-16T02:00:00Z' }] };
+  let incidentStatus = 'UNDER_REVIEW';
+  const incident = () => ({ id: 7, incidentCode: 'INC-0007', horseId: 14, reportedByUserId: 5, medicalCaseId: 9, incidentType: 'LAMENESS', observedSeverity: 'MEDIUM', description: 'Uneven gait', observedAt: '2026-10-16T01:00:00Z', reportedAt: '2026-10-16T01:00:00Z', status: incidentStatus });
+  const fetcher = vi.fn(async (url: string, init?: RequestInit) => {
+    if (url.endsWith('/api/auth/me')) return ok(vet);
+    if (url.endsWith('/api/medical/cases/9') && init?.method === 'GET') return ok(linked);
+    if (url.endsWith('/api/horses/14/training-availability')) return ok({ horseId: 14, availability: 'AVAILABLE' });
+    if (url.includes('/api/medical/restrictions?')) return ok(page([]));
+    if (url.endsWith('/api/incidents/7/review')) { incidentStatus = 'RESOLVED'; return ok(incident()); }
+    if (url.endsWith('/api/incidents/7')) return ok(incident());
+    throw new Error(`Unexpected request: ${url}`);
+  });
+  vi.stubGlobal('fetch', fetcher);
+  mount('/medical/cases/9');
+  expect(await screen.findByText('1 sự cố chưa đóng.')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Đóng ca' })).toBeDisabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Đóng sự cố' }));
+  expect(await screen.findByText('Ca đã đủ điều kiện đóng.')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Đóng ca' })).toBeEnabled();
 });
 
 it('filters only the loaded case page and resets both search and status without a business mutation', async () => {

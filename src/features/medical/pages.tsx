@@ -2,7 +2,7 @@ import { clubDateTime, parseClubDateTime } from '../../shared/clubCalendar';
 import { boxLabel } from '../../shared/stableBox';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { ActionBar, AlertBanner, ButtonLink, Button, Card, DataTable, EmptyState, Icon, KeyValue, MetricCard, NextStep, StatusBadge, TableToolbar, SelectField, TextField, Tabs } from '../../design-system';
+import { AlertBanner, ButtonLink, Button, Card, DataTable, EmptyState, Icon, KeyValue, MetricCard, NextStep, StatusBadge, TableToolbar, SelectField, TextField, Tabs } from '../../design-system';
 import { PageHeader } from '../../layout/PageHeader';
 import { MEDICAL_ROUTES as ROUTES } from './paths';
 import { MedicalForm } from './MedicalForm';
@@ -13,6 +13,7 @@ import type { ClinicalSeverity, MedicalCase, MedicalService, RecoveryStatus, Tra
 import { useMedicalRuntime } from './runtimeContext';
 import { dateTime } from '../evaluation/models';
 import { medicalErrorMessage } from './errors';
+import { CaseClosure } from './CaseClosure';
 import './medical.css';
 import { viLabel } from '../../shared/viLabels';
 import { formatDate } from '../horses/shared/format';
@@ -211,9 +212,6 @@ export function CaseDetailPage() {
 function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }) {
   const { service } = useMedicalRuntime();
   const [panel, setPanel] = useState('record');
-  const [closeError, setCloseError] = useState('');
-  const [closing, setClosing] = useState(false);
-  const [confirmClose, setConfirmClose] = useState(false);
   const closed = item.status === 'CLOSED';
   const needsExamination = !item.examinations.length && !item.reexaminations.length;
   const needsRecovery = (item.injuries.length > 0 || !!item.treatmentPlan) && latest(item.reexaminations)?.recoveryStatus !== 'RECOVERED';
@@ -239,13 +237,7 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
       <Card title="Thể trạng hiện tại"><KeyValue label="Chẩn đoán gần nhất" value={latest(item.examinations)?.diagnosis ?? (item.examinations.length ? 'Chưa có chẩn đoán' : 'Đang chờ khám')} />
         <KeyValue label="Hồi phục" value={viLabel(latest(item.reexaminations)?.recoveryStatus, 'Chưa ghi nhận tái khám')} />
         <KeyValue label="Lần khám tiếp theo" value={item.treatmentPlan?.reexaminationDate ? formatDate(item.treatmentPlan?.reexaminationDate) : 'Chưa lên lịch'} /></Card>
-      {!closed && <Card className="medical-close-panel" title="Đóng ca y tế"><p>Trước khi đóng, kiểm tra lần khám, công việc điều trị, sự cố liên quan và hạn chế. Nếu ca có chấn thương hoặc điều trị, lần tái khám gần nhất cần ghi Đã hồi phục.</p>
-        {closeError && <AlertBanner feedback type="danger" title={closeError} />}
-        {confirmClose ? <ActionBar leading={<span>Đóng ca {item.id}?</span>}><Button variant="secondary" disabled={closing} onClick={() => setConfirmClose(false)}>Hủy</Button><Button disabled={closing} onClick={async () => {
-          setClosing(true); setCloseError('');
-          try { await service.closeCase(item.id); reload(); } catch (failure) { setCloseError(medicalErrorMessage(failure, 'Không đóng được ca y tế.')); } finally { setClosing(false); }
-        }}>{closing ? 'Đang đóng…' : 'Xác nhận đóng'}</Button></ActionBar> :
-          <ActionBar leading={<span>Chỉ đóng sau khi hoàn tất các điều kiện của ca.</span>}><Button variant="secondary" onClick={() => setConfirmClose(true)}>Đóng ca</Button></ActionBar>}</Card>}
+      {!closed && <CaseClosure item={item} needsExamination={needsExamination} needsRecovery={needsRecovery} reload={reload} openTab={(tab) => { setPanel(tab); document.getElementById(`case-tab-${tab}`)?.focus(); }} />}
     </div>
     <div role="tabpanel" id="case-panel-examination" aria-labelledby="case-tab-examination" hidden={panel !== 'examination'} className="medical-stack">
       <Card title="Các lần khám"><History count={item.examinations.length} empty="Chưa có lần khám nào">{item.examinations.map((exam) =>
