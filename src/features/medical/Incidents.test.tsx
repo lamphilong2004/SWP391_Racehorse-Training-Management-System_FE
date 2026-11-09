@@ -137,7 +137,7 @@ it('shows the reporter name when a directory reader is available and keeps the i
   expect(await screen.findByText('Demo GROOM')).toBeInTheDocument(); expect(reporter).toHaveBeenCalledWith(6);
   unmount();
   render(<MemoryRouter><IncidentListPage service={service()} role="VETERINARIAN" actorId={7} /></MemoryRouter>);
-  expect(await screen.findByText('Người dùng 6')).toBeInTheDocument();
+  expect(await screen.findByText(/· mã người dùng 6$/)).toBeInTheDocument();
 });
 it('names the signed-in reporter "You" on the detail page', async () => {
   const value = service();

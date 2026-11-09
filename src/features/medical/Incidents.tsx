@@ -86,7 +86,7 @@ export function IncidentListPage({ service, role, actorId, horse, reporter, stab
       { key: 'code', header: 'SỰ CỐ', render: (item) => <Link to={incidentPath(item.id)}>{item.incidentCode}</Link> },
       { key: 'horse', header: 'NGỰA', render: (item) => <IncidentHorse horseId={item.horseId} read={horse} /> },
       { key: 'observation', header: 'QUAN SÁT', render: (item) => <span>{labelType(item.incidentType)}<br /><small>{viLabel(item.observedSeverity)}</small></span> },
-      { key: 'reporter', header: 'NGƯỜI BÁO', nowrap: true, render: (item) => <IncidentReporter userId={item.reportedByUserId} actorId={actorId} read={reporter} /> },
+      { key: 'reporter', header: 'NGƯỜI BÁO', nowrap: true, render: (item) => <IncidentReporter userId={item.reportedByUserId} actorId={actorId} read={reporter} role={reporterRole(item)} /> },
       { key: 'reported', header: 'THỜI ĐIỂM BÁO', nowrap: true, render: (item) => <time dateTime={item.reportedAt}>{displayDate(item.reportedAt)}</time> },
       { key: 'status', header: 'TRẠNG THÁI', render: (item) => <StatusBadge family="incident" status={item.status} /> },
     ]} /><div className="medical-actions"><Button variant="secondary" disabled={!page} onClick={() => setPage(page - 1)}>Trước</Button><span>Trang {page + 1} · {state.data.totalElements} báo cáo</span><Button variant="secondary" disabled={(page + 1) * state.data.size >= state.data.totalElements} onClick={() => setPage(page + 1)}>Sau</Button></div></div>}</Card>
@@ -99,10 +99,14 @@ function IncidentHorse({ horseId, read }: { horseId: number; read?: HorseReader 
   const state = useIncidentRead(load);
   return state.data ? <span>{state.data.name}<br /><small>{state.data.horseCode}</small></span> : <span>Ngựa {horseId}</span>;
 }
-function IncidentReporter({ userId, actorId, read }: { userId: number; actorId: number; read?: UserReader }) {
+/** Without user-directory access the reporter is named by the role the source allows (Groom, or the session's Work Rider/Trainer). */
+function reporterRole(item: Pick<Incident, 'preSessionCheckId' | 'trainingSessionId' | 'careTaskId'>) {
+  return item.preSessionCheckId || item.careTaskId ? 'Groom' : item.trainingSessionId ? `Work Rider hoặc Trainer của buổi tập #${item.trainingSessionId}` : 'Nhân viên';
+}
+function IncidentReporter({ userId, actorId, read, role }: { userId: number; actorId: number; read?: UserReader; role: string }) {
   const load = useCallback(() => read ? read(userId) : Promise.reject(new Error('No user directory access')), [read, userId]);
   const state = useIncidentRead(load);
-  return <>{userId === actorId ? 'Bạn' : state.data ?? `Người dùng ${userId}`}</>;
+  return <>{userId === actorId ? 'Bạn' : state.data ?? `${role} · mã người dùng ${userId}`}</>;
 }
 function IncidentHorseStatus({ horseId, read }: { horseId: number; read?: HorseReader }) {
   const load = useCallback(() => read ? read(horseId) : Promise.reject(new Error('Identity unavailable')), [read, horseId]);
@@ -143,7 +147,7 @@ function IncidentDetail({ id, service, role, actorId, horse, reporter }: { id: n
       </AlertBanner>}
       <div className="medical-progress" aria-label="Trạng thái xử lý">{(['REPORTED', 'UNDER_REVIEW', 'RESOLVED'] as const).map((status) => <span key={status} className={status === item.status ? 'medical-progress-active' : ''}><StatusBadge family="incident" status={status} /></span>)}<p>Chỉ Veterinarian được chuyển trạng thái này.</p></div>
       <div className="medical-grid medical-treatment-layout"><div className="medical-stack">
-        <Card title="Báo cáo"><div className="medical-incident-details"><KeyValue label="Ngựa" value={<IncidentHorse horseId={item.horseId} read={horse} />} /><KeyValue label="Thời điểm phát hiện" value={<time dateTime={item.observedAt}>{displayDate(item.observedAt)}</time>} /><KeyValue label="Loại" value={labelType(item.incidentType)} /><KeyValue label="Mức độ (người báo)" value={viLabel(item.observedSeverity)} /><KeyValue label="Mô tả" value={item.description || 'Không có mô tả.'} /><KeyValue label="Người báo" value={<IncidentReporter userId={item.reportedByUserId} actorId={actorId ?? 0} read={reporter} />} /></div></Card>
+        <Card title="Báo cáo"><div className="medical-incident-details"><KeyValue label="Ngựa" value={<IncidentHorse horseId={item.horseId} read={horse} />} /><KeyValue label="Thời điểm phát hiện" value={<time dateTime={item.observedAt}>{displayDate(item.observedAt)}</time>} /><KeyValue label="Loại" value={labelType(item.incidentType)} /><KeyValue label="Mức độ (người báo)" value={viLabel(item.observedSeverity)} /><KeyValue label="Mô tả" value={item.description || 'Không có mô tả.'} /><KeyValue label="Người báo" value={<IncidentReporter userId={item.reportedByUserId} actorId={actorId ?? 0} read={reporter} role={reporterRole(item)} />} /></div></Card>
         <Card title="Nguồn"><p><strong>{item.preSessionCheckId ? 'Groom phát hiện khi kiểm tra trước buổi tập' : item.trainingSessionId ? 'Phát hiện khi đang cưỡi, buổi tập đã dừng' : item.careTaskId ? 'Groom phát hiện khi làm công việc chăm sóc' : 'Báo cáo trực tiếp'}</strong></p><p className="text-caption">{item.preSessionCheckId ? `Lần kiểm tra #${item.preSessionCheckId}` : item.trainingSessionId ? `Buổi tập #${item.trainingSessionId}` : item.careTaskId ? `Công việc #${item.careTaskId}` : 'Không gắn với buổi tập hay công việc nào'}</p></Card>
         <Card title="Diễn biến"><p><time dateTime={item.reportedAt}>{displayDate(item.reportedAt)}</time> · Đã báo cáo</p><p>Trạng thái hiện tại: {viLabel(item.status)}</p></Card>
       </div><aside className="medical-stack"><IncidentHorseStatus horseId={item.horseId} read={horse} /><Card title={role === 'VETERINARIAN' ? 'Bước xử lý tiếp theo' : 'Theo dõi xử lý'}>
