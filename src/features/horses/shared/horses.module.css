@@ -181,3 +181,16 @@
 /* 2026-11 refresh: section titles match the shared Card heading (emerald dot, navy text). */
 :global([data-ui-v3]) .cardTitle { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 700; color: var(--color-brand-primary); }
 :global([data-ui-v3]) .cardTitle::before { content: ''; width: 8px; height: 8px; flex-shrink: 0; border-radius: 999px; background: var(--color-primary-600); box-shadow: 0 0 0 4px var(--color-primary-50); }
+
+/* Horse registry (2026-11-09): lifecycle tabs with counts, neutral pending pill, muted empty values. */
+.lifecycleTabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.lifecycleTabs button { display: inline-flex; align-items: center; gap: 10px; min-height: 40px; padding: 6px 14px; font: 600 14px/20px var(--font-family); color: var(--color-text-secondary); background: var(--color-bg-surface); border: 1px solid var(--color-border-default); border-radius: 999px; cursor: pointer; }
+.lifecycleTabs button strong { min-width: 24px; padding: 0 8px; border-radius: 999px; font-size: 12px; line-height: 20px; text-align: center; color: var(--color-text-primary); background: var(--color-bg-subtle); font-variant-numeric: tabular-nums; }
+.lifecycleTabs button:hover { border-color: var(--color-primary-600); color: var(--color-text-primary); }
+.lifecycleTabs button[aria-pressed='true'] { color: #ffffff; background: var(--color-brand-primary, var(--color-primary-600)); border-color: transparent; }
+.lifecycleTabs button[aria-pressed='true'] strong { color: var(--color-brand-primary, var(--color-primary-600)); background: #ffffff; }
+.lifecycleTabs button:focus-visible { outline: 2px solid var(--color-primary-600); outline-offset: 2px; }
+.pendingPill { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; line-height: 20px; white-space: nowrap; color: var(--color-warning-600); background: var(--color-warning-50); }
+.mutedValue { color: var(--color-text-secondary); font-size: 13px; }
+/* The banner is dark navy; secondary ink is unreadable there. */
+[data-page-banner] .startsAs { color: rgb(226 232 240 / 92%); }
