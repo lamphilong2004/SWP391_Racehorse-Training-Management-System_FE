@@ -86,6 +86,30 @@ describe('CORE-048 registration contract', () => {
   });
 });
 
+describe.each(['requestedAt', 'reviewedAt'] as const)('CORE-048 %s calendar validation', (field) => {
+  it.each([
+    '2026-02-30T01:00:00Z',
+    '2025-02-29T01:00:00+07:00',
+    '2026-04-31T23:30:00-05:00',
+    '1900-02-29T01:00:00Z',
+    '2100-02-29T01:00:00Z',
+  ])('rejects the impossible date %s instead of normalizing it', (timestamp) => {
+    expect(() => parseRegistration({ ...pending, [field]: timestamp })).toThrowError(
+      expect.objectContaining({ status: 200, code: 'INVALID_RESPONSE' }),
+    );
+  });
+
+  it.each([
+    '2024-02-29T01:00:00Z',
+    '2000-02-29T01:00:00Z',
+    '2026-03-01T00:30:00+14:00',
+    '2026-01-31T23:30:00-12:00',
+    '2026-10-18T01:00:00.123456789Z',
+  ])('preserves the valid timestamp %s with its original offset and precision', (timestamp) => {
+    expect(parseRegistration({ ...pending, [field]: timestamp })).toMatchObject({ [field]: timestamp });
+  });
+});
+
 describe('CORE-048 input validation', () => {
   it('accepts contract-compliant credentials without trimming the password', () => {
     expect(validateRegistration({ ...input, password: '  Valid123  ', confirmPassword: '  Valid123  ' })).toEqual({});

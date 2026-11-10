@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { AuthProvider, useAuth } from '../../shared/auth/AuthProvider';
@@ -161,6 +161,50 @@ describe('CORE-056 read-only Owner journey', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Xóa tìm kiếm' })); await screen.findByRole('heading', { name: 'Thunder Bolt' });
     expect(router.state.location.search).toBe('');
     expect(screen.getByRole('searchbox', { name: 'Tìm ngựa của tôi…' })).toHaveValue('');
+  });
+  it.each(['back link', 'breadcrumb'])('keeps list search across detail tabs and the %s', async (returnLink) => {
+    const { router } = mount('/owner/horses?q=Thunder');
+    await userEvent.click(await screen.findByRole('link', { name: 'Xem ngựa Thunder Bolt' }));
+    await screen.findByRole('heading', { name: 'Hồ sơ' });
+    expect(new URLSearchParams(router.state.location.search).get('q')).toBe('Thunder');
+    await userEvent.click(screen.getByRole('tab', { name: 'Sức khỏe & mức sẵn sàng' }));
+    await userEvent.click(screen.getByRole('tab', { name: 'Huấn luyện & thành tích' }));
+    expect(new URLSearchParams(router.state.location.search).get('q')).toBe('Thunder');
+    expect(new URLSearchParams(router.state.location.search).get('tab')).toBe('training');
+    const back = returnLink === 'back link' ? screen.getByRole('link', { name: '← Ngựa của tôi' })
+      : within(screen.getByRole('navigation', { name: 'Đường dẫn trang' })).getByRole('link', { name: 'Ngựa của tôi' });
+    await userEvent.click(back);
+    await screen.findByRole('heading', { name: 'Ngựa của tôi' });
+    expect(router.state.location.pathname).toBe('/owner/horses');
+    expect(router.state.location.search).toBe('?q=Thunder');
+    expect(screen.getByRole('button', { name: 'Xóa tìm kiếm' })).toBeInTheDocument();
+  });
+  it('round-trips encoded Owner search and still clears it after returning', async () => {
+    const source = createOwnerSampleTransport({ readSamples: canonicalFixture, getBusinessActor: () => ownerA }, () => new Date('2026-10-18T00:00:00Z'));
+    const query = 'Mây & Nắng + A/B?';
+    const horse = { ...await source.detail(7, { actorId: ownerA.id }), name: query };
+    const other = { ...horse, id: 9, code: 'RH-9', name: 'Other owned horse' };
+    const service: OwnerService = { async list() { return [horse, other]; }, async detail() { return horse; } };
+    const { router } = mount(`/owner/horses?${new URLSearchParams({ q: query })}`, { service });
+    expect(screen.queryByRole('heading', { name: other.name })).not.toBeInTheDocument();
+    await userEvent.click(await screen.findByRole('link', { name: `Xem ngựa ${query}` }));
+    await screen.findByRole('heading', { name: 'Hồ sơ' });
+    expect(new URLSearchParams(router.state.location.search).get('q')).toBe(query);
+    await userEvent.click(screen.getByRole('link', { name: '← Ngựa của tôi' }));
+    await screen.findByRole('button', { name: 'Xóa tìm kiếm' });
+    expect(new URLSearchParams(router.state.location.search).get('q')).toBe(query);
+    expect(screen.queryByRole('heading', { name: other.name })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Xóa tìm kiếm' }));
+    await screen.findByRole('heading', { name: other.name });
+    expect(router.state.location.search).toBe('');
+  });
+  it('returns an unfiltered detail deep link to the plain Owner list without its tab', async () => {
+    const { router } = mount('/owner/horses/7?tab=training');
+    await screen.findByRole('heading', { name: 'Buổi tập gần đây' });
+    await userEvent.click(screen.getByRole('link', { name: '← Ngựa của tôi' }));
+    await screen.findByRole('heading', { name: 'Ngựa của tôi' });
+    expect(router.state.location.search).toBe('');
+    expect(screen.getByRole('link', { name: 'Xem ngựa Thunder Bolt' })).toHaveAttribute('href', '/owner/horses/7');
   });
   it('shows a retryable safe error without leaking raw service details', async () => {
     const service: OwnerService = { list: vi.fn().mockRejectedValueOnce(new Error('CLINICAL-SECRET')).mockResolvedValue([]), detail: vi.fn() };

@@ -1,11 +1,14 @@
 import { useRef, useState } from 'react';
-import { ActionBar, AlertBanner, Button, Card, TextAreaField, TextField } from '../../design-system';
+import { ActionBar, AlertBanner, Button, Card, SelectField, TextAreaField, TextField } from '../../design-system';
+import { clubDate } from '../../shared/clubCalendar';
 import type { GroomTaskInstruction, TreatmentPlanRequest } from './models';
 import { medicalErrorMessage } from './errors';
 import { validDate } from './groomService';
 import { dateTime } from '../evaluation/models';
 
-export function TreatmentPlanEditor({ initial, onSave, onCancel, openedAt, retainedTaskCount = 0 }: {
+export function TreatmentPlanEditor({ initial, onSave, onCancel, openedAt, retainedTaskCount = 0, grooms }: {
+  /** Active Grooms the Vet may assign; when absent the editor falls back to the numeric id field. */
+  grooms?: { id: number; fullName: string }[];
   initial?: Partial<TreatmentPlanRequest>; onSave: (input: TreatmentPlanRequest) => Promise<void>;
   onCancel?: () => void;
   openedAt?: string;
@@ -33,7 +36,7 @@ export function TreatmentPlanEditor({ initial, onSave, onCancel, openedAt, retai
       return setError('Hướng dẫn nghỉ ngơi tối đa 100 ký tự và hướng dẫn chăm sóc tối đa 2000 ký tự.');
     }
     if (tasks.some((task) => !Number.isSafeInteger(task.assignedGroomUserId) || task.assignedGroomUserId < 1 || !task.instruction.trim() || !task.taskDate)) {
-      return setError('Mỗi công việc cho Groom cần mã Groom đang hoạt động, hướng dẫn và ngày thực hiện.');
+      return setError('Mỗi công việc cho Groom cần chọn Groom phụ trách, hướng dẫn và ngày thực hiện.');
     }
     if (tasks.some((task) => task.instruction.trim().length > 2000 || (task.scheduledSlot?.trim().length ?? 0) > 50)) {
       return setError('Hướng dẫn cho Groom tối đa 2000 ký tự và khung giờ tối đa 50 ký tự.');
@@ -61,13 +64,15 @@ export function TreatmentPlanEditor({ initial, onSave, onCancel, openedAt, retai
       <legend className="text-h3">Công việc đã giao cho Groom</legend>
       {tasks.map((task, index) => <fieldset disabled={index < retainedTaskCount} className="medical-form" key={index}>
         <legend>{index < retainedTaskCount ? 'Công việc đã lưu — giữ lịch sử' : 'Công việc mới'}</legend>
-        <TextField label={`Mã Groom ${index + 1}`} type="number" min={1} step={1} value={task.assignedGroomUserId || ''} onChange={(event) => changeTask(index, { assignedGroomUserId: Number(event.target.value) })} />
+        {grooms?.length
+          ? <SelectField label={`Groom phụ trách ${index + 1}`} value={task.assignedGroomUserId ? String(task.assignedGroomUserId) : ''} onChange={(event) => changeTask(index, { assignedGroomUserId: Number(event.target.value) })} options={[{ value: '', label: 'Chọn Groom đang hoạt động' }, ...grooms.map((groom) => ({ value: String(groom.id), label: groom.fullName })), ...(task.assignedGroomUserId && !grooms.some((groom) => groom.id === task.assignedGroomUserId) ? [{ value: String(task.assignedGroomUserId), label: `Groom #${task.assignedGroomUserId}` }] : [])]} />
+          : <TextField label={`Mã Groom ${index + 1}`} type="number" min={1} step={1} value={task.assignedGroomUserId || ''} onChange={(event) => changeTask(index, { assignedGroomUserId: Number(event.target.value) })} />}
         <TextAreaField label={`Hướng dẫn cho Groom ${index + 1}`} value={task.instruction} onChange={(event) => changeTask(index, { instruction: event.target.value })} />
         <TextField label={`Ngày thực hiện ${index + 1}`} type="date" value={task.taskDate} onChange={(event) => changeTask(index, { taskDate: event.target.value })} />
         <TextField label={`Khung giờ ${index + 1}`} value={task.scheduledSlot ?? ''} onChange={(event) => changeTask(index, { scheduledSlot: event.target.value || undefined })} />
         <Button type="button" variant="secondary" onClick={() => setPlan({ ...plan, groomTasks: tasks.filter((_, i) => i !== index) })}>Xóa công việc</Button>
       </fieldset>)}
-      <Button type="button" variant="secondary" onClick={() => setPlan({ ...plan, groomTasks: [...tasks, { assignedGroomUserId: 0, instruction: '', taskDate: '' }] })}>Thêm công việc cho Groom</Button>
+      <Button type="button" variant="secondary" onClick={() => setPlan({ ...plan, groomTasks: [...tasks, { assignedGroomUserId: grooms?.length === 1 ? grooms[0].id : 0, instruction: '', taskDate: clubDate() }] })}>Thêm công việc cho Groom</Button>
     </fieldset></Card>
     {error && <AlertBanner feedback type="danger" title={error} />}
     <ActionBar>

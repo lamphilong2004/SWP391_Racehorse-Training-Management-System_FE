@@ -288,3 +288,4 @@ it('filters only the loaded case page and resets both search and status without 
   expect(screen.getByLabelText('Tìm trên trang hiện tại')).toHaveValue('');
   expect(fetcher.mock.calls.every(([, init]) => !init?.method || init.method === 'GET')).toBe(true);
 });
+

@@ -175,8 +175,25 @@ export function createAuthApi(options: Pick<RequestOptions, 'fetcher' | 'baseUrl
         method: 'POST',
         body: JSON.stringify(credentials),
       }),
-    currentUser: (token, onUnauthorized) =>
-      request<CurrentUser>('/api/auth/me', { method: 'GET' }, { token, onUnauthorized }),
+    currentUser: async (token, onUnauthorized) => {
+      const controller = new AbortController();
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        // Bound the complete read, including JSON decoding. A stalled restore must offer retry,
+        // not grant access or leave the application's loading screen up indefinitely.
+        return await Promise.race([
+          request<CurrentUser>('/api/auth/me', { method: 'GET', signal: controller.signal }, {
+            token, onUnauthorized: () => { if (!controller.signal.aborted) onUnauthorized(); },
+          }),
+          new Promise<never>((_, reject) => {
+            timer = setTimeout(() => {
+              reject(new ApiError(0, 'NETWORK_ERROR', 'Khôi phục phiên đăng nhập quá thời gian chờ. Hãy kiểm tra Backend và chọn Thử lại.'));
+              controller.abort();
+            }, 15000);
+          }),
+        ]);
+      } finally { clearTimeout(timer); }
+    },
     logout: (token) => request<void>('/api/auth/logout', { method: 'POST' }, { token }),
   };
 }

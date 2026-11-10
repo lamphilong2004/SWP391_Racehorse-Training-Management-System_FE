@@ -62,7 +62,8 @@ it('Vet assigns treatment -> normal Groom login completes -> Vet rereads progres
   fireEvent.click(screen.getByRole('button', { name: 'Lưu lần khám' }));
   await screen.findByText('Lame after exercise');
   await section('Chấn thương');
-  fireEvent.change(screen.getByLabelText('Vùng cơ thể'), { target: { value: 'Chân trước trái' } });
+  expect(screen.queryByText(/Điểm đánh dấu|mô hình 3D/)).not.toBeInTheDocument(); // DEC-015: text only, no 3D coordinates
+  fireEvent.change(screen.getByLabelText('Vị trí chấn thương', { exact: false }), { target: { value: 'Chân trước trái' } });
   fireEvent.change(screen.getByRole('combobox', { name: 'Mức độ' }), { target: { value: 'MODERATE' } });
   fireEvent.change(screen.getByRole('combobox', { name: 'Tình trạng hồi phục' }), { target: { value: 'NOT_RECOVERED' } });
   fireEvent.click(screen.getByRole('button', { name: 'Lưu chấn thương' }));

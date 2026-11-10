@@ -7,6 +7,7 @@ import type { RiderSession } from './types';
 const auth = vi.hoisted(() => ({ user: { id: 9, fullName: 'Test Rider', roles: ['WORK_RIDER'], accountStatus: 'ACTIVE' }, handleApiError: vi.fn(() => false) }));
 vi.mock('../../shared/auth/AuthProvider', () => ({ useAuth: () => auth }));
 vi.mock('../../layout/AppShell', () => ({ AppShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div> }));
+afterEach(() => { vi.useRealTimers(); });
 
 const at = (offsetDays: number, hour: number) => { const date = new Date(); date.setDate(date.getDate() + offsetDays); date.setHours(hour, 0, 0, 0); return date.toISOString(); };
 const ride = (id: number, patch: Partial<RiderSession>): RiderSession => ({
@@ -34,6 +35,8 @@ function mount(element: React.ReactNode, path: string) {
 }
 
 it('groups own assignments into Today and Upcoming tables (Figma WR-D4) and opens a row', async () => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  const beforeFirstRide = new Date(); beforeFirstRide.setHours(5, 0, 0, 0); vi.setSystemTime(beforeFirstRide);
   const api = client();
   const router = mount(<RiderAssignmentsPage api={api} />, '/rider/assignments');
   expect(await screen.findByRole('tab', { name: 'Hôm nay · 2' })).toHaveAttribute('aria-selected', 'true');
@@ -47,6 +50,23 @@ it('groups own assignments into Today and Upcoming tables (Figma WR-D4) and open
   expect(within(upcoming).getAllByText('Đã lên lịch').length).toBeGreaterThan(0);
   fireEvent.click(within(upcoming).getAllByRole('row')[1]);
   expect(router.state.location.pathname).toBe('/rider/assignments/43');
+});
+
+it('keeps past scheduled rides out of Upcoming, preserves them visibly and does not label them ready', async () => {
+  const api = client();
+  vi.mocked(api.assignments).mockResolvedValue([
+    ride(51, { horse: { id: 7, name: 'Past ride', horseCode: 'RH-051' }, scheduledStart: at(-1, 6), scheduledEnd: at(-1, 7), preCheckResult: 'ALL_NORMAL' }),
+    ride(52, { horse: { id: 8, name: 'Future ride', horseCode: 'RH-052' }, scheduledStart: at(1, 6), scheduledEnd: at(1, 7) }),
+  ]);
+  mount(<RiderAssignmentsPage api={api} />, '/rider/assignments');
+  const overdue = await screen.findByRole('table', { name: 'Lượt cưỡi quá lịch' });
+  const upcoming = screen.getByRole('table', { name: 'Lượt cưỡi sắp tới' });
+  expect(within(overdue).getByText('Past ride')).toBeInTheDocument();
+  expect(within(overdue).getByText('Đã hết khung giờ — cần dời lịch')).toBeInTheDocument();
+  expect(within(overdue).queryByText('Sẵn sàng')).not.toBeInTheDocument();
+  expect(within(upcoming).queryByText('Past ride')).not.toBeInTheDocument();
+  expect(within(upcoming).getByText('Future ride')).toBeInTheDocument();
+  expect(screen.getByRole('tab', { name: 'Sắp tới · 1' })).toBeInTheDocument();
 });
 
 it('requests COMPLETED rides only for the Completed tab', async () => {

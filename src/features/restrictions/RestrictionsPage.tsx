@@ -67,7 +67,8 @@ function RestrictionContent({ horseId, canEdit }: { horseId: string; canEdit: bo
 function RestrictionEditor({ current, record, onSaved }: { current: Availability; record?: Restriction; onSaved: (message: string) => void }) {
   const request = useFlowRequest(), api = useMemo(() => createRestrictionApi(request), [request]);
   const [level, setLevel] = useState(current.availability), [reason, setReason] = useState(current.reason ?? '');
-  const [effectiveAt, setEffectiveAt] = useState(''), [reviewDate, setReviewDate] = useState('');
+  // Defaults to "now" (browser local minute, never in the future); the Vet can still change it.
+  const [effectiveAt, setEffectiveAt] = useState(() => new Date(Date.now() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 16)), [reviewDate, setReviewDate] = useState('');
   const rulesKnown = current.exerciseRules !== undefined || record?.exerciseRules !== undefined || !current.activeRestrictionId;
   const [rules, setRules] = useState<ExerciseRule[]>(current.exerciseRules ?? record?.exerciseRules ?? []), [created, setCreated] = useState<Restriction>();
   const [busy, setBusy] = useState(false), [error, setError] = useState('');

@@ -118,7 +118,7 @@ export const SERVER_ERROR_TEXT: Record<string, string> = {
   'Invalid examination request.': 'Thông tin lần khám chưa hợp lệ.',
   'Invalid re-examination request.': 'Thông tin lần tái khám chưa hợp lệ.',
   'Invalid injury request.': 'Thông tin chấn thương chưa hợp lệ.',
-  'position3d must fit the VARCHAR schema field.': 'Vị trí chấn thương trên mô hình 3D không hợp lệ.',
+  'position3d must fit the VARCHAR schema field.': 'Vị trí chấn thương không hợp lệ.',
   'Examination not found for this case and horse.': 'Không tìm thấy lần khám của ca và ngựa này.',
   'Treatment instructions required.': 'Cần nhập hướng dẫn điều trị.',
   'Treatment task fields are invalid.': 'Thông tin công việc điều trị chưa hợp lệ.',
