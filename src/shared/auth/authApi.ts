@@ -2,6 +2,7 @@ import type { RoleCode } from './roles';
 import { getBusinessActor, usesSampleData } from '../data/businessData';
 import { resolveApiBase } from '../apiOrigin';
 import { serverText } from '../serverText';
+import { scheduleHorsePhoto } from './photoRequests';
 
 const API_BASE_URL = resolveApiBase(import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:8080' : ''), import.meta.env.DEV);
 
@@ -144,6 +145,10 @@ async function readEnvelope<T>(path: string, response: Response, options: Reques
 
 /** Authenticated image endpoint. A 204 response means the horse has no uploaded photo. */
 export async function requestHorsePhoto(path: string, token: string, signal: AbortSignal): Promise<Blob | null> {
+  return scheduleHorsePhoto(() => fetchHorsePhoto(path, token, signal), signal);
+}
+
+async function fetchHorsePhoto(path: string, token: string, signal: AbortSignal): Promise<Blob | null> {
   const response = await sendRequest(path, { method: 'GET', signal, cache: 'no-store', redirect: 'error' }, { token });
   if (response.status === 204) return null;
   if (!response.ok) await readEnvelope<never>(path, response, {});
