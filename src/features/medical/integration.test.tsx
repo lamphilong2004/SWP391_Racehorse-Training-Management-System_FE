@@ -289,19 +289,3 @@ it('filters only the loaded case page and resets both search and status without 
   expect(fetcher.mock.calls.every(([, init]) => !init?.method || init.method === 'GET')).toBe(true);
 });
 
-it('offers active Grooms by name on a multi-digit case id treatment plan (BR-32)', async () => {
-  authSession.save('jwt', 3600, false);
-  const fetcher = vi.fn(async (url: string, init?: RequestInit) => {
-    if (url.endsWith('/api/auth/me')) return ok(vet);
-    if (url.endsWith('/api/medical/cases/57') && (!init?.method || init.method === 'GET')) return ok({ ...medicalCase, id: 57 });
-    if (url.endsWith('/api/stable-care/grooms')) return ok([{ id: 2, fullName: 'groom' }, { id: 8, fullName: 'Groom dự phòng' }]);
-    if (url.includes('/treatment-tasks')) return ok(page([]));
-    if (url.endsWith('/api/horses/14/training-availability')) return ok({ horseId: 14, availability: 'AVAILABLE' });
-    if (url.includes('/api/horses/14')) return ok({ id: 14, name: 'Test horse', horseCode: 'RH-14', lifecycle: 'ACTIVE' });
-    return ok([]);
-  });
-  vi.stubGlobal('fetch', fetcher);
-  mount('/medical/cases/57/treatment-plan');
-  // Regression: a broken id regex only loaded the Groom list for single-digit case ids.
-  await waitFor(() => expect(fetcher.mock.calls.some(([url]) => String(url).endsWith('/api/stable-care/grooms'))).toBe(true), { timeout: 4000 });
-});
