@@ -36,11 +36,19 @@ export function HorseListPage() {
   const [query, setQuery] = useState({ q: '', lifecycle: '', availability: '', page: 0, size: 20 });
   const load = useCallback(() => api.listHorses(query), [api, query]);
   const { data, error, reload } = useHorseResource(load);
-  const loadCounts = useCallback(async () => Object.fromEntries(await Promise.all(LIFECYCLE_TABS.map(async ({ value }) => [value, (await api.listHorses({ lifecycle: value || undefined, page: 0, size: 1 })).totalItems] as const))) as Record<string, number>, [api]);
+  const loadCounts = useCallback(async (active: () => boolean) => {
+    const result: Record<string, number> = {};
+    // These optional counters must not occupy all SQL connections alongside the visible photos.
+    for (const { value } of LIFECYCLE_TABS) {
+      if (!active()) return undefined;
+      result[value] = (await api.listHorses({ lifecycle: value || undefined, page: 0, size: 1 })).totalItems;
+    }
+    return result;
+  }, [api]);
   const [counts, setCounts] = useState<Record<string, number>>();
   const listed = Boolean(data);
   // Counts are read only after the list itself loaded, so a failing list stays a single request.
-  useEffect(() => { if (!listed || counts) return; let active = true; loadCounts().then((value) => { if (active) setCounts(value); }, () => undefined); return () => { active = false; }; }, [listed, counts, loadCounts]);
+  useEffect(() => { if (!listed || counts) return; let active = true; loadCounts(() => active).then((value) => { if (active && value) setCounts(value); }, () => undefined); return () => { active = false; }; }, [listed, counts, loadCounts]);
   const apply = (next: Partial<typeof query>) => setQuery({ ...query, ...next, page: 0 });
   return <div className={styles.page} data-ui-v3>
     <div data-page-banner className={styles.titleRow}><div className={styles.titleBlock}><h1 className="text-h1">Danh sách ngựa</h1><p>Danh sách ngựa của câu lạc bộ · nhận dạng, phả hệ, sở hữu và ô chuồng</p></div>{canManage && <><ButtonLink to="/horses/pending-activation">Chờ kích hoạt</ButtonLink><ButtonLink variant="primary" to="/horses/new">Thêm ngựa</ButtonLink></>}</div>
