@@ -29,8 +29,8 @@
 
 .feedbackStack {
   position: fixed;
-  /* Toasts sit bottom-left (Leader request 11/11), newest at the bottom. */
-  inset-inline-start: max(1rem, env(safe-area-inset-left));
+  /* Toasts sit bottom-right (Leader request 11/11), newest at the bottom. */
+  inset-inline-end: max(1rem, env(safe-area-inset-right));
   inset-block-end: max(1rem, env(safe-area-inset-bottom));
   z-index: 100;
   align-content: end;

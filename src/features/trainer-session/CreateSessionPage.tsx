@@ -17,11 +17,10 @@ const STEPS = ['Thông tin buổi tập', 'Bài tập', 'Work Rider', 'Xem lại
 export function CreateSessionPage() {
   const [params] = useSearchParams(), navigate = useNavigate(), { user } = useAuth();
   const request = useFlowRequest(), api = useMemo(() => createSessionApi(request), [request]);
-  const [programId, setProgramId] = useState(params.get('programId') ?? ''), [phaseId, setPhaseId] = useState('');
-  const [date, setDate] = useState(''), [time, setTime] = useState('');
-  const when = `${date}T${time}`;
-  const [duration, setDuration] = useState(''), [surface, setSurface] = useState(''), [focus, setFocus] = useState('');
-  const [intensity, setIntensity] = useState<Intensity | ''>(''), [exercises, setExercises] = useState<SessionExerciseInput[]>([]);
+  const [programId, setProgramId] = useState(params.get('programId') ?? ''), [phasePick, setPhaseId] = useState('');
+  const [datePick, setDate] = useState<string | null>(null), [time, setTime] = useState('');
+  const [durationPick, setDuration] = useState<string | null>(null), [surface, setSurface] = useState(''), [focusPick, setFocus] = useState<string | null>(null);
+  const [intensityPick, setIntensity] = useState<Intensity | '' | null>(null), [exercises, setExercises] = useState<SessionExerciseInput[]>([]);
   const [riderId, setRiderId] = useState(0), [acknowledged, setAcknowledged] = useState(false), [step, setStep] = useState(0);
   const [check, setCheck] = useState<Suitability>(), [riders, setRiders] = useState<CandidateList>();
   const [error, setError] = useState(''), [busy, setBusy] = useState(false); const pending = useRef(false);
@@ -31,7 +30,17 @@ export function CreateSessionPage() {
   const programs = useResource(loadPrograms), program = useResource(loadProgram), catalog = useResource(loadExercises);
   const loadAvailability = useCallback((signal: AbortSignal) => program.data ? api.availability(program.data.horse.id, signal) : Promise.resolve(null), [api, program.data]);
   const availability = useResource(loadAvailability);
+  // Prefill from the Head Trainer's program (Leader request 11/11): current phase, its objective and lowest allowed
+  // intensity, a date inside the phase and 60 minutes. Every value stays editable; a touched field keeps the Trainer's value.
+  const today = clubDate();
+  const defaultPhase = program.data?.phases.find((item) => item.startDate <= today && today <= item.endDate) ?? program.data?.phases.find((item) => item.endDate >= today);
+  const phaseId = phasePick || (defaultPhase ? String(defaultPhase.id) : '');
   const phase = program.data?.phases.find((item) => item.id === Number(phaseId));
+  const date = datePick ?? (phase ? (phase.startDate > today ? phase.startDate : today) : '');
+  const when = `${date}T${time}`;
+  const duration = durationPick ?? (phase ? '60' : '');
+  const focus = focusPick ?? phase?.objective ?? '';
+  const intensity: Intensity | '' = intensityPick ?? phase?.intensityMin ?? '';
   const rider = riders?.candidates.find((item) => item.user.id === riderId);
   function toggleRider(id: number) { setRiderId((selected) => selected === id ? 0 : id); setAcknowledged(false); setError(''); }
   const resetValidation = () => { setCheck(undefined); setRiders(undefined); setRiderId(0); setAcknowledged(false); setError(''); };
