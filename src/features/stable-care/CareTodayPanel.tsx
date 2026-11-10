@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ButtonLink, Card, ErrorState, Icon, LoadingState, MetricCard } from '../../design-system';
 import { ROUTES } from '../../app/routePaths';
 import { clubDateTime } from '../../shared/clubCalendar';
@@ -15,10 +15,27 @@ function listOrFail<T>(value: T[]): T[] {
   return value;
 }
 
+/**
+ * Vietnam club clock that keeps moving while the dashboard stays open: tasks cross into "overdue" without a reload,
+ * and a new club day changes `date`, which reloads that day's tasks. Same-minute ticks do not re-render.
+ */
+function useClubClock(intervalMs = 30_000) {
+  const [now, setNow] = useState(() => clubDateTime());
+  useEffect(() => {
+    const tick = () => setNow(clubDateTime());
+    const onVisible = () => { if (document.visibilityState === 'visible') tick(); };
+    const timer = window.setInterval(tick, intervalMs);
+    window.addEventListener('focus', tick);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => { window.clearInterval(timer); window.removeEventListener('focus', tick); document.removeEventListener('visibilitychange', onVisible); };
+  }, [intervalMs]);
+  return now;
+}
+
 /** Flow 4 step 4.4 at a glance: today's care progress for the Groom (own tasks) or the Club Manager (whole stable). */
 export function CareTodayPanel({ manager }: { manager: boolean }) {
   const request = useFlowRequest();
-  const [clubNow] = useState(() => clubDateTime()); const date = clubNow.slice(0, 10);
+  const clubNow = useClubClock(); const date = clubNow.slice(0, 10);
   const load = useCallback((signal: AbortSignal) => request<Task[]>(`/api/stable-care/tasks?date=${date}`, { signal }).then(listOrFail), [request, date]);
   const tasks = useResource(load);
   const counts = tasks.data ? summarize(tasks.data, date, clubNow) : null;
