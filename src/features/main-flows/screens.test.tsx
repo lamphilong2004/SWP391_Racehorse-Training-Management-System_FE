@@ -39,6 +39,15 @@ it('keeps a failed baseline draft for retry and confirms only a real save respon
   expect(await screen.findByText('Đã lưu kết quả khám ban đầu')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Lưu kết quả khám' })).toBeDisabled();
 });
+it('shows activation requirement codes as Vietnamese labels', async () => {
+  state.request.mockImplementation(async (path: string) => path.endsWith('/activation-status')
+    ? { checklist: [{ id: 'IDENTITY', label: 'Nhận dạng ngựa', requirement: 'MANDATORY', state: 'SATISFIED' }, { id: 'HT', label: 'Đánh giá sẵn sàng của Head Trainer', requirement: 'RECOMMENDED', state: 'PENDING' }] }
+    : horse);
+  render(<MemoryRouter initialEntries={['/horses/7/baseline']}><Routes><Route path="/horses/:id/baseline" element={<BaselinePage />} /></Routes></MemoryRouter>);
+  expect(await screen.findByText('Bắt buộc')).toBeInTheDocument();
+  expect(screen.getByText('Khuyến nghị · không bắt buộc')).toBeInTheDocument();
+  expect(screen.queryByText(/MANDATORY|RECOMMENDED/)).not.toBeInTheDocument();
+});
 it('schedules one session through all four steps using the approved draft/recommendation/create operations', async () => {
   state.user.roles = ['TRAINER']; let posts = 0;
   const program = { id: 10, horse, name: 'Test program', status: 'ACTIVE', periodStart: '2026-11-01', periodEnd: '2026-11-30', phases: [{ id: 31, name: 'Foundation', startDate: '2026-11-01', endDate: '2026-11-30' }] };

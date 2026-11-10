@@ -13,6 +13,8 @@ import { viLabel } from '../../shared/viLabels';
 import { serverText } from '../../shared/serverText';
 
 const HEALTH: HealthStatus[] = ['FIT', 'MONITORING', 'INJURED', 'QUARANTINED'];
+/** Vietnamese label for the activation requirement code (DEC-011); the API keeps the English code. */
+const requirementLabel = (code?: string) => code === 'MANDATORY' ? 'Bắt buộc' : code === 'RECOMMENDED' ? 'Khuyến nghị · không bắt buộc' : 'Kết quả sẵn sàng từ hệ thống';
 interface Activation { checklist: { id: string; label: string; requirement?: string; state?: string; satisfied?: boolean }[] }
 export function BaselinePage() {
   const { id } = useParams();
@@ -71,7 +73,7 @@ function BaselineContent({ rawId }: { rawId?: string }) {
         <AlertBanner type="info" title="">Biểu mẫu này chỉ đặt tình trạng sức khỏe ban đầu. Khả năng tập luyện do Veterinarian quản lý riêng trong hồ sơ y tế.</AlertBanner>
       </fieldset></Card><Card title="Mức sẵn sàng kích hoạt"><div className={styles.stack}><p className={styles.muted}>Ngựa tự chuyển sang Hoạt động khi đủ mọi yêu cầu bắt buộc. Nên có đánh giá sẵn sàng của Head Trainer nhưng không bắt buộc để kích hoạt.</p>
         {activation.pending && <LoadingState label="Đang tải mức sẵn sàng…" />}{activation.error && <ErrorState title="Không tải được mức sẵn sàng" description={activation.error} onRetry={activation.reload} />}
-        {activation.data?.checklist.map((item) => <div className={styles.checklist} key={item.id}><Icon name={item.state === 'SATISFIED' || item.state === 'REVIEWED' || item.satisfied ? 'check-circle' : 'circle'} size={16} /><div><p>{serverText(item.label)}</p><span className="text-caption">{item.requirement ?? 'Kết quả sẵn sàng từ hệ thống'}</span></div></div>)}
+        {activation.data?.checklist.map((item) => <div className={styles.checklist} key={item.id}><Icon name={item.state === 'SATISFIED' || item.state === 'REVIEWED' || item.satisfied ? 'check-circle' : 'circle'} size={16} /><div><p>{serverText(item.label)}</p><span className="text-caption">{requirementLabel(item.requirement)}</span></div></div>)}
         <div className={styles.row}><StatusBadge family="lifecycle" status="DRAFT" /><Icon name="chevron-right" size={16} /><StatusBadge family="lifecycle" status="ACTIVE" /></div>
       </div></Card></div>
       <div className={styles.footer}><span className="text-caption">Điền đủ các trường bắt buộc để lưu.</span><ButtonLink to={rawId ? `/horses/${rawId}` : '/horses'}>Hủy</ButtonLink><Button type="submit" disabled={!valid || !data || data.lifecycle !== 'DRAFT' || saving || !!saved}>{saving ? 'Đang lưu…' : 'Lưu kết quả khám'}</Button></div>
