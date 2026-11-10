@@ -1,13 +1,15 @@
 import { HorsePhotoImage } from '../horses/shared/HorsePhotoImage';
 import { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
-import { ButtonLink, AlertBanner, Button, Card, DataTable, ErrorState, KeyValue, LoadingState, StatusBadge } from '../../design-system';
+import type { FormEvent } from 'react';
+import { ButtonLink, AlertBanner, Button, Card, DataTable, ErrorState, KeyValue, LoadingState, SelectField, StatusBadge, TextAreaField } from '../../design-system';
 import { useAuth } from '../../shared/auth/AuthProvider';
+import { INCIDENT_TYPE_CODES, isIncidentType, type IncidentType } from '../../shared/incidents/incidentTypes';
 import { dateTime, metric, type SessionExercise } from '../evaluation/models';
 import { FlowShell } from '../main-flows/FlowShell';
-import { idOf, useFlowRequest } from '../main-flows/api';
+import { errorMessage, idOf, useFlowRequest } from '../main-flows/api';
 import { useResource } from '../main-flows/useResource';
-import { createSessionApi } from './sessionApi';
+import { createSessionApi, INCIDENT_SEVERITIES, isObservedSeverity, type ObservedSeverity, type ReportIssueResult, type TrainingSession } from './sessionApi';
 import { EditSession } from './EditSession';
 import { GroomAssignment } from './GroomAssignment';
 import styles from '../main-flows/flow.module.css';
@@ -18,9 +20,38 @@ export function SessionDetailPage() {
   const { id } = useParams(), { user } = useAuth(), request = useFlowRequest();
   const api = useMemo(() => createSessionApi(request), [request]);
   const load = useCallback((signal: AbortSignal) => api.read(idOf(id), signal), [api, id]);
-  const resource = useResource(load), session = resource.data, [editing, setEditing] = useState(false);
+  const resource = useResource(load), [editing, setEditing] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false), [reportBusy, setReportBusy] = useState(false), [reportDescription, setReportDescription] = useState('');
+  const [reportType, setReportType] = useState<IncidentType | ''>(''), [reportSeverity, setReportSeverity] = useState<ObservedSeverity | ''>('');
+  const [reportError, setReportError] = useState(''), [issueResult, setIssueResult] = useState<{ sessionId: number; description: string; result: ReportIssueResult; session?: TrainingSession }>();
+  const resultForSession = issueResult?.sessionId === Number(id) ? issueResult : undefined;
+  const loadedSession = resource.data;
+  const session = resultForSession?.result.sessionStatus === 'INTERRUPTED' && resultForSession.session
+    ? { ...(loadedSession ?? resultForSession.session), status: 'INTERRUPTED' as const, interruptionReason: resultForSession.description }
+    : loadedSession;
   const canEdit = !!session && session.status === 'SCHEDULED' && (user?.roles.includes('TRAINER') ?? false);
   const canAssignGroom = canEdit && !session?.preSessionCheck;
+  const canReportIncident = !!session && (user?.roles.includes('TRAINER') ?? false) && ['IN_PROGRESS', 'PAUSED'].includes(session.status);
+  async function submitIncident(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (reportBusy) return;
+    const description = reportDescription.trim();
+    if (!description || description.length > 1000) { setReportError('Nhập mô tả sự cố (tối đa 1000 ký tự).'); return; }
+    if (!isIncidentType(reportType) || !isObservedSeverity(reportSeverity)) { setReportError('Chọn loại sự cố và mức độ nghiêm trọng.'); return; }
+    setReportBusy(true); setReportError('');
+    try {
+      const sessionId = idOf(id);
+      const result = await api.reportIssue(sessionId, { description, incidentType: reportType, observedSeverity: reportSeverity });
+      setIssueResult({
+        sessionId, description, result,
+        ...(session && result.sessionStatus === 'INTERRUPTED' ? { session: { ...session, status: 'INTERRUPTED', interruptionReason: description } } : {}),
+      });
+      setReportOpen(false);
+      setReportDescription(''); setReportType(''); setReportSeverity('');
+      resource.reload();
+    } catch (error) { setReportError(errorMessage(error)); }
+    finally { setReportBusy(false); }
+  }
   const role = user?.roles.find((value) => ['TRAINER', 'HEAD_TRAINER', 'VETERINARIAN', 'CLUB_MANAGER'].includes(value)) ?? 'TRAINER';
   return <FlowShell title={session ? `${session.focus || 'Buổi tập'} · ${session.phaseName}` : 'Chi tiết buổi tập'} description={session ? `${session.horse.name} · ${session.horse.horseCode} · ${session.sessionCode} · ${dateTime(session.scheduledStart)}` : undefined} section="Lịch tập" role={role} actions={<>
     <Button variant="tertiary" onClick={resource.reload} disabled={resource.pending}>Tải lại buổi tập</Button>
@@ -31,11 +62,23 @@ export function SessionDetailPage() {
     {session && ['COMPLETED', 'INTERRUPTED'].includes(session.status) && <ButtonLink variant="primary" to={`/training/sessions/${session.id}/evaluation`}>Mở đánh giá của Trainer</ButtonLink>}
   </>}>
     {resource.pending && <LoadingState label="Đang tải buổi tập…" />}{resource.error && <ErrorState title="Không tải được buổi tập" description={resource.error} onRetry={resource.reload} />}
+    {resultForSession && <AlertBanner feedback type="success" title="Đã báo cáo sự cố">Sự cố {resultForSession.result.incidentCode} (ID {resultForSession.result.incidentId}) đã được ghi nhận. Trạng thái buổi tập: {viLabel(resultForSession.result.sessionStatus)}.</AlertBanner>}
     {session && canAssignGroom && !session.groom && <Card title="Bước tiếp theo · Phân công Groom">
       <div className={styles.stack}>
         <p>Buổi tập đã lên lịch. Chọn và lưu người kiểm tra trước buổi tập để buổi này xuất hiện trong lịch của Groom.</p>
         <GroomAssignment api={api} session={session} onSaved={resource.reload} />
       </div>
+    </Card>}
+    {canReportIncident && <Card title="Trainer báo cáo sự cố">
+      {reportOpen
+        ? <form aria-label="Báo cáo sự cố" className={styles.stack} onSubmit={(event) => void submitIncident(event)}>
+          <TextAreaField label="Mô tả sự cố" required maxLength={1000} value={reportDescription} onChange={(event) => setReportDescription(event.target.value)} />
+          <SelectField label="Loại sự cố" value={reportType} placeholder="Chọn loại sự cố" required options={INCIDENT_TYPE_CODES.map((value) => ({ value, label: value === 'OTHER' ? 'Khác' : viLabel(value) }))} onChange={(event) => setReportType(isIncidentType(event.target.value) ? event.target.value : '')} />
+          <SelectField label="Mức độ nghiêm trọng" value={reportSeverity} placeholder="Chọn mức độ" required options={INCIDENT_SEVERITIES.map((value) => ({ value, label: viLabel(value) }))} onChange={(event) => setReportSeverity(isObservedSeverity(event.target.value) ? event.target.value : '')} />
+          {reportError && <AlertBanner feedback type="danger" title="Chưa gửi được báo cáo">{reportError}</AlertBanner>}
+          <div className={styles.row}><Button type="submit" disabled={reportBusy}>{reportBusy ? 'Đang gửi báo cáo…' : 'Gửi báo cáo sự cố'}</Button><Button type="button" variant="tertiary" disabled={reportBusy} onClick={() => { setReportOpen(false); setReportError(''); }}>Hủy</Button></div>
+        </form>
+        : <Button onClick={() => { setReportError(''); setReportOpen(true); }}>Báo cáo sự cố</Button>}
     </Card>}
     {session && <><AlertBanner type={session.blocked || session.status === 'INTERRUPTED' ? 'danger' : 'info'} title={session.blocked ? `${viLabel(session.status)} · bị chặn bắt đầu` : viLabel(session.status)}>{serverText(session.blockedMessage) || session.interruptionReason || (session.status === 'SCHEDULED' ? 'Work Rider được phân công bắt đầu buổi tập sau khi Groom kiểm tra trước buổi tập đạt và các điều kiện y tế được thông qua.' : 'Trạng thái buổi tập lấy từ hệ thống.')} {session.blockedReasons?.map((reason) => viLabel(reason)).join(' · ')}</AlertBanner>
       <Card><div className={styles.factGrid}><KeyValue label="Mã buổi tập" value={session.sessionCode} /><KeyValue label="Ngày & giờ" value={dateTime(session.scheduledStart)} /><KeyValue label="Mặt sân" value={session.surface ?? 'Chưa xác định'} /><KeyValue label="Trọng tâm buổi tập" value={session.focus ?? 'Chưa xác định'} /><KeyValue label="Cường độ buổi tập" value={viLabel(session.intensity, 'Chưa xác định')} /><KeyValue label="Trạng thái" value={<StatusBadge family="session" status={session.status} />} /></div></Card>

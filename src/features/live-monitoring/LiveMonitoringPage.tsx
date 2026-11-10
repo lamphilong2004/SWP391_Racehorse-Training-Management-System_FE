@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
-import { ButtonLink, AlertBanner, Button, Card, ChartContainer, EmptyState, ErrorState, KeyValue, LoadingState, MetricCard, StatusBadge, TextAreaField, TextField } from '../../design-system';
+import { ButtonLink, AlertBanner, Button, Card, ChartContainer, EmptyState, ErrorState, KeyValue, LoadingState, MetricCard, SelectField, StatusBadge, TextAreaField, TextField } from '../../design-system';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { authSession } from '../../shared/auth/authSession';
+import { INCIDENT_TYPE_CODES, isIncidentType, type IncidentType } from '../../shared/incidents/incidentTypes';
 import { dateTime, metric, type SessionResultView } from '../evaluation/models';
 import { FlowShell } from '../main-flows/FlowShell';
 import { errorMessage, idOf, jsonBody, useFlowRequest } from '../main-flows/api';
 import { useResource } from '../main-flows/useResource';
-import { createSessionApi, type TrainingSession } from '../trainer-session/sessionApi';
+import { createSessionApi, INCIDENT_SEVERITIES, isObservedSeverity, type ObservedSeverity, type TrainingSession } from '../trainer-session/sessionApi';
 import { connectSessionStream, type StreamStatus } from './sessionStream';
 
 const STATUS_TEXT: Record<StreamStatus, string> = { Connecting: 'Đang kết nối', Connected: 'Đã kết nối', Disconnected: 'Mất kết nối', Unavailable: 'Không có kết nối' };
@@ -40,7 +41,9 @@ function LiveSession({ rawId }: { rawId: string }) {
   const [overlay, setOverlay] = useState<{ source?: typeof resource.data; sample?: Sample; state?: 'NORMAL' | 'WARNING' | 'CRITICAL'; samples: Sample[]; alerts: Alert[]; warning?: MonitoringAlertView; simulated?: boolean; session?: Partial<TrainingSession> }>({ samples: [], alerts: [] });
   const [connection, setConnection] = useState<{ source?: typeof resource.data; status: StreamStatus; message?: string }>({ status: 'Disconnected' });
   const [selectedAlert, setSelectedAlert] = useState<number | 'warning'>();
-  const [actionError, setActionError] = useState(''), [busy, setBusy] = useState(false), [reason, setReason] = useState(''); const pending = useRef(false);
+  const [actionError, setActionError] = useState(''), [actionSuccess, setActionSuccess] = useState(''), [busy, setBusy] = useState(false), [reason, setReason] = useState('');
+  const [stopMode, setStopMode] = useState<'ordinary' | 'medical'>('ordinary'), [incidentType, setIncidentType] = useState<IncidentType | ''>(''), [observedSeverity, setObservedSeverity] = useState<ObservedSeverity | ''>('');
+  const pending = useRef(false);
   useEffect(() => {
     const source = resource.data; if (!source) return;
     const token = authSession.read()?.accessToken;
@@ -97,11 +100,18 @@ function LiveSession({ rawId }: { rawId: string }) {
   const canWrite = user?.roles.includes('TRAINER'), canAck = canWrite || user?.roles.includes('VETERINARIAN');
   async function action(kind: 'pause' | 'resume' | 'stop' | 'acknowledge', alertId?: number) {
     if (pending.current) return;
-    pending.current = true; setBusy(true); setActionError('');
+    pending.current = true; setBusy(true); setActionError(''); setActionSuccess('');
     try {
       if (kind === 'stop' && !reason.trim()) throw new Error('Nhập lý do dừng buổi tập.');
+      if (kind === 'stop' && stopMode === 'medical' && (!isIncidentType(incidentType) || !isObservedSeverity(observedSeverity))) throw new Error('Chọn loại sự cố và mức độ nghiêm trọng để dừng vì lý do y tế.');
       const path = kind === 'acknowledge' ? `/api/monitoring-alerts/${idOf(alertId)}/acknowledge` : `/api/training-sessions/${idOf(rawId)}/${kind}`;
-      await request(path, (kind === 'pause' || kind === 'resume') ? { method: 'POST' } : jsonBody('POST', kind === 'acknowledge' ? { action: 'ACKNOWLEDGE' } : { reason: reason.trim(), medicallyRelevant: false }));
+      const body = kind === 'acknowledge' ? { action: 'ACKNOWLEDGE' } : {
+        reason: reason.trim(),
+        medicallyRelevant: stopMode === 'medical',
+        ...(stopMode === 'medical' ? { incidentType, observedSeverity } : {}),
+      };
+      await request(path, (kind === 'pause' || kind === 'resume') ? { method: 'POST' } : jsonBody('POST', body));
+      if (kind === 'stop') setActionSuccess(stopMode === 'medical' ? 'Buổi tập đã được dừng vì lý do y tế; sự cố y tế đã được gửi lên hệ thống.' : 'Buổi tập đã được dừng thông thường.');
       resource.reload();
     } catch (error) { setActionError(errorMessage(error)); }
     finally { pending.current = false; setBusy(false); }
@@ -110,6 +120,7 @@ function LiveSession({ rawId }: { rawId: string }) {
   return <FlowShell title={session ? `${session.horse.name} · ${session.horse.horseCode}` : 'Giám sát trực tiếp'} description={session ? `${session.sessionCode} · ${session.focus ?? session.phaseName} · Work Rider ${session.workRider?.fullName ?? 'Chưa phân công'}` : undefined} section="Giám sát trực tiếp" role={role} actions={<div className={styles.row}><span role="status">{live ? 'Đã kết nối' : connection.source === data ? STATUS_TEXT[connection.status] : 'Đang tải dữ liệu'}</span><Button variant="secondary" onClick={resource.reload}>Kết nối lại / tải lại</Button><ButtonLink to={`/training/session/${rawId}`}>Chi tiết buổi tập</ButtonLink></div>}>
     {resource.pending && <LoadingState label="Đang tải buổi tập và số đo đã ghi trước khi kết nối…" />}{resource.error && <ErrorState title="Không giám sát được" description={resource.error} onRetry={resource.reload} />}
     {actionError && <AlertBanner feedback type="danger" title="Chưa xác nhận thao tác">{actionError}</AlertBanner>}
+    {actionSuccess && <AlertBanner feedback type="success" title="Đã dừng buổi tập">{actionSuccess}</AlertBanner>}
     {connection.source === data && connection.message && <AlertBanner type="warning" title="Không có dữ liệu trực tiếp">{connection.message}</AlertBanner>}
     {simulated && <AlertBanner type="simulated" title="DỮ LIỆU MÔ PHỎNG">Máy chủ đánh dấu số đo hoặc cảnh báo là mô phỏng. Đây không phải dữ liệu tập thật.</AlertBanner>}
     {session && <div className={styles.row}><StatusBadge family="session" status={session.status} /><StatusBadge family="availability" status={session.trainingAvailability} />{current?.state && <StatusBadge family="realtime" status={current.state} />}<span>{last ? `${live ? 'Số đo gần nhất' : 'Số đo đã ghi gần nhất'}: ${dateTime(last.recordedAt)} · ${last.source}` : 'Chưa nhận được dữ liệu đo.'}</span></div>}
@@ -117,7 +128,7 @@ function LiveSession({ rawId }: { rawId: string }) {
     <div className={styles.metrics}><MetricCard label="Nhịp tim" value={metric(last?.heartRate, 'bpm')} caption="Số đo gần nhất từ máy chủ" /><MetricCard label="Tốc độ" value={metric(last?.speedKmh, 'km/h')} caption="Số đo gần nhất từ máy chủ" /><MetricCard label="Quãng đường" value={metric(last?.distanceM, 'm')} caption="Quãng đường từ máy chủ" /><MetricCard label="Thời gian đã trôi qua" value={metric(data?.result.actual.durationMin, 'phút')} caption="Thời lượng ghi nhận từ máy chủ" /></div>
     <div className={styles.columns}><div className={styles.stack}><ChartContainer title="Nhịp tim — buổi tập này" seriesLabel="Nhịp tim (bpm)" values={values} yTicks={[max, (max + min) / 2, min]} threshold={threshold ? { value: threshold.thresholdValue, label: `Ngưỡng nghiêm trọng hiện tại ${threshold.thresholdValue} bpm` } : undefined} xLabels={samples.length ? [dateTime(samples[0].recordedAt), dateTime(samples[samples.length - 1].recordedAt)] : []} emptyTitle="Chưa có số đo nhịp tim" emptyDescription="Số đo đã ghi và số đo trực tiếp sẽ hiện ở đây khi có." /><Card title="Tiến độ buổi tập"><div className={styles.stack}>{session?.exercises?.map((item) => <div className={styles.row} key={item.id}><strong>{item.exerciseName}</strong><span>{metric(item.distanceM, 'm')} · {viLabel(item.intensity, 'Chưa xác định')}</span></div>)}{!session?.exercises?.length && <EmptyState title="Chưa có kế hoạch bài tập" />}<p className="text-caption">Hệ thống chưa có dữ liệu lượt hiện tại và mức hoàn thành bài tập, nên không suy ra tiến độ. Biểu đồ giữ 300 số đo gần nhất.</p></div></Card></div>
     <div className={styles.stack}><Card title="Cảnh báo"><div className={styles.stack}>{alerts.map((alert) => <AlertBanner key={alert.id} type="danger" title={`${viLabel('CRITICAL')} · ${metric(alert.metricValue, 'bpm')}`}><p>{dateTime(alert.raisedAt)} · Ngưỡng áp dụng {alert.thresholdApplied} bpm</p><Button variant="tertiary" onClick={() => { setActionError(''); setSelectedAlert(alert.id); }}>Xem cảnh báo {alert.id}</Button>{alert.acknowledgedAt ? <p>Đã xác nhận {dateTime(alert.acknowledgedAt)}</p> : canAck && <Button disabled={busy} variant="secondary" onClick={() => void action('acknowledge', alert.id)}>Xác nhận cảnh báo</Button>}</AlertBanner>)}{current?.warning && <AlertBanner type="warning" title="CẢNH BÁO · tạm thời"><Button variant="tertiary" onClick={() => { setActionError(''); setSelectedAlert('warning'); }}>Xem chi tiết cảnh báo</Button></AlertBanner>}{!alerts.length && <EmptyState title={data ? 'Không có cảnh báo nghiêm trọng' : 'Không có dữ liệu cảnh báo'} />}</div></Card><Card title="Ngưỡng"><div className={styles.stack}>{thresholds.error && <ErrorState title="Không tải được ngưỡng" description={thresholds.error} onRetry={thresholds.reload} />}<KeyValue label="Ngưỡng nghiêm trọng đang áp dụng" value={threshold ? `${threshold.thresholdValue} bpm · ${viLabel(threshold.scope)}` : 'Chưa cung cấp'} /><KeyValue label="Ngưỡng cảnh báo" value="Chưa cung cấp; không áp dụng công thức" /><p>Ngưỡng do Veterinarian thiết lập. Mỗi cảnh báo đã ghi giữ nguyên ngưỡng áp dụng tại thời điểm đó.</p></div></Card></div></div>
-    {canWrite && session && ['IN_PROGRESS', 'PAUSED'].includes(session.status) && <Card title="Thao tác của Trainer"><div className={styles.stack}><ReduceIntensity api={api} session={session} onSaved={resource.reload} /><TextAreaField label="Lý do dừng" maxLength={1000} value={reason} onChange={(event) => setReason(event.target.value)} /><div className={styles.row}><Button disabled={busy || session.status !== 'IN_PROGRESS'} variant="secondary" onClick={() => void action('pause')}>Tạm dừng buổi tập</Button><Button disabled={busy || session.status !== 'PAUSED' || session.blocked || session.trainingAvailability === 'LOCKED'} variant="secondary" onClick={() => void action('resume')}>Tiếp tục buổi tập</Button><Button disabled={busy || !reason.trim()} variant="destructive" onClick={() => void action('stop')}>Dừng buổi tập</Button></div></div></Card>}
+    {canWrite && session && ['IN_PROGRESS', 'PAUSED'].includes(session.status) && <Card title="Thao tác của Trainer"><div className={styles.stack}><ReduceIntensity api={api} session={session} onSaved={resource.reload} /><TextAreaField label="Lý do dừng" maxLength={1000} required value={reason} onChange={(event) => setReason(event.target.value)} /><SelectField label="Loại dừng" value={stopMode} options={[{ value: 'ordinary', label: 'Dừng thông thường' }, { value: 'medical', label: 'Dừng vì lý do y tế' }]} onChange={(event) => setStopMode(event.target.value === 'medical' ? 'medical' : 'ordinary')} />{stopMode === 'medical' && <><SelectField label="Loại sự cố" value={incidentType} placeholder="Chọn loại sự cố" required options={INCIDENT_TYPE_CODES.map((value) => ({ value, label: value === 'OTHER' ? 'Khác' : viLabel(value) }))} onChange={(event) => setIncidentType(isIncidentType(event.target.value) ? event.target.value : '')} /><SelectField label="Mức độ nghiêm trọng" value={observedSeverity} placeholder="Chọn mức độ" required options={INCIDENT_SEVERITIES.map((value) => ({ value, label: viLabel(value) }))} onChange={(event) => setObservedSeverity(isObservedSeverity(event.target.value) ? event.target.value : '')} /></>}<div className={styles.row}><Button disabled={busy || session.status !== 'IN_PROGRESS'} variant="secondary" onClick={() => void action('pause')}>Tạm dừng buổi tập</Button><Button disabled={busy || session.status !== 'PAUSED' || session.blocked || session.trainingAvailability === 'LOCKED'} variant="secondary" onClick={() => void action('resume')}>Tiếp tục buổi tập</Button><Button disabled={busy || !reason.trim()} variant="destructive" onClick={() => void action('stop')}>Dừng buổi tập</Button></div></div></Card>}
     <AlertDetail alert={selectedAlert === 'warning' ? current?.warning : alerts.find((item) => item.id === selectedAlert)} horse={session ? `${session.horse.name} · ${session.horse.horseCode}` : undefined} canAcknowledge={!!canAck} busy={busy} error={actionError} onClose={() => setSelectedAlert(undefined)} onAcknowledge={(id) => void action('acknowledge', id)} />
   </FlowShell>;
 }
