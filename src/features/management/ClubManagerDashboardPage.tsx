@@ -7,6 +7,7 @@ import { viLabel } from '../../shared/viLabels';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { RecentAudit } from './RecentAudit';
 import { ManagementShortcuts } from './ManagementShortcuts';
+import { CareTodayPanel } from '../stable-care/CareTodayPanel';
 import { ManagementAccess } from './ManagementAccess';
 import { ManagementContext, ManagementDestinationsContext } from './ManagementProvider';
 import { useManagementResource } from './useManagementResource';
@@ -62,13 +63,14 @@ function DashboardContent() {
           <Card title="Cần chú ý" className={styles.figmaCard}>
             <dl className={styles.stats}>
               <div><dt><Link to={pendingActivationPath}>Ngựa chờ kích hoạt</Link></dt><dd>{data.needsAttention.pendingActivations}</dd></div>
-              <div><dt>Yêu cầu đăng ký chờ duyệt</dt><dd>{data.needsAttention.pendingRegistrations}</dd></div>
+              <div><dt><Link to={ROUTES.registrations}>Yêu cầu đăng ký chờ duyệt</Link></dt><dd>{data.needsAttention.pendingRegistrations}</dd></div>
               <div><dt><Link to={ROUTES.incidents}>Sự cố chưa xử lý xong</Link></dt><dd>{data.openIncidents}</dd></div>
             </dl>
             {data.needsAttention.pendingActivations + data.needsAttention.pendingRegistrations + data.openIncidents === 0 && <EmptyState title="Không có mục nào cần chú ý" />}
             <p className={styles.note}>Sự cố chưa xong gồm sự cố mới báo và đang xem xét.</p>
           </Card>
         </div>
+        {businessDataMode() === 'api' && <CareTodayPanel manager />}
         <div className={styles.threeColumns}>
           <Card title="Lịch tập hôm nay" className={styles.figmaCard}><p className={styles.number}>{total(data.trainingToday.byStatus)} <span className={styles.note}>{total(data.trainingToday.byStatus) === 1 ? 'buổi tập đã lên lịch' : 'buổi tập đã lên lịch'}</span></p><Breakdown rows={data.trainingToday.byStatus} empty="Hôm nay không có buổi tập nào" /></Card>
           <Card title="Sự cố" className={styles.figmaCard} action={<Link to={ROUTES.incidents}>Xem sự cố →</Link>}><p className={styles.number}>{data.openIncidents}</p><p className={styles.subtitle}>Mới báo hoặc đang xem xét</p><p className={styles.note}>Chỉ là tóm tắt quản lý.</p></Card>

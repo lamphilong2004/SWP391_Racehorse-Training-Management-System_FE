@@ -48,7 +48,7 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
           { label: 'Chương trình huấn luyện ngựa', icon: 'clipboard-list', to: ROUTES.trainingPrograms },
           { label: 'Mẫu chương trình', icon: 'file-text', to: ROUTES.programTemplates },
           { label: 'Chăm sóc & dinh dưỡng', icon: 'warehouse', to: ROUTES.stable },
-          { label: 'Công việc chăm sóc theo ngày', icon: 'calendar', to: ROUTES.dailyCare },
+          { label: 'Chăm sóc hằng ngày', icon: 'calendar', to: ROUTES.dailyCare },
           { label: 'Yêu cầu điều chỉnh', icon: 'history', to: ROUTES.adjustmentRequests },
           { label: 'Lịch tập', icon: 'calendar', to: ROUTES.trainingSchedule },
           { label: 'Thành tích', icon: 'trending-up', to: ROUTES.performance },
@@ -136,7 +136,7 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
           { label: 'Ngựa', icon: 'horseshoe', to: ROUTES.horses },
           { label: 'Chờ kích hoạt', icon: 'clipboard-list', to: ROUTES.pendingActivation },
           { label: 'Chăm sóc & dinh dưỡng', icon: 'warehouse', to: ROUTES.stable },
-          { label: 'Công việc theo ngày', icon: 'calendar', to: ROUTES.dailyCare },
+          { label: 'Chăm sóc hằng ngày', icon: 'calendar', to: ROUTES.dailyCare },
         ],
       },
       {
@@ -167,7 +167,7 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
       {
         heading: 'Công việc của tôi',
         items: [
-          { label: 'Công việc chăm sóc', icon: 'clipboard-list', to: ROUTES.careTasks },
+          { label: 'Công việc điều trị', icon: 'clipboard-list', to: ROUTES.careTasks },
           { label: 'Chăm sóc hằng ngày', icon: 'check-circle', to: ROUTES.dailyCare },
           { label: 'Kho & yêu cầu bổ sung', icon: 'package', to: ROUTES.inventory },
           {

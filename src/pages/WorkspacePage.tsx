@@ -9,6 +9,7 @@ import { NAVIGATION } from '../layout/navigation';
 import { useFlowRequest } from '../features/main-flows/api';
 import { useResource } from '../features/main-flows/useResource';
 import type { HorseDetail, Page } from '../features/horses/api/types';
+import { CareTodayPanel } from '../features/stable-care/CareTodayPanel';
 import styles from './WorkspacePage.module.css';
 
 type WorkspaceAction = { title: string; description: string; label: string; to: string; icon: IconName };
@@ -34,10 +35,11 @@ const WORKSPACES: Record<RoleCode, { description: string; primary: WorkspaceActi
     ],
   },
   GROOM: {
-    description: 'Các mục kiểm tra trước buổi tập và công việc chăm sóc được giao cho bạn.',
+    description: 'Việc chăm sóc hằng ngày, kiểm tra trước buổi tập và công việc điều trị được giao cho bạn.',
     primary: { title: 'Hôm nay', description: '', label: 'Mở hôm nay & kiểm tra', to: ROUTES.groomToday, icon: 'clipboard-list' },
     actions: [
       { title: 'Hôm nay & kiểm tra', description: 'Tìm ngựa được giao và hoàn tất cả năm mục kiểm tra trước buổi tập.', label: 'Mở kiểm tra trước buổi tập', to: ROUTES.groomToday, icon: 'clipboard-list' },
+      { title: 'Chăm sóc hằng ngày', description: 'Cho ăn, vệ sinh, tắm theo kế hoạch. Bấm Hoàn thành khi làm xong, báo bất thường nếu ngựa có vấn đề.', label: 'Mở chăm sóc hằng ngày', to: ROUTES.dailyCare, icon: 'calendar' },
       { title: 'Công việc điều trị', description: 'Làm theo hướng dẫn của Veterinarian và ghi nhận công việc chăm sóc đã làm.', label: 'Xem công việc điều trị', to: ROUTES.careTasks, icon: 'check-circle' },
       { title: 'Sự cố đã báo', description: 'Theo dõi trạng thái xử lý các quan sát bạn đã báo.', label: 'Xem sự cố', to: ROUTES.incidents, icon: 'alert-triangle' },
     ],
@@ -93,6 +95,7 @@ export function WorkspacePage() {
         <div><span className={styles.eyebrow}>{ROLE_LABELS[role]}</span><h2>Xin chào, {user.fullName}</h2><p>Chọn một công việc bên dưới để tiếp tục.</p></div>
         <span className={styles.access}><Icon name="shield-check" size={16} />Truy cập theo vai trò</span>
       </section>
+      {role === 'GROOM' && <CareTodayPanel manager={false} />}
       <section aria-labelledby="workspace-actions-title" className={styles.section}>
         <div className={styles.sectionHeading}><h2 id="workspace-actions-title">Thao tác nhanh</h2><span>Mở không gian làm việc</span></div>
         <div className={styles.actionGrid}>{workspace.actions.map((action) => <Card key={action.to} className={styles.actionCard}>

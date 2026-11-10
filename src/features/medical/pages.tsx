@@ -337,7 +337,7 @@ export function TreatmentPlanPage() {
     {saved && <AlertBanner feedback type="success" title="Đã lưu phác đồ điều trị" />}
     {saved && <NextStep title="Thực hiện công việc điều trị" owner={tasks.length ? 'Groom được giao' : 'Veterinarian (bạn) · chưa giao Groom'}
       action={{ label: 'Quay lại ca y tế', to: casePath(id) }}>
-      <p>{tasks.length ? `${tasks.length} công việc đã giao cho Groom, hiện trong mục Công việc chăm sóc của họ.` : 'Phác đồ chưa có công việc nào cho Groom. Thêm công việc nếu ngựa cần chăm sóc hoặc cho thuốc.'} Khi ngựa ổn, tái khám ghi Đã hồi phục rồi gỡ hạn chế và đóng ca.</p>
+      <p>{tasks.length ? `${tasks.length} công việc đã giao cho Groom, hiện trong mục Công việc điều trị của họ.` : 'Phác đồ chưa có công việc nào cho Groom. Thêm công việc nếu ngựa cần chăm sóc hoặc cho thuốc.'} Khi ngựa ổn, tái khám ghi Đã hồi phục rồi gỡ hạn chế và đóng ca.</p>
     </NextStep>}
     <div className="medical-grid medical-treatment-layout"><div className="medical-stack">
       {medicalCase.status === 'CLOSED' ? <AlertBanner type="danger" title="Không thể sửa ca y tế đã đóng" /> :

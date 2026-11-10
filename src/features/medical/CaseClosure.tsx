@@ -57,7 +57,7 @@ export function CaseClosure({ item, needsExamination, needsRecovery, openTab, re
     ...(needsPlanRecovery ? [{ key: 'recovery', ok: !needsRecovery, label: 'Tái khám gần nhất ghi Đã hồi phục', detail: needsRecovery ? 'Ca có chấn thương hoặc phác đồ; cần tái khám ghi Đã hồi phục.' : 'Đã hồi phục',
       action: needsRecovery ? <Button size="sm" onClick={() => openTab('recovery')}>Ghi tái khám</Button> : null }] : []),
     ...(item.treatmentPlan ? [{ key: 'tasks', ok: blockers ? blockers.pendingTasks === 0 : undefined, label: 'Groom hoàn thành mọi công việc điều trị',
-      detail: !blockers ? 'Đang kiểm tra…' : blockers.pendingTasks ? `Còn ${blockers.pendingTasks} công việc chưa hoàn thành. Groom đánh dấu trong mục Công việc chăm sóc.` : 'Đã hoàn thành',
+      detail: !blockers ? 'Đang kiểm tra…' : blockers.pendingTasks ? `Còn ${blockers.pendingTasks} công việc chưa hoàn thành. Groom đánh dấu trong mục Công việc điều trị.` : 'Đã hoàn thành',
       action: blockers?.pendingTasks ? <Button size="sm" variant="secondary" onClick={() => openTab('treatment')}>Xem công việc điều trị</Button> : null }] : []),
     // DEC-014: open linked incidents no longer block closing; the close resolves them.
     ...(item.incidentIds.length ? [{ key: 'incidents', ok: blockers ? true : undefined, label: 'Sự cố liên quan',

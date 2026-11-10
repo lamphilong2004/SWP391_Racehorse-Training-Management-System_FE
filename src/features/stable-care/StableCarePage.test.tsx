@@ -78,15 +78,15 @@ describe('Flow 4 API-only UI', () => {
     });
     vi.stubGlobal('fetch', fetcher); mount('/care/daily');fireEvent.click(await screen.findByRole('button', { name: 'Thao tác' }));fireEvent.click(screen.getByRole('button', { name: 'Đổi Groom' }));
     expect(screen.getByLabelText('Ngày công việc (giờ Việt Nam)')).toBeDisabled();
-    await screen.findByRole('option', { name: 'Groom dự phòng' });expect(screen.queryByRole('option', { name: 'Groom fixture' })).not.toBeInTheDocument();
+    await screen.findByRole('option', { name: 'Groom dự phòng' });expect(within(screen.getByRole('dialog')).queryByRole('option', { name: 'Groom fixture' })).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Groom thay thế'), { target: { value: '3' } });fireEvent.change(screen.getByLabelText('Lý do thay đổi'), { target: { value: 'Đổi ca trực' } });fireEvent.click(screen.getByRole('button', { name: 'Lưu phân công' }));
-    await screen.findByText('Máy chủ đã xác nhận đổi Groom và gửi thông báo.');expect(screen.queryByRole('dialog')).not.toBeInTheDocument();await waitFor(() => expect(screen.getByLabelText('Ngày công việc (giờ Việt Nam)')).toBeEnabled());
+    await screen.findByText('Đã đổi Groom phụ trách và gửi thông báo cho Groom mới.');expect(screen.queryByRole('dialog')).not.toBeInTheDocument();await waitFor(() => expect(screen.getByLabelText('Ngày công việc (giờ Việt Nam)')).toBeEnabled());
     const post = fetcher.mock.calls.find(([, init]) => init?.method === 'POST');expect(String(post?.[0])).toMatch(/\/tasks\/10\/reassign$/);expect(JSON.parse(String(post?.[1]?.body))).toEqual({ expectedGroomUserId: 2, groomUserId: 3, reason: 'Đổi ca trực' });
   });
   it('preserves cancellation reason and shows no success after a conflict', async () => {
     state.role = 'CLUB_MANAGER';vi.stubGlobal('fetch', vi.fn(async (_url, init) => init?.method === 'POST' ? fail() : ok([task()])));
     mount('/care/daily');fireEvent.click(await screen.findByRole('button', { name: 'Thao tác' }));fireEvent.click(screen.getByRole('button', { name: 'Hủy công việc' }));fireEvent.change(screen.getByLabelText('Lý do thay đổi'), { target: { value: 'Giữ lý do' } });fireEvent.click(screen.getByRole('button', { name: 'Xác nhận hủy công việc' }));
-    await screen.findByText('Stock changed.');expect(screen.getByLabelText('Lý do thay đổi')).toHaveValue('Giữ lý do');expect(screen.queryByText(/Máy chủ đã xác nhận hủy/)).not.toBeInTheDocument();
+    await screen.findByText('Stock changed.');expect(screen.getByLabelText('Lý do thay đổi')).toHaveValue('Giữ lý do');expect(screen.queryByText(/Đã hủy công việc/)).not.toBeInTheDocument();
   });
   it('does not offer mutations on cancelled/completed/past work and filters cancellation separately', async () => {
     state.role = 'CLUB_MANAGER';vi.stubGlobal('fetch', vi.fn(async () => ok([{ ...task('Đã hủy'), cancelledAt: new Date().toISOString(), cancellationReason: 'Lịch thay đổi' }, { ...task('Đã xong'), id: 11, completedAt: new Date().toISOString() }])));
@@ -189,7 +189,7 @@ describe('Flow 4 API-only UI', () => {
     mount('/stable');await screen.findByRole('option', { name: 'Sao Mai · SM' });fireEvent.change(screen.getByLabelText('Ngựa'), { target: { value: '1' } });fireEvent.click(await screen.findByRole('button', { name: 'Tạo kế hoạch chăm sóc' }));
     fireEvent.change(screen.getByLabelText('Hướng dẫn'), { target: { value: 'Nội dung chưa lưu' } });expect(screen.getByLabelText('Ngựa')).toBeDisabled();
     fireEvent.click(screen.getByRole('button', { name: 'Hủy' }));const cancel = await screen.findByRole('dialog', { name: 'Hủy thay đổi chưa lưu?' });fireEvent.click(within(cancel).getByRole('button', { name: 'Tiếp tục chỉnh sửa' }));expect(screen.getByLabelText('Hướng dẫn')).toHaveValue('Nội dung chưa lưu');
-    fireEvent.click(within(screen.getByRole('navigation', { name: 'Chăm sóc chuồng' })).getByRole('link', { name: 'Công việc theo ngày' }));const navigation = await screen.findByRole('dialog', { name: 'Thay đổi chưa lưu' });fireEvent.click(within(navigation).getByRole('button', { name: 'Tiếp tục chỉnh sửa' }));expect(screen.getByLabelText('Hướng dẫn')).toHaveValue('Nội dung chưa lưu');
+    fireEvent.click(within(screen.getByRole('navigation', { name: 'Chăm sóc chuồng' })).getByRole('link', { name: 'Chăm sóc hằng ngày' }));const navigation = await screen.findByRole('dialog', { name: 'Thay đổi chưa lưu' });fireEvent.click(within(navigation).getByRole('button', { name: 'Tiếp tục chỉnh sửa' }));expect(screen.getByLabelText('Hướng dẫn')).toHaveValue('Nội dung chưa lưu');
     fireEvent.click(screen.getByRole('button', { name: 'Hủy' }));fireEvent.click(within(await screen.findByRole('dialog', { name: 'Hủy thay đổi chưa lưu?' })).getByRole('button', { name: 'Hủy thay đổi' }));expect(screen.queryByLabelText('Hướng dẫn')).not.toBeInTheDocument();expect(screen.getByLabelText('Ngựa')).toBeEnabled();
   });
   it('announces confirmed plan save after the editor is closed', async () => {
