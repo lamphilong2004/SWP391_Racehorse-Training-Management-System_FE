@@ -11,9 +11,29 @@ export interface TaskChange { id: number; taskId: number; changeType: 'REASSIGN'
 export interface StockItem { id: number; name: string; category: string; unit: string; threshold: number | null; currentQuantity: number; active: boolean }
 export interface Movement { id: number; itemName: string; changeQuantity: number; unit: string; note: string; recordedBy: string; recordedAt: string }
 export interface Replenishment { id: number; inventoryItemId: number; itemName: string; quantity: number; unit: string; reason: string; requestedBy: string; submittedAt: string }
+export const STABLE_CARE_READ_TIMEOUT_MS = 15_000;
+
+/** Bound read-only loading, including JSON decoding. Never time out/replay a database write here. */
+async function readStableCare<T>(path: string, token: string): Promise<T> {
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      reject(new Error('Máy chủ phản hồi chậm. Dữ liệu chưa tải được; hãy bấm Thử lại.'));
+      controller.abort();
+    }, STABLE_CARE_READ_TIMEOUT_MS);
+  });
+  try {
+    return await Promise.race([requestApi<T>(path, { method: 'GET', signal: controller.signal }, { token }), timeout]);
+  } finally { clearTimeout(timer); }
+}
 export function createStableCareApi(token: string, onError: (cause: unknown) => boolean) {
   async function call<T>(path: string, method = 'GET', body?: unknown): Promise<T> {
-    try { return await requestApi<T>(path === '/api/incidents' ? path : `/api/stable-care${path}`, { method, ...(body === undefined ? {} : { body: JSON.stringify(body) }) }, { token }); }
+    const endpoint = path === '/api/incidents' ? path : `/api/stable-care${path}`;
+    try {
+      if (method === 'GET') return await readStableCare<T>(endpoint, token);
+      return await requestApi<T>(endpoint, { method, ...(body === undefined ? {} : { body: JSON.stringify(body) }) }, { token });
+    }
     catch (cause) { onError(cause); throw cause; }
   }
   return {
