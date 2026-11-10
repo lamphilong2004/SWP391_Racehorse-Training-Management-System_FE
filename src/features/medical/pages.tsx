@@ -2,13 +2,12 @@ import { clubDateTime, parseClubDateTime } from '../../shared/clubCalendar';
 import { boxLabel } from '../../shared/stableBox';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { AlertBanner, ButtonLink, Button, Card, DataTable, EmptyState, Icon, KeyValue, MetricCard, NextStep, StatusBadge, TableToolbar, SelectField, TextField, Tabs } from '../../design-system';
+import { AlertBanner, ButtonLink, Button, Card, DataTable, EmptyState, Icon, KeyValue, MetricCard, NextStep, PresetField, StatusBadge, TableToolbar, SelectField, TextField, Tabs } from '../../design-system';
 import { PageHeader } from '../../layout/PageHeader';
 import { MEDICAL_ROUTES as ROUTES } from './paths';
 import { MedicalForm } from './MedicalForm';
 import { TreatmentPlanEditor } from './TreatmentPlanEditor';
-import { InjuryMap } from './InjuryMap';
-import { regionLabel } from './bodyRegions';
+import { BODY_REGIONS, regionLabel } from './bodyRegions';
 import type { ClinicalSeverity, MedicalCase, MedicalService, RecoveryStatus, TrainingAvailability } from './models';
 import { useMedicalRuntime } from './runtimeContext';
 import { dateTime } from '../evaluation/models';
@@ -256,20 +255,16 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
         }); reload(); }} />}</Card>
     </div>
     <div role="tabpanel" id="case-panel-injury" aria-labelledby="case-tab-injury" hidden={panel !== 'injury'} className="medical-stack">
-      <InjuryMap injuries={item.injuries} />
       <Card title="Hồ sơ chấn thương"><History count={item.injuries.length} empty="Chưa có chấn thương">{item.injuries.map((injury) =>
-        <li key={injury.id}>{regionLabel(injury.bodyRegion)} · {viLabel(injury.severity)} · {viLabel(injury.recoveryStatus)}{injury.position3d && <p>Điểm đánh dấu vị trí: {injury.position3d}</p>}</li>)}</History>
+        <li key={injury.id}>{regionLabel(injury.bodyRegion)} · {viLabel(injury.severity)} · {viLabel(injury.recoveryStatus)}{injury.side && <> · {injury.side}</>}</li>)}</History>
         {!closed && <MedicalForm submitLabel="Lưu chấn thương" fields={[
-          { name: 'bodyRegion', label: 'Vùng cơ thể', maxLength: 100, required: true },
+          // DEC-015: no 3D model; the Vet declares where and what the injury is as text.
+          { name: 'bodyRegion', label: 'Vị trí chấn thương', maxLength: 100, required: true, render: ({ value, onChange, disabled, error }) => <PresetField label="Vị trí chấn thương" required maxLength={100} value={value} onValueChange={onChange} disabled={disabled} error={error} options={BODY_REGIONS.map((region) => ({ value: regionLabel(region), label: regionLabel(region) }))} helperText="Chọn vùng, hoặc chọn Khác để ghi cụ thể, ví dụ: Chân trước trái – gân gấp sưng." /> },
           { name: 'severity', label: 'Mức độ', options: ['MILD', 'MODERATE', 'SEVERE'], required: true },
           { name: 'recoveryStatus', label: 'Tình trạng hồi phục', options: ['NOT_RECOVERED', 'IMPROVING', 'RECOVERED'], required: true },
-          { name: 'position3d', label: 'Điểm đánh dấu vị trí (không bắt buộc)', maxLength: 100 },
-          { name: 'side', label: 'Bên (không bắt buộc)', maxLength: 20 },
         ]} onSave={async (values) => { await service.addInjury(item.id, {
           bodyRegion: values.bodyRegion, severity: values.severity as ClinicalSeverity,
           recoveryStatus: values.recoveryStatus as RecoveryStatus,
-          ...(values.position3d ? { position3d: values.position3d } : {}),
-          ...(values.side ? { side: values.side } : {}),
         }); reload(); }} />}</Card>
     </div>
     <div role="tabpanel" id="case-panel-treatment" aria-labelledby="case-tab-treatment" hidden={panel !== 'treatment'} className="medical-stack">

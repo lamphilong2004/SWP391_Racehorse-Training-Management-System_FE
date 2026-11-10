@@ -35,7 +35,6 @@
 .medical-map-body { position: absolute; top: 159px; left: 179px; }
 .medical-map-head { position: absolute; top: 119px; left: 459px; }
 .medical-map-leg { position: absolute; top: 224px; width: 14px; height: 115px; background: var(--color-border-strong); border-radius: var(--radius-sm); }
-.medical-region-list { display: grid; gap: var(--space-sm); }
 @media (max-width: 1000px) { .medical-grid { grid-template-columns: minmax(0, 1fr); } }
 
 
