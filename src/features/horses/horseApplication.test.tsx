@@ -16,6 +16,7 @@ const checklist = (): ActivationStatus => ({ horseId: 81, horseCode: 'FIX-81', n
   { id: 'HEAD_TRAINER_READINESS_REVIEW', label: 'Đánh giá sẵn sàng của Head Trainer', description: 'Recommended — does not block activation', requirement: 'RECOMMENDED', state: 'NOT_REVIEWED' },
 ] });
 const ok = (data: unknown, status = 200) => new Response(JSON.stringify({ success: true, data }), { status });
+const weightPage = <T,>(items: T[]) => ({ items, page: 0, size: 20, totalElements: items.length });
 const failure = (status: number, message = 'Fixture request failed') => new Response(JSON.stringify({ success: false, error: { code: status === 401 ? 'UNAUTHORIZED' : status === 403 ? 'FORBIDDEN' : status === 409 ? 'CONFLICT' : 'NOT_FOUND', message, details: [] } }), { status });
 function SessionProbe() {
   const auth = useAuth();
@@ -43,7 +44,7 @@ function mount(path = '/horses', options: { role?: RoleCode; anonymous?: boolean
     }
     if (path === '/api/horses' && method === 'GET') return ok(options.list ? options.list(url) : { items: store, page: 0, size: 20, totalItems: store.length, totalPages: 1 });
     if (/^\/api\/horses\/\d+$/.test(path)) return options.getHorse ? options.getHorse() : ok(store.find((h) => h.id === Number(path.split('/')[3])) ?? horse());
-    if (/^\/api\/horses\/\d+\/weights$/.test(path)) return options.weights ? options.weights(method, init) : ok({ items: [] });
+    if (/^\/api\/horses\/\d+\/weights$/.test(path)) return options.weights ? options.weights(method, init) : ok(weightPage([]));
     if (path === '/api/stable-boxes') return ok([
       { id: 32, boxCode: 'B-02', yard: 'Full fixture yard', status: 'OCCUPIED', currentHorse: { id: 91, name: 'Other fixture', horseCode: 'FIX-91' } },
       { id: 31, boxCode: 'B-01', yard: 'Free fixture yard', status: 'FREE', currentHorse: null },
@@ -81,19 +82,21 @@ it('shows periodic recording only to veterinarians and keeps the weight history 
 
 it('refreshes horse detail and weight history only after a confirmed weight write', async () => {
   const oldWeight = { id: 1, horseId: 81, weightKg: 465, recordedAt: '2026-01-01T03:00:00.000Z' };
-  const newWeight = { id: 2, horseId: 81, weightKg: 467, recordedAt: '2026-01-02T03:00:00.000Z' };
+  const recordedAt = new Date(Math.floor(Date.now() / 60000) * 60000 - 60000);
+  const vietnamInput = new Date(recordedAt.getTime() + 7 * 3600000).toISOString().slice(0, 16);
+  const newWeight = { id: 2, horseId: 81, weightKg: 467, recordedAt: recordedAt.toISOString() };
   let saved = false;
   let resolvePost!: (response: Response) => void;
   const post = new Promise<Response>((resolve) => { resolvePost = resolve; });
   const { requests } = mount('/horses/81', {
     role: 'VETERINARIAN',
     getHorse: async () => ok({ ...horse(), lifecycle: 'ACTIVE', latestWeight: saved ? newWeight : oldWeight }),
-    weights: async (method) => method === 'POST' ? post : ok({ items: saved ? [newWeight, oldWeight] : [oldWeight] }),
+    weights: async (method) => method === 'POST' ? post : ok(weightPage(saved ? [newWeight, oldWeight] : [oldWeight])),
   });
   const card = (await screen.findByRole('heading', { name: 'Nhận dạng & sở hữu' })).closest('section')!;
   await screen.findByRole('list', { name: 'Lịch sử cân nặng' });
   expect(within(card).getByText('465 kg')).toBeInTheDocument();
-  fireEvent.change(screen.getByLabelText('Ngày giờ ghi nhận'), { target: { value: '2026-01-02T10:00' } });
+  fireEvent.change(screen.getByLabelText('Ngày giờ ghi nhận'), { target: { value: vietnamInput } });
   fireEvent.change(screen.getByLabelText('Cân nặng (kg)'), { target: { value: '467' } });
   fireEvent.click(screen.getByRole('button', { name: 'Lưu cân nặng' }));
   await screen.findByRole('button', { name: 'Đang lưu…' });
@@ -109,12 +112,35 @@ it('refreshes horse detail and weight history only after a confirmed weight writ
   expect(requests.filter((entry) => entry.path === '/api/horses/81/weights?page=0&size=20')).toHaveLength(2);
 });
 
+it('retains the latest weight from the server after recording an older measurement', async () => {
+  const latest = { id: 1, horseId: 81, weightKg: 465, recordedAt: '2026-01-02T03:00:00.000Z' };
+  const older = { id: 2, horseId: 81, weightKg: 430, recordedAt: '2026-01-01T03:00:00.000Z' };
+  let saved = false;
+  const { requests } = mount('/horses/81', {
+    role: 'VETERINARIAN',
+    getHorse: async () => ok({ ...horse(), lifecycle: 'ACTIVE', latestWeight: latest }),
+    weights: async (method) => {
+      if (method === 'POST') { saved = true; return ok(older, 201); }
+      return ok(weightPage(saved ? [latest, older] : [latest]));
+    },
+  });
+  const card = (await screen.findByRole('heading', { name: 'Nhận dạng & sở hữu' })).closest('section')!;
+  await screen.findByRole('list', { name: 'Lịch sử cân nặng' });
+  fireEvent.change(screen.getByLabelText('Ngày giờ ghi nhận'), { target: { value: '2026-01-01T10:00' } });
+  fireEvent.change(screen.getByLabelText('Cân nặng (kg)'), { target: { value: '430' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Lưu cân nặng' }));
+  await waitFor(() => expect(within(screen.getByRole('list', { name: 'Lịch sử cân nặng' })).getByText('430 kg')).toBeInTheDocument());
+  await waitFor(() => expect(requests.filter((entry) => entry.path === '/api/horses/81')).toHaveLength(2));
+  await within(card).findByText('465 kg');
+  expect(within(card).queryByText('430 kg')).not.toBeInTheDocument();
+});
+
 it('does not refresh the horse or report success after a failed weight write', async () => {
   const oldWeight = { id: 1, horseId: 81, weightKg: 465, recordedAt: '2026-01-01T03:00:00.000Z' };
   const { requests } = mount('/horses/81', {
     role: 'VETERINARIAN',
     getHorse: async () => ok({ ...horse(), lifecycle: 'ACTIVE', latestWeight: oldWeight }),
-    weights: async (method) => method === 'POST' ? failure(409, 'Weight save failed') : ok({ items: [oldWeight] }),
+    weights: async (method) => method === 'POST' ? failure(409, 'Weight save failed') : ok(weightPage([oldWeight])),
   });
   const card = (await screen.findByRole('heading', { name: 'Nhận dạng & sở hữu' })).closest('section')!;
   await screen.findByRole('list', { name: 'Lịch sử cân nặng' });
@@ -143,7 +169,7 @@ it('hides the old summary while a profile refresh fails and lets the user retry'
     },
     weights: async (method) => {
       if (method === 'POST') { saved = true; return ok(newWeight, 201); }
-      return ok({ items: saved ? [newWeight, oldWeight] : [oldWeight] });
+      return ok(weightPage(saved ? [newWeight, oldWeight] : [oldWeight]));
     },
   });
   const card = (await screen.findByRole('heading', { name: 'Nhận dạng & sở hữu' })).closest('section')!;

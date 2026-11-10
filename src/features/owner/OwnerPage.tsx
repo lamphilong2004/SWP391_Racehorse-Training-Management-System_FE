@@ -117,7 +117,7 @@ function Health({ horse }: { horse: OwnerHorse }) {
     </Section>
     <Section title="Cân nặng">
       {weight ? <div className={styles.weightValue}><p className={styles.weight}>{weight.weightKg} kg</p><p className={styles.caption}>ghi gần nhất <time dateTime={weight.recordedAt} title={weight.recordedAt}>{weightTimestamp(weight.recordedAt)}</time></p></div> : <p className={styles.weight}>{missing}</p>}
-      <WeightHistoryChart records={horse.healthSummary?.weights ?? []} showHistory={false} />
+      <WeightHistoryChart records={horse.healthSummary?.weights ?? []} title="Cân nặng — tối đa 12 lần đo gần nhất" showHistory={false} />
     </Section>
   </div><aside className={styles.stack}><Section title="Ý nghĩa"><h3>Sức khỏe</h3><ul><li>Khỏe mạnh</li><li>Đang theo dõi</li><li>Đang được thú y chăm sóc</li></ul><h3>Mức sẵn sàng tập luyện</h3><ul><li>Sẵn sàng — được tập bình thường</li><li>Hạn chế — vẫn tập trong giới hạn do Veterinarian đặt</li><li>Khóa — Veterinarian đã tạm dừng tập luyện</li></ul></Section><AlertBanner className={styles.note} title="Cổng này không hiển thị chi tiết y tế như chẩn đoán, điều trị và thuốc. Chỉ Veterinarian được thay đổi sức khỏe hoặc mức sẵn sàng." /></aside></div>;
 }

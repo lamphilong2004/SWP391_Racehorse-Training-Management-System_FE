@@ -13,8 +13,7 @@ export function prepareWeightHistory(records: readonly WeightHistoryEntry[]) {
       valid.push({ ...record, timestamp });
     }
   }
-  valid.sort((a, b) => a.timestamp - b.timestamp);
-  return { records: valid, invalidCount };
+  return { records: [...valid].sort((a, b) => a.timestamp - b.timestamp), history: valid, invalidCount };
 }
 
 export function weightAxisTicks(values: readonly number[]) {

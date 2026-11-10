@@ -94,7 +94,7 @@ describe('CORE-056 read-only Owner journey', () => {
     await screen.findByText('25 thg 10, 2026');
     expect(screen.getByText('501.25 kg')).toBeInTheDocument();
     expect(screen.getByText(/ghi gần nhất/)).toHaveTextContent('18 thg 10, 2026');
-    expect(screen.getByText('Lịch sử cân nặng')).toBeInTheDocument();
+    expect(screen.getByText('Cân nặng — tối đa 12 lần đo gần nhất')).toBeInTheDocument();
     expect(document.querySelector('svg[aria-label="Cân nặng (kg): 499.5, 501.25"]')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Lưu cân nặng' })).not.toBeInTheDocument();
     expect(screen.queryByText('Hồi phục')).not.toBeInTheDocument(); expect(screen.queryByText('Last examined')).not.toBeInTheDocument();

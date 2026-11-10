@@ -26,7 +26,7 @@ export function WeightHistoryChart({
   title?: string;
   showHistory?: boolean;
 }) {
-  const { records: sorted, invalidCount } = prepareWeightHistory(records);
+  const { records: sorted, history, invalidCount } = prepareWeightHistory(records);
   const timestamps = sorted.map((record) => record.timestamp);
   const first = timestamps[0], last = timestamps[timestamps.length - 1];
   const duration = first === undefined || last === undefined ? 0 : last - first;
@@ -55,7 +55,7 @@ export function WeightHistoryChart({
     />
     {showHistory && sorted.length > 0 && <Card title="Các lần ghi nhận">
       <ol aria-label="Lịch sử cân nặng" className={styles.historyList}>
-        {[...sorted].reverse().map((record, index) => (
+        {history.map((record, index) => (
           <li key={`${record.timestamp}-${record.weightKg}-${index}`} className={styles.historyItem}>
             <strong>{record.weightKg} kg</strong>
             <time dateTime={record.recordedAt}>{recordedLabel(record.timestamp)}</time>

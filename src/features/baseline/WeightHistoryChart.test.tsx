@@ -37,16 +37,17 @@ describe('weight history chart', () => {
   it('sorts newest-first input chronologically and plots irregular timestamp gaps proportionally', () => {
     const records = [
       { weightKg: 425, recordedAt: '2026-11-09T10:00:00.000Z' },
-      { weightKg: 420, recordedAt: '2026-11-09T01:00:00.000Z' },
       { weightKg: 422, recordedAt: '2026-11-09T02:00:00.000Z' },
+      { weightKg: 421, recordedAt: '2026-11-09T02:00:00.000Z' },
+      { weightKg: 420, recordedAt: '2026-11-09T01:00:00.000Z' },
     ];
     const prepared = prepareWeightHistory(records);
-    expect(prepared.records.map((record) => record.weightKg)).toEqual([420, 422, 425]);
+    expect(prepared.records.map((record) => record.weightKg)).toEqual([420, 422, 421, 425]);
     render(<WeightHistoryChart records={records} />);
     const list = screen.getByRole('list', { name: 'Lịch sử cân nặng' });
-    expect(within(list).getAllByRole('listitem').map((item) => item.textContent?.match(/\d+(?:\.\d+)? kg/)?.[0])).toEqual(['425 kg', '422 kg', '420 kg']);
+    expect(within(list).getAllByRole('listitem').map((item) => item.textContent?.match(/\d+(?:\.\d+)? kg/)?.[0])).toEqual(['425 kg', '422 kg', '421 kg', '420 kg']);
     const series = document.querySelector('polyline');
-    expect(series?.getAttribute('points')).toMatch(/^0,[^ ]+ 11\.11111111111111,[^ ]+ 100,/);
+    expect(series?.getAttribute('points')).toMatch(/^0,[^ ]+ 11\.11111111111111,[^ ]+ 11\.11111111111111,[^ ]+ 100,/);
     const markers = document.querySelectorAll<HTMLElement>('.seriesPoint');
     const points = series!.getAttribute('points')!.split(' ').map((point) => point.split(',').map(Number));
     expect(markers).toHaveLength(points.length);

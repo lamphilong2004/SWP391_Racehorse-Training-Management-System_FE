@@ -6,6 +6,7 @@ import { useResource } from '../main-flows/useResource';
 import { createBaselineApi, validateWeight, type WeightRecord } from './baselineApi';
 import { WeightHistoryChart } from './WeightHistoryChart';
 import flowStyles from '../main-flows/flow.module.css';
+import horseStyles from '../horses/shared/horses.module.css';
 
 function isConfirmedRecord(record: WeightRecord | null | undefined, horseId: number, requestedWeight: number) {
   return Boolean(record
@@ -17,13 +18,23 @@ function isConfirmedRecord(record: WeightRecord | null | undefined, horseId: num
 }
 
 export function WeightHistoryPanel({ horseId, canRecord, onSaved }: { horseId: number; canRecord: boolean; onSaved?: () => void }) {
+  return <WeightHistoryContent key={horseId} horseId={horseId} canRecord={canRecord} onSaved={onSaved} />;
+}
+
+function WeightHistoryContent({ horseId, canRecord, onSaved }: { horseId: number; canRecord: boolean; onSaved?: () => void }) {
   const request = useFlowRequest();
   const api = useMemo(() => createBaselineApi(request), [request]);
+  const [page, setPage] = useState(0);
   const load = useCallback(async (signal: AbortSignal) => {
-    const result = await api.weights(idOf(horseId), signal);
-    if (!result || !Array.isArray(result.items)) throw new Error('Phản hồi lịch sử cân nặng không đúng định dạng.');
-    return result.items;
-  }, [api, horseId]);
+    const result = await api.weights(idOf(horseId), signal, page);
+    if (!result || !Array.isArray(result.items) || result.page !== page
+      || !Number.isSafeInteger(result.size) || result.size < 1
+      || !Number.isSafeInteger(result.totalElements) || result.totalElements < 0
+      || result.items.length > result.size || page * result.size + result.items.length > result.totalElements) {
+      throw new Error('Phản hồi lịch sử cân nặng không đúng định dạng.');
+    }
+    return result;
+  }, [api, horseId, page]);
   const history = useResource(load);
   const [weight, setWeight] = useState('');
   const [recordedAt, setRecordedAt] = useState(() => clubDateTime());
@@ -59,7 +70,8 @@ export function WeightHistoryPanel({ horseId, canRecord, onSaved }: { horseId: n
       setSaved(result);
       setWeight('');
       setRecordedAt(clubDateTime());
-      history.reload();
+      if (page === 0) history.reload();
+      else setPage(0);
       onSaved?.();
     } catch (cause) {
       setError(errorMessage(cause));
@@ -106,6 +118,18 @@ export function WeightHistoryPanel({ horseId, canRecord, onSaved }: { horseId: n
     </Card>}
     {history.pending && <LoadingState label="Đang tải lịch sử cân nặng…" />}
     {history.error && <ErrorState title="Không tải được lịch sử cân nặng" description={history.error} onRetry={history.reload} />}
-    {history.data && <WeightHistoryChart records={history.data} />}
+    {history.data && <>
+      <WeightHistoryChart records={history.data.items} title="Lịch sử cân nặng — trang hiện tại" />
+      <nav aria-label="Phân trang lịch sử cân nặng" className={horseStyles.registryPagination}>
+        <span role="status">
+          Trang {history.data.page + 1} / {Math.max(1, Math.ceil(history.data.totalElements / history.data.size))}
+          {' · '}{history.data.totalElements ? history.data.page * history.data.size + 1 : 0}–{history.data.page * history.data.size + history.data.items.length} / {history.data.totalElements} bản ghi
+        </span>
+        <div>
+          <Button variant="secondary" disabled={saving || page === 0} onClick={() => setPage((value) => value - 1)}>Trước</Button>
+          <Button variant="secondary" disabled={saving || (page + 1) * history.data.size >= history.data.totalElements} onClick={() => setPage((value) => value + 1)}>Sau</Button>
+        </div>
+      </nav>
+    </>}
   </section>;
 }

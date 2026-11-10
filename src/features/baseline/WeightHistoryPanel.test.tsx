@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const { request } = vi.hoisted(() => ({ request: vi.fn() }));
 vi.mock('../main-flows/api', async (importOriginal) => {
@@ -11,14 +11,104 @@ import { WeightHistoryPanel } from './WeightHistoryPanel';
 
 const existing = { id: 1, horseId: 7, weightKg: 419, recordedAt: '2026-11-08T03:00:00.000Z' };
 const created = { id: 2, horseId: 7, weightKg: 420.5, recordedAt: '2026-11-09T03:00:00.000Z' };
+const weightPage = (items: typeof existing[]) => ({ items, page: 0, size: 20, totalElements: items.length });
 
 describe('periodic weight recording', () => {
-  beforeEach(() => request.mockReset());
+  beforeEach(() => { request.mockReset(); });
+
+  it('paginates using server totals, hides stale results on failure, and retries the requested page', async () => {
+    const records = Array.from({ length: 43 }, (_, index) => ({
+      ...existing, id: index + 1, weightKg: 500 - index,
+      recordedAt: new Date(Date.parse('2026-11-09T03:00:00Z') - index * 86400000).toISOString(),
+    }));
+    let failed = false;
+    request.mockImplementation(async (path: string) => {
+      const page = Number(new URL(path, 'http://fixture.test').searchParams.get('page'));
+      if (page === 1 && !failed) { failed = true; throw new Error('Page unavailable'); }
+      return { items: records.slice(page * 20, page * 20 + 20), page, size: 20, totalElements: records.length };
+    });
+    render(<WeightHistoryPanel horseId={7} canRecord={false} />);
+    await screen.findByText('500 kg');
+    expect(screen.getByText(/1–20 \/ 43 bản ghi/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Trước' })).toBeDisabled();
+    expect(screen.getByText('Lịch sử cân nặng — trang hiện tại')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Sau' }));
+    await screen.findByText('Page unavailable');
+    expect(screen.queryByText('500 kg')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Thử lại' }));
+    await screen.findByText('480 kg');
+    expect(screen.getByText(/21–40 \/ 43 bản ghi/)).toBeInTheDocument();
+    expect(request.mock.calls.filter(([path]) => path.includes('page=1&size=20'))).toHaveLength(2);
+    fireEvent.click(screen.getByRole('button', { name: 'Sau' }));
+    await screen.findByText('460 kg');
+    expect(screen.getByText('458 kg')).toBeInTheDocument();
+    expect(screen.getByText(/41–43 \/ 43 bản ghi/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sau' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Trước' }));
+    await screen.findByText('480 kg');
+  });
+
+  it('resets to the first page for a different horse and ignores a pending old response', async () => {
+    let resolveOld!: (value: ReturnType<typeof weightPage>) => void;
+    const pending = new Promise<ReturnType<typeof weightPage>>((resolve) => { resolveOld = resolve; });
+    request.mockImplementation((path: string) => {
+      if (path.includes('/7/') && path.includes('page=1')) return pending;
+      if (path.includes('/7/')) return Promise.resolve({ items: [existing], page: 0, size: 20, totalElements: 21 });
+      return Promise.resolve(weightPage([{ ...existing, id: 8, horseId: 8, weightKg: 555 }]));
+    });
+    const { rerender } = render(<WeightHistoryPanel horseId={7} canRecord={false} />);
+    await screen.findByText('419 kg');
+    fireEvent.click(screen.getByRole('button', { name: 'Sau' }));
+    await waitFor(() => expect(request.mock.calls.some(([path]) => path.includes('/7/weights?page=1'))).toBe(true));
+    rerender(<WeightHistoryPanel horseId={8} canRecord={false} />);
+    await screen.findByText('555 kg');
+    await act(async () => { resolveOld(weightPage([{ ...existing, weightKg: 333 }])); await pending; });
+    expect(screen.queryByText('333 kg')).not.toBeInTheDocument();
+    expect(screen.getByText('555 kg')).toBeInTheDocument();
+    expect(request.mock.calls.some(([path]) => path.includes('/8/weights?page=1'))).toBe(false);
+    expect(screen.getByText(/1–1 \/ 1 bản ghi/)).toBeInTheDocument();
+  });
+
+  it('prevents pagination during a pending save and reloads the first page after confirmation', async () => {
+    let resolvePost!: (value: typeof created) => void;
+    const post = new Promise<typeof created>((resolve) => { resolvePost = resolve; });
+    let saved = false;
+    const onSaved = vi.fn();
+    const records = Array.from({ length: 21 }, (_, index) => ({
+      ...existing, id: index + 10, weightKg: 419 - index,
+      recordedAt: new Date(Date.parse(existing.recordedAt) - index * 86400000).toISOString(),
+    }));
+    request.mockImplementation((path: string, init?: RequestInit) => {
+      if (init?.method === 'POST') return post;
+      const page = Number(new URL(path, 'http://fixture.test').searchParams.get('page'));
+      const current = saved ? [created, ...records] : records;
+      return Promise.resolve({
+        items: current.slice(page * 20, (page + 1) * 20), page, size: 20, totalElements: current.length,
+      });
+    });
+    render(<WeightHistoryPanel horseId={7} canRecord onSaved={onSaved} />);
+    await screen.findByText('419 kg');
+    fireEvent.click(screen.getByRole('button', { name: 'Sau' }));
+    await screen.findByText('399 kg');
+    fireEvent.change(screen.getByLabelText('Ngày giờ ghi nhận'), { target: { value: '2026-11-09T10:00' } });
+    fireEvent.change(screen.getByLabelText('Cân nặng (kg)'), { target: { value: '420.5' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu cân nặng' }));
+    expect(screen.getByRole('button', { name: 'Trước' })).toBeDisabled();
+    expect(onSaved).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Trước' }));
+    expect(request.mock.calls.filter(([path]) => path.includes('page=0&size=20'))).toHaveLength(1);
+    saved = true;
+    await act(async () => { resolvePost(created); await post; });
+    await screen.findByText('420.5 kg');
+    expect(screen.getByText(/1–20 \/ 22 bản ghi/)).toBeInTheDocument();
+    expect(request.mock.calls.filter(([path]) => path.includes('page=0&size=20'))).toHaveLength(2);
+    expect(onSaved).toHaveBeenCalledTimes(1);
+  });
 
   it('posts the validated weight/time then reloads the history after server confirmation', async () => {
     request.mockImplementation(async (_path: string, init?: RequestInit) => {
       if (init?.method === 'POST') return created;
-      return { items: request.mock.calls.some(([, options]) => options?.method === 'POST') ? [created, existing] : [existing] };
+      return weightPage(request.mock.calls.some(([, options]) => options?.method === 'POST') ? [created, existing] : [existing]);
     });
     render(<WeightHistoryPanel horseId={7} canRecord />);
     await screen.findByText('419 kg');
@@ -39,7 +129,7 @@ describe('periodic weight recording', () => {
   it('does not report success when the API response does not confirm the requested horse record', async () => {
     request.mockImplementation(async (_path: string, init?: RequestInit) => init?.method === 'POST'
       ? { id: 3, horseId: 8, weightKg: 420.5, recordedAt: '2026-11-09T03:00:00.000Z' }
-      : { items: [existing] });
+      : weightPage([existing]));
     render(<WeightHistoryPanel horseId={7} canRecord />);
     await screen.findByText('419 kg');
     fireEvent.change(screen.getByLabelText('Ngày giờ ghi nhận'), { target: { value: '2026-11-09T10:00' } });
@@ -53,7 +143,7 @@ describe('periodic weight recording', () => {
   it('surfaces a failed create request without showing success', async () => {
     request.mockImplementation(async (_path: string, init?: RequestInit) => {
       if (init?.method === 'POST') throw new Error('API refused save');
-      return { items: [existing] };
+      return weightPage([existing]);
     });
     render(<WeightHistoryPanel horseId={7} canRecord />);
     await screen.findByText('419 kg');
@@ -66,14 +156,14 @@ describe('periodic weight recording', () => {
   });
 
   it('hides the write form for read-only staff roles', async () => {
-    request.mockResolvedValue({ items: [existing] });
+    request.mockResolvedValue(weightPage([existing]));
     render(<WeightHistoryPanel horseId={7} canRecord={false} />);
     await screen.findByText('419 kg');
     expect(screen.queryByRole('button', { name: 'Lưu cân nặng' })).not.toBeInTheDocument();
   });
 
   it('blocks future timestamps and malformed weights before making a write request', async () => {
-    request.mockResolvedValue({ items: [] });
+    request.mockResolvedValue(weightPage([]));
     render(<WeightHistoryPanel horseId={7} canRecord />);
     await screen.findByText('Chưa có bản ghi cân nặng');
     fireEvent.change(screen.getByLabelText('Ngày giờ ghi nhận'), { target: { value: '2099-01-01T10:00' } });
@@ -89,7 +179,7 @@ describe('periodic weight recording', () => {
     vi.setSystemTime(new Date('2026-11-09T00:00:00.000Z'));
     request.mockImplementation(async (_path: string, init?: RequestInit) => init?.method === 'POST'
       ? created
-      : { items: [existing] });
+      : weightPage([existing]));
     try {
       render(<WeightHistoryPanel horseId={7} canRecord />);
       await screen.findByText('419 kg');
@@ -116,7 +206,7 @@ describe('periodic weight recording', () => {
       if (init?.method === 'POST') return created;
       reads += 1;
       if (reads === 2) throw new Error('Refresh failed');
-      return { items: reads === 1 ? [existing] : [created, existing] };
+      return weightPage(reads === 1 ? [existing] : [created, existing]);
     });
     render(<WeightHistoryPanel horseId={7} canRecord />);
     await screen.findByText('419 kg');
