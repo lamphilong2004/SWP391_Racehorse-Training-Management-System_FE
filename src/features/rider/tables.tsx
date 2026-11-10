@@ -5,12 +5,12 @@ import { ButtonLink, Card, DataTable, EmptyState, Icon, MetricCard, StatusBadge,
 import { useAuth } from '../../shared/auth/AuthProvider';
 import type { RiderApi, RiderHistory } from './api';
 import { ReadState } from './common';
-import type { RiderSession } from './types';
+import { startWindowExpired, type RiderSession } from './types';
+import { clubDate } from '../../shared/clubCalendar';
 import styles from './rider.module.css';
 
 /** Figma WR-D4 (426:10287) My Riding Assignments and WR-D5 (427:10371) My Riding History. */
 
-const sameDay = (a: Date, b: Date) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 /** Figma formats: 24-hour time, "Thu 22 · 06:30", "Tue 20 Oct · 06:00". */
 const FORMAT_LOCALE = 'vi-VN';
 const time = (value: string) => new Date(value).toLocaleTimeString(FORMAT_LOCALE, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
@@ -31,6 +31,7 @@ function HorseCell({ ride }: { ride: RiderSession }) {
 const chevron: DataTableColumn<RiderSession> = { key: 'open', header: 'Thao tác', width: 144, render: (ride) => <ButtonLink size="sm" to={`/rider/assignments/${ride.id}`} aria-label={`Xem lượt cưỡi ${ride.horse.name}`} onClick={(event) => event.stopPropagation()}>Xem lượt cưỡi<Icon name="chevron-right" size={16} /></ButtonLink> };
 
 function preCheck(ride: RiderSession, today: boolean) {
+  if (startWindowExpired(ride, Date.now())) return <span className={styles.toneWarning}>Đã hết khung giờ — cần dời lịch</span>;
   const result = ride.preSessionCheck?.overallResult ?? ride.preCheckResult;
   if (result === 'ABNORMAL' || (ride.blocked && result === 'ALL_NORMAL')) return <span className={styles.toneDanger}>Bị chặn bắt đầu</span>;
   if (result === 'ALL_NORMAL') return <span className={styles.toneSuccess}>Sẵn sàng</span>;
@@ -59,8 +60,10 @@ export function AssignmentsTable({ api }: { api: RiderApi }) {
   const completed = useLoad(() => (tab === 'completed' ? api.assignments('COMPLETED') : Promise.resolve([] as RiderSession[])), [api, tab]);
   const now = new Date();
   const sorted = [...(active.data ?? [])].sort((a, b) => a.scheduledStart.localeCompare(b.scheduledStart));
-  const todayRides = sorted.filter((ride) => sameDay(new Date(ride.scheduledStart), now) || ride.status !== 'SCHEDULED');
-  const upcomingRides = sorted.filter((ride) => !todayRides.includes(ride));
+  const today = clubDate(now);
+  const todayRides = sorted.filter((ride) => clubDate(new Date(ride.scheduledStart)) === today || ride.status !== 'SCHEDULED');
+  const upcomingRides = sorted.filter((ride) => ride.status === 'SCHEDULED' && clubDate(new Date(ride.scheduledStart)) > today);
+  const overdueRides = sorted.filter((ride) => ride.status === 'SCHEDULED' && clubDate(new Date(ride.scheduledStart)) < today);
   const open = (ride: RiderSession) => navigate(`/rider/assignments/${ride.id}`);
   const columns = (today: boolean): DataTableColumn<RiderSession>[] => [
     { key: 'when', header: 'Thời gian', width: 126, render: (ride) => <span className={styles.strong}>{today ? time(ride.scheduledStart) : dayTime(ride.scheduledStart)}</span> },
@@ -93,6 +96,7 @@ export function AssignmentsTable({ api }: { api: RiderApi }) {
         <>
           {tab === 'today' && <Card className={styles.tableCard}><p className={styles.overline}>Hôm nay · {dayTitle(now)}</p>{table(todayRides, true, 'Lượt cưỡi hôm nay', 'Hôm nay không có lượt cưỡi')}</Card>}
           <Card className={styles.tableCard}><p className={styles.overline}>Sắp tới</p>{table(upcomingRides, false, 'Lượt cưỡi sắp tới', 'Không có lượt cưỡi sắp tới')}</Card>
+          {overdueRides.length > 0 && <Card className={styles.tableCard}><p className={styles.overline}>Quá lịch · cần Trainer xem lại</p><p>Buổi cũ vẫn được giữ lại. Hãy nhờ Trainer kiểm tra và dời lịch; kết quả precheck không thay thế điều kiện thời gian.</p>{table(overdueRides, false, 'Lượt cưỡi quá lịch', 'Không có lượt cưỡi quá lịch')}</Card>}
         </>
       )}
       {tab === 'completed' && completed.data && <Card className={styles.tableCard}><p className={styles.overline}>Đã hoàn thành</p>{table(completed.data, false, 'Lượt cưỡi đã hoàn thành', 'Chưa có lượt cưỡi hoàn thành')}</Card>}
