@@ -16,39 +16,43 @@ export function HorsePhotoImage({ path, name, className, revision = 0, thumbnail
 }) {
   const token = authSession.read()?.accessToken;
   const container = useRef<HTMLDivElement>(null);
+  const objectUrl = useRef<string | null>(null);
   const [nearViewport, setNearViewport] = useState(false);
   const shouldLoad = !thumbnail || nearViewport || typeof IntersectionObserver === 'undefined';
   const [result, setResult] = useState<{ path: string; token: string; revision: number; url: string | null; failed: boolean }>();
   const current = result?.path === path && result.token === token && result.revision === revision ? result : undefined;
 
   useEffect(() => {
-    if (shouldLoad || !container.current) return;
+    if (!thumbnail || !container.current || typeof IntersectionObserver === 'undefined') return;
     const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setNearViewport(true);
-        observer.disconnect();
-      }
-    }, { rootMargin: '160px' });
+      setNearViewport(entry.isIntersecting);
+    }, { rootMargin: '80px' });
     observer.observe(container.current);
     return () => observer.disconnect();
-  }, [shouldLoad]);
+  }, [thumbnail]);
+
+  // Keep a loaded image while scrolling; release its private URL on identity/revision changes.
+  useEffect(() => () => {
+    if (objectUrl.current) URL.revokeObjectURL(objectUrl.current);
+    objectUrl.current = null;
+  }, [path, token, revision]);
 
   useEffect(() => {
-    if (!token || !shouldLoad) return;
+    if (!token || !shouldLoad || current) return;
     const controller = new AbortController();
     let url: string | null = null;
     void requestHorsePhoto(path, token, controller.signal).then((blob) => {
       if (controller.signal.aborted) return;
       url = blob ? URL.createObjectURL(blob) : null;
+      objectUrl.current = url;
       setResult({ path, token, revision, url, failed: false });
     }).catch(() => {
       if (!controller.signal.aborted) setResult({ path, token, revision, url: null, failed: true });
     });
     return () => {
       controller.abort();
-      if (url) URL.revokeObjectURL(url);
     };
-  }, [path, revision, shouldLoad, token]);
+  }, [path, revision, shouldLoad, token, current]);
 
   // Settled without a usable photo (none uploaded, no permission, failed load or signed out): show the labelled default.
   const fallback = !current?.url && (Boolean(current) || !token);

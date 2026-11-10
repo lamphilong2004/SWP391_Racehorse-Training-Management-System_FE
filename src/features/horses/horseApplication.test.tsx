@@ -42,7 +42,7 @@ function mount(path = '/horses', options: { role?: RoleCode; anonymous?: boolean
       if (options.create) return options.create();
       const saved = { ...horse(82), horseCode: 'RH-006', ...JSON.parse(String(init?.body)), lifecycle: 'DRAFT' as const }; store.push(saved); return ok(saved, 201);
     }
-    if (path === '/api/horses' && method === 'GET') return ok(options.list ? options.list(url) : { items: store, page: 0, size: 20, totalItems: store.length, totalPages: 1 });
+    if (path === '/api/horses' && method === 'GET') return ok(options.list ? await options.list(url) : { items: store, page: 0, size: 20, totalItems: store.length, totalPages: 1 });
     if (/^\/api\/horses\/\d+$/.test(path)) return options.getHorse ? options.getHorse() : ok(store.find((h) => h.id === Number(path.split('/')[3])) ?? horse());
     if (/^\/api\/horses\/\d+\/weights$/.test(path)) return options.weights ? options.weights(method, init) : ok(weightPage([]));
     if (path === '/api/stable-boxes') return ok([
@@ -197,6 +197,38 @@ it.each([0, 1])('shows an honest compact registry summary for %s returned rows',
   expect(within(pagination).getByRole('button', { name: 'Trước' })).toBeDisabled();
   expect(within(pagination).getByRole('button', { name: 'Sau' })).toBeDisabled();
   if (!count) expect(screen.getByText('Không có ngựa phù hợp')).toBeInTheDocument();
+});
+
+it('loads optional lifecycle counters one at a time without blocking the registry', async () => {
+  const release: (() => void)[] = [], filters: string[] = []; let active = 0, peak = 0;
+  mount('/horses', { list: (url) => {
+    const page = { items: [horse()], page: 0, size: 20, totalItems: 1, totalPages: 1 };
+    if (url.searchParams.get('size') !== '1') return page;
+    filters.push(url.searchParams.get('lifecycle') ?? ''); active++; peak = Math.max(peak, active);
+    return new Promise((resolve) => release.push(() => { active--; resolve(page); }));
+  } });
+  await screen.findByRole('heading', { name: 'Hồ sơ ngựa' });
+  await waitFor(() => expect(release).toHaveLength(1));
+  expect(screen.getByRole('table', { name: 'Danh sách ngựa' })).toHaveTextContent('Fixture Draft');
+  for (let index = 0; index < 4; index++) {
+    await waitFor(() => expect(release).toHaveLength(index + 1));
+    await act(async () => { release[index](); });
+  }
+  expect(filters).toEqual(['', 'DRAFT', 'ACTIVE', 'INACTIVE']); expect(peak).toBe(1);
+  const all = within(screen.getByRole('group', { name: 'Lọc theo vòng đời' })).getByRole('button', { name: /^Tất cả/ });
+  await waitFor(() => expect(all.querySelector('strong')).toHaveTextContent('1'));
+});
+
+it('does not schedule remaining lifecycle counters after leaving the registry', async () => {
+  let release!: () => void; let counts = 0;
+  mount('/horses', { list: (url) => {
+    const page = { items: [horse()], page: 0, size: 20, totalItems: 1, totalPages: 1 };
+    if (url.searchParams.get('size') !== '1') return page;
+    counts++; return new Promise((resolve) => { release = () => resolve(page); });
+  } });
+  await screen.findByRole('heading', { name: 'Hồ sơ ngựa' });
+  await waitFor(() => expect(counts).toBe(1));cleanup();
+  await act(async () => { release(); });expect(counts).toBe(1);
 });
 
 it('keeps total results separate from page size and preserves server pagination actions', async () => {

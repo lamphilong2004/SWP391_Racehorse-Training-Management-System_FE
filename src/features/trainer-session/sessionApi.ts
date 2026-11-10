@@ -1,8 +1,26 @@
-import type { SessionDetail as ExistingSession, SessionResultView } from '../evaluation/models';
+import type { SessionDetail as ExistingSession, SessionResultView, SessionStatus } from '../evaluation/models';
 import type { CandidateList, Intensity, Page, ProgramDetail, TrainingAvailability } from '../program-creation/programTypes';
 import type { AssignedProgram, Exercise } from '../training/assigned/supportingApi';
 import { ApiError } from '../../shared/auth/authApi';
+import type { IncidentType } from '../../shared/incidents/incidentTypes';
 import { idOf, jsonBody, type FlowRequest } from '../main-flows/api';
+
+export const INCIDENT_SEVERITIES = ['LOW', 'MEDIUM', 'HIGH'] as const;
+export type ObservedSeverity = typeof INCIDENT_SEVERITIES[number];
+export interface ReportIssueInput {
+  description: string;
+  incidentType: IncidentType;
+  observedSeverity: ObservedSeverity;
+  observedAt?: string;
+}
+export interface ReportIssueResult {
+  incidentId: number;
+  incidentCode: string;
+  sessionStatus: SessionStatus;
+}
+export function isObservedSeverity(value: string): value is ObservedSeverity {
+  return INCIDENT_SEVERITIES.some((severity) => severity === value);
+}
 
 const invalid = () => new ApiError(200, 'INVALID_RESPONSE', 'Dữ liệu huấn luyện không hợp lệ. Hãy tải lại để thử lại.');
 /** Envelope shape checks so a malformed response surfaces as an error state instead of crashing the page. */
@@ -54,6 +72,7 @@ export function createSessionApi(request: FlowRequest) {
     groomCandidates: async (id: number, signal?: AbortSignal) => list(await request<{ id: number; fullName: string }[]>(`/api/training-sessions/${idOf(id)}/groom-candidates`, { signal })),
     assignGroom: (id: number, groomUserId: number) => request<TrainingSession>(`/api/training-sessions/${idOf(id)}/groom-assignment`, jsonBody('POST', { groomUserId: idOf(groomUserId) })),
     reduceIntensity: (id: number, intensity: Intensity) => request<TrainingSession>(`/api/training-sessions/${idOf(id)}/reduce-intensity`, jsonBody('POST', { intensity })),
+    reportIssue: (id: number, body: ReportIssueInput) => request<ReportIssueResult>(`/api/training-sessions/${idOf(id)}/report-issue`, jsonBody('POST', body)),
     result: (id: number, signal?: AbortSignal) => request<SessionResultView>(`/api/training-sessions/${idOf(id)}/result`, { signal }),
     suitability: (draft: SessionDraft) => request<Suitability>('/api/training-sessions/suitability-check', jsonBody('POST', draftPayload(draft))),
     riders: (draft: SessionDraft) => request<CandidateList>('/api/training-sessions/work-rider-recommendations', jsonBody('POST', draftPayload(draft))),
