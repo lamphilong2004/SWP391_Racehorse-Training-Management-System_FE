@@ -70,6 +70,7 @@
 }
 
 .series,
+.seriesMarkers,
 .threshold {
   position: absolute;
   left: 40px;
@@ -84,6 +85,21 @@
   stroke-linecap: round;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
+}
+
+.seriesMarkers {
+  pointer-events: none;
+}
+
+.seriesPoint {
+  position: absolute;
+  box-sizing: border-box;
+  width: 9px;
+  height: 9px;
+  border: 1.5px solid var(--color-bg-surface);
+  border-radius: 50%;
+  background: var(--color-accent-sky-ink, var(--color-primary-600));
+  transform: translate(-50%, -50%);
 }
 
 .thresholdStroke {
@@ -143,6 +159,25 @@
   font-size: 12px;
   line-height: 16px;
   color: var(--color-text-secondary);
+}
+
+.timedAxis {
+  position: relative;
+  display: block;
+  min-height: 32px;
+  margin-left: 40px;
+}
+
+.xAxisTick {
+  position: absolute;
+  max-width: 48%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 420px) {
+  .xAxisTickMiddle { display: none; }
 }
 
 :global([data-ui-v3]) .title { font-family: var(--font-family-headline); }

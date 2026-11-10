@@ -5,12 +5,13 @@ export interface BaselineInput { weightKg: number; healthStatus: HealthStatus; c
 export interface BaselineRecord extends BaselineInput { id: number; horseId: number; recordedAt: string }
 export interface WeightInput { weightKg: number; recordedAt?: string }
 export interface WeightRecord extends WeightInput { id: number; horseId: number; recordedAt: string }
+export interface WeightRecordsPage { items: WeightRecord[]; page: number; size: number; totalElements: number }
 export function createBaselineApi(request: FlowRequest) {
   return {
     save: (horseId: number, input: BaselineInput) => request<BaselineRecord>(`/api/horses/${idOf(horseId)}/baseline-examinations`, jsonBody('POST', {
       weightKg: input.weightKg, healthStatus: input.healthStatus, ...(input.clinicalNotes ? { clinicalNotes: input.clinicalNotes } : {}), ...(input.examinedAt ? { examinedAt: input.examinedAt } : {}),
     })),
-    weights: (horseId: number, signal?: AbortSignal) => request<{ items: WeightRecord[] }>(`/api/horses/${idOf(horseId)}/weights?page=0&size=20`, { signal }),
+    weights: (horseId: number, signal?: AbortSignal, page = 0, size = 20) => request<WeightRecordsPage>(`/api/horses/${idOf(horseId)}/weights?page=${page}&size=${size}`, { signal }),
     addWeight: (horseId: number, input: WeightInput) => request<WeightRecord>(`/api/horses/${idOf(horseId)}/weights`, jsonBody('POST', { weightKg: input.weightKg, ...(input.recordedAt ? { recordedAt: input.recordedAt } : {}) })),
   };
 }

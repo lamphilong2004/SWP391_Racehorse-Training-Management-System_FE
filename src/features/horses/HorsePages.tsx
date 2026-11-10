@@ -16,12 +16,30 @@ import historyStyles from './history/history.module.css';
 import { viLabel } from '../../shared/viLabels';
 import { dateTime } from '../evaluation/models';
 import { HorsePhotoImage } from './shared/HorsePhotoImage';
+import { WeightHistoryPanel } from '../baseline/WeightHistoryPanel';
 
 function useHorseResource<T>(load: () => Promise<T>) {
   const [revision, setRevision] = useState(0);
-  const [state, setState] = useState<{ data?: T; error?: string; source?: () => Promise<T> }>({});
-  useEffect(() => { let active = true; load().then((data) => { if (active) setState({ data, source: load }); }, (error: unknown) => { if (active) setState({ error: error instanceof Error ? error.message : 'Không tải được danh sách ngựa.', source: load }); }); return () => { active = false; }; }, [load, revision]);
-  return { ...(state.source === load ? state : {}), reload: () => { setState({}); setRevision((n) => n + 1); } };
+  const [state, setState] = useState<{ data?: T; error?: string; source?: () => Promise<T>; refreshing?: boolean; refreshError?: string }>({});
+  useEffect(() => {
+    let active = true;
+    load().then((data) => {
+      if (active) setState({ data, source: load });
+    }, (error: unknown) => {
+      if (active) {
+        const message = error instanceof Error ? error.message : 'Không tải được danh sách ngựa.';
+        setState((current) => current.source === load && current.refreshing
+          ? { ...current, refreshing: false, refreshError: message }
+          : { error: message, source: load });
+      }
+    });
+    return () => { active = false; };
+  }, [load, revision]);
+  return {
+    ...(state.source === load ? state : {}),
+    reload: () => { setState({}); setRevision((n) => n + 1); },
+    refresh: () => { setState((current) => ({ ...current, refreshing: true, refreshError: undefined })); setRevision((n) => n + 1); },
+  };
 }
 function HorseState({ error, retry }: { error?: string; retry: () => void }) {
   return error ? <ErrorState title="Không tải được dữ liệu ngựa" description={error} onRetry={retry} /> : <LoadingState label="Đang tải danh sách ngựa…" />;
@@ -93,7 +111,7 @@ function HorseProfileContent() {
   // Unknown sections are rejected before any business request.
   const validTab = ['overview', 'pedigree', 'training', 'history'].includes(tab);
   const load = useCallback(() => Number.isSafeInteger(id) && id > 0 && validTab ? api.getHorse(id) : Promise.reject(new Error('Liên kết ngựa không hợp lệ')), [api, id, validTab]);
-  const { data: horse, error, reload } = useHorseResource(load);
+  const { data: horse, error, reload, refresh, refreshing, refreshError } = useHorseResource(load);
   const setTab = (value: string) => { const next = new URLSearchParams(params); next.set('tab', value); setParams(next); };
   const [photoError, setPhotoError] = useState(''), [uploading, setUploading] = useState(false);
   const [photoRevision, setPhotoRevision] = useState(0);
@@ -131,7 +149,7 @@ function HorseProfileContent() {
     <ButtonLink to={`/horses/${id}?tab=history`}>Xem phả hệ &amp; lịch sử →</ButtonLink>
     {user?.roles.includes('VETERINARIAN') && <div className={styles.row}>{horse.lifecycle === 'DRAFT' && <ButtonLink variant="primary" to={`/horses/${id}/baseline`}>Ghi khám sức khỏe ban đầu →</ButtonLink>}<ButtonLink to={`/medical/restrictions?horseId=${id}`}>Khả năng tập luyện &amp; hạn chế →</ButtonLink></div>}
     <Tabs label="Các mục hồ sơ ngựa" idPrefix="horse-profile" value={tab} onChange={setTab} items={[{ value: 'overview', label: 'Tổng quan' }, { value: 'pedigree', label: 'Phả hệ & quyền sở hữu' }, { value: 'training', label: 'Huấn luyện & thành tích' }]} />
-    {tab === 'overview' && <div role="tabpanel" id="horse-profile-panel-overview" aria-labelledby="horse-profile-tab-overview" tabIndex={0} className={styles.twoCol}><div className={styles.colMain}><Card title="Nhận dạng & sở hữu"><div className={historyStyles.profileFacts}><KeyValue label="Mã ngựa" value={horse.horseCode} /><KeyValue label="Tên đăng ký" value={horse.name} /><KeyValue label="Giống ngựa" value={horse.breed ?? 'Chưa ghi nhận'} /><KeyValue label="Giới tính" value={sexLabel(horse.sex) ?? 'Chưa ghi nhận'} /><KeyValue label="Tuổi" value={ageInYears(horse.foaledDate) == null ? 'Chưa ghi nhận' : `${ageInYears(horse.foaledDate)} tuổi`} /><KeyValue label="Cân nặng" value={horse.latestWeight && Number.isFinite(horse.latestWeight.weightKg) && horse.latestWeight.weightKg > 0 ? `${horse.latestWeight.weightKg} kg` : 'Chưa ghi nhận'} /><KeyValue label="Vòng đời" value={<StatusBadge family="lifecycle" status={horse.lifecycle} />} /><KeyValue label="Ngày sinh" value={formatDate(horse.foaledDate)} /><KeyValue label="Xuất xứ" value={horse.countryOfOrigin ?? 'Chưa ghi nhận'} /><KeyValue label="Số đăng ký" value={horse.registrationNo ?? 'Chưa ghi nhận'} /><KeyValue label="Thế mạnh (khai báo)" value={strengthSummary(horse.strengths)} /><KeyValue label="Chủ ngựa" value={horse.currentOwnerships?.map((o) => `${o.owner.fullName} · ${o.sharePercentage}%`).join(', ') || 'Chưa phân công'} /><KeyValue label="Ô chuồng" value={boxLabel(horse.currentBoxCode) ?? 'Chưa phân công'} /></div></Card>
+    {tab === 'overview' && <div role="tabpanel" id="horse-profile-panel-overview" aria-labelledby="horse-profile-tab-overview" tabIndex={0} className={styles.twoCol}><div className={styles.colMain}><Card title="Nhận dạng & sở hữu"><div className={historyStyles.profileFacts}><KeyValue label="Mã ngựa" value={horse.horseCode} /><KeyValue label="Tên đăng ký" value={horse.name} /><KeyValue label="Giống ngựa" value={horse.breed ?? 'Chưa ghi nhận'} /><KeyValue label="Giới tính" value={sexLabel(horse.sex) ?? 'Chưa ghi nhận'} /><KeyValue label="Tuổi" value={ageInYears(horse.foaledDate) == null ? 'Chưa ghi nhận' : `${ageInYears(horse.foaledDate)} tuổi`} /><KeyValue label="Cân nặng" value={refreshing ? 'Đang tải lại cân nặng…' : refreshError ? 'Không tải được cân nặng mới' : horse.latestWeight && Number.isFinite(horse.latestWeight.weightKg) && horse.latestWeight.weightKg > 0 ? `${horse.latestWeight.weightKg} kg` : 'Chưa ghi nhận'} /><KeyValue label="Vòng đời" value={<StatusBadge family="lifecycle" status={horse.lifecycle} />} /><KeyValue label="Ngày sinh" value={formatDate(horse.foaledDate)} /><KeyValue label="Xuất xứ" value={horse.countryOfOrigin ?? 'Chưa ghi nhận'} /><KeyValue label="Số đăng ký" value={horse.registrationNo ?? 'Chưa ghi nhận'} /><KeyValue label="Thế mạnh (khai báo)" value={strengthSummary(horse.strengths)} /><KeyValue label="Chủ ngựa" value={horse.currentOwnerships?.map((o) => `${o.owner.fullName} · ${o.sharePercentage}%`).join(', ') || 'Chưa phân công'} /><KeyValue label="Ô chuồng" value={boxLabel(horse.currentBoxCode) ?? 'Chưa phân công'} /></div>{refreshError && <ErrorState title="Không tải lại được hồ sơ ngựa" description={refreshError} onRetry={refresh} />}</Card>
       {canManage && <Card title="Ảnh hồ sơ">
         <p className="text-caption">Chọn ảnh JPG, PNG hoặc WebP, tối đa 5 MB. Ảnh tải gần nhất sẽ hiện trên hồ sơ và cổng Chủ ngựa.</p>
         {photoError && <AlertBanner feedback type="danger" title={photoError} />}
@@ -145,7 +163,9 @@ function HorseProfileContent() {
             event.currentTarget.value = '';
             if (file) void uploadPhoto(file);
           }} />
-      </Card>}</div>
+      </Card>}
+      <WeightHistoryPanel horseId={id} canRecord={Boolean(user?.roles.includes('VETERINARIAN'))} onSaved={refresh} />
+      </div>
       <aside className={styles.colSide}><Card title="Sức khỏe & khả năng tập luyện"><KeyValue label="Sức khỏe" value={horse.healthStatus ? <StatusBadge family="health" status={horse.healthStatus} /> : 'Chưa khám ban đầu'} /><KeyValue label="Khả năng tập luyện" value={<StatusBadge family="availability" status={horse.trainingAvailability} />} /><p className="text-caption">Veterinarian phụ trách cập nhật sức khỏe và hạn chế. Ở đây không sửa được thông tin y tế.</p></Card><Card title="Kích hoạt & dòng thời gian"><KeyValue label="Kích hoạt lúc" value={horse.activatedAt ? <time dateTime={horse.activatedAt} title={horse.activatedAt}>{dateTime(horse.activatedAt)}</time> : 'Đang chờ đủ yêu cầu bắt buộc'} /><p className="text-caption">Thời điểm kích hoạt là mốc bắt đầu dòng thời gian của ngựa. Đánh giá sẵn sàng của Head Trainer không chặn việc kích hoạt.</p>{canManage && <ButtonLink to="/horses/pending-activation">Xem danh mục kích hoạt</ButtonLink>}</Card><ReadinessReview horseId={id} /></aside></div>}
     {tab === 'pedigree' && <div role="tabpanel" id="horse-profile-panel-pedigree" aria-labelledby="horse-profile-tab-pedigree" tabIndex={0}><Card title="Phả hệ & quyền sở hữu"><div className={styles.cardBody}><KeyValue label="Ngựa cha" value={horse.pedigree.sire.name ?? horse.pedigree.sire.horseCode ?? 'Không rõ'} /><KeyValue label="Ngựa mẹ" value={horse.pedigree.dam.name ?? horse.pedigree.dam.horseCode ?? 'Không rõ'} /><ul>{horse.currentOwnerships.map((o) => <li key={o.id}>{o.owner.fullName} · {o.sharePercentage}% · {formatDate(o.effectiveFrom)}{o.isManagingOwner ? ' · Chủ quản lý' : ''}</li>)}</ul>{canManage && <ButtonLink to={`/horses/${id}/edit`}>Sửa phả hệ, sở hữu & ô chuồng</ButtonLink>}</div></Card></div>}
     {tab === 'training' && <div role="tabpanel" id="horse-profile-panel-training" aria-labelledby="horse-profile-tab-training" tabIndex={0}><Card title="Huấn luyện & thành tích"><p>Mở không gian làm việc của bạn để tiếp tục công việc huấn luyện. Hồ sơ này không tính điểm tiến độ hay quãng đường.</p><ButtonLink to="/dashboard">Không gian huấn luyện →</ButtonLink>{businessDataMode() === 'sample' && id === 7 && !user?.roles.includes('GROOM') && <p><ButtonLink to="/training/sessions/42/evaluation">Kết quả & lịch sử buổi tập mẫu →</ButtonLink></p>}</Card></div>}

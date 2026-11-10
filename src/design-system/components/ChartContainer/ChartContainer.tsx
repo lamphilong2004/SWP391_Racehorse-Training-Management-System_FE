@@ -14,12 +14,16 @@ export interface ChartContainerProps {
   title: string;
   /** Legend label of the series line. */
   seriesLabel: string;
-  /** Values plotted left → right at even spacing. Empty = Empty state (never rendered as zeroes). */
+  /** Values plotted left → right. Provide xValues to preserve real timestamp spacing; empty = Empty state. */
   values: number[];
+  /** Optional timestamps for values, used to plot observations at their actual time intervals. */
+  xValues?: number[];
   /** Y axis ticks, top → bottom (e.g. [190, 170, 150, 130, 110]). The first/last tick bound the plot. */
   yTicks: number[];
-  /** X axis labels, spread evenly (e.g. ['0 min', '4', '8', '12', '16 min']). */
+  /** X axis labels, spread evenly when xAxisTicks is omitted (e.g. ['0 min', '4', '8', '12', '16 min']). */
   xLabels: string[];
+  /** Optional timestamp ticks; when present, labels are positioned proportionally to their actual time. */
+  xAxisTicks?: { value: number; label: string }[];
   threshold?: ChartThreshold;
   emptyTitle?: string;
   emptyDescription?: string;
@@ -38,8 +42,10 @@ export function ChartContainer({
   title,
   seriesLabel,
   values,
+  xValues,
   yTicks,
   xLabels,
+  xAxisTicks,
   threshold,
   emptyTitle = 'Không có dữ liệu trong khoảng thời gian này',
   emptyDescription = 'Dữ liệu đo sẽ hiện ở đây khi buổi tập bắt đầu ghi nhận.',
@@ -49,10 +55,24 @@ export function ChartContainer({
   const min = Math.min(...yTicks);
   const toY = (value: number) => PLOT_TOP + ((max - value) / (max - min || 1)) * PLOT_HEIGHT;
   const isEmpty = values.length === 0;
+  const timed = xValues?.length === values.length && xValues.every(Number.isFinite);
+  const timeMin = timed ? Math.min(...xValues) : 0;
+  const timeMax = timed ? Math.max(...xValues) : 0;
+  const xPercent = (index: number) => timed
+    ? timeMax === timeMin ? 50 : ((xValues[index] - timeMin) / (timeMax - timeMin)) * 100
+    : values.length === 1 ? 50 : (index / (values.length - 1)) * 100;
   const points = values
-    .map((value, index) => `${values.length === 1 ? 0 : (index / (values.length - 1)) * 100},${toY(value) - PLOT_TOP}`)
+    .map((value, index) => `${xPercent(index)},${toY(value) - PLOT_TOP}`)
     .join(' ');
   const thresholdTop = threshold ? toY(threshold.value) : 0;
+  const timeTicks = timed && xAxisTicks?.length ? xAxisTicks : undefined;
+  const timedAxis = Boolean(timeTicks);
+  const axisTicks = timeTicks
+    ? timeTicks.filter((tick) => Number.isFinite(tick.value)).map((tick) => ({
+      ...tick,
+      position: timeMax === timeMin ? 50 : Math.max(0, Math.min(100, ((tick.value - timeMin) / (timeMax - timeMin)) * 100)),
+    }))
+    : [];
 
   return (
     <figure className={cx(styles.card, className)}>
@@ -102,6 +122,15 @@ export function ChartContainer({
             >
               <polyline points={points} className={styles.seriesStroke} />
             </svg>
+            <div className={styles.seriesMarkers} style={{ top: PLOT_TOP, height: PLOT_HEIGHT }} aria-hidden="true">
+              {values.map((value, index) => (
+                <span
+                  key={`${index}-${value}`}
+                  className={styles.seriesPoint}
+                  style={{ left: `${xPercent(index)}%`, top: toY(value) - PLOT_TOP }}
+                />
+              ))}
+            </div>
             {threshold && (
               <>
                 <svg className={styles.threshold} style={{ top: thresholdTop - 1 }} height="2" aria-hidden="true">
@@ -116,11 +145,21 @@ export function ChartContainer({
         )}
       </div>
 
-      <div className={styles.xAxis}>
-        {xLabels.map((label, index) => (
-          // Axis labels can repeat (two samples in the same minute); position keeps keys unique.
-          <span key={`${index}-${label}`}>{label}</span>
-        ))}
+      <div className={timedAxis ? `${styles.xAxis} ${styles.timedAxis}` : styles.xAxis}>
+        {timedAxis
+          ? axisTicks.map(({ label, position }, index) => (
+            <span
+              key={`${index}-${label}`}
+              className={`${styles.xAxisTick}${index > 0 && index < axisTicks.length - 1 ? ` ${styles.xAxisTickMiddle}` : ''}`}
+              style={{ left: `${position}%`, transform: `translateX(${position <= 0 ? '0' : position >= 100 ? '-100%' : '-50%'})` }}
+              title={label}
+            >
+              {label}
+            </span>
+          ))
+          : xLabels.map((label, index) => (
+            <span key={`${index}-${label}`}>{label}</span>
+          ))}
       </div>
     </figure>
   );

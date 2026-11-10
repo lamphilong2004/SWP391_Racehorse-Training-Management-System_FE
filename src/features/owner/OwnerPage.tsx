@@ -11,6 +11,7 @@ import { OwnerContext } from './OwnerProvider';
 import type { OwnerHorse } from './ownerModel';
 import { RESULT_LABELS } from '../evaluation/models';
 import { HorsePhotoImage } from '../horses/shared/HorsePhotoImage';
+import { WeightHistoryChart } from '../baseline/WeightHistoryChart';
 import styles from './owner.module.css';
 
 const tabs = [{ value: 'profile', label: 'Hồ sơ & phả hệ' }, { value: 'health', label: 'Sức khỏe & mức sẵn sàng' }, { value: 'training', label: 'Huấn luyện & thành tích' }];
@@ -21,6 +22,7 @@ const isNonOperational = (horse: OwnerHorse) => horse.lifecycle === 'DRAFT' || h
 const missing = 'Chưa chia sẻ';
 const calendar = (iso: string | null) => iso ? new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(iso)) : missing;
 const timestamp = (iso: string) => new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
+const weightTimestamp = (iso: string) => new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Ho_Chi_Minh' }).format(new Date(iso));
 function age(born: string | null, unit = 'tuổi') {
   if (!born) return null;
   const birth = new Date(born), now = new Date();
@@ -114,8 +116,8 @@ function Health({ horse }: { horse: OwnerHorse }) {
       </div>
     </Section>
     <Section title="Cân nặng">
-      {weight ? <div className={styles.weightValue}><p className={styles.weight}>{weight.weightKg} kg</p><p className={styles.caption}>ghi gần nhất <time dateTime={weight.recordedAt} title={weight.recordedAt}>{calendar(weight.recordedAt)}</time></p></div> : <p className={styles.weight}>{missing}</p>}
-      <p className={styles.caption}>Biểu đồ cân nặng sẽ hiện ở đây khi có thêm số đo.</p>
+      {weight ? <div className={styles.weightValue}><p className={styles.weight}>{weight.weightKg} kg</p><p className={styles.caption}>ghi gần nhất <time dateTime={weight.recordedAt} title={weight.recordedAt}>{weightTimestamp(weight.recordedAt)}</time></p></div> : <p className={styles.weight}>{missing}</p>}
+      <WeightHistoryChart records={horse.healthSummary?.weights ?? []} title="Cân nặng — tối đa 12 lần đo gần nhất" showHistory={false} />
     </Section>
   </div><aside className={styles.stack}><Section title="Ý nghĩa"><h3>Sức khỏe</h3><ul><li>Khỏe mạnh</li><li>Đang theo dõi</li><li>Đang được thú y chăm sóc</li></ul><h3>Mức sẵn sàng tập luyện</h3><ul><li>Sẵn sàng — được tập bình thường</li><li>Hạn chế — vẫn tập trong giới hạn do Veterinarian đặt</li><li>Khóa — Veterinarian đã tạm dừng tập luyện</li></ul></Section><AlertBanner className={styles.note} title="Cổng này không hiển thị chi tiết y tế như chẩn đoán, điều trị và thuốc. Chỉ Veterinarian được thay đổi sức khỏe hoặc mức sẵn sàng." /></aside></div>;
 }

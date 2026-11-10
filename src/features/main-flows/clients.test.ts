@@ -4,6 +4,23 @@ import { blocksSession, createSessionApi, type CreateSessionInput } from '../tra
 import { createRestrictionApi, rulePayload } from '../restrictions/restrictionApi';
 
 describe('approved FE adapter boundaries', () => {
+  it('reuses the weight history endpoints and serializes the recorded timestamp', async () => {
+    const request = vi.fn().mockResolvedValue({ items: [] });
+    const api = createBaselineApi(request);
+    await api.weights(7, new AbortController().signal);
+    await api.addWeight(7, { weightKg: 420.5, recordedAt: '2026-11-09T03:00:00.000Z' });
+    await api.weights(7, undefined, 2, 10);
+    expect(request.mock.calls[0][0]).toBe('/api/horses/7/weights?page=0&size=20');
+    expect(request.mock.calls[0][1]).toHaveProperty('signal');
+    expect(request.mock.calls[1]).toEqual(['/api/horses/7/weights', {
+      method: 'POST',
+      body: JSON.stringify({ weightKg: 420.5, recordedAt: '2026-11-09T03:00:00.000Z' }),
+    }]);
+    expect(request.mock.calls[2][0]).toBe('/api/horses/7/weights?page=2&size=10');
+    expect(['0', '-0.01', '10000', '420.555', '1e2', 'Infinity'].some(validateWeight)).toBe(false);
+    expect(validateWeight('420.5')).toBe(true);
+  });
+
   it('sends only approved baseline fields; the server owns the timestamp', async () => {
     const request = vi.fn().mockResolvedValue({});
     await createBaselineApi(request).save(7, { weightKg: 512.25, healthStatus: 'FIT', clinicalNotes: 'Normal gait', recordedAt: 'forbidden' } as never);

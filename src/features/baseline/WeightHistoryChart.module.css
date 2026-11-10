@@ -1,0 +1,43 @@
+.root {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.historyList {
+  display: grid;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.historyItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.historyItem:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.historyItem time {
+  color: var(--color-text-secondary);
+  text-align: right;
+}
+
+@media (max-width: 520px) {
+  .historyItem {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+
+  .historyItem time {
+    text-align: left;
+  }
+}
