@@ -7,7 +7,17 @@ function invalid(): never { throw new ApiError(200, 'INVALID_RESPONSE', 'Dữ li
 function object(value: unknown): Record<string, unknown> { if (!value || typeof value !== 'object' || Array.isArray(value)) return invalid(); return value as Record<string, unknown>; }
 function text(value: unknown, max?: number): string { if (typeof value !== 'string' || (max && value.length > max)) return invalid(); return value; }
 function integer(value: unknown, minimum = 0): number { if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < minimum) return invalid(); return value; }
-function iso(value: unknown): string { const result = text(value); if (!/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/.test(result) || !Number.isFinite(Date.parse(result))) return invalid(); return result; }
+function iso(value: unknown): string {
+  const result = text(value);
+  const parts = /^(\d{4})-(\d{2})-(\d{2})T.*(?:Z|[+-]\d{2}:\d{2})$/.exec(result);
+  if (!parts || !Number.isFinite(Date.parse(result))) return invalid();
+  const year = Number(parts[1]), month = Number(parts[2]), day = Number(parts[3]);
+  const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1];
+  // Date.parse normalizes impossible days; validate the source calendar day before any timezone conversion.
+  if (!daysInMonth || day < 1 || day > daysInMonth) return invalid();
+  return result;
+}
 function optional<T>(value: unknown, parse: (value: unknown) => T): T | null | undefined { return value == null ? value : parse(value); }
 
 /** Explicit display-field projection: password/hash/extra properties never cross into UI state. */
