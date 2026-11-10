@@ -102,3 +102,37 @@ it('merges sparse STOMP acknowledgement/escalation into the open detail instead 
   act(() => mock.connect.mock.calls[0][0].onEvent({ topic: 'alerts', data: { sessionId: 42, alertId: 77, type: 'CRITICAL_ESCALATED', escalatedToVetAt: '2026-10-20T06:02:00Z' } }));
   expect(within(dialog).getByText('Server Vet')).toBeInTheDocument();
 });
+
+it('stops ordinarily without requesting a medical incident', async () => {
+  recordedSession('IN_PROGRESS'); mount();
+  fireEvent.change(await screen.findByLabelText('Lý do dừng'), { target: { value: 'Kết thúc buổi tập theo kế hoạch' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Dừng buổi tập' }));
+  await waitFor(() => expect(mock.request).toHaveBeenCalledWith('/api/training-sessions/42/stop', {
+    method: 'POST',
+    body: JSON.stringify({ reason: 'Kết thúc buổi tập theo kế hoạch', medicallyRelevant: false }),
+  }));
+  expect(await screen.findByText('Buổi tập đã được dừng thông thường.')).toBeInTheDocument();
+});
+
+it('stops medically with the backend incident metadata and confirms the medical response', async () => {
+  recordedSession('IN_PROGRESS'); mount();
+  fireEvent.change(await screen.findByLabelText('Lý do dừng'), { target: { value: 'Ngựa có dấu hiệu khập khiễng' } });
+  fireEvent.change(screen.getByLabelText('Loại dừng'), { target: { value: 'medical' } });
+  fireEvent.change(screen.getByLabelText('Loại sự cố'), { target: { value: 'LAMENESS' } });
+  fireEvent.change(screen.getByLabelText('Mức độ nghiêm trọng'), { target: { value: 'MEDIUM' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Dừng buổi tập' }));
+  await waitFor(() => expect(mock.request).toHaveBeenCalledWith('/api/training-sessions/42/stop', {
+    method: 'POST',
+    body: JSON.stringify({ reason: 'Ngựa có dấu hiệu khập khiễng', medicallyRelevant: true, incidentType: 'LAMENESS', observedSeverity: 'MEDIUM' }),
+  }));
+  expect(await screen.findByText('Buổi tập đã được dừng vì lý do y tế; sự cố y tế đã được gửi lên hệ thống.')).toBeInTheDocument();
+});
+
+it('requires incident metadata before submitting a medical stop', async () => {
+  recordedSession('IN_PROGRESS'); mount();
+  fireEvent.change(await screen.findByLabelText('Lý do dừng'), { target: { value: 'Ngựa có dấu hiệu bất thường' } });
+  fireEvent.change(screen.getByLabelText('Loại dừng'), { target: { value: 'medical' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Dừng buổi tập' }));
+  expect(await screen.findByText('Chọn loại sự cố và mức độ nghiêm trọng để dừng vì lý do y tế.')).toBeInTheDocument();
+  expect(mock.request.mock.calls.some(([path]) => path.endsWith('/stop'))).toBe(false);
+});
