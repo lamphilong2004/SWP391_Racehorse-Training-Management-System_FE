@@ -300,7 +300,7 @@ export function TreatmentPlanPage() {
   const { service } = useMedicalRuntime();
   const request = useFlowRequest();
   // BR-32: the Vet picks the Groom by name (GET /api/stable-care/grooms); falls back to the id field if the list is unavailable.
-  const validCase = /^[1-9]d*$/.test(caseId);
+  const validCase = /^[1-9]\d*$/.test(caseId);
   const grooms = useResource(useCallback(() => validCase ? request<{ id: number; fullName: string }[]>('/api/stable-care/grooms').then((list) => Array.isArray(list) ? list : []).catch(() => []) : Promise.resolve([]), [request, validCase])).data;
   const id = Number(caseId);
   const load = useCallback(async () => {
