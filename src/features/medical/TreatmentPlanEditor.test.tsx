@@ -60,3 +60,15 @@ it('sends normalized strings at the exact approved length boundaries', async () 
   expect(payload.groomTasks[0].instruction).toHaveLength(2000);
   expect(payload.groomTasks[0].scheduledSlot).toHaveLength(50);
 });
+
+it('lets the Vet pick the Groom by name and prefills today as the task date', async () => {
+  const onSave = vi.fn().mockResolvedValue(undefined);
+  render(<TreatmentPlanEditor initial={{ treatmentMedicationInstructions: 'Chườm lạnh' }} grooms={[{ id: 2, fullName: 'groom' }, { id: 8, fullName: 'Groom dự phòng' }]} onSave={onSave} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Thêm công việc cho Groom' }));
+  expect(screen.queryByLabelText('Mã Groom 1')).not.toBeInTheDocument();
+  expect(screen.getByLabelText('Ngày thực hiện 1')).not.toHaveValue('');
+  fireEvent.change(screen.getByLabelText('Groom phụ trách 1'), { target: { value: '8' } });
+  fireEvent.change(screen.getByLabelText('Hướng dẫn cho Groom 1'), { target: { value: 'Chườm lạnh 15 phút' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Lưu phác đồ điều trị' }));
+  await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ groomTasks: [expect.objectContaining({ assignedGroomUserId: 8, instruction: 'Chườm lạnh 15 phút' })] })));
+});

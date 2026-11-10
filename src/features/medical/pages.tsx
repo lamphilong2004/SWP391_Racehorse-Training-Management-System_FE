@@ -298,6 +298,10 @@ export function TreatmentPlanPage() {
   const navigate = useNavigate();
   const [saved, setSaved] = useState(false);
   const { service } = useMedicalRuntime();
+  const request = useFlowRequest();
+  // BR-32: the Vet picks the Groom by name (GET /api/stable-care/grooms); falls back to the id field if the list is unavailable.
+  const validCase = /^[1-9]d*$/.test(caseId);
+  const grooms = useResource(useCallback(() => validCase ? request<{ id: number; fullName: string }[]>('/api/stable-care/grooms').then((list) => Array.isArray(list) ? list : []).catch(() => []) : Promise.resolve([]), [request, validCase])).data;
   const id = Number(caseId);
   const load = useCallback(async () => {
     if (!Number.isSafeInteger(id) || id < 1) throw new Error('Mã ca y tế không hợp lệ.');
@@ -336,7 +340,7 @@ export function TreatmentPlanPage() {
     </NextStep>}
     <div className="medical-grid medical-treatment-layout"><div className="medical-stack">
       {medicalCase.status === 'CLOSED' ? <AlertBanner type="danger" title="Không thể sửa ca y tế đã đóng" /> :
-        <TreatmentPlanEditor key={medicalCase.treatmentPlan?.id ?? 'new'} openedAt={medicalCase.openedAt} initial={initial} retainedTaskCount={tasks.length} onCancel={() => navigate(casePath(id))} onSave={async (input) => { await service.saveTreatment(id, input); setSaved(true); reload(); }} />}
+        <TreatmentPlanEditor key={medicalCase.treatmentPlan?.id ?? 'new'} grooms={grooms} openedAt={medicalCase.openedAt} initial={initial} retainedTaskCount={tasks.length} onCancel={() => navigate(casePath(id))} onSave={async (input) => { await service.saveTreatment(id, input); setSaved(true); reload(); }} />}
       <CaseTasks caseId={id} />
     </div><div className="medical-stack">
       <TreatmentCaseSummary item={medicalCase} />
