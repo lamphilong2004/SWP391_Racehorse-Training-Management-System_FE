@@ -8,6 +8,7 @@ vi.mock('../main-flows/api', async (importOriginal) => {
 });
 
 import { WeightHistoryPanel } from './WeightHistoryPanel';
+import { ApiError } from '../../shared/auth/authApi';
 
 const existing = { id: 1, horseId: 7, weightKg: 419, recordedAt: '2026-11-08T03:00:00.000Z' };
 const created = { id: 2, horseId: 7, weightKg: 420.5, recordedAt: '2026-11-09T03:00:00.000Z' };
@@ -15,6 +16,29 @@ const weightPage = (items: typeof existing[]) => ({ items, page: 0, size: 20, to
 
 describe('periodic weight recording', () => {
   beforeEach(() => { request.mockReset(); });
+
+  it.each([403, 404])('shows a terminal HTTP %s history error without retry or a recording form', async (status) => {
+    request.mockRejectedValue(new ApiError(status, status === 403 ? 'FORBIDDEN' : 'NOT_FOUND', 'History unavailable'));
+    render(<WeightHistoryPanel horseId={7} canRecord />);
+    expect(await screen.findByText('Không tải được lịch sử cân nặng')).toBeInTheDocument();
+    expect(screen.getByText('History unavailable')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Thử lại' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Lưu cân nặng' })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Cân nặng (kg)')).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ['HTTP 500', new ApiError(500, 'INTERNAL_ERROR', 'History unavailable')],
+    ['network failure', new ApiError(0, 'NETWORK_ERROR', 'History unavailable')],
+  ])('allows retry and retains the recording form after %s', async (_label, error) => {
+    request.mockRejectedValueOnce(error).mockResolvedValueOnce(weightPage([existing]));
+    render(<WeightHistoryPanel horseId={7} canRecord />);
+    expect(await screen.findByText('Không tải được lịch sử cân nặng')).toBeInTheDocument();
+    expect(screen.getByLabelText('Cân nặng (kg)')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Thử lại' }));
+    await screen.findByText('419 kg');
+    expect(request).toHaveBeenCalledTimes(2);
+  });
 
   it('paginates using server totals, hides stale results on failure, and retries the requested page', async () => {
     const records = Array.from({ length: 43 }, (_, index) => ({

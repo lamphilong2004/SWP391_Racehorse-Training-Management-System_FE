@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { AlertBanner, Button, Card, ErrorState, LoadingState, TextField } from '../../design-system';
 import { clubDateTime, parseClubDateTime } from '../../shared/clubCalendar';
+import { ApiError } from '../../shared/auth/authApi';
 import { errorMessage, idOf, useFlowRequest } from '../main-flows/api';
 import { useResource } from '../main-flows/useResource';
 import { createBaselineApi, validateWeight, type WeightRecord } from './baselineApi';
@@ -36,6 +37,7 @@ function WeightHistoryContent({ horseId, canRecord, onSaved }: { horseId: number
     return result;
   }, [api, horseId, page]);
   const history = useResource(load);
+  const terminalError = history.errorCause instanceof ApiError && (history.errorCause.status === 403 || history.errorCause.status === 404);
   const [weight, setWeight] = useState('');
   const [recordedAt, setRecordedAt] = useState(() => clubDateTime());
   const [now, setNow] = useState(() => Date.now());
@@ -82,7 +84,7 @@ function WeightHistoryContent({ horseId, canRecord, onSaved }: { horseId: number
   }
 
   return <section aria-label="Lịch sử cân nặng">
-    {canRecord && <Card title="Ghi nhận cân nặng định kỳ">
+    {canRecord && !terminalError && <Card title="Ghi nhận cân nặng định kỳ">
       {error && <AlertBanner feedback type="danger" title="Chưa ghi nhận được cân nặng">{error}</AlertBanner>}
       {saved && <AlertBanner feedback type="success" title="Đã ghi nhận cân nặng">{saved.weightKg} kg · {new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Ho_Chi_Minh' }).format(new Date(saved.recordedAt))}</AlertBanner>}
       <form onSubmit={(event) => { event.preventDefault(); void save(); }}>
@@ -117,7 +119,7 @@ function WeightHistoryContent({ horseId, canRecord, onSaved }: { horseId: number
       </form>
     </Card>}
     {history.pending && <LoadingState label="Đang tải lịch sử cân nặng…" />}
-    {history.error && <ErrorState title="Không tải được lịch sử cân nặng" description={history.error} onRetry={history.reload} />}
+    {history.error && <ErrorState title="Không tải được lịch sử cân nặng" description={history.error} onRetry={terminalError ? undefined : history.reload} />}
     {history.data && <>
       <WeightHistoryChart records={history.data.items} title="Lịch sử cân nặng — trang hiện tại" />
       <nav aria-label="Phân trang lịch sử cân nặng" className={horseStyles.registryPagination}>
