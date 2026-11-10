@@ -89,7 +89,7 @@ export function GroomTasks({ service }: { service: GroomService }) {
     finally { pending.current = false; if (mounted.current) setBusy(null); }
   }, [tasks, service, reload]);
   return <div className="medical-stack">
-    <PageHeader title="Công việc chăm sóc & cho thuốc của tôi" description="Được giao từ phác đồ điều trị của Veterinarian" />
+    <PageHeader title="Công việc điều trị của tôi" description="Được giao từ phác đồ điều trị của Veterinarian" />
     {action.success && <AlertBanner feedback type="success" title={action.success} />}
     {action.error && <AlertBanner feedback type="danger" title={action.error} />}
     {identities.source === state.tasks && identities.error && <AlertBanner type="warning" title={identities.error} />}
