@@ -27,7 +27,8 @@ export interface AlertBannerProps {
 
 export function AlertBanner({ feedback = false, ...props }: AlertBannerProps) {
   const host = useContext(FeedbackHostContext);
-  return feedback && host
+  // Success messages are notifications, so they always become a toast when the page has a toast host.
+  return (feedback || props.type === 'success') && host
     ? createPortal(<FeedbackAlert key={`${props.type}:${props.title}`} {...props} />, host)
     : <AlertContent {...props} />;
 }

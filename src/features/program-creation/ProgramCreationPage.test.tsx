@@ -145,7 +145,7 @@ describe('CORE-022 UI + production router + real transport with HTTP fixtures (n
     const { actor, posts } = setup();
     await toTrainer(actor);
     await actor.click(screen.getByRole('button', { name: 'Chọn Fixture Trainer' }));
-    expect(screen.getByLabelText('Trainer phụ trách từ ngày', { exact: false })).toHaveValue('2026-11-01');
+    expect(screen.getByLabelText('Trainer phụ trách từ ngày', { exact: false })).toHaveValue('01/11/2026');
     expect(screen.getByRole('checkbox', { name: 'Tôi đã đọc các cảnh báo về Trainer' })).not.toBeChecked();
     await actor.click(screen.getByRole('checkbox', { name: 'Tôi đã đọc các cảnh báo về Trainer' }));
     change('Lý do phân công', 'Observed training suitability');
@@ -162,7 +162,7 @@ describe('CORE-022 UI + production router + real transport with HTTP fixtures (n
     await toTrainer(actor);
     change('Trainer phụ trách từ ngày', '2026-11-02');
     await actor.click(screen.getByRole('button', { name: 'Chọn Fixture Trainer' }));
-    expect(screen.getByLabelText('Trainer phụ trách từ ngày', { exact: false })).toHaveValue('2026-11-02');
+    expect(screen.getByLabelText('Trainer phụ trách từ ngày', { exact: false })).toHaveValue('02/11/2026');
   });
 
   it('points back to the invalid program date rather than leaving the user stuck at Trainer after midnight', async () => {

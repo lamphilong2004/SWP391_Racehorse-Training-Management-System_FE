@@ -17,7 +17,11 @@ export interface NextStepProps {
 }
 
 /** Hand-off panel shown after a task: the next action, its owner and, when permitted, a direct link. */
-export function NextStep({ title, owner, children, action, secondary }: NextStepProps) {
+export function NextStep(props: NextStepProps) {
+  // Leader request 11/11: hand-off panels are not shown; the toast already confirms the action.
+  void props; return null;
+}
+export function NextStepPanel({ title, owner, children, action, secondary }: NextStepProps) {
   return <section className={styles.step} aria-label={`Bước tiếp theo: ${title}`}>
     <Icon name="chevron-right" size={20} className={styles.icon} />
     <div className={styles.text}>

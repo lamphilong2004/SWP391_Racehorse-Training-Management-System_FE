@@ -36,7 +36,8 @@ export function ProgramCreationPage() {
   const [step, setStep] = useState(0);
   const [issues, setIssues] = useState<ProgramValidationIssue[]>([]);
   const [horseSearch, setHorseSearch] = useState('');
-  const [horseQuery, setHorseQuery] = useState({ q: '', page: 0, availability: '' });
+  // 10 horses per page in a plain table (Leader request 11/11), no inner scroll area.
+  const [horseQuery, setHorseQuery] = useState({ q: '', page: 0, size: 10, availability: '' });
   const [templateSearch, setTemplateSearch] = useState('');
   const [templateQuery, setTemplateQuery] = useState({ q: '', page: 0 });
   const [browseTemplates, setBrowseTemplates] = useState(false);

@@ -1,0 +1,14 @@
+.dateWrap { position: relative; }
+.dateInput { padding-inline-end: 2.5rem; }
+.pickerButton {
+  position: absolute; inset-block: 0; inset-inline-end: 0.25rem;
+  display: inline-flex; align-items: center; justify-content: center;
+  inline-size: 2rem; border: 0; background: transparent; color: var(--color-text-secondary); cursor: pointer;
+}
+.pickerButton:hover:not(:disabled) { color: var(--color-primary-600); }
+.pickerButton:disabled { cursor: not-allowed; opacity: .5; }
+/* Present (showPicker needs a rendered element) but invisible and out of the tab order. */
+.nativePicker {
+  position: absolute; inset-inline-end: 0.5rem; inset-block-end: 0;
+  inline-size: 1px; block-size: 1px; opacity: 0; pointer-events: none; border: 0; padding: 0;
+}

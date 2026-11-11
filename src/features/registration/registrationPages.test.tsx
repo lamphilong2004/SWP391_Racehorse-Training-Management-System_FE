@@ -127,7 +127,7 @@ describe('CORE-048 review access and lifecycle', () => {
     expect(await screen.findByText('Hãy chọn đúng một vai trò trước khi duyệt.')).toBeInTheDocument(); expect(selected.approve).not.toHaveBeenCalled();
     await userEvent.selectOptions(screen.getByLabelText('Vai trò được cấp'), 'GROOM');
     await userEvent.click(screen.getByRole('button', { name: 'Xác nhận duyệt' }));
-    await screen.findByText('Đã duyệt yêu cầu của Applicant fixture.'); await screen.findByText('Đã đánh giá'); expect(screen.getByRole('region', { name: 'Bước tiếp theo: Đăng nhập lần đầu' })).toBeInTheDocument();
+    await screen.findByText('Đã duyệt yêu cầu của Applicant fixture.'); await screen.findByText('Đã đánh giá'); expect(screen.queryByRole('region', { name: 'Bước tiếp theo: Đăng nhập lần đầu' })).not.toBeInTheDocument();
     expect(selected.approve).toHaveBeenCalledWith(5, 'GROOM', { token: 'test-only-session' });
     expect(screen.queryByRole('button', { name: 'Duyệt yêu cầu 5' })).not.toBeInTheDocument();
   });
