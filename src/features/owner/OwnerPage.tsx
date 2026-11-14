@@ -63,6 +63,7 @@ function OwnerContent() {
   const current = result?.source === source ? result : null;
   const horse = current?.horses?.[0];
   const search = (value: string) => { const next = new URLSearchParams(); if (value.trim()) next.set('q', value.trim()); navigate(`${ROUTES.myHorses}${next.size ? `?${next}` : ''}`); };
+  // Carry the search in the URL so opening a horse and returning to the list restores the owner's search.
   const listQuery = params.get('q');
   const listSearch = listQuery ? `?${new URLSearchParams({ q: listQuery })}` : '';
   const listHref = `${ROUTES.myHorses}${listSearch}`;
