@@ -44,6 +44,7 @@ export const authSession = {
 
   save(accessToken: string, expiresIn: number, remember: boolean): StoredAuthSession {
     const session = { accessToken, expiresAt: Date.now() + expiresIn * 1000 };
+    // Remove the previous copy so changing the remember setting cannot leave an older session readable.
     this.clear();
     const target = storage(remember ? 'localStorage' : 'sessionStorage');
     const key = remember ? LOCAL_SESSION_KEY : TAB_SESSION_KEY;
