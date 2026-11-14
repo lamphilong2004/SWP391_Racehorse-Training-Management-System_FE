@@ -70,6 +70,7 @@ export function GroomTasks({ service }: { service: GroomService }) {
   const today = useClubToday();
   const tasks = useMemo(() => state.tasks ?? [], [state.tasks]);
   const isOverdue = (task: GroomTreatmentTask) => task.status === 'PENDING' && task.taskDate < today;
+  // These filters only organize tasks the server has already scoped to the signed-in Groom.
   const filtered = tasks.filter((t) => (!horse || t.horseId === Number(horse)) &&
     (filter === 'completed' ? t.status === 'COMPLETED' : filter === 'upcoming' ? t.status === 'PENDING' && t.taskDate > today : filter === 'all' ? true : t.taskDate === today || isOverdue(t)));
   const horseIds = [...new Set(tasks.map((t) => t.horseId))];
@@ -81,6 +82,7 @@ export function GroomTasks({ service }: { service: GroomService }) {
     if (pending.current || task.status !== 'PENDING') return;
     pending.current = true; setBusy(task.id); setAction({});
     try {
+      // Confirm completion on the server so the Vet sees the same saved status when reopening the treatment plan.
       await service.complete(task.id);
       if (!mounted.current) return;
       setAction({ success: `Đã hoàn thành công việc ${task.id}.` });
