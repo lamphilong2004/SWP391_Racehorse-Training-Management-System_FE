@@ -13,12 +13,14 @@ export function prepareWeightHistory(records: readonly WeightHistoryEntry[]) {
       valid.push({ ...record, timestamp });
     }
   }
+  // Plot readings in time order while preserving the incoming order in the history list.
   return { records: [...valid].sort((a, b) => a.timestamp - b.timestamp), history: valid, invalidCount };
 }
 
 export function weightAxisTicks(values: readonly number[]) {
   if (!values.length) return [5, 4, 3, 2, 1, 0];
   const minimum = Math.min(...values), maximum = Math.max(...values);
+  // A single weight or a flat series still needs a nonzero range for readable axis ticks.
   const spread = maximum - minimum || Math.max(maximum * 0.1, 1);
   const lower = Math.max(0, minimum - spread * 0.15), upper = maximum + spread * 0.15;
   const rawStep = (upper - lower) / 4;
