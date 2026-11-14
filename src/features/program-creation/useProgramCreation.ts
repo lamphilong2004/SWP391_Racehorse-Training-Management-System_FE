@@ -25,8 +25,10 @@ const initialState: CreationState = {
 
 export function useProgramCreation(api: ProgramCreationApi) {
   const [state, setState] = useState<CreationState>(initialState);
+  // A late response can still settle after abort, so only the latest selection may update the draft.
   const selectionRevision = useRef(0);
   const selectionRequest = useRef<AbortController | null>(null);
+  // Guard submission synchronously while the pending state is waiting for a render.
   const submitting = useRef(false);
   const created = useRef<ProgramDetail | null>(null);
 
