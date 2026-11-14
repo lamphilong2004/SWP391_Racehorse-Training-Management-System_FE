@@ -30,6 +30,7 @@ function VetThresholdOverride({ horseId }: { horseId: number }) {
     try {
       if (stage === 'set') await api.set(horseId, { metricType: 'HEART_RATE', thresholdValue: Number(value), effectiveFrom: new Date(from).toISOString(), reason });
       else await api.end(horseId, new Date(to).toISOString());
+      // Re-read the effective threshold because the server resolves which value applies now.
       setMessage('Máy chủ đã xác nhận thay đổi ngưỡng. Đang tải lại giá trị đang áp dụng.'); resource.reload();
       setOpen(false); setStage('edit'); setValue(''); setReason(''); setFrom(''); setTo('');
     } catch (cause) { setError(errorMessage(cause)); }
