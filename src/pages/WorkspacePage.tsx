@@ -1,5 +1,6 @@
 import { boxLabel } from '../shared/stableBox';
 import { useCallback } from 'react';
+import { Link } from 'react-router';
 import { AppShell } from '../layout/AppShell';
 import { Button, ButtonLink, Card, DataTable, EmptyState, ErrorState, Icon, LoadingState, MetricCard, StatusBadge, type IconName } from '../design-system';
 import { ROUTES } from '../app/routePaths';
@@ -11,9 +12,10 @@ import { useResource } from '../features/main-flows/useResource';
 import type { HorseDetail, Page } from '../features/horses/api/types';
 import { CareTodayPanel } from '../features/stable-care/CareTodayPanel';
 import styles from './WorkspacePage.module.css';
+import headTrainerStyles from './HeadTrainerWorkspace.module.css';
 
 type WorkspaceAction = { title: string; description: string; label: string; to: string; icon: IconName };
-const WORKSPACES: Record<RoleCode, { description: string; primary: WorkspaceAction; actions: WorkspaceAction[] }> = {
+const WORKSPACES: Record<Exclude<RoleCode, 'HEAD_TRAINER'>, { description: string; primary: WorkspaceAction; actions: WorkspaceAction[] }> = {
   VETERINARIAN: {
     description: 'Xem ngựa mới đến, theo dõi ca y tế và quản lý sức khỏe đàn ngựa.',
     primary: { title: 'Ca y tế', description: '', label: 'Mở ca y tế', to: ROUTES.medical, icon: 'stethoscope' },
@@ -22,16 +24,6 @@ const WORKSPACES: Record<RoleCode, { description: string; primary: WorkspaceActi
       { title: 'Ca y tế', description: 'Mở các lần khám, hạn chế, phác đồ điều trị và hồ sơ hồi phục.', label: 'Xem ca y tế', to: ROUTES.medical, icon: 'stethoscope' },
       { title: 'Sức khỏe đàn ngựa', description: 'Xem tổng quan sức khỏe đàn ngựa và nhận biết ngựa cần chú ý.', label: 'Xem sức khỏe đàn ngựa', to: ROUTES.herdHealth, icon: 'activity' },
       { title: 'Xem xét sự cố', description: 'Xem các quan sát đã báo và tiếp tục xử lý y tế.', label: 'Xem xét sự cố', to: ROUTES.incidents, icon: 'shield-alert' },
-    ],
-  },
-  HEAD_TRAINER: {
-    description: 'Xem mức sẵn sàng của ngựa, chọn chiến lược dùng lại được và phân công Trainer phù hợp.',
-    primary: { title: 'Tạo chương trình', description: '', label: 'Tạo chương trình', to: ROUTES.trainingProgramCreate, icon: 'plus' },
-    actions: [
-      { title: 'Mức sẵn sàng của ngựa', description: 'Xem hồ sơ, sức khỏe ban đầu và khả năng tập luyện trước khi lên kế hoạch huấn luyện.', label: 'Xem ngựa', to: ROUTES.horses, icon: 'horseshoe' },
-      { title: 'Mẫu chương trình', description: 'So sánh các chiến lược dùng lại được và các phiên bản đã lưu.', label: 'Xem mẫu chương trình', to: ROUTES.programTemplates, icon: 'book-open' },
-      { title: 'Chương trình huấn luyện ngựa', description: 'Mở chương trình của ngựa, phiên bản mẫu đã chọn và phân công Trainer.', label: 'Xem chương trình', to: ROUTES.trainingPrograms, icon: 'clipboard-list' },
-      { title: 'Lịch tập', description: 'Xem các buổi tập đã lên lịch của câu lạc bộ.', label: 'Xem lịch tập', to: ROUTES.trainingSchedule, icon: 'calendar' },
     ],
   },
   GROOM: {
@@ -83,7 +75,9 @@ const WORKSPACES: Record<RoleCode, { description: string; primary: WorkspaceActi
 export function WorkspacePage() {
   const { user } = useAuth();
   if (!user) return null;
-  const role = user.roles[0], workspace = WORKSPACES[role];
+  const role = user.roles[0];
+  if (role === 'HEAD_TRAINER') return <HeadTrainerWorkspace fullName={user.fullName} />;
+  const workspace = WORKSPACES[role];
   return <AppShell designSystem="v2" user={{ fullName: user.fullName, role }} breadcrumb={[{ label: 'Tổng quan' }]}>
     <div className={styles.page}>
       <header data-page-banner className={styles.heading}>
@@ -105,6 +99,44 @@ export function WorkspacePage() {
       </section>
       {role === 'VETERINARIAN' && <VeterinaryArrivals />}
       <footer className={styles.identity}><span><Icon name="user" size={16} />{user.email}</span><span>{ROLE_LABELS[role]} · {user.userCode}</span><ButtonLink variant="tertiary" to={ROUTES.account}>Xem tài khoản</ButtonLink></footer>
+    </div>
+  </AppShell>;
+}
+
+const HEAD_TRAINER_GROUPS = [
+  { title: 'Điều phối huấn luyện', tone: 'training', links: [
+    { label: 'Chương trình huấn luyện ngựa', detail: 'Xem kế hoạch và phân công Trainer', icon: 'clipboard-list', to: ROUTES.trainingPrograms },
+    { label: 'Yêu cầu điều chỉnh', detail: 'Xem đề xuất từ Trainer', icon: 'history', to: ROUTES.adjustmentRequests },
+    { label: 'Lịch tập', detail: 'Xem các buổi tập đã lên lịch', icon: 'calendar', to: ROUTES.trainingSchedule },
+    { label: 'Mẫu chương trình', detail: 'Chọn mẫu cho kế hoạch mới', icon: 'book-open', to: ROUTES.programTemplates },
+  ] },
+  { title: 'Sức khỏe và mức sẵn sàng', tone: 'health', links: [
+    { label: 'Tóm tắt y tế', detail: 'Tra cứu sức khỏe và khả năng tập theo từng ngựa', icon: 'stethoscope', to: ROUTES.medicalSummary },
+    { label: 'Hạn chế tập luyện', detail: 'Xem hạn chế do Vet đặt', icon: 'shield-alert', to: ROUTES.restrictions },
+    { label: 'Hồ sơ ngựa', detail: 'Xem thông tin và mức sẵn sàng trước khi lập kế hoạch', icon: 'horseshoe', to: ROUTES.horses },
+    { label: 'Sự cố', detail: 'Theo dõi báo cáo liên quan đến ngựa', icon: 'alert-triangle', to: ROUTES.incidents },
+  ] },
+] as const;
+
+function HeadTrainerWorkspace({ fullName }: { fullName: string }) {
+  return <AppShell designSystem="v2" user={{ fullName, role: 'HEAD_TRAINER' }} breadcrumb={[{ label: 'Tổng quan' }]}>
+    <div className={headTrainerStyles.page}>
+      <header data-page-banner className={headTrainerStyles.banner}>
+        <div><h1 className="text-h1">Tổng quan Head Trainer</h1><p>Điều phối lịch tập và kiểm tra mức sẵn sàng của ngựa.</p></div>
+        <ButtonLink variant="primary" to={ROUTES.trainingProgramCreate}><Icon name="plus" size={18} />Tạo chương trình</ButtonLink>
+      </header>
+      <div className={headTrainerStyles.groups}>
+        {HEAD_TRAINER_GROUPS.map((group) => <section key={group.tone} className={headTrainerStyles.group} data-tone={group.tone} aria-labelledby={`head-trainer-${group.tone}`}>
+          <h2 id={`head-trainer-${group.tone}`}>{group.title}</h2>
+          <ul>{group.links.map((link) => <li key={link.to}>
+            <Link to={link.to} className={headTrainerStyles.link}>
+              <span className={headTrainerStyles.icon}><Icon name={link.icon} size={20} /></span>
+              <span className={headTrainerStyles.linkText}><strong>{link.label}</strong><span>{link.detail}</span></span>
+              <Icon name="chevron-right" size={18} />
+            </Link>
+          </li>)}</ul>
+        </section>)}
+      </div>
     </div>
   </AppShell>;
 }

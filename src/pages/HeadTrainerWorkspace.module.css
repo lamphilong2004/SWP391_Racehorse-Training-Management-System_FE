@@ -1,0 +1,42 @@
+.page { display: grid; gap: var(--space-xl); max-width: 1240px; margin-inline: auto; }
+.banner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-lg); }
+.banner h1 { text-wrap: balance; }
+.banner > a { min-height: 44px; }
+.groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-xl); align-items: start; }
+.group {
+  --group-accent: var(--color-primary-700);
+  --group-tint: var(--color-primary-50);
+  min-width: 0;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-top: 3px solid var(--group-accent);
+  border-radius: var(--card-radius);
+  padding: var(--space-lg);
+  box-shadow: var(--elev-1);
+}
+.group[data-tone='health'] { --group-accent: var(--color-success-600); --group-tint: var(--color-success-50); }
+.group h2 { margin: 0 var(--space-sm) var(--space-sm); font-size: 19px; font-weight: 700; line-height: 1.4; }
+.group ul { margin: 0; padding: 0; list-style: none; }
+.group li + li { border-top: 1px solid var(--color-border-default); }
+.link {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-md);
+  min-height: 72px;
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  text-decoration: none;
+  transition: background-color var(--motion-fast) var(--motion-ease);
+}
+.link:hover { background: var(--color-bg-subtle); }
+.link:focus-visible { outline: 2px solid var(--color-primary-700); outline-offset: 2px; }
+.link > svg { color: var(--group-accent); }
+.icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: var(--radius-md); color: var(--group-accent); background: var(--group-tint); }
+.linkText { display: grid; gap: 3px; overflow-wrap: anywhere; }
+.linkText strong { font-weight: 650; }
+.linkText > span { color: var(--color-text-secondary); font-size: 14px; line-height: 1.45; }
+@media (max-width: 800px) { .groups { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 480px) { .banner > a { width: 100%; } }
+@media (prefers-reduced-motion: reduce) { .link { transition: none; } }
