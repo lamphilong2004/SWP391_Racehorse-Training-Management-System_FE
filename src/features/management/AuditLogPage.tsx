@@ -24,6 +24,7 @@ function AuditResults({ query, pageSearch, role }: { query: AuditQuery; pageSear
   if (resource.status === 'error') return <ErrorState title={resource.forbidden ? 'Không có quyền truy cập' : 'Không tải được nhật ký hệ thống'} description={resource.message} onRetry={resource.forbidden ? undefined : () => setRevision((value) => value + 1)} />;
   const data = resource.data;
   const search = pageSearch.trim().toLocaleLowerCase();
+  // Text and role filters narrow the loaded page. Pagination still describes the full server result for the audit query.
   const entries = data.items.filter((entry) => (!role || entry.actorRole === role) && (!search || [entry.actor?.fullName, entry.actor?.userCode, entry.actor?.id, entry.action, entry.targetType, entry.targetId, entry.id].some((value) => value != null && String(value).toLocaleLowerCase().includes(search))));
   const navigatePage = (page: number) => {
     const next = new URLSearchParams(params);
