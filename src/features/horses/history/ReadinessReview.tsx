@@ -27,6 +27,7 @@ function Review({ id }: { id: number }) {
     return () => { active = false; abort.abort(); };
   }, [source, service, id, handleApiError]);
   const current = result?.source === source ? result : undefined;
+  // This acknowledgement records a Head Trainer review. Horse activation still follows the mandatory onboarding checklist.
   const acknowledge = async () => {
     if (locked.current) return; locked.current = true; setBusy(true); setWriteError(undefined); setSuccess(false);
     try {
