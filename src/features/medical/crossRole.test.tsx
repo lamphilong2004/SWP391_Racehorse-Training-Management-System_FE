@@ -91,6 +91,7 @@ it('Vet assigns treatment -> normal Groom login completes -> Vet rereads progres
   fireEvent.click(await screen.findByRole('button', { name: 'Tất cả được giao' }));
   fireEvent.click(await screen.findByRole('checkbox', { name: 'Hoàn thành công việc 1' }));
   await screen.findByText(/Đã hoàn thành công việc 1/);
+  // The assigned Groom needs the care instructions to complete the task. The clinical protocol stays visible to the Vet.
   expect(screen.queryByText('Private veterinary protocol')).not.toBeInTheDocument();
   await login(vet);
   await act(() => router.navigate('/medical/cases/9'));
