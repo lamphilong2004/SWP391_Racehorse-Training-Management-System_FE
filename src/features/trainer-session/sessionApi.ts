@@ -52,6 +52,7 @@ export function draftPayload(input: SessionDraft): SessionDraft {
     intensity: input.intensity, workRiderUserId: input.workRiderUserId,
     exercises: exercisePayload(input.exercises) };
 }
+// The suitability response identifies each exercise by its one-based order in this payload.
 export function exercisePayload(exercises: SessionExerciseInput[]): SessionExerciseInput[] {
   return exercises.map((item, index) => ({ exerciseDefinitionId: idOf(item.exerciseDefinitionId), exerciseOrder: index + 1,
     distanceM: item.distanceM, durationMin: item.durationMin, repetitions: item.repetitions, restIntervalMin: item.restIntervalMin,
@@ -84,6 +85,7 @@ export function createSessionApi(request: FlowRequest) {
       request<TrainingSession>(`/api/training-sessions/${idOf(id)}/exercises`, jsonBody('PUT', { exercises: exercisePayload(exercises) })),
   };
 }
+// Categories A and B block the session. An exercise in C or D can stay with a written acknowledgement.
 export function blocksSession(result: Suitability, exercises: SessionExerciseInput[]): string[] {
   return [
     ...(result.sessionBlocked ? [result.blockedMessage || 'Veterinarian đã chặn tập luyện.'] : []),
