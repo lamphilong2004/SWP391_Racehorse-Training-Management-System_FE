@@ -13,6 +13,8 @@ export function useResource<T>(load: (signal: AbortSignal) => Promise<T>) {
     });
     return () => controller.abort();
   }, [load, revision]);
+  // Treat the resource as pending as soon as the loader changes or reload is requested.
+  // The previous result may still be in state until the new request finishes.
   const current = state?.source === load && state.revision === revision ? state : undefined;
   return { data: current?.data, error: current?.error, errorCause: current?.errorCause, pending: !current, reload: () => setRevision((value) => value + 1) };
 }
