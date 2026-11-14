@@ -80,6 +80,8 @@ export function validateProgramCreation(input: CreateProgramRequest, candidate?:
       add(`${prefix}.intensityMax`, 'Cường độ tối đa phải lớn hơn hoặc bằng cường độ tối thiểu.');
     }
   });
+  // Sort for overlap checks while retaining each field's index in the form.
+  // Phase dates are inclusive, so sharing an end and start date counts as overlap.
   const datedPhases = input.phases.map((phase, index) => ({ phase, index }))
     .filter(({ phase }) => validDate(phase.startDate) && validDate(phase.endDate))
     .sort((a, b) => a.phase.startDate.localeCompare(b.phase.startDate));
