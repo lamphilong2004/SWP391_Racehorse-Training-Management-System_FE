@@ -63,6 +63,7 @@ function HorseSummary({ id, service }: { id: number; service: SummaryService }) 
   const casesLoad = useMemo(() => () => service.listCases(), [service]);
   const horse = useRead(horseLoad, horseLoad), availability = useRead(availabilityLoad, availabilityLoad), cases = useRead(casesLoad, casesLoad);
   if (!horse.data) return <State error={horse.error} retry={horse.retry} />;
+  // Clinical health and permission to train are separate. Show the availability returned for this horse, even when the health badge says it is fit.
   const current = availability.data;
   const birth = horse.data.foaledDate?.split('-').map(Number), today = new Date();
   let age = birth ? today.getFullYear() - birth[0] : null;

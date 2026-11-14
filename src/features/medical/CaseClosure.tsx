@@ -63,6 +63,7 @@ export function CaseClosure({ item, needsExamination, needsRecovery, openTab, re
     ...(item.incidentIds.length ? [{ key: 'incidents', ok: blockers ? true : undefined, label: 'Sự cố liên quan',
       detail: !blockers ? 'Đang kiểm tra…' : blockers.incidents.length ? `${blockers.incidents.length} sự cố sẽ được đóng cùng ca.` : 'Đã đóng hết',
       action: blockers?.incidents.length ? <div className="medical-closure-items">{blockers.incidents.map((incident) => <ButtonLink key={incident.id} size="sm" variant="tertiary" to={`/incidents/${incident.id}`}>{viLabel(incident.incidentType)} · {incident.incidentCode}</ButtonLink>)}</div> : null }] : []),
+    // Closing a case can resolve its linked incidents. The Vet must lift its training restrictions in a separate action.
     { key: 'restrictions', ok: blockers ? blockers.restrictions.length === 0 : undefined, label: 'Hạn chế tập luyện của ca đã gỡ',
       detail: !blockers ? 'Đang kiểm tra…' : blockers.restrictions.length ? `Còn hạn chế ${blockers.restrictions.map((r) => viLabel(r.level)).join(', ')} đang hiệu lực.` : 'Không còn hạn chế của ca',
       action: blockers?.restrictions.length ? <ButtonLink size="sm" to={`/medical/restrictions?horseId=${item.horseId}`}>Gỡ hạn chế</ButtonLink> : null },
