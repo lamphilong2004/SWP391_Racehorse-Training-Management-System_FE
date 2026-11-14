@@ -57,6 +57,7 @@ export function createRegistrationService(options: { fetcher?: typeof fetch; bas
     approve: async (id, roleCode, context) => {
       if (!isRoleCode(roleCode)) throw new ApiError(400, 'VALIDATION_ERROR', 'Hãy chọn đúng một vai trò.');
       const result = parseRegistration(await authenticated(`${idPath(id)}/approve`, context, 'POST', { roleCode }));
+      // Show approval only after the server confirms the selected request and any role it reports matches the manager's choice.
       if (result.id !== id || result.status !== 'APPROVED' || (result.approvedRoleCode != null && result.approvedRoleCode !== roleCode)) return invalid();
       return result;
     },
