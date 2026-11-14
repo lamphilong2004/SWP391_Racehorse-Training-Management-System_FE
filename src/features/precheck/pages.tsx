@@ -96,10 +96,12 @@ function PrecheckContent({ id, api, showPhoto }: { id: number; api: PrecheckApi;
         try {
           const reports = await api.incidents();
           if (!active) return;
+          // Match the saved check ID so an incident from another session cannot hide this report action.
           setIncident(reports.find((report) => report.preSessionCheckId === data.preSessionCheck?.id));
           setReportLookupError(false);
         } catch (cause) {
           if (!active || handleApiError(cause)) return;
+          // Keep reporting unavailable until a reload can confirm whether this check already has a report.
           setReportLookupError(true);
         }
       }
