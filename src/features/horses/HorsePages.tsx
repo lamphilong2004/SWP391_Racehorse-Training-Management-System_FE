@@ -5,7 +5,7 @@ import { ButtonLink, AlertBanner, Button, Card, DataTable, EmptyState, ErrorStat
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { businessDataMode } from '../../shared/data/businessData';
 import { useHorsesApi } from './api/HorsesApiContext';
-import type { HorseDetail } from './api/types';
+import type { HorseDetail, Page } from './api/types';
 import { ageInYears, formatDate } from './shared/format';
 import { useBreadcrumb } from './shared/HorseManagementLayout';
 import styles from './shared/horses.module.css';
@@ -18,13 +18,16 @@ import { dateTime } from '../evaluation/models';
 import { HorsePhotoImage } from './shared/HorsePhotoImage';
 import { WeightHistoryPanel } from '../baseline/WeightHistoryPanel';
 
-function useHorseResource<T>(load: () => Promise<T>) {
+function useHorseResource<T>(load: () => Promise<T>, onLoaded?: (data: T) => void) {
   const [revision, setRevision] = useState(0);
   const [state, setState] = useState<{ data?: T; error?: string; source?: () => Promise<T>; refreshing?: boolean; refreshError?: string }>({});
   useEffect(() => {
     let active = true;
     load().then((data) => {
-      if (active) setState({ data, source: load });
+      if (active) {
+        onLoaded?.(data);
+        setState({ data, source: load });
+      }
     }, (error: unknown) => {
       if (active) {
         const message = error instanceof Error ? error.message : 'Không tải được danh sách ngựa.';
@@ -34,7 +37,7 @@ function useHorseResource<T>(load: () => Promise<T>) {
       }
     });
     return () => { active = false; };
-  }, [load, revision]);
+  }, [load, onLoaded, revision]);
   return {
     ...(state.source === load ? state : {}),
     reload: () => { setState({}); setRevision((n) => n + 1); },
@@ -53,7 +56,12 @@ export function HorseListPage() {
   const [search, setSearch] = useState(''), [lifecycle, setLifecycle] = useState(''), [availability, setAvailability] = useState('');
   const [query, setQuery] = useState({ q: '', lifecycle: '', availability: '', page: 0, size: 20 });
   const load = useCallback(() => api.listHorses(query), [api, query]);
-  const { data, error, reload } = useHorseResource(load);
+  const correctPage = useCallback((result: Page<HorseDetail>) => {
+    const lastPage = Math.max(0, result.totalPages - 1);
+    const validPage = Math.min(Math.max(0, query.page), lastPage);
+    if (query.page !== validPage) setQuery((current) => ({ ...current, page: validPage }));
+  }, [query.page]);
+  const { data, error, reload } = useHorseResource(load, correctPage);
   const loadCounts = useCallback(async (active: () => boolean) => {
     const result: Record<string, number> = {};
     // These optional counters must not occupy all SQL connections alongside the visible photos.
@@ -65,14 +73,16 @@ export function HorseListPage() {
   }, [api]);
   const [counts, setCounts] = useState<Record<string, number>>();
   const listed = Boolean(data);
+  const lastPage = data ? Math.max(0, data.totalPages - 1) : 0;
+  const currentPage = data ? Math.min(Math.max(0, data.page), lastPage) : 0;
   // Counts are read only after the list itself loaded, so a failing list stays a single request.
   useEffect(() => { if (!listed || counts) return; let active = true; loadCounts(() => active).then((value) => { if (active && value) setCounts(value); }, () => undefined); return () => { active = false; }; }, [listed, counts, loadCounts]);
-  const apply = (next: Partial<typeof query>) => setQuery({ ...query, ...next, page: 0 });
+  const apply = (next: Partial<typeof query>) => setQuery((current) => ({ ...current, ...next, page: 0 }));
   return <div className={styles.page} data-ui-v3>
     <div data-page-banner className={styles.titleRow}><div className={styles.titleBlock}><h1 className="text-h1">Danh sách ngựa</h1><p>Danh sách ngựa của câu lạc bộ · nhận dạng, phả hệ, sở hữu và ô chuồng</p></div>{canManage && <><ButtonLink to="/horses/pending-activation">Chờ kích hoạt</ButtonLink><ButtonLink variant="primary" to="/horses/new">Thêm ngựa</ButtonLink></>}</div>
     <TableToolbar label="Bộ lọc danh sách ngựa" scope="server" resultCount={data?.totalItems}
       hasFilters={Boolean(search || lifecycle || availability || query.q || query.lifecycle || query.availability)}
-      onClear={() => { setSearch(''); setLifecycle(''); setAvailability(''); setQuery({ q: '', lifecycle: '', availability: '', page: 0, size: query.size }); }}
+      onClear={() => { setSearch(''); setLifecycle(''); setAvailability(''); setQuery((current) => ({ q: '', lifecycle: '', availability: '', page: 0, size: current.size })); }}
       onSubmit={(e) => { e.preventDefault(); apply({ q: search.trim() }); }}>
       <TextField label="Tìm ngựa" type="search" placeholder="Tên hoặc mã ngựa, nhấn Enter" value={search} onChange={(e) => { setSearch(e.target.value); if (!e.target.value) apply({ q: '' }); }} />
       <SelectField label="Khả năng tập luyện" value={availability} options={[{ value: '', label: 'Tất cả' }, ...['AVAILABLE', 'LIMITED', 'LOCKED'].map((value) => ({ value, label: viLabel(value) }))]} onChange={(e) => { setAvailability(e.target.value); apply({ availability: e.target.value }); }} />
@@ -92,7 +102,7 @@ export function HorseListPage() {
         { key: 'action', header: 'Thao tác', nowrap: true, render: (h) => canManage && h.lifecycle === 'DRAFT'
           ? (h.currentBoxCode ? <ButtonLink size="sm" variant="secondary" to="/horses/pending-activation">Còn thiếu</ButtonLink> : <ButtonLink size="sm" variant="primary" to={`/horses/${h.id}/edit`}>Hoàn tất</ButtonLink>)
           : <ButtonLink size="sm" variant="secondary" to={`/horses/${h.id}`}>{canManage ? 'Quản lý' : 'Xem'}</ButtonLink> },
-      ]} /></div><nav className={styles.registryPagination} aria-label="Phân trang danh sách ngựa"><span role="status">Trang {data.page + 1} / {Math.max(1, data.totalPages)}</span><div><Button variant="secondary" disabled={!query.page} onClick={() => setQuery({ ...query, page: query.page - 1 })}>Trước</Button><Button variant="secondary" disabled={query.page + 1 >= data.totalPages} onClick={() => setQuery({ ...query, page: query.page + 1 })}>Sau</Button></div></nav></Card>
+      ]} /></div><nav className={styles.registryPagination} aria-label="Phân trang danh sách ngựa"><span role="status">Trang {currentPage + 1} / {Math.max(1, data.totalPages)}</span><div><Button variant="secondary" disabled={currentPage === 0} onClick={() => setQuery((current) => ({ ...current, page: Math.max(0, currentPage - 1) }))}>Trước</Button><Button variant="secondary" disabled={currentPage >= lastPage} onClick={() => setQuery((current) => ({ ...current, page: Math.min(lastPage, currentPage + 1) }))}>Sau</Button></div></nav></Card>
       <p className="text-caption">Sức khỏe và khả năng tập luyện chỉ xem ở đây (Veterinarian cập nhật). Ngựa Nháp tự chuyển sang Hoạt động khi đủ nhận dạng, phả hệ, chủ ngựa, ô chuồng và khám ban đầu.</p>
     </>}
   </div>;
