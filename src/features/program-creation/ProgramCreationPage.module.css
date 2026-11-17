@@ -1,4 +1,8 @@
+@reference '../../design-system/styles/tailwind.css';
+
 .page, .stack { display: flex; flex-direction: column; gap: var(--space-xl); }
+.progress { @apply rounded-rh-card border border-rh-border bg-rh-surface p-4 shadow-rh-card; }
+.progress [aria-current='step'] > span { @apply rounded-rh-control bg-rh-primary-soft py-1 pr-2; }
 .formBody { border: 0; padding: 0 0 var(--space-xl); margin: 0; min-width: 0; }
 .heading, .footer, .context, .row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-lg); }
 .heading p, .muted { color: var(--color-text-secondary); }
@@ -19,12 +23,7 @@
 .horseStep { padding-bottom: var(--space-md); }
 .horseTable { overflow: visible; }
 .horseTable > [role="region"] { overflow-x: auto; }
-.horseActions {
-  padding: var(--space-md);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-md);
-  background: var(--color-bg-surface);
-}
+.wizardActions { @apply rounded-rh-card border border-rh-border bg-rh-surface p-4; }
 .horseSummary { width: 100%; max-width: none; }
 .profileFacts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-lg); }
 .fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg); }

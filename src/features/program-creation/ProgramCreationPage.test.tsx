@@ -24,10 +24,12 @@ function setup({ role = 'HEAD_TRAINER', path = '/training/programs/new', overrid
   return { actor: userEvent.setup({ delay: null }), fetchMock, router, posts };
 }
 function change(label: string, value: string) { fireEvent.change(screen.getByLabelText(label, { exact: false }), { target: { value } }); }
-async function next(actor: Actor) { await actor.click(screen.getByRole('button', { name: 'Tiếp tục' })); }
+const nextStepNames = /^(Xem hồ sơ|Chọn mẫu chương trình|Tùy chỉnh chương trình|Đặt khối lượng|Phân công Trainer|Xem lại chương trình)$/;
+const nextStep = () => screen.getByRole('button', { name: nextStepNames });
+async function next(actor: Actor) { await actor.click(nextStep()); }
 async function chooseTemplate(actor: Actor) {
   await actor.click(await screen.findByRole('radio', { name: /^Chọn Thunder Bolt \(/ }));
-  await waitFor(() => expect(screen.getByRole('button', { name: 'Tiếp tục' })).toBeEnabled());
+  await waitFor(() => expect(nextStep()).toBeEnabled());
   await next(actor); await next(actor);
   await actor.click(await screen.findByRole('button', { name: 'Dùng mẫu gợi ý Race Preparation 1600m' }));
   await screen.findByLabelText('Phiên bản mẫu');
@@ -82,6 +84,15 @@ describe('CORE-022 UI + production router + real transport with HTTP fixtures (n
     expect(ready).toBeChecked();
     expect(ready.closest('tr')).toHaveAttribute('aria-selected', 'true');
     expect(screen.queryByRole('heading', { name: 'Ngựa đã chọn' })).not.toBeInTheDocument();
+  });
+
+  it('focuses an eligible horse with the step error when advancing without a selection', async () => {
+    const { actor } = setup();
+    const ready = await screen.findByRole('radio', { name: /^Chọn Thunder Bolt \(/ });
+    await actor.click(nextStep());
+    await waitFor(() => expect(ready).toHaveFocus());
+    expect(ready).toHaveAccessibleDescription('Hãy chọn ngựa.');
+    expect(screen.getByRole('navigation', { name: 'Các bước tạo chương trình' }).querySelector('[aria-current="step"]')).toHaveTextContent('Ngựa');
   });
 
   it('shows one dismissible date error toast while retaining inline field errors', async () => {
@@ -214,7 +225,7 @@ describe('CORE-022 UI + production router + real transport with HTTP fixtures (n
     expect(screen.getByLabelText('Ngày bắt đầu chương trình', { exact: false })).toHaveValue('');
     await actor.click(screen.getByRole('button', { name: 'Ngựa' }));
     await actor.click(screen.getByRole('radio', { name: /^Chọn Silver Star \(/ }));
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Tiếp tục' })).toBeEnabled());
+    await waitFor(() => expect(nextStep()).toBeEnabled());
     await next(actor); await next(actor);
     expect(screen.queryByLabelText('Phiên bản mẫu')).not.toBeInTheDocument();
     await next(actor);
@@ -248,12 +259,12 @@ describe('CORE-022 UI + production router + real transport with HTTP fixtures (n
     const { actor, fetchMock, posts } = setup({ override: (url, init) => url.pathname === '/api/program-templates/3'
       ? new Promise((resolve) => { finish = resolve; }) : fixtureResponse(url, init) });
     await actor.click(await screen.findByRole('radio', { name: /^Chọn Thunder Bolt \(/ }));
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Tiếp tục' })).toBeEnabled());
+    await waitFor(() => expect(nextStep()).toBeEnabled());
     await next(actor); await next(actor);
     await actor.click(screen.getByRole('button', { name: 'Dùng mẫu gợi ý Race Preparation 1600m' }));
     await actor.click(screen.getByRole('button', { name: 'Ngựa' }));
     await actor.click(screen.getByRole('radio', { name: /^Chọn Silver Star \(/ }));
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Tiếp tục' })).toBeEnabled());
+    await waitFor(() => expect(nextStep()).toBeEnabled());
     finish(fixtureResponse(new URL('http://localhost:8080/api/program-templates/3?versionNo=2')));
     await next(actor); await next(actor);
     expect(screen.queryByLabelText('Phiên bản mẫu')).not.toBeInTheDocument();
