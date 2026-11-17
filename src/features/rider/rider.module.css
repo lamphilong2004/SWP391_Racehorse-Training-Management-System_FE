@@ -124,4 +124,5 @@ td .smallStack > * { min-width: auto; }
 .assignmentTable { @apply min-w-[1280px]; }
 .historyTable { @apply min-w-[1420px]; }
 .tableCard :global(th:last-child), .tableCard :global(td:last-child) { min-width: 168px; }
-.tableCard :global(td:last-child a.button) { @apply min-h-11 whitespace-nowrap; }
+/* Direct CSS-module class on the ButtonLink; do not target its hashed shared class. */
+.riderTableAction { @apply min-h-11 whitespace-nowrap; }

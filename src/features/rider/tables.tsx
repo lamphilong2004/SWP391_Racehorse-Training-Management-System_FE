@@ -28,7 +28,7 @@ const sessionLabel = (ride: RiderSession) => [ride.focus, ride.phaseName].filter
 function HorseCell({ ride }: { ride: RiderSession }) {
   return <div className={styles.cellStack}><span className={`${styles.strong} ${styles.personName}`}>{ride.horse.name}</span><span className={styles.caption}>{ride.horse.horseCode}</span></div>;
 }
-const chevron: DataTableColumn<RiderSession> = { key: 'open', header: 'Thao tác', width: 168, render: (ride) => <ButtonLink size="sm" to={`/rider/assignments/${ride.id}`} aria-label={`Xem lượt cưỡi ${ride.horse.name}`} onClick={(event) => event.stopPropagation()}>Xem lượt cưỡi<Icon name="chevron-right" size={16} /></ButtonLink> };
+const chevron: DataTableColumn<RiderSession> = { key: 'open', header: 'Thao tác', width: 168, render: (ride) => <ButtonLink className={styles.riderTableAction} size="sm" to={`/rider/assignments/${ride.id}`} aria-label={`Xem lượt cưỡi ${ride.horse.name}`} onClick={(event) => event.stopPropagation()}>Xem lượt cưỡi<Icon name="chevron-right" size={16} /></ButtonLink> };
 
 function preCheck(ride: RiderSession, today: boolean) {
   if (startWindowExpired(ride, Date.now())) return <span className={styles.toneWarning}>Đã hết khung giờ — cần dời lịch</span>;

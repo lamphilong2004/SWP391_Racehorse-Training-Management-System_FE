@@ -43,6 +43,7 @@ it('groups own assignments into Today and Upcoming tables (Figma WR-D4) and open
   expect(await screen.findByRole('tab', { name: 'Hôm nay · 2' })).toHaveAttribute('aria-selected', 'true');
   expect(screen.getByText('Báo cáo vấn đề trong lúc cưỡi')).toBeInTheDocument();
   expect(screen.getByText(/mở lượt cưỡi đang diễn ra hoặc tạm dừng bằng “Xem lượt cưỡi”/)).toBeInTheDocument();
+  expect(screen.getByText('Báo cáo vấn đề trong lúc cưỡi')).toBeInTheDocument();
   expect(screen.getByRole('tab', { name: 'Sắp tới · 1' })).toBeInTheDocument();
   const today = screen.getByRole('table', { name: 'Lượt cưỡi hôm nay' });
   expect(within(today).getAllByRole('row')).toHaveLength(3);
@@ -55,10 +56,12 @@ it('groups own assignments into Today and Upcoming tables (Figma WR-D4) and open
   expect(router.state.location.pathname).toBe('/rider/assignments/43');
 });
 
-it('keeps the assignment detail action available from the table', async () => {
+it('keeps the assignment detail action styled and available from the table', async () => {
   const router = mount(<RiderAssignmentsPage api={client()} />, '/rider/assignments');
   const table = await screen.findByRole('table', { name: 'Lượt cưỡi hôm nay' });
-  fireEvent.click(within(table).getAllByRole('link', { name: 'Xem lượt cưỡi Thunder Bolt' })[0]);
+  const action = within(table).getAllByRole('link', { name: 'Xem lượt cưỡi Thunder Bolt' })[0];
+  expect(action).toHaveClass(styles.riderTableAction);
+  fireEvent.click(action);
   expect(router.state.location.pathname).toBe('/rider/assignments/41');
 });
 
