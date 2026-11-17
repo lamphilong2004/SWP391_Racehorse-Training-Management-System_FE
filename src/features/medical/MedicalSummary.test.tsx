@@ -14,14 +14,29 @@ afterEach(() => { authSession.clear(); vi.unstubAllGlobals(); });
 it('selects a horse, persists its deep link and renders the read-only authorized summary', async () => {
   const value = service(); mount(value, '/medical/summary');
   fireEvent.change(await screen.findByLabelText('Ngựa'), { target: { value: '14' } });
-  expect(await screen.findByRole('heading', { name: 'Tóm tắt y tế · Storm' })).toBeInTheDocument();
+  expect(await screen.findByRole('heading', { name: 'Storm' })).toBeInTheDocument();
   expect(await screen.findByText('Ca 9')).toBeInTheDocument();
-  expect(screen.getByText('READ-ONLY')).toBeInTheDocument();
-  expect(screen.getAllByText('Walking only')).toHaveLength(2);
+  expect(screen.getByText('Chỉ xem')).toBeInTheDocument();
+  expect(screen.getByText('Walking only')).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: /save|approve|activate/i })).not.toBeInTheDocument();
-  expect(screen.getAllByText('Không có trong bản tóm tắt này')).toHaveLength(2);
-  fireEvent.click(screen.getByRole('link', { name: /Quay lại/ }));
-  expect(await screen.findByLabelText('Ngựa')).toBeInTheDocument();
+  expect(screen.getByText('Chưa có dữ liệu cân nặng')).toBeInTheDocument();
+  expect(screen.getByLabelText('Ngựa')).toHaveValue('14');
+});
+it('finds horses without Vietnamese accents and keeps the picker available after selection', async () => {
+  const value = service();
+  const second = { ...horse, id: 15, name: 'Thiên Mã', horseCode: 'RH-004' };
+  vi.mocked(value.listHorses).mockResolvedValue([horse, second]);
+  vi.mocked(value.getHorse).mockImplementation(async (id) => id === second.id ? second : horse);
+  mount(value, '/medical/summary');
+  const search = await screen.findByRole('searchbox', { name: 'Tìm theo tên hoặc mã ngựa' });
+  fireEvent.change(search, { target: { value: 'thien ma' } });
+  expect(screen.queryByRole('option', { name: /Storm/ })).not.toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Ngựa'), { target: { value: '15' } });
+  expect(await screen.findByRole('heading', { name: 'Thiên Mã' })).toBeInTheDocument();
+  fireEvent.change(search, { target: { value: 'ST-014' } });
+  fireEvent.change(screen.getByLabelText('Ngựa'), { target: { value: '14' } });
+  expect(await screen.findByRole('heading', { name: 'Storm' })).toBeInTheDocument();
+  expect(screen.getByLabelText('Ngựa')).toHaveValue('14');
 });
 it('shows independent read failures without claiming no case or no restriction', async () => {
   const value = service(); vi.mocked(value.listCases).mockRejectedValue(new Error('Không tải được tóm tắt ca')); vi.mocked(value.getAvailability).mockRejectedValue(new Error('Không tải được khả năng tập luyện'));
@@ -49,9 +64,9 @@ it('discards a stale horse response after selection changes', async () => {
   const router = createMemoryRouter([{ path: '/medical/summary', element: <MedicalSummaryPage service={value} /> }], { initialEntries: ['/medical/summary?horseId=14'] });
   render(<RouterProvider router={router} />);
   await act(() => router.navigate('/medical/summary?horseId=15'));
-  await screen.findByRole('heading', { name: 'Tóm tắt y tế · Second' });
+  await screen.findByRole('heading', { name: 'Second' });
   await act(async () => { finish(horse); });
-  expect(screen.queryByRole('heading', { name: 'Tóm tắt y tế · Storm' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('heading', { name: 'Storm' })).not.toBeInTheDocument();
 });
 it.each(['GROOM', 'VETERINARIAN', 'HORSE_OWNER', 'TRAINER', 'CLUB_MANAGER', 'WORK_RIDER'])('denies %s before summary requests', async (role) => {
   authSession.save('fixture', 3600, false);
@@ -77,7 +92,7 @@ it('uses the approved non-clinical HorseDetail weight and identity projection wi
   const value = createSummaryService('fixture', undefined, { baseUrl: '', fetcher });
   const result = await value.getHorse(14); expect(result.latestWeight?.weightKg).toBe(512); expect(result).not.toHaveProperty('diagnosis');
   const view = service(); vi.mocked(view.getHorse).mockResolvedValue(result); mount(view);
-  await screen.findByRole('heading', { name: 'Tóm tắt y tế · Storm' });
+  await screen.findByRole('heading', { name: 'Storm' });
   expect(screen.getByText(/ST-014 · Thoroughbred · \d+ tuổi · Ngựa đực non · North Yard, Chuồng B-03/)).toBeInTheDocument();
   expect(screen.getByText('30 thg 9, 2026')).toHaveAttribute('dateTime', '2026-09-30T00:00:00Z');
   expect(screen.queryByText('Do not copy clinical details')).not.toBeInTheDocument();
