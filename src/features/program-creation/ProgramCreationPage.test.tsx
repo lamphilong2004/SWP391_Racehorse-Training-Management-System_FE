@@ -149,6 +149,9 @@ describe('CORE-022 UI + production router + real transport with HTTP fixtures (n
     expect(template.version.phases[0].name).toBe('Foundation');
     await actor.click(screen.getByRole('button', { name: 'Tải lại chương trình đã lưu' }));
     expect(await screen.findByRole('heading', { name: 'Saved server program' })).toBeInTheDocument();
+    await actor.click(screen.getByRole('link', { name: 'Mở chi tiết chương trình' }));
+    expect(await screen.findByRole('heading', { name: 'Thunder Bolt · TB-001' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/training/programs/1001');
     expect(posts()).toHaveLength(1);
   });
 

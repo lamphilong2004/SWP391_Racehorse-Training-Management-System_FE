@@ -1,7 +1,8 @@
 import {
-  AlertBanner, Button, CandidateCard, Card, Checkbox, EmptyState, HorseCard, KeyValue, NextStep, OptionalFields,
+  ActionBar, AlertBanner, Button, ButtonLink, CandidateCard, Card, Checkbox, EmptyState, HorseCard, KeyValue, OptionalFields,
   SelectField, StatusBadge, TextAreaField, TextField,
 } from '../../design-system';
+import { ROUTES } from '../../app/routePaths';
 import type { ProgramCreationFlow } from './useProgramCreation';
 import type { CreateProgramRequest, Intensity, ProgramPhaseInput } from './programTypes';
 import type { ProgramValidationIssue } from './programDraft';
@@ -157,17 +158,16 @@ export function ProgramResult({ flow, reload, reloading, readError }: { flow: Pr
   const program = flow.created!;
   return <div className={styles.stack}>
     <AlertBanner feedback type="success" title="Đã tạo chương trình">Mã chương trình: {program.id}</AlertBanner>
-    <NextStep title="Lên lịch buổi tập đầu tiên" owner={program.currentTrainer ? `Trainer · ${program.currentTrainer.fullName}` : 'Trainer được phân công'}
-      action={{ label: 'Mở chi tiết chương trình', to: `/training/programs/${program.id}` }} secondary={{ label: 'Tạo chương trình khác', to: '/training/programs/new' }}>
-      <p>Trainer đã nhận thông báo và tạo buổi tập trong giai đoạn {program.phases[0]?.name ?? 'đầu tiên'}. Groom kiểm tra trước mỗi buổi, Work Rider thực hiện.</p>
-    </NextStep>
     <Card title={program.name}><div className={styles.stack}>
       <StatusBadge family="program" status={program.status} /><KeyValue label="Ngựa" value={`${program.horse.name} · ${program.horse.horseCode}`} />
       <KeyValue label="Thời gian" value={`${formatDate(program.periodStart)} — ${formatDate(program.periodEnd)}`} /><KeyValue label="Phiên bản mẫu" value={`v${program.sourceTemplateVersion}`} />
       <KeyValue label="Trainer" value={program.currentTrainer?.fullName ?? 'Không có trong dữ liệu trả về'} />
       <KeyValue label="Kích hoạt lúc" value={<time dateTime={program.activatedAt} title={program.activatedAt}>{dateTime(program.activatedAt)}</time>} />
       {program.phases.map((phase) => <p key={phase.id}>{phase.phaseOrder}. {phase.name} · {formatDate(phase.startDate)} — {formatDate(phase.endDate)}</p>)}
-      <Button type="button" variant="secondary" disabled={reloading} onClick={reload}>{reloading ? 'Đang tải lại…' : 'Tải lại chương trình đã lưu'}</Button>
+      <ActionBar>
+        <Button type="button" variant="secondary" disabled={reloading} onClick={reload}>{reloading ? 'Đang tải lại…' : 'Tải lại chương trình đã lưu'}</Button>
+        <ButtonLink variant="primary" to={`${ROUTES.trainingPrograms}/${program.id}`}>Mở chi tiết chương trình</ButtonLink>
+      </ActionBar>
       {readError && <AlertBanner feedback type="danger" title="Không đọc lại được">{readError}</AlertBanner>}
     </div></Card>
   </div>;
