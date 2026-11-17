@@ -556,3 +556,46 @@ it('clears registry filters via the API adapter and keeps DRAFT distinct from av
   });
   expect(screen.getByRole('searchbox', { name: 'Tìm ngựa' })).toHaveValue('');
 });
+
+it('filters horses by training availability and lifecycle and resets server pagination', async () => {
+  const { requests } = mount('/horses', { list: (url) => {
+    const page = Number(url.searchParams.get('page') ?? '0');
+    const lifecycle = url.searchParams.get('lifecycle');
+    const availability = url.searchParams.get('availability');
+    const count = page === 0 ? 20 : 1;
+    const items = Array.from({ length: count }, (_, index) => ({
+      ...horse(801 + page * 20 + index),
+      lifecycle: lifecycle === 'ACTIVE' ? 'ACTIVE' as const : 'DRAFT' as const,
+      trainingAvailability: availability === 'LIMITED' ? 'LIMITED' as const : 'AVAILABLE' as const,
+    }));
+    return { items, page, size: 20, totalItems: 21, totalPages: 2 };
+  } });
+  const latestListQuery = () => {
+    const paths = requests.filter((request) => request.path.startsWith('/api/horses?'));
+    const latest = paths.filter((request) => new URL(request.path, 'http://fixture.test').searchParams.get('size') !== '1').at(-1);
+    return latest ? new URL(latest.path, 'http://fixture.test').searchParams : undefined;
+  };
+  await screen.findByText('20 ngựa trên trang này');
+  const pagination = screen.getByRole('navigation', { name: 'Phân trang danh sách ngựa' });
+  await userEvent.click(within(pagination).getByRole('button', { name: 'Sau' }));
+  await screen.findByText('1 ngựa trên trang này');
+  expect(latestListQuery()?.get('page')).toBe('1');
+
+  await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Khả năng tập luyện' }), 'LIMITED');
+  await waitFor(() => {
+    const query = latestListQuery();
+    expect(query?.get('availability')).toBe('LIMITED');
+    expect(query?.get('lifecycle') ?? '').toBe('');
+    expect(query?.get('page')).toBe('0');
+  });
+  expect(within(pagination).getByRole('status')).toHaveTextContent('Trang 1 / 2');
+
+  await userEvent.click(within(screen.getByRole('group', { name: 'Lọc theo vòng đời' })).getByRole('button', { name: /^Hoạt động/ }));
+  await waitFor(() => {
+    const query = latestListQuery();
+    expect(query?.get('availability')).toBe('LIMITED');
+    expect(query?.get('lifecycle')).toBe('ACTIVE');
+    expect(query?.get('page')).toBe('0');
+  });
+  expect(within(pagination).getByRole('status')).toHaveTextContent('Trang 1 / 2');
+});
