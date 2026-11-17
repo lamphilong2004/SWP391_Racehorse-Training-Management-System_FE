@@ -45,7 +45,16 @@ Before a screen adoption PR, verify its v1 neighbors are unchanged, authorized A
 
 ## Review and verification
 
-`npm run dev` exposes `/dev/foundation-v2` and the existing `/dev/components` only in development. The review page has component examples, no business sample store or save operation. Normal Production and staging bundles reject these review chunks.
+`npm run dev` exposes `/dev/foundation-v2` and `/dev/components` only in development. Normal production and staging bundles reject these review chunks.
+
+### Mẫu Tailwind chung
+
+Mở `/dev/foundation-v2#mau-tailwind` để thử một màn hình dùng `Card`, `Button`, `TextField`, `SelectField`, `TableToolbar`, `DataTable` và `Modal`. Nút **Thêm chương trình mẫu** mở form. Thử lưu khi thiếu tên, đóng bằng Escape, rồi thêm một dòng và tìm theo tên. Ví dụ thao tác trên state của trang, dữ liệu được đặt lại khi tải lại.
+
+- Dùng utility Tailwind v4 cho bố cục. Lấy màu, bán kính và bóng đổ từ token `rh-*` trong `src/design-system/styles/tailwind.css`. CSS Module dùng `@reference` tới file này khi cần `@apply`.
+- Dùng `Button` hoặc `ButtonLink` theo hành vi. Đặt nút phụ trước nút chính. Dùng `TextField` và `SelectField` để hiển thị nhãn, hướng dẫn và lỗi ngay tại trường nhập.
+- Dùng `TableToolbar` với phạm vi lọc đúng theo dữ liệu, `DataTable` có caption và `EmptyState`. Khi bảng rộng hơn màn hình, vùng cuộn có sẵn của `DataTable` nhận focus bàn phím.
+- Dùng `Modal` có tiêu đề rõ nghĩa. Khi footer ở ngoài form, liên kết nút submit bằng thuộc tính `form`. Giữ form mở khi dữ liệu chưa hợp lệ để người dùng sửa tại chỗ.
 
 - `node --test scripts/design-system-policy.check.mjs`: token scope, contrast pairs, reduced motion and responsive bounds.
 - `src/design-system/components/Foundation/foundation.test.tsx`: controls, overlays, skeleton and controlled feedback.
