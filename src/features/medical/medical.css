@@ -1,5 +1,21 @@
 ﻿.medical-stack { display: flex; flex-direction: column; gap: var(--space-xl); min-width: 0; }
 .medical-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-xl); align-items: start; }
+.medical-next-step {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md) var(--space-lg);
+  padding: var(--space-lg);
+  border: 1px solid var(--color-border-default);
+  border-inline-start: 3px solid var(--color-primary-600);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface);
+}
+.medical-next-step > div { flex: 1 1 18rem; min-width: 0; }
+.medical-next-step p { margin-block-start: var(--space-xs); color: var(--color-text-secondary); }
+.medical-next-step button { min-height: 44px; }
+@media (max-width: 600px) { .medical-next-step button { width: 100%; } }
 .medical-form { display: flex; flex-direction: column; gap: var(--space-lg); }
 .medical-form-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg); align-items: start; }
 .medical-form-fields > * { min-width: 0; }
