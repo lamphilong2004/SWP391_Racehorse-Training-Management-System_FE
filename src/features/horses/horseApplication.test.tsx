@@ -18,6 +18,11 @@ const checklist = (): ActivationStatus => ({ horseId: 81, horseCode: 'FIX-81', n
 const ok = (data: unknown, status = 200) => new Response(JSON.stringify({ success: true, data }), { status });
 const weightPage = <T,>(items: T[]) => ({ items, page: 0, size: 20, totalElements: items.length });
 const failure = (status: number, message = 'Fixture request failed') => new Response(JSON.stringify({ success: false, error: { code: status === 401 ? 'UNAUTHORIZED' : status === 403 ? 'FORBIDDEN' : status === 409 ? 'CONFLICT' : 'NOT_FOUND', message, details: [] } }), { status });
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((done) => { resolve = done; });
+  return { promise, resolve };
+}
 function SessionProbe() {
   const auth = useAuth();
   return <><button onClick={() => void auth.logout()}>Fixture logout</button><button onClick={() => void auth.login('second@fixture.test', 'fixture-only', false)}>Fixture switch</button></>;
@@ -249,6 +254,99 @@ it('keeps total results separate from page size and preserves server pagination 
   await userEvent.click(within(pagination).getByRole('button', { name: 'Trước' }));
   await screen.findByText('20 ngựa trên trang này');
   expect(state.requests.filter(request => request.method !== 'GET')).toHaveLength(0);
+});
+
+it('returns to a valid page when the result set shrinks during pagination', async () => {
+  const initialRecords = Array.from({ length: 20 }, (_, i) => ({ ...horse(81 + i), name: i === 0 ? 'Initial page horse' : `Initial fixture ${i + 1}` }));
+  const correctedRecords = Array.from({ length: 20 }, (_, i) => ({ ...horse(181 + i), name: i === 0 ? 'Final valid page horse' : `Final fixture ${i + 1}` }));
+  const requestedPages: number[] = [];
+  mount('/horses', { list: (url) => {
+    const page = Number(url.searchParams.get('page') ?? '0');
+    if (url.searchParams.get('size') === '1') return { items: [], page, size: 1, totalItems: 0, totalPages: 0 };
+    requestedPages.push(page);
+    if (page === 1) return { items: [], page, size: 20, totalItems: 20, totalPages: 1 };
+    return requestedPages.length === 1
+      ? { items: initialRecords, page, size: 20, totalItems: 21, totalPages: 2 }
+      : { items: correctedRecords, page, size: 20, totalItems: 20, totalPages: 1 };
+  } });
+  await screen.findByText('Initial page horse');
+  await userEvent.click(within(screen.getByRole('navigation', { name: 'Phân trang danh sách ngựa' })).getByRole('button', { name: 'Sau' }));
+  await screen.findByText('Final valid page horse');
+  expect(screen.queryByText('Initial page horse')).not.toBeInTheDocument();
+  expect(requestedPages).toEqual([0, 1, 0]);
+  const pagination = screen.getByRole('navigation', { name: 'Phân trang danh sách ngựa' });
+  expect(within(pagination).getByRole('status')).toHaveTextContent('Trang 1 / 1');
+  expect(within(pagination).getByRole('button', { name: 'Trước' })).toBeDisabled();
+  expect(within(pagination).getByRole('button', { name: 'Sau' })).toBeDisabled();
+});
+
+it('ignores a stale page response after a newer query and page load', async () => {
+  const olderRequest = deferred<unknown>();
+  const requests: { q: string; page: number }[] = [];
+  const response = (name: string, page: number, totalPages = 2) => ({
+    items: [{ ...horse(page + 101), name }], page, size: 20, totalItems: totalPages * 20, totalPages,
+  });
+  mount('/horses', { list: (url) => {
+    const q = url.searchParams.get('q') ?? '';
+    const page = Number(url.searchParams.get('page') ?? '0');
+    if (url.searchParams.get('size') === '1') return { items: [], page, size: 1, totalItems: 0, totalPages: 0 };
+    requests.push({ q, page });
+    if (!q && page === 1) return olderRequest.promise;
+    if (q === 'new' && page === 1) return response('New query page two', page);
+    if (q === 'new') return response('New query page one', page);
+    return response('Original query page one', page);
+  } });
+  await screen.findByText('Original query page one');
+  await userEvent.click(within(screen.getByRole('navigation', { name: 'Phân trang danh sách ngựa' })).getByRole('button', { name: 'Sau' }));
+  await waitFor(() => expect(requests).toContainEqual({ q: '', page: 1 }));
+
+  await userEvent.type(screen.getByRole('searchbox', { name: 'Tìm ngựa' }), 'new{enter}');
+  await screen.findByText('New query page one');
+  await userEvent.click(within(screen.getByRole('navigation', { name: 'Phân trang danh sách ngựa' })).getByRole('button', { name: 'Sau' }));
+  await screen.findByText('New query page two');
+
+  await act(async () => { olderRequest.resolve(response('Stale old page', 1, 1)); });
+  expect(screen.getByText('New query page two')).toBeInTheDocument();
+  expect(screen.queryByText('Stale old page')).not.toBeInTheDocument();
+  expect(within(screen.getByRole('navigation', { name: 'Phân trang danh sách ngựa' })).getByRole('status')).toHaveTextContent('Trang 2 / 2');
+  expect(requests).toEqual([{ q: '', page: 0 }, { q: '', page: 1 }, { q: 'new', page: 0 }, { q: 'new', page: 1 }]);
+});
+
+it('ignores an older response when the same query values become current again', async () => {
+  const olderRequest = deferred<unknown>();
+  const requests: { q: string; page: number }[] = [];
+  let originalPageOneRequests = 0;
+  const response = (name: string, page: number, totalPages = 2) => ({
+    items: [{ ...horse(page + 201), name }], page, size: 20, totalItems: totalPages * 20, totalPages,
+  });
+  mount('/horses', { list: (url) => {
+    const q = url.searchParams.get('q') ?? '';
+    const page = Number(url.searchParams.get('page') ?? '0');
+    if (url.searchParams.get('size') === '1') return { items: [], page, size: 1, totalItems: 0, totalPages: 0 };
+    requests.push({ q, page });
+    if (!q && page === 1 && ++originalPageOneRequests === 1) return olderRequest.promise;
+    if (!q && page === 1) return response('Current original page two', page);
+    if (q === 'away') return response('Away query page', page, 1);
+    return response('Original query page one', page);
+  } });
+  await screen.findByText('Original query page one');
+  await userEvent.click(within(screen.getByRole('navigation', { name: 'Phân trang danh sách ngựa' })).getByRole('button', { name: 'Sau' }));
+  await waitFor(() => expect(originalPageOneRequests).toBe(1));
+
+  await userEvent.type(screen.getByRole('searchbox', { name: 'Tìm ngựa' }), 'away{enter}');
+  await screen.findByText('Away query page');
+  await userEvent.clear(screen.getByRole('searchbox', { name: 'Tìm ngựa' }));
+  await screen.findByText('Original query page one');
+  await userEvent.click(within(screen.getByRole('navigation', { name: 'Phân trang danh sách ngựa' })).getByRole('button', { name: 'Sau' }));
+  await screen.findByText('Current original page two');
+
+  await act(async () => { olderRequest.resolve(response('Stale original page', 1, 1)); });
+  expect(screen.getByText('Current original page two')).toBeInTheDocument();
+  expect(screen.queryByText('Stale original page')).not.toBeInTheDocument();
+  expect(within(screen.getByRole('navigation', { name: 'Phân trang danh sách ngựa' })).getByRole('status')).toHaveTextContent('Trang 2 / 2');
+  expect(requests).toEqual([
+    { q: '', page: 0 }, { q: '', page: 1 }, { q: 'away', page: 0 }, { q: '', page: 0 }, { q: '', page: 1 },
+  ]);
 });
 
 it('uses a country dropdown while preserving custom origin text through failed saves', async () => {
