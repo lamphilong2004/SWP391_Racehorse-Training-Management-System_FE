@@ -216,6 +216,10 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
   const needsExamination = !item.examinations.length && !item.reexaminations.length;
   const needsRecovery = (item.injuries.length > 0 || !!item.treatmentPlan) && latest(item.reexaminations)?.recoveryStatus !== 'RECOVERED';
   const nextClinicalTab = needsExamination ? 'examination' : needsRecovery ? 'recovery' : null;
+  const openTab = (tab: string) => {
+    setPanel(tab);
+    document.getElementById(`case-tab-${tab}`)?.focus();
+  };
   return <><ButtonLink variant="tertiary" to={ROUTES.medical}>← Quay lại danh sách ca</ButtonLink>
     <HorseHeading title={'Ca y tế ' + item.id} horseId={item.horseId} description={'Mở lúc ' + dateTime(item.openedAt)} />
     <div className="medical-grid"><Card title="Tổng quan ca"><div className="medical-case-facts">
@@ -227,17 +231,16 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
       { value: 'injury', label: 'Chấn thương' }, { value: 'treatment', label: 'Điều trị' },
       { value: 'recovery', label: 'Tái khám' },
     ]} />
+    {!closed && nextClinicalTab && panel !== nextClinicalTab && <div className="medical-next-step">
+      <div><strong>{needsExamination ? 'Bước tiếp theo · Ghi lần khám' : 'Bước tiếp theo · Ghi nhận tái khám'}</strong>
+        <p>{needsExamination ? 'Ghi triệu chứng và kết quả khám trước khi quyết định điều trị.' : 'Ghi nhận kết quả hồi phục thực tế trước khi đóng ca.'}</p></div>
+      <Button onClick={() => openTab(nextClinicalTab)}>{needsExamination ? 'Mở mục Khám' : 'Mở mục Tái khám'}</Button>
+    </div>}
     <div role="tabpanel" id="case-panel-record" aria-labelledby="case-tab-record" hidden={panel !== 'record'} className="medical-stack">
-      {!closed && nextClinicalTab && <AlertBanner type="info" title={needsExamination ? 'Bước tiếp theo · Ghi lần khám' : 'Bước tiếp theo · Ghi nhận tái khám'}>
-        <p>{needsExamination ? 'Ghi triệu chứng và kết quả khám trước khi quyết định điều trị.' : 'Khi đã khám lại, ghi kết quả hồi phục thực tế trước khi đóng ca.'}</p>
-        <Button onClick={() => { setPanel(nextClinicalTab); document.getElementById(`case-tab-${nextClinicalTab}`)?.focus(); }}>
-          {needsExamination ? 'Mở mục Khám' : 'Mở mục Tái khám'}
-        </Button>
-      </AlertBanner>}
       <Card title="Thể trạng hiện tại"><KeyValue label="Chẩn đoán gần nhất" value={latest(item.examinations)?.diagnosis ?? (item.examinations.length ? 'Chưa có chẩn đoán' : 'Đang chờ khám')} />
         <KeyValue label="Hồi phục" value={viLabel(latest(item.reexaminations)?.recoveryStatus, 'Chưa ghi nhận tái khám')} />
         <KeyValue label="Lần khám tiếp theo" value={item.treatmentPlan?.reexaminationDate ? formatDate(item.treatmentPlan?.reexaminationDate) : 'Chưa lên lịch'} /></Card>
-      {!closed && <CaseClosure item={item} needsExamination={needsExamination} needsRecovery={needsRecovery} reload={reload} openTab={(tab) => { setPanel(tab); document.getElementById(`case-tab-${tab}`)?.focus(); }} />}
+      {!closed && <CaseClosure item={item} needsExamination={needsExamination} needsRecovery={needsRecovery} reload={reload} openTab={openTab} />}
     </div>
     <div role="tabpanel" id="case-panel-examination" aria-labelledby="case-tab-examination" hidden={panel !== 'examination'} className="medical-stack">
       <Card title="Các lần khám"><History count={item.examinations.length} empty="Chưa có lần khám nào">{item.examinations.map((exam) =>

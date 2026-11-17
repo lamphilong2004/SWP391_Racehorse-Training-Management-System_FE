@@ -49,6 +49,11 @@ it('denies other roles before any feature request', async () => {
 });
 it('requires all five results before submitting', async () => {
   const client = api(); mount(client); await screen.findByRole('heading', { name: 'Danh mục quan sát' });
+  const progress = screen.getByRole('progressbar', { name: 'Tiến độ danh mục quan sát' });
+  expect(progress).toHaveAttribute('value', '0');
+  const first = screen.getByRole('radiogroup', { name: CHECK_ITEMS[0].label });
+  fireEvent.click(within(first).getByRole('radio', { name: 'Bình thường' }));
+  expect(progress).toHaveAttribute('value', '1');
   fireEvent.click(screen.getByRole('button', { name: 'Hoàn tất kiểm tra trước buổi tập' }));
   const feedback = within(screen.getByLabelText('Thông báo thao tác'));
   expect(feedback.getByRole('alert')).toHaveTextContent('Chọn Bình thường hoặc Bất thường cho cả năm mục kiểm tra.');

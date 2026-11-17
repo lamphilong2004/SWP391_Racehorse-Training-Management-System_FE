@@ -111,12 +111,13 @@ function PrecheckContent({ id, api, showPhoto }: { id: number; api: PrecheckApi;
     return () => { active = false; };
   }, [id, api, attempt, handleApiError]);
   const reload = () => { setSession(undefined); setError(undefined); setAttempt((value) => value + 1); };
+  const answered = CHECK_ITEMS.filter(({ key }) => draft[key]?.result).length;
   const abnormal = CHECK_ITEMS.some(({ key }) => draft[key]?.result === 'ABNORMAL');
   const locked = busy || Boolean(check) || conflict || session?.status !== 'SCHEDULED';
   const startGate = check?.overallResult === 'ABNORMAL' ? 'Buổi tập bị chặn do kiểm tra trước buổi tập bất thường.' : check ? 'Tải lại buổi tập để xác nhận các điều kiện bắt đầu còn lại.' : session?.blocked ? viLabel(session.blockedMessage) || session.blockedReasons.map((reason) => viLabel(reason)).join(', ') || 'Bị chặn' : 'Không có điểm chặn';
   async function save() {
     if (pending.current || check || conflict) return;
-    if (CHECK_ITEMS.some(({ key }) => !draft[key]?.result)) {
+    if (answered < CHECK_ITEMS.length) {
       setActionError('Chọn Bình thường hoặc Bất thường cho cả năm mục kiểm tra.');
       // Focus the first unanswered check (UX Playbook v2.1 §2).
       const unanswered = [...(checklist.current?.querySelectorAll<HTMLElement>('[role="radiogroup"]') ?? [])].find((group) => !group.querySelector('input:checked'));
@@ -161,6 +162,10 @@ function PrecheckContent({ id, api, showPhoto }: { id: number; api: PrecheckApi;
     </AlertBanner>}
     <div className={styles.columns}><Card title="Danh mục quan sát"><p className={styles.muted}>Ghi lại những gì bạn quan sát. Chọn Bất thường cho mọi dấu hiệu lạ — bạn không cần xác định nguyên nhân.</p>
       {!check && session.status === 'SCHEDULED' && <p className={styles.muted}>Có thể gửi kiểm tra từ 12 giờ trước giờ bắt đầu đến khi hết khung giờ của buổi tập.</p>}
+      <div className={styles.progress}>
+        <p role="status">Đã trả lời <strong>{answered}/{CHECK_ITEMS.length}</strong> mục</p>
+        <progress aria-label="Tiến độ danh mục quan sát" value={answered} max={CHECK_ITEMS.length} />
+      </div>
       <div ref={checklist}>{CHECK_ITEMS.map(({ key, label, hint }) => <div key={key} className={`${styles.item} ${draft[key]?.result === 'ABNORMAL' ? styles.abnormal : ''}`}><RadioGroup label={label} helperText={hint} value={draft[key]?.result ?? ''} onChange={(result) => update(key, { result: result as 'NORMAL' | 'ABNORMAL' })} options={[{ value: 'NORMAL', label: 'Bình thường' }, { value: 'ABNORMAL', label: 'Bất thường' }]} disabled={locked} className={styles.checkRow} /><TextField label={`Quan sát ${label} (không bắt buộc)`} placeholder="Quan sát" value={draft[key]?.observation ?? ''} maxLength={1000} disabled={locked} onChange={(event) => update(key, { observation: event.target.value })} className={styles.observation} /></div>)}</div>
     </Card><aside className={styles.stack}><Card title="Tình trạng ngựa và điều kiện buổi tập">{showPhoto && <HorsePhotoImage path={`/api/training-sessions/${id}/horse-photo`} name={session.horse.name} />}<div className={styles.summary}><KeyValue label="Khả năng tập luyện" value={viLabel(session.trainingAvailability, 'Chưa cung cấp')} /><KeyValue label="Điều kiện bắt đầu" value={startGate} /><KeyValue label="Trainer" value={session.trainer?.fullName ?? 'Chưa cung cấp'} /></div></Card><AlertBanner type="info" title="Chỉ quan sát">Chẩn đoán, tình trạng sức khỏe, khả năng tập luyện và hạn chế do Veterinarian quyết định.</AlertBanner></aside></div>
     {check ? <AlertBanner type={check.overallResult === 'ABNORMAL' ? 'danger' : 'success'} title={check.overallResult === 'ABNORMAL' ? 'BẤT THƯỜNG — không được bắt đầu buổi tập này' : 'TẤT CẢ BÌNH THƯỜNG — đã ghi kiểm tra trước buổi tập'}>Đã kiểm tra {when(check.performedAt)} bởi {check.performedBy.fullName}. {check.overallResult === 'ABNORMAL' ? 'Kết quả bất thường của lần kiểm tra này vẫn được giữ. Theo dõi báo cáo để xem tiến trình xử lý của Veterinarian.' : 'Work Rider có thể bắt đầu từ lịch phân công khi các điều kiện còn lại đều đạt.'} Buổi tập vẫn ở trạng thái {viLabel(session.status)}.</AlertBanner> : abnormal ? <AlertBanner type="danger" title="Ngựa này hiện chưa đủ điều kiện tập. Hãy báo cáo sự cố để bác sĩ thú y xem xét.">Ghi kết quả bất thường trước khi báo cáo. Buổi tập vẫn giữ lịch và bị chặn; hệ thống không tự tạo sự cố.</AlertBanner> : <AlertBanner type="info" title="Hoàn tất cả năm mục quan sát">Kiểm tra bình thường sẽ mở điều kiện này; việc này không tự bắt đầu buổi tập.</AlertBanner>}
