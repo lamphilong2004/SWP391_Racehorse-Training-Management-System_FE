@@ -1,5 +1,5 @@
 import { beforeEach, afterEach, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { buildRoutes } from '../../app/router';
@@ -18,6 +18,16 @@ function open(path: string, user = manager) {
   const router = createMemoryRouter(buildRoutes(false), { initialEntries: [path] });
   render(<AuthProvider api={{ login: vi.fn(), currentUser: async () => user, logout: async () => undefined }}><RouterProvider router={router} /></AuthProvider>);
   return router;
+}
+function stubPhotoUrls() {
+  const NativeURL = globalThis.URL;
+  const createObjectURL = vi.fn<typeof URL.createObjectURL>((file) => `blob:${file instanceof File ? file.name : 'fixture'}`);
+  const revokeObjectURL = vi.fn<typeof URL.revokeObjectURL>();
+  vi.stubGlobal('URL', class extends NativeURL {
+    static createObjectURL = createObjectURL;
+    static revokeObjectURL = revokeObjectURL;
+  });
+  return { createObjectURL, revokeObjectURL };
 }
 it('registers, declares ownership, assigns a FREE box and shows pending baseline without manual activation', async () => {
   const router = open('/horses/new'), user = userEvent.setup();
@@ -164,6 +174,117 @@ it('uploads the selected photo with the identifier returned by horse creation', 
   const sent = form.get('file') as File;
   expect(sent).toMatchObject({ name: image.name, type: image.type, size: image.size });
   expect(new Headers(writes[1][1]?.headers).has('Content-Type')).toBe(false);
+});
+
+it.each([
+  { format: 'JPEG', name: 'portrait.jpg', type: 'image/jpeg' },
+  { format: 'PNG', name: 'portrait.png', type: 'image/png' },
+  { format: 'WebP', name: 'portrait.webp', type: 'image/webp' },
+])('accepts a valid $format photo', async ({ name, type }) => {
+  const urls = stubPhotoUrls();
+  open('/horses/new');
+  await screen.findByRole('heading', { name: 'Thêm ngựa' });
+  const file = new File(['x'], name, { type });
+
+  fireEvent.change(screen.getByLabelText('Thêm ảnh'), { target: { files: [file] } });
+
+  expect(await screen.findByText(name)).toBeInTheDocument();
+  expect(urls.createObjectURL).toHaveBeenCalledExactlyOnceWith(file);
+});
+
+it('accepts a photo at the 5 MB limit', async () => {
+  const urls = stubPhotoUrls();
+  open('/horses/new');
+  await screen.findByRole('heading', { name: 'Thêm ngựa' });
+  const file = new File([new Uint8Array(5 * 1024 * 1024)], 'limit.png', { type: 'image/png' });
+
+  fireEvent.change(screen.getByLabelText('Thêm ảnh'), { target: { files: [file] } });
+
+  expect(await screen.findByText('limit.png')).toBeInTheDocument();
+  expect(urls.createObjectURL).toHaveBeenCalledExactlyOnceWith(file);
+});
+
+it.each([
+  {
+    scenario: 'unsupported MIME type',
+    file: new File(['x'], 'portrait.gif', { type: 'image/gif' }),
+    message: 'portrait.gif: Chỉ chấp nhận ảnh JPEG, PNG hoặc WebP.',
+  },
+  {
+    scenario: 'empty file',
+    file: new File([], 'empty.png', { type: 'image/png' }),
+    message: 'empty.png: Ảnh phải có dung lượng tối thiểu 1 byte.',
+  },
+  {
+    scenario: 'file larger than 5 MB',
+    file: new File([new Uint8Array(5 * 1024 * 1024 + 1)], 'large.png', { type: 'image/png' }),
+    message: 'large.png: Ảnh không được vượt quá 5 MB.',
+  },
+])('rejects a photo with $scenario before creating a preview', async ({ file, message }) => {
+  const urls = stubPhotoUrls();
+  open('/horses/new');
+  await screen.findByRole('heading', { name: 'Thêm ngựa' });
+
+  fireEvent.change(screen.getByLabelText('Thêm ảnh'), { target: { files: [file] } });
+
+  expect(await screen.findByText(message)).toBeInTheDocument();
+  expect(screen.queryByText(file.name)).not.toBeInTheDocument();
+  expect(urls.createObjectURL).not.toHaveBeenCalled();
+});
+
+it('keeps valid files and reports invalid files from a mixed selection', async () => {
+  const urls = stubPhotoUrls();
+  open('/horses/new');
+  await screen.findByRole('heading', { name: 'Thêm ngựa' });
+  const jpeg = new File(['x'], 'valid.jpg', { type: 'image/jpeg' });
+  const invalid = new File(['x'], 'invalid.gif', { type: 'image/gif' });
+  const webp = new File(['x'], 'valid.webp', { type: 'image/webp' });
+
+  fireEvent.change(screen.getByLabelText('Thêm ảnh'), { target: { files: [jpeg, invalid, webp] } });
+
+  expect(await screen.findByText('valid.jpg')).toBeInTheDocument();
+  expect(screen.getByText('valid.webp')).toBeInTheDocument();
+  expect(screen.queryByText('invalid.gif')).not.toBeInTheDocument();
+  expect(screen.getByText('invalid.gif: Chỉ chấp nhận ảnh JPEG, PNG hoặc WebP.')).toBeInTheDocument();
+  expect(urls.createObjectURL).toHaveBeenCalledTimes(2);
+  expect(urls.createObjectURL).toHaveBeenNthCalledWith(1, jpeg);
+  expect(urls.createObjectURL).toHaveBeenNthCalledWith(2, webp);
+});
+
+it('revokes a photo preview when that photo is removed', async () => {
+  const urls = stubPhotoUrls();
+  open('/horses/new');
+  await screen.findByRole('heading', { name: 'Thêm ngựa' });
+  const file = new File(['x'], 'remove.png', { type: 'image/png' });
+  fireEvent.change(screen.getByLabelText('Thêm ảnh'), { target: { files: [file] } });
+  await screen.findByText(file.name);
+  urls.revokeObjectURL.mockImplementation(() => {
+    expect(screen.queryByText(file.name)).not.toBeInTheDocument();
+  });
+
+  await userEvent.click(screen.getByRole('button', { name: `Xóa ${file.name}` }));
+
+  expect(screen.queryByText(file.name)).not.toBeInTheDocument();
+  expect(urls.revokeObjectURL).toHaveBeenCalledExactlyOnceWith(`blob:${file.name}`);
+  cleanup();
+  expect(urls.revokeObjectURL).toHaveBeenCalledTimes(1);
+});
+
+it('revokes each remaining photo preview when the form unmounts', async () => {
+  const urls = stubPhotoUrls();
+  open('/horses/new');
+  await screen.findByRole('heading', { name: 'Thêm ngựa' });
+  const first = new File(['x'], 'first.png', { type: 'image/png' });
+  const second = new File(['x'], 'second.webp', { type: 'image/webp' });
+  fireEvent.change(screen.getByLabelText('Thêm ảnh'), { target: { files: [first, second] } });
+  await screen.findByText(first.name);
+  await screen.findByText(second.name);
+
+  cleanup();
+
+  expect(urls.revokeObjectURL).toHaveBeenCalledTimes(2);
+  expect(urls.revokeObjectURL).toHaveBeenNthCalledWith(1, `blob:${first.name}`);
+  expect(urls.revokeObjectURL).toHaveBeenNthCalledWith(2, `blob:${second.name}`);
 });
 
 it('retains the identity 404 error without offering an unverified saved profile', async () => {
