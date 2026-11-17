@@ -1,3 +1,5 @@
+@reference '../../design-system/styles/tailwind.css';
+
 .stack { display: grid; gap: var(--space-xl); }
 .smallStack { display: grid; gap: var(--space-md); }
 .header, .actions { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-lg); }
@@ -113,3 +115,13 @@
 }
 /* Inside table cells, stacked text keeps its natural minimum width (no overlap with the next column). */
 td .smallStack > * { min-width: auto; }
+
+/* Keep long rider-facing values readable without changing table actions or row navigation. */
+.personName, .sessionCell { @apply break-words; }
+.sessionCell { @apply block max-w-80 leading-6; }
+.dateCell { @apply inline-block min-w-24 font-semibold text-rh-text tabular-nums; }
+.tableCard :global(.table-scroll) { @apply max-w-full overflow-x-auto; }
+.assignmentTable { @apply min-w-[1280px]; }
+.historyTable { @apply min-w-[1420px]; }
+.tableCard :global(th:last-child), .tableCard :global(td:last-child) { min-width: 168px; }
+.tableCard :global(td:last-child a.button) { @apply min-h-11 whitespace-nowrap; }
