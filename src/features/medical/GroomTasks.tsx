@@ -2,7 +2,7 @@ import { boxLabel } from '../../shared/stableBox';
 import { ROUTES } from '../../app/routePaths';
 import { UiPreviewNotice } from './UiPreviewNotice';
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
-import { AlertBanner, Button, Card, Checkbox, EmptyState, Icon, SelectField, StatusBadge } from '../../design-system';
+import { AlertBanner, Button, Card, Checkbox, EmptyState, Icon, SelectField, StatusBadge, TableToolbar, TextField } from '../../design-system';
 import { AppShell } from '../../layout/AppShell';
 import { PageHeader } from '../../layout/PageHeader';
 import { useAuth } from '../../shared/auth/AuthProvider';
@@ -11,6 +11,7 @@ import { ApiError } from '../../shared/auth/authApi';
 import { collectAssignedTasks, createGroomService, type GroomService, type GroomTreatmentTask } from './groomService';
 import type { HorseIdentity } from './horseRead';
 import './medical.css';
+import styles from './GroomTasks.module.css';
 import { useClubToday } from '../../shared/useClubToday';
 import { formatDate } from '../horses/shared/format';
 import { dateTime } from '../evaluation/models';
@@ -42,6 +43,7 @@ export function GroomTasks({ service }: { service: GroomService }) {
   const [state, setState] = useState<{ tasks?: GroomTreatmentTask[]; error?: string }>({});
   const [identities, setIdentities] = useState<{ source?: GroomTreatmentTask[]; rows: Record<number, HorseIdentity>; error?: string }>({ rows: {} });
   const [revision, setRevision] = useState(0), [filter, setFilter] = useState('today'), [horse, setHorse] = useState('');
+  const [query, setQuery] = useState('');
   const [busy, setBusy] = useState<number | null>(null), [action, setAction] = useState<{ success?: string; error?: string }>({});
   const pending = useRef(false), mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
@@ -70,10 +72,11 @@ export function GroomTasks({ service }: { service: GroomService }) {
   const today = useClubToday();
   const tasks = useMemo(() => state.tasks ?? [], [state.tasks]);
   const isOverdue = (task: GroomTreatmentTask) => task.status === 'PENDING' && task.taskDate < today;
-  const filtered = tasks.filter((t) => (!horse || t.horseId === Number(horse)) &&
+  const names = identities.source === state.tasks ? identities.rows : {};
+  const search = query.trim().toLocaleLowerCase('vi');
+  const filtered = tasks.filter((t) => (!search || `${t.instruction} ${names[t.horseId]?.name ?? ''} ${names[t.horseId]?.horseCode ?? ''}`.toLocaleLowerCase('vi').includes(search)) && (!horse || t.horseId === Number(horse)) &&
     (filter === 'completed' ? t.status === 'COMPLETED' : filter === 'upcoming' ? t.status === 'PENDING' && t.taskDate > today : filter === 'all' ? true : t.taskDate === today || isOverdue(t)));
   const horseIds = [...new Set(tasks.map((t) => t.horseId))];
-  const names = identities.source === state.tasks ? identities.rows : {};
   const handleComplete = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
     const taskId = Number(event.currentTarget.value);
     const task = tasks.find((item) => item.id === taskId);
@@ -93,11 +96,12 @@ export function GroomTasks({ service }: { service: GroomService }) {
     {action.success && <AlertBanner feedback type="success" title={action.success} />}
     {action.error && <AlertBanner feedback type="danger" title={action.error} />}
     {identities.source === state.tasks && identities.error && <AlertBanner type="warning" title={identities.error} />}
-    <div className="medical-groom-filters">
-      <div className="medical-actions" role="group" aria-label="Bộ lọc công việc">{[['today', 'Hôm nay'], ['upcoming', 'Sắp tới'], ['completed', 'Đã hoàn thành'], ['all', 'Tất cả được giao']].map(([value, label]) =>
-        <button key={value} type="button" className="medical-chip" aria-pressed={filter === value} onClick={() => setFilter(value)}>{label}</button>)}</div>
+    <div className={styles.filters} role="group" aria-label="Bộ lọc công việc">{[['today', 'Hôm nay'], ['upcoming', 'Sắp tới'], ['completed', 'Đã hoàn thành'], ['all', 'Tất cả được giao']].map(([value, label]) =>
+      <Button key={value} variant="secondary" aria-pressed={filter === value} onClick={() => setFilter(value)}>{label}</Button>)}</div>
+    <TableToolbar label="Lọc công việc điều trị đã tải" scope="page" resultCount={state.tasks ? filtered.length : undefined} hasFilters={Boolean(query || horse || filter !== 'today')} onClear={() => { setQuery(''); setHorse(''); setFilter('today'); }}>
+      <TextField label="Tìm hướng dẫn / ngựa" type="search" value={query} onChange={event => setQuery(event.target.value)} />
       <SelectField label="Ngựa" placeholder="Tất cả ngựa của tôi" value={horse} options={horseIds.map((id) => ({ value: String(id), label: names[id]?.name ?? `Ngựa ${id}` }))} onChange={(e) => setHorse(e.target.value)} />
-    </div>
+    </TableToolbar>
     <div className="medical-grid medical-treatment-layout"><div className="medical-stack">
       {!state.tasks ? state.error ? <><AlertBanner type="danger" title={state.error} /><Button onClick={reload}>Thử lại</Button></> : <p role="status">Đang tải công việc điều trị được giao…</p> :
         !filtered.length ? <EmptyState title="Không có công việc nào với bộ lọc này" /> :

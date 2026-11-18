@@ -99,8 +99,23 @@ it('drops a delayed read when the task screen unmounts', async () => {
   let finish!: (data: ReturnType<typeof page>) => void;
   const list = vi.fn().mockReturnValue(new Promise((resolve) => { finish = resolve; }));
   const { unmount } = render(<GroomTasks service={{ list, complete: vi.fn() } as GroomService} />);
-  expect(screen.getByRole('status')).toHaveTextContent('Đang tải công việc điều trị được giao');
+  expect(screen.getByText('Đang tải công việc điều trị được giao…')).toHaveAttribute('role', 'status');
   unmount(); finish(page([task]));
   await Promise.resolve();
   expect(screen.queryByText(/Cold compress/)).not.toBeInTheDocument();
+});
+
+it('searches only assigned instructions and combines search with horse and status filters', async () => {
+  const list = vi.fn().mockResolvedValue(page([task, { ...task, id: 13, horseId: 15, instruction: 'Theo dõi ăn uống' }]));
+  render(<GroomTasks service={{ list, complete: vi.fn() }} />); await screen.findByText('Cold compress');
+  fireEvent.change(screen.getByLabelText('Tìm hướng dẫn / ngựa'), { target: { value: 'ăn uống' } });
+  expect(screen.queryByText('Cold compress')).not.toBeInTheDocument();
+  expect(screen.getByText('Theo dõi ăn uống')).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Ngựa'), { target: { value: '14' } });
+  expect(screen.getByText('Không có công việc nào với bộ lọc này')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Xóa bộ lọc' }));
+  expect(screen.getByLabelText('Tìm hướng dẫn / ngựa')).toHaveValue('');
+  expect(screen.getByLabelText('Ngựa')).toHaveValue('');
+  expect(screen.getByRole('button', { name: 'Hôm nay' })).toHaveAttribute('aria-pressed', 'true');
+  expect(screen.getByText('Cold compress')).toBeInTheDocument(); expect(list).toHaveBeenCalledOnce();
 });

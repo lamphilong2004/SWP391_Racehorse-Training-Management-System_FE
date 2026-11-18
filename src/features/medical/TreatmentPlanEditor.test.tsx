@@ -72,3 +72,17 @@ it('lets the Vet pick the Groom by name and prefills today as the task date', as
   fireEvent.click(screen.getByRole('button', { name: 'Lưu phác đồ điều trị' }));
   await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ groomTasks: [expect.objectContaining({ assignedGroomUserId: 8, instruction: 'Chườm lạnh 15 phút' })] })));
 });
+
+it('keeps failed changes dirty and clears dirty only after server confirmation', async () => {
+  const onSave = vi.fn().mockRejectedValueOnce(new Error('Network unavailable')).mockResolvedValue(undefined);
+  const onDirtyChange = vi.fn();
+  render(<TreatmentPlanEditor initial={{ treatmentMedicationInstructions: 'Ban đầu' }} onSave={onSave} onDirtyChange={onDirtyChange} />);
+  fireEvent.change(screen.getByLabelText('Hướng dẫn điều trị và dùng thuốc'), { target: { value: 'Đã sửa' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Lưu phác đồ điều trị' }));
+  await screen.findByText('Network unavailable');
+  expect(screen.getByLabelText('Hướng dẫn điều trị và dùng thuốc')).toHaveValue('Đã sửa');
+  expect(onDirtyChange).toHaveBeenLastCalledWith(true);
+  fireEvent.click(screen.getByRole('button', { name: 'Lưu phác đồ điều trị' }));
+  await waitFor(() => expect(onDirtyChange).toHaveBeenLastCalledWith(false));
+  expect(onSave).toHaveBeenCalledTimes(2);
+});

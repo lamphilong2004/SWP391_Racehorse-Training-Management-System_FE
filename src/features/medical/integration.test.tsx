@@ -289,3 +289,49 @@ it('filters only the loaded case page and resets both search and status without 
   expect(fetcher.mock.calls.every(([, init]) => !init?.method || init.method === 'GET')).toBe(true);
 });
 
+
+it('keeps examination fields while switching case tabs without submitting', async () => {
+  authSession.save('jwt', 3600, false);
+  const fetcher = vi.fn(async (url: string) => {
+    if (url.endsWith('/api/auth/me')) return ok(vet);
+    if (url.endsWith('/api/medical/cases/9')) return ok(medicalCase);
+    if (url.endsWith('/api/horses/14')) return ok({ id: 14, horseCode: 'ST-014', name: 'Storm', lifecycle: 'ACTIVE', healthStatus: 'MONITORING', trainingAvailability: 'LIMITED' });
+    return ok(page([]));
+  });
+  vi.stubGlobal('fetch', fetcher); mount('/medical/cases/9');
+  fireEvent.click(await screen.findByRole('tab', { name: 'Khám' }));
+  fireEvent.change(screen.getByLabelText('Triệu chứng và phát hiện'), { target: { value: 'Nội dung khám đang nhập' } });
+  fireEvent.change(screen.getByLabelText('Chẩn đoán'), { target: { value: 'Nhận xét chưa lưu' } });
+  fireEvent.click(screen.getByRole('tab', { name: 'Chấn thương' }));
+  fireEvent.click(screen.getByRole('tab', { name: 'Khám' }));
+  expect(screen.getByLabelText('Triệu chứng và phát hiện')).toHaveValue('Nội dung khám đang nhập');
+  expect(screen.getByLabelText('Chẩn đoán')).toHaveValue('Nhận xét chưa lưu');
+});
+
+it('guards leaving a dirty treatment route, keeps the draft and discards only explicitly', async () => {
+  authSession.save('jwt', 3600, false);
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+    if (url.endsWith('/api/auth/me')) return ok(vet);
+    if (url.endsWith('/api/medical/cases/9')) return ok(medicalCase);
+    if (url.endsWith('/api/stable-care/grooms')) return ok([]);
+    if (url.endsWith('/api/horses/14')) return ok({ id: 14, horseCode: 'ST-014', name: 'Storm', lifecycle: 'ACTIVE', healthStatus: 'MONITORING', trainingAvailability: 'LIMITED' });
+    return ok(page([]));
+  }));
+  const router = mount('/medical/cases/9/treatment-plan');
+  fireEvent.change(await screen.findByLabelText('Hướng dẫn điều trị và dùng thuốc'), { target: { value: 'Giữ phác đồ khi quay lại' } });
+  fireEvent.change(screen.getByLabelText('Hướng dẫn chăm sóc'), { target: { value: 'Quan sát sau ăn' } });
+  fireEvent.change(screen.getByLabelText('Hướng dẫn nghỉ ngơi'), { target: { value: 'Theo chỉ định Vet' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Hủy' }));
+  const cancel = await screen.findByRole('dialog', { name: 'Thay đổi chưa lưu' });
+  fireEvent.keyDown(cancel, { key: 'Escape' });
+  expect(screen.getByLabelText('Hướng dẫn chăm sóc')).toHaveValue('Quan sát sau ăn');
+  expect(screen.getByLabelText('Hướng dẫn nghỉ ngơi')).toHaveValue('Theo chỉ định Vet');
+  fireEvent.click(screen.getByRole('link', { name: '← Quay lại ca y tế' }));
+  expect(await screen.findByRole('dialog', { name: 'Thay đổi chưa lưu' })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Tiếp tục chỉnh sửa' }));
+  expect(screen.getByLabelText('Hướng dẫn điều trị và dùng thuốc')).toHaveValue('Giữ phác đồ khi quay lại');
+  expect(router.state.location.pathname).toBe('/medical/cases/9/treatment-plan');
+  fireEvent.click(screen.getByRole('link', { name: '← Quay lại ca y tế' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Hủy thay đổi' }));
+  await waitFor(() => expect(router.state.location.pathname).toBe('/medical/cases/9'));
+});
