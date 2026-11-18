@@ -6,7 +6,12 @@ import test from 'node:test';
 const read = file => readFileSync(new URL(`../src/design-system/${file}`, import.meta.url), 'utf8');
 const tokens = read('styles/tokens.css');
 const v2 = tokens.split("[data-design-system='v2'] {")[1].split('}')[0];
-const color = name => new RegExp(`--color-${name}: (#[0-9a-f]{6});`).exec(v2)[1];
+const v3 = tokens.split("[data-design-system='v3'] {")[1].split('}')[0];
+const color = (name, scope = v2) => {
+  const match = new RegExp(`--color-${name}: (#[0-9a-f]{6});`).exec(scope);
+  assert(match, `Missing hex value for --color-${name}`);
+  return match[1];
+};
 const luminance = hex => hex.slice(1).match(/../g).map(v => parseInt(v, 16) / 255).map(v => v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4).reduce((sum, v, i) => sum + v * [.2126, .7152, .0722][i], 0);
 const ratio = (a, b) => (Math.max(luminance(a), luminance(b)) + .05) / (Math.min(luminance(a), luminance(b)) + .05);
 test('v1 remains default; v2 overrides only inside the single shared scope', () => {
@@ -36,19 +41,26 @@ test('responsive primitives and overlays bound narrow viewports without changing
 });
 
 test('v3 exposes the approved brand and typography only in an explicit scope', () => {
-  const v3 = tokens.split("[data-design-system='v3'] {")[1].split('}')[0];
   for (const [name, hex] of Object.entries({ primary: '#0b132b', secondary: '#059669', tertiary: '#d97706', neutral: '#f8fafc' })) {
-    assert(v3.includes(`--color-brand-${name}: ${hex};`));
+    assert.equal(color(`brand-${name}`, v3), hex);
   }
   assert.match(v3, /--font-family: 'Inter',/);
   assert.match(v3, /--font-family-headline: 'Plus Jakarta Sans', 'Inter',/);
-  assert.match(v3, /--color-primary-600: var\(--color-brand-primary\);/);
-  assert.match(v3, /--color-bg-page: var\(--color-brand-neutral\);/);
-  assert(!tokens.slice(0, tokens.indexOf("[data-design-system='v3'] {")).includes('--color-brand-tertiary:'));
+  // Enterprise V4 uses dark emerald actions and a dedicated page surface in this scope.
+  assert.equal(color('primary-600', v3), '#047857');
+  assert.equal(color('bg-page', v3), '#f3f5f9');
+  assert.doesNotMatch(tokens.slice(0, tokens.indexOf(v3)), /--color-brand-(primary|secondary|tertiary|neutral):/);
 });
 
 test('v3 primary supports white action labels without replacing clinical status colours', () => {
-  assert(ratio('#ffffff', '#0b132b') >= 4.5);
-  const v3 = tokens.split("[data-design-system='v3'] {")[1].split('}')[0];
-  assert(!/--color-(success|warning|danger)-/.test(v3));
+  const label = color('text-on-primary', tokens);
+  assert.equal(label, '#ffffff');
+  for (const state of ['600', '700', '800']) {
+    const background = color(`primary-${state}`, v3);
+    assert(ratio(label, background) >= 4.5, `White action label on ${background} falls below 4.5:1`);
+  }
+  // Named component borders have their own tokens. The inherited clinical palette uses numeric shades.
+  const clinicalShade = /--color-(success|warning|danger)-\d+\s*:/;
+  assert.doesNotMatch(v3, clinicalShade);
+  assert.doesNotMatch(read('styles/tailwind.css'), clinicalShade);
 });
