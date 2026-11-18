@@ -1,3 +1,11 @@
+// CORE-052 — trang đọc nhật ký hệ thống: ai làm gì, lúc nào, với đối tượng nào.
+// Màn này không có chức năng tạo/sửa/xóa nhật ký; dữ liệu ghi bởi Backend khi thao tác xảy ra.
+// Hai nhóm lọc khác nhau: actor/action/target/date gửi lên server tìm toàn bộ phạm vi;
+// pageSearch/pageRole chỉ lọc những dòng của trang vừa tải trên FE.
+// Không lấy số dòng sau lọc một trang làm tổng số bản ghi trong database.
+// Query URL giữ bộ lọc/phân trang để link có thể mở lại đúng ngữ cảnh.
+// Các màn ghi log và API log là nguồn thật; nhãn sample nếu có chỉ là bản xem trước.
+
 import { useCallback, useContext, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { ROUTES } from '../../app/routePaths';
@@ -24,6 +32,8 @@ function AuditResults({ query, pageSearch, role }: { query: AuditQuery; pageSear
   if (resource.status === 'error') return <ErrorState title={resource.forbidden ? 'Không có quyền truy cập' : 'Không tải được nhật ký hệ thống'} description={resource.message} onRetry={resource.forbidden ? undefined : () => setRevision((value) => value + 1)} />;
   const data = resource.data;
   const search = pageSearch.trim().toLocaleLowerCase();
+  // Lọc cục bộ theo tên/mã/thao tác/vai trò trong data.items hiện tại.
+  // data.totalItems vẫn là tổng do server trả theo bộ lọc server, không bị ghi đè bằng entries.length.
   const entries = data.items.filter((entry) => (!role || entry.actorRole === role) && (!search || [entry.actor?.fullName, entry.actor?.userCode, entry.actor?.id, entry.action, entry.targetType, entry.targetId, entry.id].some((value) => value != null && String(value).toLocaleLowerCase().includes(search))));
   const navigatePage = (page: number) => {
     const next = new URLSearchParams(params);
@@ -57,6 +67,8 @@ function AuditContent({ query }: { query: AuditQuery }) {
   const [role, setRole] = useState(params.get('pageRole') ?? '');
   const [datesOpen, setDatesOpen] = useState(Boolean(errors.from || errors.to));
   const queryErrors = validateAuditQuery(query);
+  // Bấm Áp dụng: chuyển ô đang nhập thành query, kiểm lỗi ngày/id rồi mới đổi URL.
+  // Chỉ đổi URL hợp lệ mới kích hoạt tải kết quả; sai một ô thì giữ nguyên bộ lọc để sửa.
   const apply = (event: FormEvent) => {
     event.preventDefault();
     const next = queryFromFilters(filters, query.size);
