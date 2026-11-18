@@ -43,6 +43,23 @@ it('pages and filters status on the server without assignedToMe or unsupported s
   expect(fetcher).toHaveBeenCalledTimes(count);
   expect(fetcher.mock.calls.every(([url]) => !String(url).includes('assignedToMe') && !String(url).includes('q='))).toBe(true);
 });
+it('labels server and page filters and clears both from the shared toolbar', async () => {
+  mount(); await screen.findByRole('link', { name: 'Xem Foundation' });
+  expect(screen.getByLabelText('Trạng thái')).toHaveAccessibleDescription('Áp dụng cho toàn bộ danh sách.');
+  fireEvent.change(screen.getByLabelText('Trạng thái'), { target: { value: 'PAUSED' } });
+  await waitFor(() => expect(String(fetcher.mock.calls.at(-1)?.[0])).toContain('status=PAUSED'));
+  await screen.findByRole('link', { name: 'Xem Foundation' });
+  fireEvent.change(screen.getByLabelText('Trainer'), { target: { value: '4' } });
+  fireEvent.change(screen.getByLabelText('Ngựa'), { target: { value: '7' } });
+  fireEvent.change(screen.getByLabelText('Tìm ngựa hoặc chương trình'), { target: { value: 'missing' } });
+  expect(screen.getByText(/0 kết quả/)).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Xóa bộ lọc' }));
+  await screen.findByRole('link', { name: 'Xem Foundation' });
+  for (const label of ['Trạng thái', 'Tìm ngựa hoặc chương trình', 'Trainer', 'Ngựa']) {
+    expect(screen.getByLabelText(label)).toHaveValue('');
+  }
+  expect(String(fetcher.mock.calls.at(-1)?.[0])).toMatch(/\?page=0&size=20$/);
+});
 it('shows errors and permits retry without fixture fallback or writes', async () => {
   fetcher.mockRejectedValueOnce(new Error('Offline')); mount();
   expect(await screen.findByText('Không kết nối được máy chủ. Hãy kiểm tra kết nối và thử lại.')).toBeInTheDocument();

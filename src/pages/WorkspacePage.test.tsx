@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { WorkspacePage } from './WorkspacePage';
@@ -12,7 +12,7 @@ vi.mock('../features/main-flows/api', async (original) => ({ ...await original<o
 const horse = { id: 17, name: 'Test arrival', horseCode: 'TEST-17', lifecycle: 'DRAFT', currentBoxCode: null, healthStatus: null };
 const page = { items: [horse], page: 0, size: 6, totalItems: 1, totalPages: 1 };
 function mount() {
-  return render(<MemoryRouter><Routes><Route path="/" element={<WorkspacePage />} /><Route path="/medical" element={<h1>Medical destination</h1>} /><Route path="/owner/horses" element={<h1>Owner destination</h1>} /></Routes></MemoryRouter>);
+  return render(<MemoryRouter><Routes><Route path="/" element={<WorkspacePage />} /><Route path="/medical" element={<h1>Medical destination</h1>} /><Route path="/owner/horses" element={<h1>Owner destination</h1>} /><Route path="/training/programs/new" element={<h1>Program wizard destination</h1>} /></Routes></MemoryRouter>);
 }
 beforeEach(() => { state.user.roles = ['VETERINARIAN']; state.request.mockReset().mockResolvedValue(page); });
 
@@ -23,6 +23,18 @@ it('opens the medical workspace and exposes a baseline action for the actual ret
   expect(screen.queryByRole('link', { name: 'Tạo chương trình' })).not.toBeInTheDocument();
   await userEvent.click(screen.getByRole('link', { name: 'Mở ca y tế' }));
   expect(await screen.findByRole('heading', { name: 'Medical destination' })).toBeInTheDocument();
+});
+
+it('groups Head Trainer shortcuts and opens the existing creation wizard', async () => {
+  state.user.roles = ['HEAD_TRAINER'];
+  mount();
+  const training = within(screen.getByRole('region', { name: 'Điều phối huấn luyện' }));
+  const health = within(screen.getByRole('region', { name: 'Sức khỏe và mức sẵn sàng' }));
+  expect(training.getByRole('link', { name: /^Yêu cầu điều chỉnh/ })).toHaveAttribute('href', '/training/adjustment-requests');
+  expect(health.getByRole('link', { name: /^Tóm tắt y tế/ })).toHaveAttribute('href', '/medical/summary');
+  expect(state.request).not.toHaveBeenCalled();
+  await userEvent.click(screen.getByRole('link', { name: 'Tạo chương trình' }));
+  expect(await screen.findByRole('heading', { name: 'Program wizard destination' })).toBeInTheDocument();
 });
 
 it('keeps the Owner hub read-only and does not request the staff horse register', async () => {

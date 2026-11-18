@@ -1,0 +1,18 @@
+{
+  "result": "PASS",
+  "backend": "Spring Boot test + isolated H2, actual HTTP, no interception",
+  "medicalSummary": "/medical/summary?horseId=5201",
+  "createStatus": 201,
+  "detailStatus": 200,
+  "reloadStatus": 200,
+  "programId": 1,
+  "program": "PR57 - Chuong trinh kiem thu",
+  "horseId": 5201,
+  "horseCode": "T52-001",
+  "templateVersionId": 52212,
+  "templateVersion": 2,
+  "trainerId": 5212,
+  "trainer": "Trainer Test 52",
+  "businessPosts": 1,
+  "date": "2026-11-17"
+}

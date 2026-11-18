@@ -23,6 +23,7 @@ import { serverText } from '../../shared/serverText';
 
 const STEP_NAMES = ['Ngựa', 'Hồ sơ', 'Mẫu chương trình', 'Tùy chỉnh', 'Khối lượng', 'Trainer', 'Xem lại'];
 const STEP_TITLES = ['Chọn ngựa', 'Hồ sơ huấn luyện', 'Chọn mẫu chương trình', 'Tùy chỉnh chương trình', 'Khối lượng và cường độ', 'Phân công Trainer', 'Xem lại và kích hoạt'];
+const STEP_ACTIONS = ['Xem hồ sơ', 'Chọn mẫu chương trình', 'Tùy chỉnh chương trình', 'Đặt khối lượng', 'Phân công Trainer', 'Xem lại chương trình', 'Tạo và kích hoạt chương trình'];
 const blockingHealthStatus = ({ healthStatus }: HorseSelection) =>
   healthStatus === 'INJURED' || healthStatus === 'QUARANTINED' ? healthStatus : null;
 const canSelectHorse = (horse: HorseSelection) => horse.lifecycle === 'ACTIVE'
@@ -62,6 +63,7 @@ export function ProgramCreationPage() {
   const issueMessages = [...new Set(allIssues.map((issue) => issue.message))];
   const showCatalog = browseTemplates || flow.recommendations.length === 0;
   const error = (field: string) => allIssues.find((issue) => issue.field === field)?.message;
+  const horseError = error('horseId');
   const renderTemplate = (id: number, name: string, versionNo: number, recommendation?: (typeof flow.recommendations)[number], goals?: string | null) => {
     const selected = flow.template?.template.id === id ? flow.template : null;
     return <article className={styles.templateOption} data-selected={Boolean(selected)} key={recommendation?.templateVersionId ?? id}>
@@ -133,7 +135,9 @@ export function ProgramCreationPage() {
         <Button type="button" variant="secondary" disabled={busy} onClick={() => navigate(ROUTES.dashboard)}>{flow.created ? 'Quay lại không gian làm việc' : 'Hủy'}</Button>
       </div>
       {flow.created ? <ProgramResult flow={{ ...flow, created: readback ?? flow.created }} reload={() => void reload()} reloading={reloading} readError={readError} /> : <>
-        <WizardStepper steps={STEP_NAMES} currentStep={step} onStepClick={(next) => { if (!busy) edit(next); }} />
+        <nav aria-label="Các bước tạo chương trình" className={styles.progress}>
+          <WizardStepper steps={STEP_NAMES} currentStep={step} onStepClick={busy ? undefined : edit} />
+        </nav>
         {step !== 0 && flow.horse && <div className={styles.context}><Icon name="horseshoe" /><strong>{flow.horse.name}</strong><span>{flow.horse.horseCode}</span>
           <StatusBadge family="availability" status={flow.horse.trainingAvailability} />
           {step !== 2 && flow.template && <span>{flow.template.version.name} · v{flow.template.version.versionNo}</span>}
@@ -153,11 +157,14 @@ export function ProgramCreationPage() {
               {horses.pending && <p role="status">Đang tải danh sách ngựa…</p>}
               {horses.error != null && <ErrorState title="Không tải được danh sách ngựa" description={programErrorMessage(horses.error)} onRetry={horses.retry} />}
               {horses.data && <div className={`${styles.table} ${styles.horseTable}`}><DataTable caption="Chọn một ngựa đang hoạt động" rows={horses.data.items.filter((horse) => horse.lifecycle === 'ACTIVE')} rowKey={(horse) => horse.id} selectedKey={flow.horse?.id}
-                onRowClick={chooseHorse} isRowClickable={canSelectHorse} focusableRows={false} columns={[
+                onRowClick={chooseHorse} isRowClickable={canSelectHorse} focusableRows={false}
+                empty={<EmptyState title="Không có ngựa đang hoạt động" description="Hãy đổi từ khóa hoặc bộ lọc." />} columns={[
                 { key: 'horse', header: 'Ngựa', render: (horse) => <div className={styles.horseChoice}>
                   {businessDataMode() === 'api' ? <HorsePhotoImage thumbnail name={horse.name} path={`/api/horses/${horse.id}/photos/primary`} /> : <Icon name="horseshoe" size={24} />}
                   <label>
                     <input type="radio" name="program-horse" aria-label={`Chọn ${horse.name} (${horse.horseCode})`}
+                      aria-invalid={horseError && canSelectHorse(horse) ? true : undefined}
+                      aria-describedby={horseError && canSelectHorse(horse) ? 'program-horse-error' : undefined}
                       checked={flow.horse?.id === horse.id} disabled={!canSelectHorse(horse)} onChange={() => chooseHorse(horse)} />
                     <strong>{horse.name}</strong>
                     <small className={styles.muted}>{horse.horseCode}{horse.breed ? ` · ${horse.breed}` : ''}</small>
@@ -173,13 +180,12 @@ export function ProgramCreationPage() {
                 { key: 'lastTraining', header: 'Lần tập gần nhất', render: (horse) => horse.lastTrainingAt ? dateTime(horse.lastTrainingAt) : <span className={styles.muted}>Chưa có buổi hoàn thành</span> },
                 { key: 'program', header: 'Chương trình hiện tại', render: (horse) => horse.currentProgramName ?? <span className={styles.muted}>Chưa có</span> },
               ]} /></div>}
-              {horses.data?.items.length === 0 && <EmptyState title="Không có ngựa đang hoạt động" description="Hãy thử từ khóa khác." />}
               {horses.data && horses.data.totalPages > 1 && <div className={styles.row}>
                 <Button type="button" variant="tertiary" disabled={horseQuery.page === 0} onClick={() => setHorseQuery({ ...horseQuery, page: horseQuery.page - 1 })}>Ngựa trước</Button>
                 <span>Trang {horseQuery.page + 1}/{Math.max(1, horses.data.totalPages)}</span>
                 <Button type="button" variant="tertiary" disabled={horseQuery.page + 1 >= horses.data.totalPages} onClick={() => setHorseQuery({ ...horseQuery, page: horseQuery.page + 1 })}>Ngựa tiếp</Button>
               </div>}
-              {error('horseId') && <p className={styles.error}>{error('horseId')}</p>}
+              {horseError && <p id="program-horse-error" className={styles.error}>{horseError}</p>}
             </div></Card>}
             {step === 1 && flow.horse && <ProgramProfile horse={flow.horse} />}
             {step === 2 && <Card title="Chọn mẫu chương trình"><div className={styles.stack}>
@@ -201,10 +207,10 @@ export function ProgramCreationPage() {
             </div></Card>}
             {step >= 3 && <DraftSteps step={step} flow={flow} issues={allIssues} update={update} edit={edit} />}
           </fieldset>
-          <ActionBar className={step === 0 ? styles.horseActions : undefined}
-            leading={<span role="status">{step === 0 ? flow.horse ? `Đã chọn ${flow.horse.name} · ${flow.horse.horseCode}` : 'Chọn một ngựa để tiếp tục' : step === 2 && flow.template ? `${flow.template.version.name} · v${flow.template.version.versionNo}` : `Bước ${step + 1} / 7 · ${STEP_TITLES[step]}`}</span>}>
+          <ActionBar className={styles.wizardActions}
+            leading={step === 0 ? <span role="status">{flow.horse ? `Đã chọn ${flow.horse.name} · ${flow.horse.horseCode}` : 'Chọn một ngựa để tiếp tục'}</span> : undefined}>
             {step !== 0 && <Button type="button" variant="secondary" disabled={busy} onClick={() => edit(step - 1)}>Quay lại</Button>}
-            <Button type="submit" disabled={Boolean(flow.pending)}>{busy ? 'Đang tạo chương trình…' : step === 6 ? 'Tạo và kích hoạt chương trình' : 'Tiếp tục'}</Button>
+            <Button type="submit" disabled={Boolean(flow.pending)}>{busy ? 'Đang tạo chương trình…' : STEP_ACTIONS[step]}</Button>
           </ActionBar>
         </form>
       </>}
