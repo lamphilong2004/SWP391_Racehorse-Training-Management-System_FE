@@ -203,3 +203,89 @@ describe('Flow 4 API-only UI', () => {
     await screen.findByText('Đã lưu kế hoạch và cập nhật công việc được giao.');expect(screen.queryByLabelText('Hướng dẫn')).not.toBeInTheDocument();expect(await screen.findByText(`${formatDate(currentDate())} – ${formatDate(currentDate())}`, { exact: false })).toBeInTheDocument();
   });
 });
+
+describe('Flow 4 approved Tailwind interaction patterns', () => {
+  const stock = [
+    { id: 1, name: 'Cỏ khô', category: 'FEED', unit: 'kg', currentQuantity: 8, threshold: 10, active: true },
+    { id: 2, name: 'Băng quấn chân', category: 'MEDICAL_SUPPLY', unit: 'cuộn', currentQuantity: 24, threshold: 5, active: true },
+    { id: 3, name: 'Dụng cụ cũ', category: 'TOOL', unit: 'cái', currentQuantity: 0, threshold: 2, active: false },
+  ];
+  it('keeps quick task filters and the status field synchronized without a write', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-11-18T02:00:00Z'));
+    const fetcher = vi.fn<typeof fetch>(async () => ok([task('Quá giờ'), { ...task('Sắp tới'), id: 11, slot: '23:00' }]));
+    vi.stubGlobal('fetch', fetcher); mount('/care/daily');
+    const filters = await screen.findByRole('group', { name: 'Lọc nhanh công việc' });
+    fireEvent.click(within(filters).getByRole('button', { name: 'Quá giờ · 1' }));
+    expect(screen.getByLabelText('Trạng thái')).toHaveValue('overdue');
+    expect(screen.queryByText('Sắp tới', { exact: true })).not.toBeInTheDocument();
+    expect(within(filters).getByRole('button', { name: 'Quá giờ · 1' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.change(screen.getByLabelText('Trạng thái'), { target: { value: 'upcoming' } });
+    expect(within(filters).getByRole('button', { name: 'Quá giờ · 1' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByText('Sắp tới', { exact: true })).toBeInTheDocument();
+    fireEvent.click(within(filters).getByRole('button', { name: 'Tất cả · 2' }));
+    expect(screen.getByLabelText('Trạng thái')).toHaveValue('');
+    expect(fetcher.mock.calls.every(([, init]) => !init?.method || init.method === 'GET')).toBe(true);
+  });
+  it('combines inventory search and stock filters, excludes inactive low stock, and clears both', async () => {
+    vi.stubGlobal('fetch', vi.fn(async url => ok(String(url).includes('/replenishments') ? [] : stock)));
+    mount('/inventory'); await screen.findByText('Cỏ khô');
+    fireEvent.change(screen.getByLabelText('Tình trạng tồn kho'), { target: { value: 'low' } });
+    expect(screen.getByText('Cỏ khô')).toBeInTheDocument();
+    expect(screen.queryByText('Dụng cụ cũ')).not.toBeInTheDocument();
+    expect(screen.queryByText('Băng quấn chân')).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Tìm vật tư / nhóm'), { target: { value: 'không tồn tại' } });
+    expect(screen.getByText('Không có vật tư phù hợp')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Xóa bộ lọc vật tư' }));
+    expect(screen.getByLabelText('Tìm vật tư / nhóm')).toHaveValue('');
+    expect(screen.getByLabelText('Tình trạng tồn kho')).toHaveValue('');
+    expect(screen.getByText('Dụng cụ cũ')).toBeInTheDocument();
+  });
+  it('does not show inventory totals or an empty inventory while loading or after a read error', async () => {
+    let finish!: (value: Response) => void;
+    vi.stubGlobal('fetch', vi.fn(url => String(url).includes('/replenishments') ? Promise.resolve(ok([])) : new Promise<Response>(done => { finish = done; })));
+    mount('/inventory'); await waitFor(() => expect(finish).toBeDefined());
+    expect(screen.queryByRole('region', { name: 'Tổng hợp vật tư đã tải' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('table', { name: 'Kho vật tư' })).not.toBeInTheDocument();
+    await act(async () => finish(fail())); await screen.findByText('Stock changed.');
+    expect(screen.queryByRole('region', { name: 'Tổng hợp vật tư đã tải' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Không có vật tư phù hợp')).not.toBeInTheDocument();
+  });
+  it('keeps a Groom replenishment draft after conflict and never sends a stock movement', async () => {
+    const fetcher = vi.fn(async (url: unknown, init?: RequestInit) => init?.method === 'POST' ? fail() : ok(String(url).endsWith('/inventory') ? stock : []));
+    vi.stubGlobal('fetch', fetcher); mount('/inventory'); await screen.findByText('Cỏ khô');
+    expect(screen.queryByRole('button', { name: 'Thêm vật tư' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Nhập / xuất' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Đề nghị bổ sung' })[0]);
+    fireEvent.change(screen.getByLabelText('Số lượng đề nghị (kg)'), { target: { value: '3' } });
+    fireEvent.change(screen.getByLabelText('Lý do bổ sung'), { target: { value: 'Cần cho ca chiều' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Gửi yêu cầu bổ sung' }));
+    await screen.findByText('Stock changed.');
+    expect(screen.getByLabelText('Số lượng đề nghị (kg)')).toHaveValue(3);
+    expect(screen.getByLabelText('Lý do bổ sung')).toHaveValue('Cần cho ca chiều');
+    const writes = fetcher.mock.calls.filter(([, init]) => init?.method === 'POST');
+    expect(writes).toHaveLength(1); expect(String(writes[0][0])).toMatch(/replenishments$/);
+    expect(JSON.parse(String(writes[0][1]?.body))).toEqual({ inventoryItemId: 1, quantity: 3, reason: 'Cần cho ca chiều' });
+    expect(screen.queryByText('Đã gửi yêu cầu bổ sung. Tồn kho chưa thay đổi.')).not.toBeInTheDocument();
+  });
+  it('shows Vet a read-only ledger and preserves Manager stock-write payload and double-submit protection', async () => {
+    state.role = 'VETERINARIAN';
+    vi.stubGlobal('fetch', vi.fn(async url => ok(String(url).endsWith('/inventory') ? stock : [])));
+    const view = mount('/inventory'); await screen.findByText('Cỏ khô');
+    expect(screen.queryByRole('button', { name: 'Thêm vật tư' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Xem sổ kho' })[0]);
+    expect(screen.queryByRole('spinbutton')).not.toBeInTheDocument(); view.unmount();
+    state.role = 'CLUB_MANAGER'; let finish!: (value: Response) => void;
+    const fetcher = vi.fn((url: unknown, init?: RequestInit) => init?.method === 'POST' ? new Promise<Response>(done => { finish = done; }) : Promise.resolve(ok(String(url).endsWith('/inventory') ? stock : [])));
+    vi.stubGlobal('fetch', fetcher); mount('/inventory'); await screen.findByText('Cỏ khô');
+    fireEvent.click(screen.getAllByRole('button', { name: 'Nhập / xuất' })[0]);
+    fireEvent.change(screen.getByLabelText('Biến động (kg): nhập dương, xuất âm'), { target: { value: '-2' } });
+    fireEvent.change(screen.getByLabelText('Lý do nhập / xuất'), { target: { value: 'Xuất thực tế' } });
+    const save = screen.getByRole('button', { name: 'Ghi biến động thực tế' });
+    fireEvent.click(save); fireEvent.click(save);
+    expect(save).toBeDisabled();
+    const writes = fetcher.mock.calls.filter(([, init]) => init?.method === 'POST'); expect(writes).toHaveLength(1);
+    expect(JSON.parse(String(writes[0][1]?.body))).toEqual({ changeQuantity: -2, expectedQuantity: 8, note: 'Xuất thực tế' });
+    await act(async () => finish(fail())); await screen.findByText('Stock changed.');
+    expect(save).toBeEnabled(); expect(screen.getByLabelText('Lý do nhập / xuất')).toHaveValue('Xuất thực tế');
+  });
+});

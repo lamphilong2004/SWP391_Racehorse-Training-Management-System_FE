@@ -1,3 +1,4 @@
+@reference "../../design-system/styles/tailwind.css";
 .stack { display: grid; gap: 20px; min-width: 0; }
 .stack > * { min-width: 0; }
 .header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
@@ -47,3 +48,13 @@
 @media (max-width: 480px) { .summary { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 640px) { .dateActions { width: 100%; grid-template-columns: minmax(0, 1fr) auto; } }
 @media (max-width: 767px) { .actions button { min-height: 44px; } }
+
+/* Flow 4 uses the approved Tailwind pattern and shared Racehorse tokens. */
+.panelHeader { @apply flex min-w-0 flex-wrap items-center justify-between gap-4; }
+.panelHeader p { @apply mt-1 text-rh-muted; }
+.quickFilters { @apply flex flex-wrap gap-2; }
+.quickFilters button { min-height: 44px; }
+.filterSelected { @apply border-rh-primary bg-rh-primary-soft text-rh-primary; }
+.stockWarning { @apply mt-2 flex items-center gap-1 text-rh-warning; }
+.stockActive { @apply inline-flex rounded-full border border-rh-border bg-rh-success-soft px-3 py-1 text-sm font-medium text-rh-success; }
+.stockInactive { @apply inline-flex rounded-full border border-rh-border bg-rh-subtle px-3 py-1 text-sm font-medium text-rh-muted; }
