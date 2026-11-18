@@ -3,6 +3,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import type { RiderApi } from './api';
 import { RiderAssignmentsPage, RiderHistoryPage } from './pages';
 import type { RiderSession } from './types';
+import styles from './rider.module.css';
 
 const auth = vi.hoisted(() => ({ user: { id: 9, fullName: 'Test Rider', roles: ['WORK_RIDER'], accountStatus: 'ACTIVE' }, handleApiError: vi.fn(() => false) }));
 vi.mock('../../shared/auth/AuthProvider', () => ({ useAuth: () => auth }));
@@ -40,6 +41,9 @@ it('groups own assignments into Today and Upcoming tables (Figma WR-D4) and open
   const api = client();
   const router = mount(<RiderAssignmentsPage api={api} />, '/rider/assignments');
   expect(await screen.findByRole('tab', { name: 'Hôm nay · 2' })).toHaveAttribute('aria-selected', 'true');
+  expect(screen.getByText('Báo cáo vấn đề trong lúc cưỡi')).toBeInTheDocument();
+  expect(screen.getByText(/mở lượt cưỡi đang diễn ra hoặc tạm dừng bằng “Xem lượt cưỡi”/)).toBeInTheDocument();
+  expect(screen.getByText('Báo cáo vấn đề trong lúc cưỡi')).toBeInTheDocument();
   expect(screen.getByRole('tab', { name: 'Sắp tới · 1' })).toBeInTheDocument();
   const today = screen.getByRole('table', { name: 'Lượt cưỡi hôm nay' });
   expect(within(today).getAllByRole('row')).toHaveLength(3);
@@ -50,6 +54,31 @@ it('groups own assignments into Today and Upcoming tables (Figma WR-D4) and open
   expect(within(upcoming).getAllByText('Đã lên lịch').length).toBeGreaterThan(0);
   fireEvent.click(within(upcoming).getAllByRole('row')[1]);
   expect(router.state.location.pathname).toBe('/rider/assignments/43');
+});
+
+it('keeps the assignment detail action styled and available from the table', async () => {
+  const router = mount(<RiderAssignmentsPage api={client()} />, '/rider/assignments');
+  const table = await screen.findByRole('table', { name: 'Lượt cưỡi hôm nay' });
+  const action = within(table).getAllByRole('link', { name: 'Xem lượt cưỡi Thunder Bolt' })[0];
+  expect(action).toHaveClass(styles.riderTableAction);
+  fireEvent.click(action);
+  expect(router.state.location.pathname).toBe('/rider/assignments/41');
+});
+
+it('gives multi-word assignment labels normal word wrapping and a scrollable table width', async () => {
+  const api = client();
+  vi.mocked(api.assignments).mockResolvedValue([ride(44, {
+    horse: { id: 8, name: 'Silver Morning Star', horseCode: 'RH-044' },
+    focus: 'Extended Endurance Conditioning',
+    phaseName: 'Advanced Foundation Training',
+    trainer: { id: 4, fullName: 'Alexandra Longstride Trainer' },
+  })]);
+  mount(<RiderAssignmentsPage api={api} />, '/rider/assignments');
+  const table = await screen.findByRole('table', { name: 'Lượt cưỡi hôm nay' });
+  expect(table).toHaveClass(styles.assignmentTable);
+  expect(within(table).getByText('Silver Morning Star')).toHaveClass(styles.personName);
+  expect(within(table).getByText('Extended Endurance Conditioning · Advanced Foundation Training')).toHaveClass(styles.sessionCell);
+  expect(within(table).getByText('Alexandra Longstride Trainer')).toHaveClass(styles.personName);
 });
 
 it('keeps past scheduled rides out of Upcoming, preserves them visibly and does not label them ready', async () => {
@@ -79,8 +108,13 @@ it('requests COMPLETED rides only for the Completed tab', async () => {
 });
 
 it('shows history metrics, filter tabs and server-derived duration and feedback (Figma WR-D5)', async () => {
-  mount(<RiderHistoryPage api={client()} />, '/rider/history');
+  const api = client();
+  mount(<RiderHistoryPage api={api} />, '/rider/history');
   const table = await screen.findByRole('table', { name: 'Lịch sử cưỡi' });
+  expect(table).toHaveClass(styles.historyTable);
+  expect(within(table).getAllByText('Thunder Bolt')[0]).toHaveClass(styles.personName);
+  expect(within(table).getAllByText('Gallop Session · Foundation')[0]).toHaveClass(styles.sessionCell);
+  expect(within(table).getAllByText('Test Trainer')[0]).toHaveClass(styles.personName);
   expect(within(table).getAllByRole('row')).toHaveLength(3);
   expect(within(table).getByText('21 phút')).toBeInTheDocument();
   expect(within(table).getByText('Đã gửi')).toBeInTheDocument();
