@@ -54,7 +54,7 @@
 .panelHeader p { @apply mt-1 text-rh-muted; }
 .quickFilters { @apply flex flex-wrap gap-2; }
 .quickFilters button { min-height: 44px; }
-.filterSelected { @apply border-rh-primary bg-rh-primary-soft text-rh-primary; }
+.quickFilters button.filterSelected { @apply border-rh-primary bg-rh-primary-soft text-rh-primary; }
 .stockWarning { @apply mt-2 flex items-center gap-1 text-rh-warning; }
 .stockActive { @apply inline-flex rounded-full border border-rh-border bg-rh-success-soft px-3 py-1 text-sm font-medium text-rh-success; }
 .stockInactive { @apply inline-flex rounded-full border border-rh-border bg-rh-subtle px-3 py-1 text-sm font-medium text-rh-muted; }
