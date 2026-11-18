@@ -1,3 +1,12 @@
+// CORE-036 — giải thích vì sao Vet được hoặc chưa được đóng một ca.
+// Đây là checklist hỗ trợ thao tác; luật quyết định cuối nằm ở BE MedicalService.requireClosureConditions.
+// Luồng: đọc việc Groom + sự cố liên quan + hạn chế → lập các dòng đạt/chưa đạt → xác nhận đóng.
+// Ca tối thiểu cần ít nhất một lần khám/tái khám. Có chấn thương/phác đồ thì cần hồi phục gần nhất.
+// Có phác đồ thì các việc điều trị phải hoàn tất; hạn chế gắn ca phải được gỡ.
+// DEC-014: sự cố đang gắn sẽ được BE đóng cùng ca, không bắt người dùng tự đóng từng sự cố trước.
+// Checklist có thể cũ nếu người khác vừa cập nhật: BE vẫn kiểm tra lại khi nhận POST close.
+// Đóng ca không đồng nghĩa tự chữa khỏi hay tự gỡ hạn chế. Những việc đó phải được ghi đúng trước.
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertBanner, Button, ButtonLink, Card, Icon } from '../../design-system';
 import { useAuth } from '../../shared/auth/AuthProvider';
@@ -25,6 +34,9 @@ export function CaseClosure({ item, needsExamination, needsRecovery, openTab, re
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [confirm, setConfirm] = useState(false);
   const [revision, setRevision] = useState(0);
   const refresh = () => setRevision((value) => value + 1);
+  // Đọc ba nhóm điều kiện độc lập cùng lúc bằng Promise.all.
+  // Nếu một nhóm lỗi, không coi là 0 việc/0 hạn chế; màn báo chưa kiểm tra được điều kiện.
+  // Số pending là số task trả về có status khác COMPLETED; UI không tự sửa task.
   const read = useCallback(async (): Promise<Blockers> => {
     const [tasks, linked, restrictionPage] = await Promise.all([
       item.treatmentPlan ? service.listCaseTasks(item.id) : Promise.resolve({ items: [] }),
@@ -44,12 +56,17 @@ export function CaseClosure({ item, needsExamination, needsRecovery, openTab, re
     return () => { active = false; };
   }, [read, revision]);
 
+  // Chỉ gọi service.closeCase, chờ BE xác nhận rồi nhờ trang cha tải lại ca.
+  // Nếu BE từ chối, giữ thông báo và đọc lại checklist để giải thích dữ liệu vừa thay đổi.
+  // finally mở lại trạng thái thao tác và đóng bước xác nhận, dù thành công hay lỗi.
   async function close() {
     setBusy(true); setError('');
     try { await service.closeCase(item.id); reload(); }
     catch (failure) { setError(medicalErrorMessage(failure, 'Không đóng được ca y tế.')); refresh(); } finally { setBusy(false); setConfirm(false); }
   }
 
+  // Không bắt tất cả ca đều có phác đồ. Ca chỉ khám và không có chấn thương/phác đồ
+  // đi theo quy trình tối thiểu; chỉ thêm dòng tái khám hồi phục khi ca thực sự cần.
   const needsPlanRecovery = item.injuries.length > 0 || !!item.treatmentPlan;
   const rows = [
     { key: 'exam', ok: !needsExamination, label: 'Có ít nhất một lần khám hoặc tái khám', detail: needsExamination ? 'Chưa ghi lần khám nào.' : `${item.examinations.length} lần khám · ${item.reexaminations.length} lần tái khám`,

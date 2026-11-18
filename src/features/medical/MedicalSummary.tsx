@@ -1,3 +1,12 @@
+// CORE-036 — Tóm tắt y tế dành riêng Head Trainer, chế độ chỉ xem.
+// Head Trainer cần biết ngựa có được tập và có hạn chế gì, không cần xem hồ sơ chẩn đoán/đơn thuốc.
+// Access kiểm tra vai trò; summaryService chọn và kiểm tra projection dữ liệu không lâm sàng.
+// Projection nghĩa là bộ trường được phép cung cấp cho vai trò đó, không phải tải mọi bí mật rồi ẩn.
+// Màn chọn ngựa bằng horseId trong URL nên có thể mở deep link đến đúng ngựa.
+// query chỉ là chữ đang tìm trong danh sách; đổi query không tự đổi ngựa đang xem.
+// Khả năng tập luyện đứng trước sức khỏe vì hai thông tin khác nhau và đều do API quyết định.
+// Không có nút duyệt kích hoạt, sửa sức khỏe, đặt thuốc hay gỡ hạn chế ở màn này.
+
 import { boxLabel, yardLabel } from '../../shared/stableBox';
 import { UiPreviewNotice } from './UiPreviewNotice';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
@@ -43,6 +52,8 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
   return <div className={styles.fact}><dt>{label}</dt><dd>{children}</dd></div>;
 }
 
+// Chuẩn hóa chữ để tìm tiếng Việt thuận tiện: bỏ dấu, chuyển chữ thường, đ → d.
+// Ví dụ hac phong có thể khớp Hắc Phong; việc này chỉ phục vụ tìm tên/mã, không sửa dữ liệu gốc.
 function searchKey(text: string) {
   return text.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().replace(/đ/g, 'd');
 }
@@ -59,6 +70,9 @@ export function MedicalSummaryPage({ service }: { service: SummaryService }) {
   const filter = searchKey(query.trim());
   const matches = horses.data?.filter((horse) => searchKey(`${horse.name} ${horse.horseCode}`).includes(filter)) ?? [];
   const selectedHorse = horses.data?.find((horse) => horse.id === id);
+  // Nếu đang xem một ngựa rồi tìm từ không khớp, vẫn giữ ngựa đó trong select.
+  // Danh sách kết quả tìm kiếm và hồ sơ đang xem là hai trạng thái riêng; thông báo không có
+  // kết quả không có nghĩa ngựa đang xem biến mất hay API chi tiết thất bại.
   const choices = selectedHorse && !matches.includes(selectedHorse) ? [selectedHorse, ...matches] : matches;
   return <div className={styles.page}>
     <PageHeader title="Tóm tắt y tế" description="Tra cứu sức khỏe và khả năng tập luyện của ngựa."
