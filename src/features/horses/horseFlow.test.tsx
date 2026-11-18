@@ -403,7 +403,7 @@ it('makes pending horses after the first page reachable', async () => {
   for (let index = 0; index < 51; index++) data.horseRegistry!.records.push({ ...structuredClone(base), id: 3000 + index, name: `Pending Horse ${index}`, horseCode: `P-${index}`, lifecycle: 'DRAFT', activatedAt: null });
   saveSamples(data); open('/horses/pending-activation');
   await screen.findByRole('heading', { name: 'Pending Horse 0 · P-0' });
-  expect(screen.getByText(/· 51 con ngựa/)).toBeInTheDocument();
+  expect(screen.getByText('51 con ngựa')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Trang sau' }));
   expect(await screen.findByRole('heading', { name: 'Pending Horse 50 · P-50' })).toBeInTheDocument();
   expect(screen.getByText('Trang 2/2')).toBeInTheDocument();
