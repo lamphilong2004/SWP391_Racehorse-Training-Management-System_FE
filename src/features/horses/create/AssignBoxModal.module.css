@@ -1,19 +1,48 @@
 /* SCR-HORSE-007 body (Figma 284:2596): gap 16; rows gap 6; tiles gap 12. */
-.body { display: flex; flex-direction: column; gap: var(--space-lg); }
-.topRow { display: flex; align-items: flex-end; gap: var(--space-md); }
+.body { display: flex; flex-direction: column; gap: var(--space-lg); min-width: 0; }
+.topRow { display: flex; align-items: flex-end; gap: var(--space-md); min-width: 0; }
 .yard { width: 200px; }
 .spacer { flex: 1; }
-.counts { font: 400 13px/16px var(--font-family); color: var(--color-text-secondary); }
+.counts { min-width: 0; font: 400 13px/16px var(--font-family); color: var(--color-text-secondary); }
 .row { display: flex; flex-direction: column; gap: 6px; }
 .rowLabel { font: 600 11px/13px var(--font-family); color: var(--color-text-secondary); }
-.tiles { display: flex; flex-wrap: wrap; gap: var(--space-md); }
+.tiles { display: flex; flex-wrap: wrap; gap: var(--space-md); min-width: 0; max-width: 100%; }
 /* Figma 284:2588 is 880 wide: six 128px tiles per row. The shared lg size (720) stays unchanged. */
 .modal { width: 880px; max-width: calc(100vw - 32px); }
 .subtitle { margin: 0; font: 400 13px/16px var(--font-family); color: var(--color-text-secondary); }
 
 .rowLabel { letter-spacing: .06em; text-transform: uppercase; }
 .topRow { flex-wrap: wrap; }
+@media (max-width: 767px) {
+  .topRow {
+    display: grid;
+    grid-template-columns: minmax(0, 200px) minmax(0, 1fr);
+    align-items: end;
+  }
+  .spacer { display: none; }
+  .yard { min-width: 0; }
+  .counts { overflow-wrap: anywhere; text-align: right; }
+}
 @media (max-width: 600px) {
+  .topRow { grid-template-columns: minmax(0, 1fr); align-items: stretch; }
   .yard { width: 100%; }
-  .counts { flex-basis: 100%; overflow-wrap: anywhere; }
+  .counts { text-align: left; }
+  .modal :global(footer) {
+    min-height: 72px;
+    height: auto;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    padding-inline: var(--space-md);
+  }
+  .modal :global(footer > button) {
+    min-height: 44px;
+    flex: 1 1 auto;
+  }
+}
+@media (max-width: 359px) {
+  .tiles > :global(button),
+  .tiles > :global(div) {
+    flex-basis: 100%;
+    width: 100%;
+  }
 }

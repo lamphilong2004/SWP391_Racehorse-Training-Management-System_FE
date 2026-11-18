@@ -113,7 +113,7 @@ export async function handleHorseSample(path: string, init: RequestInit, actor: 
   }
   if (method === 'POST' && action === 'photos' && init.body instanceof FormData) {
     const file = init.body.get('file');
-    if (!(file instanceof File) || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) fail(400, 'Use a JPEG, PNG or WebP image up to 5 MB.');
+    if (!(file instanceof File) || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size < 1 || file.size > 5 * 1024 * 1024) fail(400, 'Use a JPEG, PNG or WebP image from 1 byte to 5 MB.');
     const image = file as File;
     const url = await new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = () => reject(new Error('Could not read the selected image.')); reader.readAsDataURL(image); });
     const photo = { id: data.nextId++, url, uploadedAt: new Date().toISOString() };

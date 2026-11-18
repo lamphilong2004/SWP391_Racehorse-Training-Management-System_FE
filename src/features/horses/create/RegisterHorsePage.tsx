@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type FormEvent } from 'react';
 import { flushSync } from 'react-dom';
 import { useNavigate, useParams } from 'react-router';
 import { AlertBanner, Button, Card, StatusBadge, ErrorState, Icon, OptionalFields, PhotoAttachmentTile, SelectField, TextField, PresetField, DesignSystemScope, UnsavedChangesGuard, focusFirstInvalid } from '../../../design-system';
@@ -15,6 +15,8 @@ type Values = Record<Field, string>;
 
 const EMPTY: Values = { name: '', horseCode: '', foaledDate: '', sex: '', breed: '', countryOfOrigin: '', registrationNo: '' };
 const REQUIRED_ON_EDIT: Field[] = ['name', 'horseCode'];
+const ALLOWED_PHOTO_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const MAX_PHOTO_SIZE = 5 * 1024 * 1024;
 const REQUIRED_MESSAGE: Record<string, string> = {
   name: 'Nhập tên ngựa.', horseCode: 'Nhập mã ngựa.', foaledDate: 'Nhập ngày sinh.',
   sex: 'Chọn giới tính.', breed: 'Chọn giống ngựa.',
@@ -56,6 +58,7 @@ function RegisterHorsePageContent() {
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const [formError, setFormError] = useState<string>();
   const [photos, setPhotos] = useState<PendingPhoto[]>([]);
+  const [photoError, setPhotoError] = useState<string>();
   const [saving, setSaving] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const pending = useRef(false);
@@ -76,15 +79,32 @@ function RegisterHorsePageContent() {
   }, [api, editId, editing, loadAttempt]);
 
   const photosRef = useRef<PendingPhoto[]>([]);
-  useEffect(() => {
-    photosRef.current = photos;
+  const pendingPhotoRevocations = useRef<PendingPhoto[]>([]);
+  useLayoutEffect(() => {
+    const removed = pendingPhotoRevocations.current;
+    pendingPhotoRevocations.current = [];
+    removed.forEach((photo) => {
+      if (photo.previewUrl && typeof URL.revokeObjectURL === 'function') URL.revokeObjectURL(photo.previewUrl);
+    });
   }, [photos]);
-  useEffect(() => () => photosRef.current.forEach((p) => p.previewUrl && URL.revokeObjectURL(p.previewUrl)), []);
+  useEffect(() => () => {
+    const remaining = photosRef.current;
+    const pendingRevocations = pendingPhotoRevocations.current;
+    photosRef.current = [];
+    pendingPhotoRevocations.current = [];
+    [...remaining, ...pendingRevocations].forEach((photo) => {
+      if (photo.previewUrl && typeof URL.revokeObjectURL === 'function') URL.revokeObjectURL(photo.previewUrl);
+    });
+  }, []);
 
   const removePhoto = (index: number) => {
-    const removed = photos[index];
-    if (removed?.previewUrl) URL.revokeObjectURL(removed.previewUrl);
-    setPhotos((all) => all.filter((_, j) => j !== index));
+    const current = photosRef.current;
+    const removed = current[index];
+    if (!removed) return;
+    const remaining = current.filter((_, j) => j !== index);
+    photosRef.current = remaining;
+    pendingPhotoRevocations.current.push(removed);
+    setPhotos(remaining);
   };
 
   const set = (field: Field) => (value: string) => {
@@ -94,11 +114,32 @@ function RegisterHorsePageContent() {
 
   const addPhotos = (files: FileList | null) => {
     if (!files) return;
-    const next = Array.from(files).map((file) => ({
-      file,
-      previewUrl: typeof URL.createObjectURL === 'function' ? URL.createObjectURL(file) : undefined,
-    }));
-    setPhotos((p) => [...p, ...next]);
+    const next: PendingPhoto[] = [];
+    const rejected: string[] = [];
+    for (const file of Array.from(files)) {
+      if (!ALLOWED_PHOTO_TYPES.has(file.type)) {
+        rejected.push(`${file.name}: Chỉ chấp nhận ảnh JPEG, PNG hoặc WebP.`);
+        continue;
+      }
+      if (file.size < 1) {
+        rejected.push(`${file.name}: Ảnh phải có dung lượng tối thiểu 1 byte.`);
+        continue;
+      }
+      if (file.size > MAX_PHOTO_SIZE) {
+        rejected.push(`${file.name}: Ảnh không được vượt quá 5 MB.`);
+        continue;
+      }
+      next.push({
+        file,
+        previewUrl: typeof URL.createObjectURL === 'function' ? URL.createObjectURL(file) : undefined,
+      });
+    }
+    setPhotoError(rejected.length ? rejected.join(' ') : undefined);
+    if (next.length) {
+      const updated = [...photosRef.current, ...next];
+      photosRef.current = updated;
+      setPhotos(updated);
+    }
   };
 
   const submit = async (event: FormEvent) => {
@@ -247,6 +288,7 @@ function RegisterHorsePageContent() {
                 ))}
                 <PhotoAttachmentTile state="empty" onAdd={() => fileInput.current?.click()} />
               </div>
+              {photoError && <AlertBanner feedback type="danger" title="Không thể thêm một số ảnh">{photoError}</AlertBanner>}
               <input ref={fileInput} className={styles.hiddenInput} type="file" accept="image/jpeg,image/png,image/webp" multiple
                 aria-label="Thêm ảnh" onChange={(e) => { addPhotos(e.target.files); e.target.value = ''; }} />
               <p className={styles.cardHelp}>Ảnh thật được dùng xuyên suốt hồ sơ cho các vai trò có quyền xem. Ảnh tải lên sau cùng là ảnh đại diện.</p>
