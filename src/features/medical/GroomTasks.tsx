@@ -1,3 +1,12 @@
+// CORE-046 — giao diện Groom làm công việc được giao từ phác đồ Vet.
+// Đây là việc điều trị, khác checklist kiểm tra trước buổi tập trong features/precheck.
+// Groom đọc instruction và đánh dấu hoàn thành; không sửa chẩn đoán, thuốc hay hạn chế tập luyện.
+// GroomTreatmentAccess kiểm tra role GROOM và tạo service theo actor hiện tại.
+// collectAssignedTasks lấy các trang việc mà JWT này được phép thấy, không lấy toàn bộ rồi giấu bớt.
+// Các bộ lọc Hôm nay/Sắp tới/Đã hoàn thành/Tất cả chỉ lọc dữ liệu đã được API cấp quyền.
+// Hôm nay dùng lịch CLB; việc quá hạn chưa xong cũng hiện trong nhóm cần làm hôm nay.
+// Checkbox không phải nút tự lưu vào database trên trình duyệt: phải đợi API complete thành công.
+
 import { boxLabel } from '../../shared/stableBox';
 import { ROUTES } from '../../app/routePaths';
 import { UiPreviewNotice } from './UiPreviewNotice';
@@ -39,6 +48,9 @@ export function GroomTreatmentAccess() {
 }
 
 export function GroomTasks({ service }: { service: GroomService }) {
+  // state chứa dữ liệu/lỗi tải danh sách; identities chứa tên/mã ngựa để đọc dễ hơn.
+  // Tên ngựa tải lỗi không làm mất hướng dẫn công việc: màn có thể dùng mã ngựa tạm thời.
+  // revision tăng khi reload để effect đọc lại dữ liệu mới từ server.
   const [state, setState] = useState<{ tasks?: GroomTreatmentTask[]; error?: string }>({});
   const [identities, setIdentities] = useState<{ source?: GroomTreatmentTask[]; rows: Record<number, HorseIdentity>; error?: string }>({ rows: {} });
   const [revision, setRevision] = useState(0), [filter, setFilter] = useState('today'), [horse, setHorse] = useState('');
@@ -74,6 +86,10 @@ export function GroomTasks({ service }: { service: GroomService }) {
     (filter === 'completed' ? t.status === 'COMPLETED' : filter === 'upcoming' ? t.status === 'PENDING' && t.taskDate > today : filter === 'all' ? true : t.taskDate === today || isOverdue(t)));
   const horseIds = [...new Set(tasks.map((t) => t.horseId))];
   const names = identities.source === state.tasks ? identities.rows : {};
+  // Đọc id từ checkbox và tìm task đang có trong danh sách được giao.
+  // pending khóa ngay lần nhấp đầu; status phải PENDING. Khi request lỗi không tự tick hoàn tất.
+  // Sau API thành công, reload lấy trạng thái/thời gian mà server đã ghi; mounted ngăn
+  // cập nhật màn đã rời. Ngày/giờ/người làm không được FE tự khai thay Backend.
   const handleComplete = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
     const taskId = Number(event.currentTarget.value);
     const task = tasks.find((item) => item.id === taskId);

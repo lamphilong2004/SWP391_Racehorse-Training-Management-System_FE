@@ -1,3 +1,12 @@
+// CORE-046 / giao diện Groom kiểm tra trước buổi tập (khác task điều trị).
+// Groom mở đúng buổi đã được Trainer phân công, ghi đủ 5 quan sát NORMAL hoặc ABNORMAL.
+// Bình thường là kết quả quan sát, không phải chẩn đoán thú y hoặc lệnh bắt đầu cưỡi.
+// BE còn kiểm tra người được giao, trạng thái SCHEDULED, khung 12 giờ và chưa có phiếu trước đó.
+// Work Rider chỉ bắt đầu theo quyền/giờ/hạn chế do Backend kiểm tra; Groom không tự start buổi tập.
+// Checklist đang nhập giữ trong state bộ nhớ; UnsavedChangesGuard cảnh báo rời khi còn chưa lưu.
+// Không lưu quan sát y tế vào localStorage/sessionStorage và không hứa phục hồi sau refresh.
+// Nếu đã lưu thì mở lại lấy phiếu thật, hiện đủ kết quả và khóa sửa; không tạo phiếu thứ hai.
+
 import { HorsePhotoImage } from '../horses/shared/HorsePhotoImage';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useParams } from 'react-router';
@@ -76,6 +85,8 @@ function PrecheckContent({ id, api, showPhoto }: { id: number; api: PrecheckApi;
   const { handleApiError } = useAuth();
   const [session, setSession] = useState<PrecheckSession>();
   const [check, setCheck] = useState<PreSessionCheck>();
+  // draft là 5 mục đang chọn. check là phiếu đã được server xác nhận — không được lẫn hai thứ.
+  // Gõ vào draft chưa làm thay đổi dữ liệu database hay thông báo cho bác sĩ.
   const [draft, setDraft] = useState<Partial<Checklist>>({});
   const checklist = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<unknown>();
@@ -111,10 +122,17 @@ function PrecheckContent({ id, api, showPhoto }: { id: number; api: PrecheckApi;
     return () => { active = false; };
   }, [id, api, attempt, handleApiError]);
   const reload = () => { setSession(undefined); setError(undefined); setAttempt((value) => value + 1); };
+  // Thanh tiến độ đếm các mục có kết quả, tối đa CHECK_ITEMS.length (hiện là 5).
+  // locked khóa form khi đang gửi, đã có phiếu, xung đột hoặc buổi không còn SCHEDULED.
+  // 5/5 chỉ là đủ mục đã trả lời; nếu có ABNORMAL thì vẫn là bất thường, không phải đạt.
   const answered = CHECK_ITEMS.filter(({ key }) => draft[key]?.result).length;
   const abnormal = CHECK_ITEMS.some(({ key }) => draft[key]?.result === 'ABNORMAL');
   const locked = busy || Boolean(check) || conflict || session?.status !== 'SCHEDULED';
   const startGate = check?.overallResult === 'ABNORMAL' ? 'Buổi tập bị chặn do kiểm tra trước buổi tập bất thường.' : check ? 'Tải lại buổi tập để xác nhận các điều kiện bắt đầu còn lại.' : session?.blocked ? viLabel(session.blockedMessage) || session.blockedReasons.map((reason) => viLabel(reason)).join(', ') || 'Bị chặn' : 'Không có điểm chặn';
+  // Trình tự: chặn gửi đôi → kiểm đủ mục/độ dài → gọi submit → kiểm đúng session/id.
+  // Không đủ mục thì focus mục đầu chưa trả lời, giữ nguyên mọi quan sát đã nhập.
+  // Chỉ setCheck sau phản hồi hợp lệ. Nếu bất thường, mở form báo sự cố để người dùng quyết định
+  // gửi; lưu phiếu ABNORMAL không tự tạo Incident và không tự kết luận một bệnh.
   async function save() {
     if (pending.current || check || conflict) return;
     if (answered < CHECK_ITEMS.length) {
@@ -150,6 +168,9 @@ function PrecheckContent({ id, api, showPhoto }: { id: number; api: PrecheckApi;
   if (error) return <ErrorState title={error instanceof ApiError && error.status === 403 ? 'Không có quyền truy cập' : 'Không tải được kiểm tra trước buổi tập'} description={message(error)} onRetry={reload} />;
   if (!session) return <LoadingState label="Đang tải kiểm tra trước buổi tập…" />;
   // Observations stay in memory only; leaving before the server records the check asks first.
+  // dirty là có nội dung chưa được server lưu. Guard cảnh báo trước khi rời màn.
+  // Lỗi 409 hoặc phản hồi không chắc chắn sẽ yêu cầu tải lại để tránh ghi trùng;
+  // catch không xóa draft, nhưng dữ liệu trong RAM vẫn không sống qua refresh.
   const dirty = !check && session.status === 'SCHEDULED' && CHECK_ITEMS.some(({ key }) => Boolean(draft[key]?.result || draft[key]?.observation));
   return <div className={styles.stack}>
     <UnsavedChangesGuard dirty={dirty} />

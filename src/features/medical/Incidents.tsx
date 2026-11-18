@@ -1,3 +1,13 @@
+// CORE-036 / phần giao diện sự cố — nơi Vet tiếp nhận báo cáo từ nhân viên.
+// Incident là báo cáo quan sát; Medical Case là hồ sơ khám/điều trị. Hai bản ghi khác nhau.
+// REPORTED = mới báo; UNDER_REVIEW = đang xử lý; RESOLVED = đã đóng sự cố.
+// Một ca có thể nhận nhiều sự cố của cùng ngựa; gắn ca không có nghĩa sao chép cách chữa cũ.
+// Đọc theo thứ tự: IncidentAccess kiểm quyền → IncidentListPage danh sách → IncidentDetail xử lý.
+// Người báo chỉ thấy phạm vi API cho phép; chỉ Vet có thao tác quyết định trên màn chi tiết.
+// Danh sách ưu tiên sự cố chưa đóng/mức cao nhưng đó là thứ tự hiển thị, không là chẩn đoán.
+// Bộ lọc/số đếm ở đây dựa trên trang đã tải, không tuyên bố là thống kê toàn bộ database.
+// service chuyển thao tác thành request; Backend xác nhận quyền, ngựa, ca và trạng thái thật.
+
 import { boxLabel } from '../../shared/stableBox';
 import { UiPreviewNotice } from './UiPreviewNotice';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -71,6 +81,8 @@ const SEVERITY_ORDER = { HIGH: 0, MEDIUM: 1, LOW: 2 } as const;
 type IncidentFocus = '' | 'REPORTED' | 'UNDER_REVIEW' | 'RESOLVED' | 'HIGH_OPEN';
 
 /** Where the report came from, in the words the Veterinarian triages by. */
+// Nguồn báo giúp Vet hiểu bối cảnh: precheck, lúc cưỡi, việc chăm sóc hay tại chuồng.
+// Chỉ đọc khóa liên kết mà API có trả; không tự gán sự cố cho một buổi tập khác.
 function incidentSource(item: Pick<Incident, 'preSessionCheckId' | 'trainingSessionId' | 'careTaskId'>) {
   if (item.preSessionCheckId) return { label: 'Kiểm tra trước buổi tập', detail: `Lần kiểm tra #${item.preSessionCheckId} · buổi tập bị chặn` };
   if (item.trainingSessionId) return { label: 'Đang cưỡi · buổi tập đã dừng', detail: `Buổi tập #${item.trainingSessionId}` };
@@ -158,6 +170,8 @@ function IncidentDetail({ id, service, role, actorId, horse, reporter }: { id: n
   const locked = useRef(false), mounted = useRef(true), navigate = useNavigate();
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const item: Incident | undefined = state.data;
+  // Chỉ bật lựa chọn tiếp nhận khi người dùng là Vet, sự cố còn mới và chưa gắn ca.
+  // Trạng thái đã gắn/đóng không được xử lý như báo cáo mới; BE cũng kiểm tra điều kiện này.
   const canDecide = role === 'VETERINARIAN' && item?.status === 'REPORTED' && !item.medicalCaseId;
   const horseId = item?.horseId;
   useEffect(() => {
@@ -166,6 +180,10 @@ function IncidentDetail({ id, service, role, actorId, horse, reporter }: { id: n
     service.openCases(horseId).then((cases) => { if (active) setOpenCases(cases); }, () => { if (active) setOpenCases([]); });
     return () => { active = false; };
   }, [canDecide, horseId, service]);
+  // Ba thao tác khác nhau:
+  // OPEN_CASE tạo hồ sơ y tế mới từ sự cố; LINK_CASE gắn vào ca đang mở của đúng ngựa;
+  // RESOLVE đóng báo cáo. Chọn LINK_CASE cần caseId hợp lệ từ danh sách ca.
+  // Khóa locked ngăn gửi lặp; kết quả phản hồi mới quyết định điều hướng/cập nhật UI.
   async function review(action: 'OPEN_CASE' | 'LINK_CASE' | 'RESOLVE') {
     const current = state.data;
     if (locked.current || !current || role !== 'VETERINARIAN' || current.status === 'RESOLVED') return;
