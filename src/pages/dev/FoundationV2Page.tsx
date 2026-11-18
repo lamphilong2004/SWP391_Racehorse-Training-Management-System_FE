@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { ActionBar, Button, Card, DataTable, DesignSystemScope, Drawer, EmptyState, ErrorState, Icon, Modal, ResponsiveGrid, Skeleton, Stack, StatusBadge, Tabs, TextAreaField, TextField, ToastRegion, UnsavedChangesGuard, type ToastMessage } from '../../design-system';
+import { TailwindPatternExample } from './TailwindPatternExample';
 import styles from './FoundationV2Page.module.css';
 
-/** Component review only. DEV-only route, no sample business store, Auth API or save action. */
+/** DEV-only component review. Interactions use local React state. */
 export function FoundationV2Page() {
   const [text, setText] = useState('');
   const [notes, setNotes] = useState('');
@@ -14,10 +15,14 @@ export function FoundationV2Page() {
   return <DesignSystemScope className={styles.page}>
     <UnsavedChangesGuard dirty={Boolean(text || notes)} />
     <header><p>Shared foundation review · no Backend or persistence</p><h1 className="text-h1">Equestrian Command v2</h1>
-      <Link to="/login">Return to application</Link>{' · '}<Link to="/dev/components">Legacy component review</Link></header>
+      <nav aria-label="Gallery navigation" className="flex flex-wrap gap-x-4 gap-y-1">
+        <Link to="/login">Return to application</Link><Link to="/dev/components">Legacy component review</Link>
+      </nav>
+    </header>
     <Tabs label="Foundation review" idPrefix="v2-review" items={[{ value: 'components', label: 'Components' }, { value: 'states', label: 'Data states' }]} value={tab} onChange={setTab} />
     <div role="tabpanel" id={`v2-review-panel-${tab}`} aria-labelledby={`v2-review-tab-${tab}`}>
       {tab === 'components' ? <Stack>
+        <TailwindPatternExample />
         <Card title="Bố cục thao tác — chỉ kiểm tra component">
           <p>Nội dung và trường nhập ở phía trên. Hủy ở bên trái nút chính; thông tin hỗ trợ tách khỏi nhóm nút.</p>
           <ActionBar leading={<span>Không gửi API hoặc lưu dữ liệu trong trang kiểm tra này.</span>}>
