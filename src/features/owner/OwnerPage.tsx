@@ -1,3 +1,12 @@
+// CORE-056 — cổng chủ ngựa: My Horses, Hồ sơ, Sức khỏe, Huấn luyện.
+// OwnerPage yêu cầu đăng nhập; OwnerAccess chỉ cho tài khoản HORSE_OWNER đang hoạt động.
+// OwnerContext cung cấp service đã được app cấu hình, thay vì trang tự chọn dữ liệu giả.
+// Owner chỉ được xem projection của ngựa đứng tên mình; server phải xác minh quyền sở hữu.
+// Ba tab dùng cùng horse đã tải; chuyển tab đổi tham số URL, không sửa hồ sơ ngựa.
+// q là từ khóa tìm kiếm, tab là tab đang mở, horseId là mã ngựa từ đường dẫn.
+// Thông tin chưa chia sẻ/chưa có phải hiện trung thực, không suy ra chẩn đoán từ trạng thái.
+// Đây là trang chỉ xem; quyền cập nhật chuyên môn thuộc nhân viên thích hợp, không phải Owner.
+
 import { useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { RequireAuth } from '../../app/RequireAuth';
@@ -48,6 +57,9 @@ function OwnerContent() {
   const valid = (!horseId || (Number.isSafeInteger(id) && id > 0)) && (!horseId || tabs.some((item) => item.value === tab));
   const [revision, setRevision] = useState(0);
   const [searchEpoch, setSearchEpoch] = useState(0);
+  // Gói thông tin lần đọc thành source gồm service/ngựa/tài khoản/revision.
+  // Khi chuyển ngựa hoặc người dùng, source đổi; kết quả source cũ không được coi là dữ liệu hiện tại.
+  // AbortController bên dưới hủy request khi rời và handleApiError xử lý lỗi phiên chung.
   const source = useMemo(() => ({ service, id, horseId, valid, revision, actorId: user!.id }), [service, id, horseId, valid, revision, user]);
   const [result, setResult] = useState<{ source: object; horses?: OwnerHorse[]; error?: number } | null>(null);
   useEffect(() => {
@@ -63,6 +75,9 @@ function OwnerContent() {
   const current = result?.source === source ? result : null;
   const horse = current?.horses?.[0];
   const search = (value: string) => { const next = new URLSearchParams(); if (value.trim()) next.set('q', value.trim()); navigate(`${ROUTES.myHorses}${next.size ? `?${next}` : ''}`); };
+  // Giữ q khi mở chi tiết và khi quay về Ngựa của tôi. Ví dụ đã tìm Hắc Phong,
+  // mở hồ sơ rồi Back vẫn giữ bộ lọc đó, không bắt người dùng nhập lại.
+  // Đổi tab sao chép params hiện có để không vô tình xóa q.
   const listQuery = params.get('q');
   const listSearch = listQuery ? `?${new URLSearchParams({ q: listQuery })}` : '';
   const listHref = `${ROUTES.myHorses}${listSearch}`;
