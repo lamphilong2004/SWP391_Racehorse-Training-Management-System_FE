@@ -1,3 +1,10 @@
+// CORE-048 — gửi đăng ký và duyệt/từ chối yêu cầu đăng ký tài khoản.
+// Public register là gửi yêu cầu, không phải tự cấp quyền role hay tự đăng nhập thành công.
+// Nhánh quản trị list/approve/reject yêu cầu token; Backend chịu trách nhiệm xác minh Club Manager.
+// parseRegistration chỉ lấy trường được phép hiển thị, không đưa password/hash vào state giao diện.
+// HTTP 200 chưa đủ: mã bản ghi, trạng thái và vai trò trong phản hồi phải khớp thao tác yêu cầu.
+// Phân biệt dữ liệu nhập sai, hết phiên, bị cấm và phản hồi sai để UI không báo thành công giả.
+
 import { ApiError, requestApi } from '../../shared/auth/authApi';
 import { isRoleCode } from '../../shared/auth/roles';
 import { REGISTRATION_STATUSES, type RegistrationRequest, type RegistrationService, type RequestContext } from './types';
@@ -7,6 +14,9 @@ function invalid(): never { throw new ApiError(200, 'INVALID_RESPONSE', 'Dữ li
 function object(value: unknown): Record<string, unknown> { if (!value || typeof value !== 'object' || Array.isArray(value)) return invalid(); return value as Record<string, unknown>; }
 function text(value: unknown, max?: number): string { if (typeof value !== 'string' || (max && value.length > max)) return invalid(); return value; }
 function integer(value: unknown, minimum = 0): number { if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < minimum) return invalid(); return value; }
+// Timestamp cần ngày hợp lệ và có timezone. Date.parse đôi khi tự dồn ngày không tồn tại
+// sang tháng kế tiếp, nên kiểm tra năm nhuận/số ngày tháng trước khi chấp nhận.
+// Ví dụ 30/02 không được xem như một ngày tháng 3 hợp lệ.
 function iso(value: unknown): string {
   const result = text(value);
   const parts = /^(\d{4})-(\d{2})-(\d{2})T.*(?:Z|[+-]\d{2}:\d{2})$/.exec(result);
@@ -54,6 +64,9 @@ export function createRegistrationService(options: { fetcher?: typeof fetch; bas
       if (result.page !== query.page || result.size !== query.size || result.totalPages !== Math.ceil(result.totalItems / result.size) || result.items.length > result.size || new Set(result.items.map((item) => item.id)).size !== result.items.length || result.items.some((item) => query.status && item.status !== query.status)) return invalid();
       return result;
     },
+    // Gửi đúng một roleCode đã được nhận diện; parse phản hồi rồi kiểm id/status/role.
+    // Màn chỉ nên báo duyệt xong khi nhận APPROVED của chính yêu cầu đó.
+    // Việc này không liên quan duyệt kích hoạt ngựa, dù cùng dùng từ duyệt.
     approve: async (id, roleCode, context) => {
       if (!isRoleCode(roleCode)) throw new ApiError(400, 'VALIDATION_ERROR', 'Hãy chọn đúng một vai trò.');
       const result = parseRegistration(await authenticated(`${idPath(id)}/approve`, context, 'POST', { roleCode }));

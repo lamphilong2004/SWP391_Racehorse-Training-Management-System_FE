@@ -1,3 +1,14 @@
+// CORE-036 — các trang nghiệp vụ chính của bác sĩ thú y.
+// Trang lấy service từ useMedicalRuntime; quyền vào phân hệ nằm ở runtime.tsx.
+// Đọc theo luồng demo: CaseListPage → CaseDetailPage → CaseDetails → form từng tab.
+// Hồ sơ ca tập hợp lần khám, chấn thương, phác đồ và tái khám; mỗi phần có thao tác lưu riêng.
+// MedicalForm dựng các form đơn giản; TreatmentPlanEditor xử lý phác đồ và giao Groom.
+// CaseClosure dựng danh sách điều kiện để Vet biết phải làm gì trước khi đóng ca.
+// Health Status mô tả sức khỏe; Training Availability mô tả quyền tập. Hai trạng thái khác nhau.
+// Ví dụ đã ghi RECOVERED chưa có nghĩa hạn chế tập luyện tự được gỡ.
+// Các hook tải dữ liệu chỉ quản lý loading/error/retry của UI; dữ liệu thật do API trả về.
+// File này dùng component Design System chung; không tự xác định liều thuốc hay quyết định y tế.
+
 import { clubDateTime, parseClubDateTime } from '../../shared/clubCalendar';
 import { boxLabel } from '../../shared/stableBox';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
@@ -65,6 +76,10 @@ const positiveId = (value: string) => {
   if (!Number.isSafeInteger(id) || id < 1) throw new Error('Nhập mã số dương hợp lệ.');
   return id;
 };
+// Hook là hàm dùng state/effect của React để tái sử dụng một cách tải dữ liệu.
+// load là hàm đọc API, revision đổi khi bấm Thử lại; effect chạy lại theo các đầu vào đó.
+// active ngăn phản hồi đến muộn cập nhật màn đã rời. source tránh hiển thị kết quả cũ
+// khi người dùng đã chuyển đối tượng. Có lỗi thì hiển thị lỗi, không suy ra là chưa có bản ghi.
 function useResource<T>(load: () => Promise<T>) {
   const [state, setState] = useState<{ data?: T; error?: string; source?: () => Promise<T> }>({});
   const [revision, setRevision] = useState(0);
@@ -98,6 +113,9 @@ function AvailabilityDetails({ availability }: { availability: TrainingAvailabil
   </div>;
 }
 
+// Danh sách nhận một trang ca từ server rồi tìm/lọc trên chính data.items trang đó.
+// Ô tìm không phải tìm toàn database; totalElements là tổng server, rows.length là số đang khớp.
+// Bấm link Ca chuyển đến hồ sơ; không gửi thao tác khám hay cập nhật trạng thái.
 export function CaseListPage() {
   const { service } = useMedicalRuntime();
   const [page, setPage] = useState(0);
@@ -120,6 +138,9 @@ export function CaseListPage() {
     </Card></>;
 }
 
+// Tạo ca độc lập: chọn hồ sơ ngựa theo tên/mã rồi gửi horseId cùng lý do.
+// Chọn trong picker mới là chọn đối tượng; chỉ await createCase thành công mới chuyển sang ca.
+// Nếu bắt đầu từ một Incident thì dùng màn xem xét sự cố, không lách bằng cách gõ id vào lý do.
 export function CreateCasePage() {
   const { service } = useMedicalRuntime();
   const navigate = useNavigate();
@@ -148,6 +169,9 @@ export function CreateCasePage() {
     }} /><p className="text-caption">Để mở ca từ một sự cố, hãy dùng màn hình xem xét sự cố.</p></Card></>;
 }
 
+// Sức khỏe đàn ngựa là màn tổng quan để Vet chọn ngựa cần chú ý và đi tới hồ sơ phù hợp.
+// Giữ nhãn sức khỏe và khả năng tập riêng: ngựa trông khỏe chưa chắc đã được phép tập.
+// Các chỉ số lấy từ dữ liệu API; màn không tự gỡ hạn chế hay tự đặt tình trạng sức khỏe.
 export function HerdHealthPage() {
   const navigate = useNavigate();
   const { service } = useMedicalRuntime();
@@ -196,6 +220,8 @@ export function HerdHealthPage() {
   </>;
 }
 
+// Lấy caseId từ URL và kiểm mã trước khi đọc ca. Đổi mã ca phải hiển thị đúng ca mới.
+// Dữ liệu tải được mới truyền xuống CaseDetails; loading/lỗi không được giả là ca rỗng.
 export function CaseDetailPage() {
   const { caseId = '' } = useParams();
   const { service } = useMedicalRuntime();
@@ -209,6 +235,9 @@ export function CaseDetailPage() {
   if (!data) return <ResourceState error={error} retry={reload} />;
   return <CaseDetails item={data} reload={reload} />;
 }
+// item là ca đã đọc từ máy chủ. Mỗi tab trình bày một nhóm hồ sơ của chính ca này.
+// needsExamination/needsRecovery chỉ gợi ý bước tiếp theo từ lịch sử đã có.
+// Chúng không phải quyền bỏ qua kiểm tra đóng ca của Backend.
 function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }) {
   const { service } = useMedicalRuntime();
   const [panel, setPanel] = useState('record');
@@ -216,6 +245,8 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
   const needsExamination = !item.examinations.length && !item.reexaminations.length;
   const needsRecovery = (item.injuries.length > 0 || !!item.treatmentPlan) && latest(item.reexaminations)?.recoveryStatus !== 'RECOVERED';
   const nextClinicalTab = needsExamination ? 'examination' : needsRecovery ? 'recovery' : null;
+  // Bấm gợi ý Khám/Tái khám: đổi tab đang hiển thị rồi đưa focus bàn phím đến tab đó.
+  // Thao tác này chỉ điều hướng giao diện; chưa tự lưu một lần khám hay kết quả hồi phục.
   const openTab = (tab: string) => {
     setPanel(tab);
     document.getElementById(`case-tab-${tab}`)?.focus();
@@ -297,6 +328,11 @@ function CaseDetails({ item, reload }: { item: MedicalCase; reload: () => void }
     </div>
   </>;
 }
+// Màn phác đồ đọc ca và toàn bộ các trang task lịch sử trước khi cho chỉnh sửa.
+// Vòng for kiểm tổng/kích thước/trùng id để tránh lưu đè khi chỉ tải được một phần công việc.
+// initial dựng lại nội dung cũ; retainedTaskCount khóa các việc đã giao, chỉ thêm việc mới.
+// await saveTreatment xong mới setSaved; reload đọc lại plan/task thực tế từ Backend.
+// Ca CLOSED chỉ được xem, không dựng editor để tiếp tục thay đổi hồ sơ đã đóng.
 export function TreatmentPlanPage() {
   const { caseId = '' } = useParams();
   const navigate = useNavigate();
@@ -352,6 +388,8 @@ export function TreatmentPlanPage() {
       <Card title="Triển khai phác đồ"><p>Groom chỉ thấy hướng dẫn chăm sóc được giao. Chẩn đoán và chi tiết thuốc vẫn nằm trong hồ sơ thú y.</p></Card>
     </div></div></>;
 }
+// Danh sách tiến độ để Vet theo dõi ai được giao và status mà Backend đã ghi.
+// Đây không phải nút Vet hoàn thành thay Groom; quyền đánh dấu nằm ở màn Groom và API tương ứng.
 function CaseTasks({ caseId }: { caseId: number }) {
   const { service } = useMedicalRuntime();
   const [page, setPage] = useState(0);

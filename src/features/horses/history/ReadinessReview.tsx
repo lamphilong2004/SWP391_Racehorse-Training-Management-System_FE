@@ -1,3 +1,11 @@
+// CORE-017 — Head Trainer ghi nhận đã xem mức sẵn sàng.
+// Checklist mô tả điều kiện và trạng thái từ hệ thống; FE không tự đánh dấu điều kiện đã đạt.
+// Club Manager/Vet có thể xem theo gate hiện hành; chỉ Head Trainer thấy nút ghi đánh giá.
+// acknowledge nghĩa là ghi nhận đã đánh giá, không là duyệt thủ công để ngựa ACTIVE.
+// Kích hoạt tự động, sức khỏe và khả năng tập luyện thuộc các quy tắc/thao tác riêng.
+// Ví dụ bấm Ghi đánh giá không gỡ LOCKED và không biến một ngựa DRAFT thành ACTIVE.
+// API lỗi thì không hiện success; mẫu có nhãn riêng và không chứng minh dữ liệu BE đã lưu.
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertBanner, Button, Card, ErrorState, LoadingState } from '../../../design-system';
 import { useAuth } from '../../../shared/auth/AuthProvider';
@@ -16,6 +24,8 @@ function Review({ id }: { id: number }) {
   const service = useHorseHistoryService(); const { user, handleApiError } = useAuth();
   const [revision, setRevision] = useState(0), [busy, setBusy] = useState(false), [success, setSuccess] = useState(false), [writeError, setWriteError] = useState<number>();
   const source = useMemo(() => ({ id, service, revision }), [id, service, revision]);
+  // Nhớ ngựa/service/revision của lần tải hiện tại. Nếu đổi ngựa lúc request đang chạy,
+  // chỉ nhận phản hồi còn đúng source, tránh hiện đánh giá của ngựa A trên ngựa B.
   const currentSource = useRef(source);
   useEffect(() => { currentSource.current = source; }, [source]);
   const mounted = useRef(false), locked = useRef(false);
@@ -27,6 +37,8 @@ function Review({ id }: { id: number }) {
     return () => { active = false; abort.abort(); };
   }, [source, service, id, handleApiError]);
   const current = result?.source === source ? result : undefined;
+  // locked ngăn gửi trùng; busy hiển thị đang gửi. Chờ BE xác nhận rồi mới hiện success
+  // và tăng revision đọc lại checklist. Không sửa trực tiếp lifecycle hoặc tình trạng y tế.
   const acknowledge = async () => {
     if (locked.current) return; locked.current = true; setBusy(true); setWriteError(undefined); setSuccess(false);
     try {

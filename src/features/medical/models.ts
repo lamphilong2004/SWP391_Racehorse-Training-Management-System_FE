@@ -1,4 +1,9 @@
 // CORE-006, backend docs/api/flow3-medical.openapi.yaml.
+// BẢN ĐỒ DỮ LIỆU Y TẾ CHO NGƯỜI ĐỌC CODE
+// File này mô tả kiểu dữ liệu, không gọi API và không tự ghi database.
+// RecoveryStatus nói vết thương hồi phục đến đâu; HealthStatus nói thể trạng ngựa.
+// Availability nói quyền tập luyện theo hạn chế của Vet: ba giá trị này không thay nhau.
+// Ví dụ: RECOVERED + FIT vẫn có thể LOCKED nếu hạn chế chưa được Vet gỡ.
 export type RecoveryStatus = 'NOT_RECOVERED' | 'IMPROVING' | 'RECOVERED';
 export type ClinicalSeverity = 'MILD' | 'MODERATE' | 'SEVERE';
 export type HealthStatus = 'FIT' | 'MONITORING' | 'INJURED' | 'QUARANTINED';
@@ -11,6 +16,9 @@ export interface MedicalCaseCreateRequest { horseId: number; reason: string }
 export interface ExaminationRequest { symptoms: string; diagnosis?: string; severity?: ClinicalSeverity; examinedAt: string; healthStatus?: HealthStatus; bodyCondition?: string }
 export interface InjuryRequest { bodyRegion: string; severity: ClinicalSeverity; recoveryStatus: RecoveryStatus; veterinaryExaminationId?: number; position3d?: string; side?: string }
 export interface GroomTaskInstruction { assignedGroomUserId: number; instruction: string; taskDate: string; scheduledSlot?: string }
+// Request là dữ liệu form gửi đi, chưa phải kết quả đã lưu. Thuốc hiện là văn bản.
+// Mỗi groomTasks chỉ ra đúng người nhận, ngày, hướng dẫn và khung giờ tùy chọn;
+// không chứa completedAt/completedBy vì server phải xác nhận ai thực sự hoàn thành.
 export interface TreatmentPlanRequest { treatmentMedicationInstructions: string; restInstructions?: string; careInstructions?: string; groomTasks?: GroomTaskInstruction[]; reexaminationDate?: string }
 export interface ReexaminationRequest { recoveryStatus: RecoveryStatus; findings: string; examinedAt: string; healthStatus?: HealthStatus; diagnosis?: string; severity?: ClinicalSeverity; bodyCondition?: string }
 export interface MedicalCase { id: number; horseId: number; status: 'OPEN' | 'CLOSED'; openedAt: string; closedAt?: string; reason?: string; incidentIds: number[]; examinations: Examination[]; injuries: Injury[]; treatmentPlan?: TreatmentPlan; reexaminations: Reexamination[] }
@@ -25,6 +33,9 @@ export interface TrainingAvailability { horseId: number; availability: Availabil
 export interface MedicalRestriction { id: number; horseId: number; level: 'LIMITED' | 'LOCKED'; reason: string; effectiveAt: string; liftedAt?: string; reviewDate?: string; medicalCaseId?: number; exerciseRules?: RestrictionExerciseRule[] }
 export interface HerdHealthOverview { totalHorses: number; fit: number; monitoring: number; injured: number; quarantined: number; unassessed: number }
 
+// Đây là các thao tác màn Vet được phép yêu cầu service thực hiện.
+// Promise thành công nghĩa lời gọi đã trả kết quả; quyền truy cập và luật đóng ca
+// vẫn do Backend kiểm tra, không phải chỉ cần ẩn/hiện nút trên màn hình là đủ.
 export interface MedicalService {
   listHerdHorses(): Promise<import('./horseRead').HerdHorse[]>;
   getHorse(id: number): Promise<import('./horseRead').HorseIdentity>;

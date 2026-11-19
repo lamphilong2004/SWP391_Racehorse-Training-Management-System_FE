@@ -10,6 +10,10 @@ const recovery = ['NOT_RECOVERED', 'IMPROVING', 'RECOVERED'];
 const severity = ['MILD', 'MODERATE', 'SEVERE'];
 const invalid = () => new ApiError(200, 'INVALID_RESPONSE', 'Dữ liệu y tế không hợp lệ. Hãy tải lại để thử lại.');
 
+// API trả JSON chưa có kiểu đáng tin cậy dù TypeScript đã khai báo MedicalCase.
+// Reader kiểm tra cả cấu trúc lẫn liên kết: lần khám phải thuộc đúng ca VÀ đúng ngựa,
+// chấn thương/phác đồ phải thuộc đúng ca. Sai dữ liệu thì báo INVALID_RESPONSE,
+// không ghép hồ sơ của ngựa khác hoặc thay bằng dữ liệu mẫu.
 export function readCase(v: unknown): MedicalCase {
   if (!object(v) || !positive(v.id) || !positive(v.horseId) || !oneOf(v.status, ['OPEN', 'CLOSED']) || !timestamp(v.openedAt) ||
     !optional(v, ['reason', 'closedAt']) || !Array.isArray(v.incidentIds) || !v.incidentIds.every(positive) ||
@@ -19,11 +23,16 @@ export function readCase(v: unknown): MedicalCase {
     (v.treatmentPlan !== undefined && (!object(v.treatmentPlan) || !positive(v.treatmentPlan.id) || v.treatmentPlan.caseId !== v.id || typeof v.treatmentPlan.treatmentMedicationInstructions !== 'string' || !timestamp(v.treatmentPlan.createdAt) || !optional(v.treatmentPlan, ['restInstructions', 'careInstructions', 'reexaminationDate'])))) throw invalid();
   return v as unknown as MedicalCase;
 }
+// Kiểm tra số trang và kích thước trước khi đưa dữ liệu cho bảng.
+// read được truyền vào để kiểm tra từng dòng theo đúng loại DTO;
+// trang trống hợp lệ khác với API trả sai cấu trúc hoặc sai trang.
 export function readPage<T>(v: unknown, read: (item: unknown) => T, page: number): Page<T> {
   if (!object(v) || !Array.isArray(v.items) || v.page !== page || !Number.isSafeInteger(v.size) || Number(v.size) < 1 || Number(v.size) > 100 ||
     !Number.isSafeInteger(v.totalElements) || Number(v.totalElements) < 0 || v.items.length > Number(v.size) || v.items.length > Number(v.totalElements)) throw invalid();
   return { items: v.items.map(read), page, size: Number(v.size), totalElements: Number(v.totalElements) };
 }
+// Task phải gắn đúng caseId đang mở và có người nhận hợp lệ.
+// PENDING/COMPLETED là trạng thái server trả về, không suy ra từ checkbox local.
 export function readCaseTask(v: unknown, caseId: number): CaseTreatmentTask {
   if (!object(v) || !positive(v.id) || v.caseId !== caseId || !positive(v.horseId) || !positive(v.treatmentPlanId) || !positive(v.assignedGroomUserId) ||
     typeof v.instruction !== 'string' || typeof v.taskDate !== 'string' || !oneOf(v.status, ['PENDING', 'COMPLETED']) || !optional(v, ['scheduledSlot', 'completedAt'])) throw invalid();
@@ -34,6 +43,8 @@ export function readHerd(v: unknown): HerdHealthOverview {
   if (!object(v) || !keys.every((key) => Number.isSafeInteger(v[key]) && Number(v[key]) >= 0)) throw invalid();
   return v as unknown as HerdHealthOverview;
 }
+// Xác nhận phản hồi đúng horseId, tránh hiển thị khả năng tập của ngựa vừa xem trước.
+// Rule hiện chọn exerciseId HOẶC exerciseTypeNote; reader không tự tạo luật tập mới.
 export function readAvailability(v: unknown, horseId: number): TrainingAvailability {
   if (!object(v) || v.horseId !== horseId || !oneOf(v.availability, ['AVAILABLE', 'LIMITED', 'LOCKED']) || !optional(v, ['reason']) ||
     (v.exerciseRules !== undefined && (!Array.isArray(v.exerciseRules) || !v.exerciseRules.every((x) => object(x) && oneOf(x.ruleType, ['ALLOWED', 'PROHIBITED']) &&

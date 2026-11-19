@@ -1,3 +1,12 @@
+// CORE-017 — phả hệ, lịch sử sở hữu/xếp chuồng và timeline của ngựa.
+// horse là hồ sơ hiện tại do trang cha đưa vào; lịch sử đọc thêm qua historyService.
+// HorseHistoryPanel kiểm tài khoản trước, History mới thực hiện tải dữ liệu.
+// Club Manager/Head Trainer thấy toàn bộ lịch sử sở hữu và xếp chuồng; vai trò khác
+// được vào màn chỉ xem phần mà luồng hiện tại cho phép, không được FE tự gọi rộng hơn.
+// Timeline trình bày sự kiện không thuộc chuyên môn y tế, phân trang bằng page.
+// Không có ông/bà/người gây giống trong dữ liệu thì hiện Không có; không tự tạo gia phả.
+// source=sample phải có nhãn mẫu; dữ liệu mẫu không là bằng chứng đã gọi API/SQL thật.
+
 import { boxLabel, yardLabel } from '../../../shared/stableBox';
 import { useEffect, useMemo, useState } from 'react';
 import { ButtonLink, AlertBanner, Button, Card, EmptyState, ErrorState, KeyValue, LoadingState } from '../../../design-system';
@@ -21,11 +30,16 @@ export function HorseHistoryPanel({ horse }: { horse: HorseDetail }) {
 function History({ horse }: { horse: HorseDetail }) {
   const service = useHorseHistoryService();
   const { user, handleApiError } = useAuth();
+  // Đây là quyền xem thêm lịch sử sở hữu/xếp chuồng, không phải quyền sửa ngựa.
+  // Các API còn phải kiểm quyền riêng, nên không thể mở rộng quyền bằng cách sửa giao diện.
   const fullHistory = user!.roles.some((r) => ['CLUB_MANAGER', 'HEAD_TRAINER'].includes(r));
   const [page, setPage] = useState(0), [revision, setRevision] = useState(0);
   const source = useMemo(() => ({ service, id: horse.id, page, revision, fullHistory, actorId: user!.id }), [service, horse.id, page, revision, fullHistory, user]);
   const [result, setResult] = useState<{ source: object; timeline?: Page<TimelineEvent>; ownerships?: Ownership[]; assignments?: StableAssignment[]; error?: number }>();
   useEffect(() => {
+    // Gọi timeline cùng các lịch sử được phép. AbortController hủy khi rời màn/chuyển ngựa.
+    // active và đối chiếu source ngăn phản hồi của ngựa/trang trước xuất hiện trên ngựa/trang mới.
+    // Promise.all có lỗi thì báo tải thất bại, không giả sử là lịch sử rỗng.
     const abort = new AbortController(); let active = true;
     const histories = source.fullHistory ? Promise.all([service.ownerships(source.id, abort.signal), service.assignments(source.id, abort.signal)]) : Promise.resolve([undefined, undefined] as const);
     Promise.all([service.timeline(source.id, source.page, abort.signal), histories]).then(([timeline, [ownerships, assignments]]) => { if (active) setResult({ source, timeline, ownerships, assignments }); }, (cause: unknown) => { if (active && !handleApiError(cause)) setResult({ source, error: cause instanceof ApiError ? cause.status : 500 }); });

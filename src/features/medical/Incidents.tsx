@@ -1,3 +1,13 @@
+// CORE-036 / phần giao diện sự cố — nơi Vet tiếp nhận báo cáo từ nhân viên.
+// Incident là báo cáo quan sát; Medical Case là hồ sơ khám/điều trị. Hai bản ghi khác nhau.
+// REPORTED = mới báo; UNDER_REVIEW = đang xử lý; RESOLVED = đã đóng sự cố.
+// Một ca có thể nhận nhiều sự cố của cùng ngựa; gắn ca không có nghĩa sao chép cách chữa cũ.
+// Đọc theo thứ tự: IncidentAccess kiểm quyền → IncidentListPage danh sách → IncidentDetail xử lý.
+// Người báo chỉ thấy phạm vi API cho phép; chỉ Vet có thao tác quyết định trên màn chi tiết.
+// Danh sách ưu tiên sự cố chưa đóng/mức cao nhưng đó là thứ tự hiển thị, không là chẩn đoán.
+// Bộ lọc/số đếm ở đây dựa trên trang đã tải, không tuyên bố là thống kê toàn bộ database.
+// service chuyển thao tác thành request; Backend xác nhận quyền, ngựa, ca và trạng thái thật.
+
 import { boxLabel } from '../../shared/stableBox';
 import { UiPreviewNotice } from './UiPreviewNotice';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -32,7 +42,9 @@ export function IncidentAccess({ detail = false }: { detail?: boolean }) {
   const role = actor?.roles.find((r) => allowed.includes(r));
   const service = useMemo(() => token && actor ? createIncidentService(token, actor, auth.handleApiError) : null, [token, actor, auth.handleApiError]);
   const horse = useMemo(() => token ? (id: number) => readHorseIdentity(token, id, auth.handleApiError) : undefined, [token, auth.handleApiError]);
-  // BR-35: a Groom may report what they observe at the stable for any ACTIVE horse that is in a box today.
+  // BR-35 cho Groom báo quan sát tại chuồng; bộ chọn hiện chỉ lấy trang đầu,
+  // tối đa 100 ngựa ACTIVE rồi lọc currentBoxCode có giá trị. Không phải mọi ngựa
+  // đủ điều kiện đều chắc chắn có trong bộ chọn; BE vẫn kiểm quyền khi gửi báo cáo.
   const stableHorses = useMemo(() => token ? () => requestApi<{ items: { id: number; name: string; horseCode: string; currentBoxCode: string | null }[] }>('/api/horses?lifecycle=ACTIVE&size=100', { method: 'GET' }, { token })
     .then((page) => page.items.filter((item) => item.currentBoxCode).map((item) => ({ id: item.id, label: `${item.name} · ${item.horseCode} · ${boxLabel(item.currentBoxCode)}` }))) : undefined, [token]);
   // Only the Club Manager may read the staff directory (GET /api/admin/users/{id}); other roles see the reporter id.
@@ -71,6 +83,8 @@ const SEVERITY_ORDER = { HIGH: 0, MEDIUM: 1, LOW: 2 } as const;
 type IncidentFocus = '' | 'REPORTED' | 'UNDER_REVIEW' | 'RESOLVED' | 'HIGH_OPEN';
 
 /** Where the report came from, in the words the Veterinarian triages by. */
+// Nguồn báo giúp Vet hiểu bối cảnh: precheck, lúc cưỡi, việc chăm sóc hay tại chuồng.
+// Chỉ đọc khóa liên kết mà API có trả; không tự gán sự cố cho một buổi tập khác.
 function incidentSource(item: Pick<Incident, 'preSessionCheckId' | 'trainingSessionId' | 'careTaskId'>) {
   if (item.preSessionCheckId) return { label: 'Kiểm tra trước buổi tập', detail: `Lần kiểm tra #${item.preSessionCheckId} · buổi tập bị chặn` };
   if (item.trainingSessionId) return { label: 'Đang cưỡi · buổi tập đã dừng', detail: `Buổi tập #${item.trainingSessionId}` };
@@ -163,14 +177,23 @@ function IncidentDetail({ id, service, role, actorId, horse, reporter }: { id: n
   const locked = useRef(false), mounted = useRef(true), navigate = useNavigate();
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const item: Incident | undefined = state.data;
+  // Chỉ bật lựa chọn tiếp nhận khi người dùng là Vet, sự cố còn mới và chưa gắn ca.
+  // Trạng thái đã gắn/đóng không được xử lý như báo cáo mới; BE cũng kiểm tra điều kiện này.
   const canDecide = role === 'VETERINARIAN' && item?.status === 'REPORTED' && !item.medicalCaseId;
   const horseId = item?.horseId;
   useEffect(() => {
     if (!canDecide || horseId === undefined || !service.openCases) return;
     let active = true;
+    // Adapter chỉ lọc ca OPEN của ngựa từ 100 ca đầu. Nhánh lỗi bên dưới cũng đặt [];
+    // danh sách rỗng trên UI vì vậy chưa chứng minh ngựa không có ca đang mở ở BE.
+    // Cần kiểm request/trang dữ liệu trước khi quyết định tạo thêm ca để thay thế.
     service.openCases(horseId).then((cases) => { if (active) setOpenCases(cases); }, () => { if (active) setOpenCases([]); });
     return () => { active = false; };
   }, [canDecide, horseId, service]);
+  // Ba thao tác khác nhau:
+  // OPEN_CASE tạo hồ sơ y tế mới từ sự cố; LINK_CASE gắn vào ca đang mở của đúng ngựa;
+  // RESOLVE đóng báo cáo. Chọn LINK_CASE cần caseId hợp lệ từ danh sách ca.
+  // Khóa locked ngăn gửi lặp; kết quả phản hồi mới quyết định điều hướng/cập nhật UI.
   async function review(action: 'OPEN_CASE' | 'LINK_CASE' | 'RESOLVE') {
     const current = state.data;
     if (locked.current || !current || role !== 'VETERINARIAN' || current.status === 'RESOLVED') return;

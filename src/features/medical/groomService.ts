@@ -1,3 +1,11 @@
+// CORE-046 — đường API và kiểm tra dữ liệu công việc điều trị của Groom.
+// GroomTreatmentTask cố ý chỉ có hướng dẫn công việc, người nhận, lịch và kết quả hoàn thành.
+// Không đưa chi tiết lâm sàng/phác đồ vào kiểu dữ liệu này để chỉ ẩn bằng CSS.
+// allowed là danh sách trường được chấp nhận; validTask còn kiểm tra người nhận đúng actorId.
+// Phản hồi có trường ngoài phạm vi hoặc task của Groom khác bị xem là dữ liệu không hợp lệ.
+// complete gửi POST; server lấy người thực hiện từ JWT và tự ghi thời gian.
+// Không được suy ra HTTP thành công là task đã xong nếu payload chưa trả đúng task COMPLETED.
+
 import { ApiError, requestApi } from '../../shared/auth/authApi';
 import type { Page } from './models';
 import { readHorseIdentity } from './horseRead';
@@ -19,6 +27,9 @@ const object = (v: unknown): v is Record<string, unknown> => typeof v === 'objec
 export function validDate(value: unknown): value is string {
   return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value;
 }
+// Ngoài kiểu dữ liệu, kiểm tra sự nhất quán trạng thái:
+// COMPLETED phải có completedAt; PENDING không có completedAt.
+// Đây là kiểm tra hàng rào phía FE, không thay thế kiểm soát truy cập ở BE.
 function validTask(v: unknown, actorId: number): v is GroomTreatmentTask {
   return object(v) && Object.keys(v).every((key) => allowed.has(key)) && positive(v.id) && positive(v.horseId) &&
     v.assignedGroomUserId === actorId && typeof v.instruction === 'string' && v.instruction.length <= 2000 && validDate(v.taskDate) &&
@@ -45,6 +56,8 @@ export function createGroomService(token: string, actorId: number, onApiError?: 
         !Number.isSafeInteger(v.totalElements) || Number(v.totalElements) < 0 || !v.items.every((row) => validTask(row, actorId))) throw invalid();
       return v as unknown as Page<GroomTreatmentTask>;
     },
+    // Không gửi assignedGroomUserId hoặc giờ do người dùng gõ để giả người hoàn thành.
+    // Đối chiếu cả id, người nhận và status từ phản hồi trước khi cho màn báo đã hoàn tất.
     async complete(id: number): Promise<GroomTreatmentTask> {
       if (!positive(id)) throw new Error('Mã công việc không hợp lệ.');
       // Actor/time are supplied by the server JWT. Completion notes have no approved persistence contract.
@@ -58,6 +71,9 @@ type LiveGroomService = ReturnType<typeof createGroomService>;
 export type GroomService = Pick<LiveGroomService, 'list' | 'complete'> & Partial<Pick<LiveGroomService, 'horse'>>;
 
 /** Collect ONLY the server's JWT-scoped pages. Fail instead of silently showing a partial list. */
+// Đọc trang đầu để biết tổng và kích thước, rồi lấy đủ các trang còn lại.
+// Nếu tổng/kích thước thay đổi giữa chừng, số lượng lệch hoặc trùng id: báo lỗi để tải lại.
+// Không âm thầm hiển thị thiếu việc rồi khiến Groom tưởng đã xử lý hết.
 export async function collectAssignedTasks(service: Pick<GroomService, 'list'>): Promise<GroomTreatmentTask[]> {
   const first = await service.list(0), tasks = [...first.items];
   const pages = Math.ceil(first.totalElements / first.size);

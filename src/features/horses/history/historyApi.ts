@@ -19,6 +19,9 @@ const instant = (v: unknown): string => {
 const date = (v: unknown): string => { const s = text(v); if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || !Number.isFinite(Date.parse(s)) || new Date(s).toISOString().slice(0, 10) !== s) throw invalid(); return s; };
 const nullableDate = (v: unknown) => v == null ? null : date(v);
 const user = (v: unknown) => { const u = object(v); return { id: int(u.id, 1), fullName: text(u.fullName), ...(u.userCode == null ? {} : { userCode: text(u.userCode) }) }; };
+// Contract có đúng 6 dòng theo thứ tự: 5 điều kiện bắt buộc và đánh giá HT
+// khuyến nghị ở cuối. HT chưa đánh giá không tự biến thành điều kiện chặn kích
+// hoạt; adapter từ chối response legacy thiếu dòng thay vì tự thêm dữ liệu giả.
 export function parseChecklist(value: unknown, id: number): ReadinessChecklist {
   const v = object(value); if (int(v.horseId, 1) !== id) throw invalid();
   const expected = ['IDENTITY', 'PEDIGREE', 'OWNER', 'FREE_STABLE_BOX', 'VETERINARIAN_BASELINE', 'HEAD_TRAINER_READINESS_REVIEW'];
@@ -33,6 +36,9 @@ export function parseChecklist(value: unknown, id: number): ReadinessChecklist {
   return { horseId: id, horseCode: text(v.horseCode), name: text(v.name), lifecycle: v.lifecycle as ReadinessChecklist['lifecycle'], activatedAt: v.activatedAt == null ? null : instant(v.activatedAt), checklist };
 }
 /** Shared HTTP client, exact pinned paths, no error-to-sample fallback. */
+// Các lần đọc đi qua shared requestApi và token phiên hiện hành. Mỗi id/ngày giờ
+// được kiểm tra; không gọi SQL trực tiếp từ FE. AbortSignal loại bỏ lượt đọc cũ
+// khi người xem đổi ngựa, giữ lịch sử đúng đối tượng đang mở.
 export function createHorseHistoryApi(options: { fetcher?: typeof fetch; baseUrl?: string; getToken?: () => string | undefined } = {}): HorseHistoryService {
   const call = async (id: number, suffix: string, signal?: AbortSignal, method = 'GET') => {
     if (!Number.isSafeInteger(id) || id < 1) throw new ApiError(400, 'VALIDATION_ERROR', 'Hãy chọn ngựa hợp lệ.');
@@ -46,6 +52,12 @@ export function createHorseHistoryApi(options: { fetcher?: typeof fetch; baseUrl
   };
   return {
     source: 'api',
+    // Timeline nhận thứ tự thời gian do Backend cấp, kiểm mới trước cũ sau.
+    // Không suy diễn event/source từ tên hiển thị. Endpoint trả sai trang, ngày giờ
+    // không hợp lệ hay title vượt giới hạn đều bị từ chối, không âm thầm chuẩn hóa.
+    // Adapter chỉ chuyển occurredAt, eventType và title sang TimelineEvent. Các
+    // trường khác của response, kể cả target tùy chọn, không được chuyển tiếp;
+    // không lấy tên sự kiện làm căn cứ tự tạo link đến ca hoặc buổi tập.
     async timeline(id, page, signal) {
       if (!Number.isSafeInteger(page) || page < 0) throw new ApiError(400, 'VALIDATION_ERROR', 'Hãy chọn trang hợp lệ.');
       const v = object(await call(id, `timeline?page=${page}&size=20`, signal));
@@ -61,6 +73,9 @@ export function createHorseHistoryApi(options: { fetcher?: typeof fetch; baseUrl
     async ownerships(id, signal) { return list(await call(id, 'ownerships', signal)).map((value): Ownership => { const v = object(value); if (typeof v.sharePercentage !== 'number' || !Number.isFinite(v.sharePercentage) || v.sharePercentage <= 0 || v.sharePercentage > 100 || typeof v.isManagingOwner !== 'boolean') throw invalid(); return { id: int(v.id, 1), owner: user(v.owner), sharePercentage: v.sharePercentage, effectiveFrom: date(v.effectiveFrom), effectiveTo: nullableDate(v.effectiveTo), isManagingOwner: v.isManagingOwner }; }); },
     async assignments(id, signal) { return list(await call(id, 'stable-assignments', signal)).map((value): StableAssignment => { const v = object(value); return { id: int(v.id, 1), stableBoxId: int(v.stableBoxId, 1), boxCode: text(v.boxCode), yard: v.yard == null ? null : text(v.yard), effectiveFrom: date(v.effectiveFrom), effectiveTo: nullableDate(v.effectiveTo), reason: null, assignedBy: user(v.assignedBy) }; }); },
     async checklist(id, signal) { return parseChecklist(await call(id, 'activation-status', signal), id); },
+    // POST readiness-review phải trả đúng 204 và không có data. Đây là ghi nhận HT
+    // đã xem, không phải nút manual activation. Sau đó UI cần đọc lại checklist
+    // để hiển thị trạng thái server đã xác nhận.
     async acknowledge(id) { const result = await call(id, 'readiness-review', undefined, 'POST'); if (result !== undefined) throw invalid(); },
   };
 }

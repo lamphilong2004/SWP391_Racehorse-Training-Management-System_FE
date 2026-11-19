@@ -1,3 +1,12 @@
+// CORE-037 — test tích hợp giao diện nhiều vai trò của luồng y tế.
+// Test là kịch bản chạy tự động, không phải dữ liệu hay tài khoản dùng trong Production.
+// render dựng màn trong môi trường test; screen tìm thành phần như người dùng thấy;
+// fireEvent mô phỏng bấm/nhập; expect kiểm kết quả đúng với điều kiện đã đặt.
+// Các service giả ở đây cố ý tách khỏi API runtime để kiểm logic hiển thị một cách lặp lại được.
+// Đọc mỗi it/test như một tình huống: chuẩn bị → thao tác → kỳ vọng UI và lời gọi service.
+// Test FE PASS không đồng nghĩa đã kiểm đường FE → BE → SQL thật.
+// Khi demo, dùng runtime API thật và dữ liệu của database đã cấu hình, không dùng fixture trong file này.
+
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { buildRoutes } from '../../app/router';

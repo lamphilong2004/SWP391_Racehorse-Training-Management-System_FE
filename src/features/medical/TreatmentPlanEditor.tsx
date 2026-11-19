@@ -1,3 +1,13 @@
+// CORE-036 — form phác đồ điều trị và các công việc giao Groom.
+// Vet nhập hướng dẫn thuốc, nghỉ ngơi, chăm sóc, ngày tái khám; thuốc hiện là văn bản theo DTO.
+// DTO là cấu trúc dữ liệu FE và BE đã thống nhất, ở đây là TreatmentPlanRequest.
+// grooms là danh sách người có thể nhận việc; màn dùng tên để chọn nhưng gửi userId cho BE.
+// Nếu chưa có danh sách, nhánh hiện hành hiển thị ô mã Groom; không tự tạo nhân sự giả.
+// Mỗi task có người nhận + hướng dẫn + ngày + khung giờ tùy chọn.
+// retainedTaskCount là số việc đã lưu từ trước: khóa chỉnh/xóa để bảo toàn lịch sử việc đã giao.
+// plan chỉ là bản đang sửa trong bộ nhớ; chưa gọi onSave thành công thì chưa được coi là đã lưu SQL.
+// Không cất hướng dẫn y tế vào bộ nhớ trình duyệt lâu dài. Rời/refresh có thể mất state này.
+
 import { useEffect, useRef, useState } from 'react';
 import { ActionBar, AlertBanner, Button, Card, SelectField, TextAreaField, TextField } from '../../design-system';
 import { clubDate } from '../../shared/clubCalendar';
@@ -15,6 +25,8 @@ export function TreatmentPlanEditor({ initial, onSave, onCancel, openedAt, retai
   openedAt?: string;
   retainedTaskCount?: number;
 }) {
+  // Khởi tạo bằng dữ liệu cũ nếu có, nếu chưa có thì để rỗng.
+  // Sao chép từng task để việc gõ trong form không sửa trực tiếp object initial của trang cha.
   const [plan, setPlan] = useState<TreatmentPlanRequest>({
     treatmentMedicationInstructions: initial?.treatmentMedicationInstructions ?? '',
     restInstructions: initial?.restInstructions ?? '',
@@ -33,10 +45,15 @@ export function TreatmentPlanEditor({ initial, onSave, onCancel, openedAt, retai
   useEffect(() => { onDirtyChange?.(dirty); }, [dirty, onDirtyChange]);
   useEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
   const tasks = plan.groomTasks ?? [];
+  // Cập nhật đúng công việc ở vị trí index, giữ nguyên những công việc khác.
+  // map tạo mảng mới để React nhận ra dữ liệu thay đổi và cập nhật đúng UI.
   const changeTask = (index: number, patch: Partial<GroomTaskInstruction>) =>
     setPlan({ ...plan, groomTasks: tasks.map((task, i) => i === index ? { ...task, ...patch } : task) });
   return <form className="medical-form" onSubmit={async (event) => {
     event.preventDefault();
+    // Nhấp Lưu lần hai khi request đầu đang chạy sẽ bị bỏ qua.
+    // Các kiểm tra phía dưới bảo đảm đủ nội dung và ngày hợp lệ trước khi gọi Backend;
+    // đây là kiểm tra dữ liệu nhập, không phải tự đánh giá đúng/sai chuyên môn điều trị.
     if (submitting.current) return;
     setError('');
     if (!plan.treatmentMedicationInstructions.trim()) return setError('Cần nhập hướng dẫn điều trị và thuốc.');
@@ -51,6 +68,9 @@ export function TreatmentPlanEditor({ initial, onSave, onCancel, openedAt, retai
     }
     if (tasks.some((task) => !validDate(task.taskDate)) || (plan.reexaminationDate && !validDate(plan.reexaminationDate))) return setError('Nhập ngày thực hiện và ngày tái khám hợp lệ.');
     submitting.current = true; setSaving(true);
+    // Gửi phác đồ đã cắt khoảng trắng thừa; task lịch sử được giữ nguyên.
+    // Không đổi trạng thái tập luyện tại đây. Gỡ/đặt hạn chế là thao tác riêng của Vet.
+    // Nếu onSave lỗi, catch giữ plan và mở lại nút để người dùng sửa/thử lại.
     try { await onSave({
       ...plan,
       treatmentMedicationInstructions: plan.treatmentMedicationInstructions.trim(),

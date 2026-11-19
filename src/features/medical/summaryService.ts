@@ -12,6 +12,9 @@ export interface SummaryService {
   listCases: () => Promise<CaseSummary[]>;
 }
 const invalid = () => new ApiError(200, 'INVALID_RESPONSE', 'Dữ liệu tóm tắt không hợp lệ.');
+// Head Trainer không dùng reader bệnh án của Vet. Summary chỉ nhận id/ngựa,
+// trạng thái và thời gian ca; nếu response có thêm trường lâm sàng thì reader
+// từ chối thay vì vô tình hiện ra chẩn đoán, ghi chú khám hoặc phác đồ.
 function readSummary(value: unknown): CaseSummary {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw invalid();
   const v = value as Record<string, unknown>;
@@ -28,6 +31,9 @@ export function createSummaryService(token: string, onError?: (error: unknown) =
   }
   return {
     listHorses: () => readActiveHerd(token, onError, options),
+    // Nhận dạng ngựa được ghép với các trường hiển thị được cho phép như giống,
+    // chuồng và cân nặng gần nhất. Từng trường đều được kiểm dạng trước khi tạo
+    // SummaryHorse mới; cân nặng thiếu không được biến thành 0 hoặc số minh họa.
     getHorse: async (id) => {
       if (!Number.isSafeInteger(id) || id < 1) throw new Error('Mã ngựa không hợp lệ.');
       const raw = await get(`/api/horses/${id}`), identity = readHorseIdentityData(raw), v = raw as Record<string, unknown>;
@@ -44,6 +50,8 @@ export function createSummaryService(token: string, onError?: (error: unknown) =
       if (!Number.isSafeInteger(id) || id < 1) throw new Error('Mã ngựa không hợp lệ.');
       return readAvailability(await get(`/api/horses/${id}/training-availability`), id);
     },
+    // Đọc hết các trang summary; tổng/kích thước không nhất quán hoặc id trùng
+    // làm cả lượt đọc thất bại. Vì vậy màn không thể coi thiếu trang là không có ca.
     listCases: async () => {
       const load = async (page: number) => readPage(await get(`/api/medical/cases?page=${page}&size=100`), readSummary, page);
       const first = await load(0), result = [...first.items];

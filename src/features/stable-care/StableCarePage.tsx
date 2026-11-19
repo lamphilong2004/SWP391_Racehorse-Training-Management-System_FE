@@ -35,6 +35,10 @@ function useEditorFocus() {
 function EditorProtection({ dirty, discard, onKeep, onDiscard }: { dirty: boolean; discard: boolean; onKeep: () => void; onDiscard: () => void }) {
   return <><UnsavedChangesGuard dirty={dirty} /><Modal open={discard} title="Hủy thay đổi chưa lưu?" onClose={onKeep} footer={<><Button variant="secondary" autoFocus onClick={onKeep}>Tiếp tục chỉnh sửa</Button><Button variant="danger" onClick={onDiscard}>Hủy thay đổi</Button></>}><p>Nội dung đang nhập chưa được lưu. Bạn có muốn bỏ các thay đổi này không?</p></Modal></>;
 }
+// Ref lock khóa ngay lần bấm đầu, trước cả lần React render busy=true tiếp theo;
+// nhờ vậy nhấp đúp không gửi hai request ghi. Chỉ gọi confirmed và hiện success
+// sau khi await action thành công. Lỗi giữ editor để người dùng sửa/thử lại,
+// không tự biến API lỗi thành đã lưu hoặc tự thao tác SQL từ trình duyệt.
 function useAction() {
   const lock = useRef(false); const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const [notice, setNotice] = useState('');
   async function run(action: () => Promise<unknown>, confirmed: () => void, success = 'Đã lưu thay đổi.') {
@@ -66,6 +70,11 @@ function Daily({ api, role }: { api: StableCareApi; role: RoleCode }) {
   const [date, setDate] = useState(today()); const [editing, setEditing] = useState(false);
   return <><div className={styles.dayHeader}><div><h2>Lịch chăm sóc theo ngày</h2><p>{role === 'GROOM' ? 'Chọn ngày để xem việc của bạn. Khi đến giờ được giao, bấm Hoàn thành sau khi làm xong.' : 'Chọn ngày để xem ai phụ trách. Việc quá giờ hiện trên cùng; mở Thao tác ở dòng cần đổi Groom hoặc hủy.'}</p></div><div className={styles.dateActions}><TextField label="Ngày công việc (giờ Việt Nam)" type="date" disabled={editing} value={date} onChange={e => setDate(e.target.value)} /><Button variant="secondary" disabled={editing || date === today()} onClick={() => setDate(today())}>Hôm nay</Button></div></div>{date && <DayTasks key={date} api={api} role={role} date={date} onEditing={setEditing} />}</>;
 }
+// Một DayTasks gắn với ngày đang chọn. Trong lúc sửa phân công/báo sự cố,
+// parent khóa đổi ngày để không trộn editor của ngày cũ vào bảng ngày mới.
+// Search/status/Groom chỉ lọc các task đã tải; quyền xem và quyền ghi cuối cùng
+// vẫn do Backend. Bảng refresh không được dùng như bằng chứng request ghi đã
+// thành công nếu bản thân POST chưa được server xác nhận.
 function DayTasks({ api, role, date, onEditing }: { api: StableCareApi; role: RoleCode; date: string; onEditing: (value: boolean) => void }) {
   const data = useSupportingLoad(() => api.tasks(date), [api, date]); const action = useAction();
   const [clubNow, setClubNow] = useState(() => clubDateTime());
@@ -112,6 +121,8 @@ function DayTasks({ api, role, date, onEditing }: { api: StableCareApi; role: Ro
       { key: 'state', header: 'Trạng thái', render: t => <div className={styles.stateCell}><span className={styles.taskState} data-state={t.phase}>{PHASE_LABELS[t.phase]}</span>{t.cancelledAt ? <><p>{t.cancellationReason}</p><time dateTime={t.cancelledAt}>{new Date(t.cancelledAt).toLocaleString('vi-VN')}</time></> : t.completedAt ? <time dateTime={t.completedAt}>{new Date(t.completedAt).toLocaleString('vi-VN')}</time> : <small>{stateHint(t)}</small>}</div> },
       { key: 'actions', header: 'Thao tác', render: t => <div className={styles.rowActions} role="group" aria-label={`Thao tác cho ${t.horseName}`}>{isGroom && <div className={styles.rowMutations}>{t.phase !== 'upcoming' && !t.completedAt && !t.cancelledAt && <Button size="sm" disabled={action.busy} onClick={() => void action.run(() => api.complete(t.id), data.retry, `Đã hoàn thành: ${t.horseName} · ${labels[t.taskType] ?? t.taskType}.`)}>Hoàn thành</Button>}{!t.cancelledAt && date <= today() && <Button size="sm" variant="secondary" onClick={() => setReport(t)}>Báo bất thường</Button>}</div>}{canChange(t) && <Button size="sm" variant="secondary" aria-expanded={openActions === t.id} onClick={() => setOpenActions(openActions === t.id ? null : t.id)}>Thao tác <Icon name="chevron-down" size={14} /></Button>}{canChange(t) && openActions === t.id && <div className={styles.rowMutations}><Button size="sm" variant="secondary" onClick={() => { setNotice(''); setEdit({ task: t, mode: 'reassign' }); }}><Icon name="user" size={14} />Đổi Groom</Button><Button size="sm" variant="danger-outline" onClick={() => { setNotice(''); setEdit({ task: t, mode: 'cancel' }); }}><Icon name="x" size={14} />Hủy công việc</Button></div>}{(!canChange(t) || openActions === t.id) && <Button size="sm" variant="secondary" onClick={() => setHistory(t)}><Icon name="history" size={14} />Lịch sử</Button>}</div> },
     ]} />}
+    {/* careTaskId giữ nguồn công việc cho báo cáo. Kết quả id/incidentCode chỉ là
+        biên nhận sự cố, không phải xác nhận đã mở/đóng ca, hoàn thành việc hay ghi kho. */}
     {report && <IncidentReportModal open source={{ kind: 'groom', horseId: report.horseId, horseLabel: report.horseName, careTaskId: report.id, contextLabel: `${labels[report.taskType]} · ${report.taskDate}` }} onClose={() => setReport(null)} onSubmit={async body => { const result = await api.reportIncident(body); if (!Number.isSafeInteger(result.id) || result.id < 1 || !result.incidentCode) throw new Error('Chưa xác nhận được báo cáo. Hãy xem danh sách sự cố trước khi thử lại.'); setReported(result); setReport(null); }} />}
     {edit && <TaskEditor api={api} task={edit.task} mode={edit.mode} onClose={() => setEdit(null)} onSaved={() => { setNotice(edit.mode === 'cancel' ? 'Đã hủy công việc. Lịch sử được giữ nguyên.' : 'Đã đổi Groom phụ trách và gửi thông báo cho Groom mới.'); setEdit(null); data.retry(); }} />}
     {history && <TaskHistory api={api} task={history} onClose={() => setHistory(null)} />}
@@ -177,6 +188,10 @@ function PlanEditor({ api, horseId, nutrition, plan, onClose, onSaved }: { api: 
       <div className={styles.actions}><Button variant="secondary" disabled={action.busy || (nutrition ? food.length : care.length) >= 20} onClick={() => nutrition ? setFood([...food, { meal: '', component: 'HAY', quantity: 0, unit: 'kg' }]) : setCare([...care, { taskType: 'CLEANING', timeSlot: '', instructions: '' }])}>Thêm {nutrition ? 'khẩu phần' : 'công việc'}</Button><span className={styles.saveActions}><Button variant="secondary" disabled={action.busy} onClick={() => dirty ? setDiscard(true) : onClose()}>Hủy</Button><Button type="submit" loading={action.busy} disabled={!groom || !grooms.data || !!dateError || !!endError || !validSlots}>Lưu kế hoạch & giao việc</Button></span></div></fieldset>
     </form></Card>;
 }
+// Kho dùng cùng component nhưng action khác theo role: Club Manager ghi nhập/
+// xuất, Groom chỉ đề nghị bổ sung, role đọc chỉ xem sổ. Ẩn nút trên FE chỉ giúp
+// tránh thao tác sai; Backend vẫn phải trả 403 khi người không có quyền tự gọi
+// endpoint ghi. Không gộp các đơn vị vật tư thành một tổng số lượng vô nghĩa.
 function Inventory({ api, role }: { api: StableCareApi; role: RoleCode }) {
   const data = useSupportingLoad(api.inventory, [api]);
   const [query, setQuery] = useState(''), [stockFilter, setStockFilter] = useState('');
