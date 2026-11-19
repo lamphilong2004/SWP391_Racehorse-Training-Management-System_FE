@@ -351,5 +351,13 @@
     "The restriction with medicalCaseId was created via API; lift and clinical/care/stock actions used the actual UI.",
     "Only the new QA records were mutated. Existing six horses and nineteen accounts retained.",
     "PR 61 pending-save regression is separately verified on 920ab43, not included in the tested main SHA."
-  ]
+  ],
+  "latestMainReadback": {
+    "sha": "c211075c9ce12e4207d4d68d08b70e72c770b512",
+    "at": "2026-11-19T03:57:09.994Z",
+    "readOnlyBrowser": "PASS",
+    "pendingFixtureRegression": "PASS",
+    "businessWrites": 0,
+    "fullWriteFlowRepeated": false
+  }
 }

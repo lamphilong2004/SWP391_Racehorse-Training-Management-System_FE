@@ -9,7 +9,7 @@
 - Bộ mới `QA-DUC-20261119-612344`, ngựa RH-007/id 7. Tạo bằng API; không reset/seed lại DB, không thay mật khẩu, không sửa sáu ngựa cũ. DB vẫn có 19 tài khoản.
 - Chạy trực tiếp source main và JAR mới; **không dùng launcher/artifacts 11/11**. Leader vẫn phụ trách đối chiếu launcher trên máy Long.
 
-Đây là browser/API/SQL thật, không intercept HTTP và không sample fallback. Bản phác đồ pending trong PR #61 được kiểm riêng trên `920ab43`, không được gộp với kết quả main này.
+Đây là browser/API/SQL thật, không intercept HTTP và không sample fallback. Chuỗi ghi SQL dưới đây được pin tại `d6f17f7`; xem mục đọc lại sau merge #61 để phân biệt với main mới.
 
 ## Màn và thao tác đã thử
 
@@ -51,9 +51,17 @@ Hạn chế **gắn caseId** được tạo qua API setup vì màn tạo restric
 
 ## PR #61 và phần còn lại
 
-- Lỗi guard khi lưu pending đã sửa tại `920ab43ba88d012572e39c90c2abc5e706d60658`, push cùng PR #61 và chuyển Ready để Long re-review; không tự merge/dismiss review.
+- Lỗi guard khi lưu pending đã sửa tại `920ab43ba88d012572e39c90c2abc5e706d60658`. Long re-review/approve rồi merge #61 vào main `c211075c9ce12e4207d4d68d08b70e72c770b512`; tác giả không tự approve/merge/dismiss review.
 - Hai deferred test tái hiện FAIL trên HEAD cũ, sau sửa cả **120/120 medical tests**, lint, typecheck/build/bundle guard và policy **7/7 PASS**. Chrome kiểm delayed success/failure/Back, giữ draft và Back hợp lệ sau success.
 - Guard mới chỉ phủ route soạn phác đồ, không tuyên bố đã bảo vệ mọi form khám/chấn thương. Không lưu bản nháp y tế vào browser storage.
 - Không gặp lỗi sản phẩm ngoài dự kiến trong các thao tác main đã thử ở trên. Ảnh sự cố vẫn chờ quyết định contract/phạm vi; không triển khai thêm. Quy tắc tổng distanceM thuộc phạm vi đang chốt, không thay đổi trong batch này.
 - Chưa thử lại full bốn flow. Groom precheck → Rider → Trainer/Owner, Template/Trainer/điều chỉnh, Owner/nhân sự và thông báo Trainer về phác đồ không được xác nhận bởi lượt này. Đây là báo cáo đoạn Vet/Groom/HT y tế và chăm sóc/kho của Đức.
 - Mật khẩu, token, DPAPI/account files không nằm trong gói bằng chứng này. Các bản ghi QA được giữ để đọc lại; không xóa dữ liệu lịch sử.
+
+## Đọc lại trên main sau merge #61
+
+- FE local đã fast-forward tới `c211075c9ce12e4207d4d68d08b70e72c770b512`; BE giữ `ee7fde6`.
+- Lúc **10:57 ngày 19/11, UTC+7**, browser/API thật đọc lại ca 7 CLOSED, không còn nút ghi khám; task Groom 6 vẫn checked/disabled; tồn kho vẫn 13 kg. Không gửi thêm thao tác ghi nghiệp vụ.
+- Chạy regression Chrome deferred success/failure/Back trên main `c211075`: PASS. Lượt này dùng HTTP fixture có kiểm soát, không phải API ghi SQL thật.
+- Không chạy lại toàn bộ chuỗi ghi hoặc full bốn flow sau merge; bằng chứng ghi thật vẫn là pin `d6f17f7` ở trên.
+- Ảnh main mới: [Ca](evidence/duc-local-main-20261119/local-latest-main-closed.png) · [Groom](evidence/duc-local-main-20261119/local-latest-main-groom.png) · [Kho](evidence/duc-local-main-20261119/local-latest-main-stock.png).
