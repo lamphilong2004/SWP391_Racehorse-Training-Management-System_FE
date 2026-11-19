@@ -28,7 +28,7 @@
 .heroCopy { max-width: 680px; min-width: 0; }
 .eyebrow { display: flex; align-items: center; gap: 12px; margin: 0 0 28px; font-size: 11px; line-height: 1.6; font-weight: 600; letter-spacing: .14em; color: var(--landing-mint); }
 .eyebrow span { flex-shrink: 0; width: 24px; height: 2px; background: currentColor; }
-.heroCopy h1 { margin: 0 0 28px; font-family: var(--font-family-headline); font-size: clamp(42px, 4.8vw, 76px); font-weight: 800; line-height: 1.15; letter-spacing: -.05em; }
+.heroCopy h1 { margin: 0 0 28px; color: #fff; font-family: var(--font-family-headline); font-size: clamp(42px, 4.8vw, 76px); font-weight: 800; line-height: 1.15; letter-spacing: -.05em; }
 .heroCopy em { display: block; font-style: normal; color: var(--landing-mint); }
 .lead { margin: 0; font-size: 17px; line-height: 1.8; color: var(--color-text-secondary); }
 .heroCopy .lead { max-width: 480px; color: #d4dce6; font-size: clamp(16px, 1.2vw, 18px); }
