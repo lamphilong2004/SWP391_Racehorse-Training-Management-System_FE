@@ -29,7 +29,8 @@ export function TreatmentPlanEditor({ initial, onSave, onCancel, openedAt, retai
   const serialized = JSON.stringify(plan);
   const [savedSnapshot, setSavedSnapshot] = useState(serialized);
   const dirty = serialized !== savedSnapshot;
-  useEffect(() => { onDirtyChange?.(dirty && !saving); }, [dirty, saving, onDirtyChange]);
+  // Đang gửi chưa có nghĩa đã lưu: giữ guard cho đến khi server xác nhận và snapshot được cập nhật.
+  useEffect(() => { onDirtyChange?.(dirty); }, [dirty, onDirtyChange]);
   useEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
   const tasks = plan.groomTasks ?? [];
   const changeTask = (index: number, patch: Partial<GroomTaskInstruction>) =>

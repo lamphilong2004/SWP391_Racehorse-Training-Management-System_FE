@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { TreatmentPlanEditor } from './TreatmentPlanEditor';
 
 it('preserves loaded Groom assignments when saving an existing treatment plan', async () => {
@@ -85,4 +85,23 @@ it('keeps failed changes dirty and clears dirty only after server confirmation',
   fireEvent.click(screen.getByRole('button', { name: 'Lưu phác đồ điều trị' }));
   await waitFor(() => expect(onDirtyChange).toHaveBeenLastCalledWith(false));
   expect(onSave).toHaveBeenCalledTimes(2);
+});
+
+it.each(['success', 'failure'] as const)('keeps the draft protected throughout a delayed %s', async outcome => {
+  let resolve!: () => void, reject!: (error: Error) => void;
+  const onSave = vi.fn(() => new Promise<void>((yes, no) => { resolve = yes; reject = no; }));
+  const onDirtyChange = vi.fn();
+  render(<TreatmentPlanEditor initial={{ treatmentMedicationInstructions: 'Ban đầu' }} onSave={onSave} onDirtyChange={onDirtyChange} />);
+  const instructions = screen.getByLabelText('Hướng dẫn điều trị và dùng thuốc');
+  fireEvent.change(instructions, { target: { value: 'Bản nháp cần giữ' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Lưu phác đồ điều trị' }));
+  expect(onSave).toHaveBeenCalledOnce();
+  expect(onDirtyChange).toHaveBeenLastCalledWith(true);
+  expect(instructions).toHaveValue('Bản nháp cần giữ');
+  expect(instructions).toBeDisabled();
+  await act(async () => { if(outcome === 'success') resolve(); else reject(new Error('Mạng chậm rồi thất bại')); });
+  expect(onDirtyChange).toHaveBeenLastCalledWith(outcome !== 'success');
+  expect(instructions).toHaveValue('Bản nháp cần giữ');
+  expect(instructions).toBeEnabled();
+  if(outcome === 'failure') expect(screen.getByText('Mạng chậm rồi thất bại')).toBeInTheDocument();
 });
