@@ -23,6 +23,18 @@ Tài liệu xử lý thao tác thường gặp, bổ sung cho [kịch bản demo
 | HT ghi readiness nhưng ngựa chưa ACTIVE | Mở checklist xem các điều kiện bắt buộc còn thiếu | Đánh giá HT là khuyến nghị, không phải nút kích hoạt thủ công. |
 | Gửi đề nghị bổ sung mà kho không tăng | Mở bảng yêu cầu và kiểm server đã xác nhận; Manager ghi nhận hàng thực nhận bằng Nhập/xuất | Yêu cầu bổ sung không phải phiếu nhập. Hoàn thành cho ăn không tự trừ kho. |
 
+## Không thấy trong danh sách chưa chắc là không có
+
+Phân biệt **rỗng sau khi đọc thành công**, **đọc lỗi** và **chỉ đọc một phần**. Một request 200 chỉ xác nhận trang vừa nhận, không tự chứng minh mọi trang đều đã được tải.
+
+| Chỗ cần kiểm tra | Giới hạn hiện tại trong source | Cách xử lý an toàn |
+|---|---|---|
+| Checklist đóng ca Vet | [CaseClosure.tsx](../src/features/medical/CaseClosure.tsx) đọc trang 0 của task (20 dòng) và restriction (100 dòng), chưa duyệt mọi trang | Đọc thông báo khi BE nhận yêu cầu đóng ca. Nếu bị từ chối, kiểm task/hạn chế còn lại qua danh sách tương ứng; không coi checklist xanh là bằng chứng đầy đủ. Trang sửa phác đồ có vòng tải mọi trang task riêng trong [pages.tsx](../src/features/medical/pages.tsx). |
+| Gắn sự cố vào ca đang mở | [incidentService.ts](../src/features/medical/incidentService.ts) chỉ lọc ca OPEN của đúng ngựa trong 100 ca đầu. [Incidents.tsx](../src/features/medical/Incidents.tsx) còn chuyển lỗi đọc thành danh sách rỗng | Kiểm request danh sách ca có lỗi không, đúng ngựa/DB và các trang trong màn ca y tế. Không vội mở ca mới chỉ vì bộ chọn trống. |
+| Groom chọn ngựa báo sự cố tại chuồng | [Incidents.tsx](../src/features/medical/Incidents.tsx) chỉ đọc tối đa 100 ngựa ACTIVE ở trang đầu rồi lọc ngựa có currentBoxCode | Kiểm đúng mã ngựa, trạng thái và chuồng hiện hành trong nguồn được phép xem. Không nhập bừa ID hoặc đổi quyền để ép báo cáo. |
+
+Khi kiểm tra Network, chỉ ghi method/path/status và thông báo đã bỏ thông tin riêng tư; không sao chép Authorization, JWT hoặc bệnh án. Muốn kết luận **không tồn tại bản ghi** cần kết quả đọc lại Backend bao phủ đúng phạm vi/phân trang trong môi trường hiện hành. Tài liệu này ghi nhận giới hạn FE, chưa sửa chúng và không phải bằng chứng SQL PASS.
+
 ## Khi màn hình báo lỗi
 
 - **Đang tải:** chờ request kết thúc, không coi là không có dữ liệu. Màn sự cố có loading riêng cho tình trạng ngựa.

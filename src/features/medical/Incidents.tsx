@@ -42,7 +42,9 @@ export function IncidentAccess({ detail = false }: { detail?: boolean }) {
   const role = actor?.roles.find((r) => allowed.includes(r));
   const service = useMemo(() => token && actor ? createIncidentService(token, actor, auth.handleApiError) : null, [token, actor, auth.handleApiError]);
   const horse = useMemo(() => token ? (id: number) => readHorseIdentity(token, id, auth.handleApiError) : undefined, [token, auth.handleApiError]);
-  // BR-35: a Groom may report what they observe at the stable for any ACTIVE horse that is in a box today.
+  // BR-35 cho Groom báo quan sát tại chuồng; bộ chọn hiện chỉ lấy trang đầu,
+  // tối đa 100 ngựa ACTIVE rồi lọc currentBoxCode có giá trị. Không phải mọi ngựa
+  // đủ điều kiện đều chắc chắn có trong bộ chọn; BE vẫn kiểm quyền khi gửi báo cáo.
   const stableHorses = useMemo(() => token ? () => requestApi<{ items: { id: number; name: string; horseCode: string; currentBoxCode: string | null }[] }>('/api/horses?lifecycle=ACTIVE&size=100', { method: 'GET' }, { token })
     .then((page) => page.items.filter((item) => item.currentBoxCode).map((item) => ({ id: item.id, label: `${item.name} · ${item.horseCode} · ${boxLabel(item.currentBoxCode)}` }))) : undefined, [token]);
   // Only the Club Manager may read the staff directory (GET /api/admin/users/{id}); other roles see the reporter id.
@@ -182,6 +184,9 @@ function IncidentDetail({ id, service, role, actorId, horse, reporter }: { id: n
   useEffect(() => {
     if (!canDecide || horseId === undefined || !service.openCases) return;
     let active = true;
+    // Adapter chỉ lọc ca OPEN của ngựa từ 100 ca đầu. Nhánh lỗi bên dưới cũng đặt [];
+    // danh sách rỗng trên UI vì vậy chưa chứng minh ngựa không có ca đang mở ở BE.
+    // Cần kiểm request/trang dữ liệu trước khi quyết định tạo thêm ca để thay thế.
     service.openCases(horseId).then((cases) => { if (active) setOpenCases(cases); }, () => { if (active) setOpenCases([]); });
     return () => { active = false; };
   }, [canDecide, horseId, service]);

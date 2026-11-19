@@ -55,6 +55,9 @@ export function createHorseHistoryApi(options: { fetcher?: typeof fetch; baseUrl
     // Timeline nhận thứ tự thời gian do Backend cấp, kiểm mới trước cũ sau.
     // Không suy diễn event/source từ tên hiển thị. Endpoint trả sai trang, ngày giờ
     // không hợp lệ hay title vượt giới hạn đều bị từ chối, không âm thầm chuẩn hóa.
+    // Adapter chỉ chuyển occurredAt, eventType và title sang TimelineEvent. Các
+    // trường khác của response, kể cả target tùy chọn, không được chuyển tiếp;
+    // không lấy tên sự kiện làm căn cứ tự tạo link đến ca hoặc buổi tập.
     async timeline(id, page, signal) {
       if (!Number.isSafeInteger(page) || page < 0) throw new ApiError(400, 'VALIDATION_ERROR', 'Hãy chọn trang hợp lệ.');
       const v = object(await call(id, `timeline?page=${page}&size=20`, signal));

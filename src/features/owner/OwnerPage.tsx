@@ -102,6 +102,9 @@ function OwnerContent() {
     </div>
   </AppShell>;
 }
+// Ảnh Owner được HorsePhotoImage tải riêng bằng request có xác thực, không nằm
+// trong DTO card. Khi không có ảnh hoặc tải lỗi, ảnh mặc định có nhãn minh họa;
+// nhìn thấy ảnh minh họa không chứng minh ngựa này đã được tải ảnh thật lên.
 function Photo({ horse, detail = false }: { horse: OwnerHorse; detail?: boolean }) {
   const { source } = useContext(OwnerContext);
   const className = `${styles.photo} ${detail ? styles.detailPhoto : ''}`;

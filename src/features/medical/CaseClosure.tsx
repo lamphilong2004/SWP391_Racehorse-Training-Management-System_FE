@@ -36,7 +36,12 @@ export function CaseClosure({ item, needsExamination, needsRecovery, openTab, re
   const refresh = () => setRevision((value) => value + 1);
   // Đọc ba nhóm điều kiện độc lập cùng lúc bằng Promise.all.
   // Nếu một nhóm lỗi, không coi là 0 việc/0 hạn chế; màn báo chưa kiểm tra được điều kiện.
-  // Số pending là số task trả về có status khác COMPLETED; UI không tự sửa task.
+  // Số pending chỉ tính task trả về có status khác COMPLETED; UI không tự sửa task.
+  // listCaseTasks không truyền page nên chỉ đọc trang 0 (size=20); restriction cũng
+  // chỉ đọc trang 0 (size=100). Không tìm thấy blocker ở đây chưa chứng minh toàn bộ
+  // dữ liệu đã đạt: POST close vẫn phải được BE kiểm tra, kể cả các dòng ngoài trang.
+  // TreatmentPlanPage có vòng đọc mọi trang task trước khi sửa phác đồ; checklist này
+  // không dùng vòng đọc đó, nên không suy rộng số đang hiển thị thành tổng toàn ca.
   const read = useCallback(async (): Promise<Blockers> => {
     const [tasks, linked, restrictionPage] = await Promise.all([
       item.treatmentPlan ? service.listCaseTasks(item.id) : Promise.resolve({ items: [] }),
