@@ -1,0 +1,5 @@
+@reference "../../design-system/styles/tailwind.css";
+
+.filters { @apply flex flex-wrap gap-3; }
+/* Keep the selected filter visible above the shared secondary button base style. */
+.filters button[aria-pressed='true'] { @apply border-rh-primary bg-rh-primary-soft text-rh-primary; }
