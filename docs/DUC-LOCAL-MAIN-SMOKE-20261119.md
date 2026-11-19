@@ -54,7 +54,7 @@ Hạn chế **gắn caseId** được tạo qua API setup vì màn tạo restric
 - Lỗi guard khi lưu pending đã sửa tại `920ab43ba88d012572e39c90c2abc5e706d60658`. Long re-review/approve rồi merge #61 vào main `c211075c9ce12e4207d4d68d08b70e72c770b512`; tác giả không tự approve/merge/dismiss review.
 - Hai deferred test tái hiện FAIL trên HEAD cũ, sau sửa cả **120/120 medical tests**, lint, typecheck/build/bundle guard và policy **7/7 PASS**. Chrome kiểm delayed success/failure/Back, giữ draft và Back hợp lệ sau success.
 - Guard mới chỉ phủ route soạn phác đồ, không tuyên bố đã bảo vệ mọi form khám/chấn thương. Không lưu bản nháp y tế vào browser storage.
-- Không gặp lỗi sản phẩm ngoài dự kiến trong các thao tác main đã thử ở trên. Ảnh sự cố vẫn chờ quyết định contract/phạm vi; không triển khai thêm. Quy tắc tổng distanceM thuộc phạm vi đang chốt, không thay đổi trong batch này.
+- Chuỗi ghi nghiệp vụ ở trên không gặp lỗi ngoài dự kiến. Ở lượt bổ sung bên dưới phát hiện lỗi hiển thị loading nhỏ, đã sửa riêng trong #64, chưa nằm trong main được thử. Ảnh sự cố vẫn chờ quyết định contract/phạm vi; không triển khai thêm. Quy tắc tổng distanceM thuộc phạm vi đang chốt, không thay đổi trong batch này.
 - Chưa thử lại full bốn flow. Groom precheck → Rider → Trainer/Owner, Template/Trainer/điều chỉnh, Owner/nhân sự và thông báo Trainer về phác đồ không được xác nhận bởi lượt này. Đây là báo cáo đoạn Vet/Groom/HT y tế và chăm sóc/kho của Đức.
 - Mật khẩu, token, DPAPI/account files không nằm trong gói bằng chứng này. Các bản ghi QA được giữ để đọc lại; không xóa dữ liệu lịch sử.
 
@@ -65,3 +65,22 @@ Hạn chế **gắn caseId** được tạo qua API setup vì màn tạo restric
 - Chạy regression Chrome deferred success/failure/Back trên main `c211075`: PASS. Lượt này dùng HTTP fixture có kiểm soát, không phải API ghi SQL thật.
 - Không chạy lại toàn bộ chuỗi ghi hoặc full bốn flow sau merge; bằng chứng ghi thật vẫn là pin `d6f17f7` ở trên.
 - Ảnh main mới: [Ca](evidence/duc-local-main-20261119/local-latest-main-closed.png) · [Groom](evidence/duc-local-main-20261119/local-latest-main-groom.png) · [Kho](evidence/duc-local-main-20261119/local-latest-main-stock.png).
+
+
+## Bổ sung theo phân công mới — 11:03–11:04, UTC+7
+
+FE main `c211075c9ce12e4207d4d68d08b70e72c770b512`; BE main và DB giữ nguyên. Không dùng HTTP fixture cho lượt ghi này.
+
+| Role → route | Thao tác | API / đọc lại |
+|---|---|---|
+| CM, API setup | Thêm nutrition plan cho đúng ngựa QA 7, Groom 6, hôm nay 00:00, HAY 1 kg | POST nutrition-plans 201; không sửa plan/ngựa cũ |
+| Groom → `/care/daily` | Hoàn thành nutrition task **7** rồi refresh | POST tasks/7/complete 200; SQL completed_by=6; tồn trước/sau **13 kg**, số phiếu kho vẫn **2** |
+| Groom → cùng dòng → Báo bất thường | Bỏ ăn, mức thấp, mô tả có nhãn QA; gửi và mở Theo dõi báo cáo | POST incidents 201 → **incident 12**, horseId=7, careTaskId=7, reportedBy=6; refresh vẫn đọc được |
+| Vet → `/incidents/12` | Đọc đúng báo cáo và đóng sự cố | POST incidents/12/review 200; refresh + SQL **RESOLVED** |
+| HT, API read | Kiểm tra bàn giao trạng thái sau xử lý | GET horses/7/training-availability 200 → **AVAILABLE** |
+| Trainer / Work Rider, API read | Kiểm tra phạm vi quyền | Hai GET trả **403 đúng phạm vi**: ngựa QA chưa có program/session được giao. Chưa nghiệm thu việc Trainer/Rider bắt đầu tập lại; bàn giao ID ngựa 7 cho người phụ trách Flow 2, không bypass phân công. |
+
+- [SQL bổ sung](evidence/duc-local-main-20261119/local-supplement-readback.txt): **SUPPLEMENT_SQL_READBACK_PASS**; [SELECT/assertions](evidence/duc-local-main-20261119/local-supplement-readback.sql). Giữ nguyên 19 tài khoản.
+- Ảnh: [Hoàn thành cho ăn](evidence/duc-local-main-20261119/local-care-no-auto-stock.png) · [Biên nhận báo cáo](evidence/duc-local-main-20261119/local-care-incident-receipt.png) · [Groom đọc lại](evidence/duc-local-main-20261119/local-care-incident-detail.png) · [Vet đã xử lý](evidence/duc-local-main-20261119/local-care-incident-vet-resolved.png).
+- Phát hiện thẻ tình trạng ngựa hiển thị “Không tải được” khi request còn pending, sau đó dữ liệu vẫn lên đúng. Sửa nhỏ và ảnh trước/sau ở **PR #64**, chưa merge: loading đúng, lỗi thật có retry; 29 focused tests/lint/typecheck/build/bundle và policy 13/13 PASS. Chrome delay/error trong #64 là fixture riêng, không tính là SQL E2E.
+- Lượt ghi mới chỉ phủ care/incident bổ sung; không chạy lại nguyên chuỗi medical ghi trên main c211075. Không suy ra full bốn flow PASS.

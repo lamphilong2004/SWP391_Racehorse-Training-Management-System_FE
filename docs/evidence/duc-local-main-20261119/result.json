@@ -359,5 +359,396 @@
     "pendingFixtureRegression": "PASS",
     "businessWrites": 0,
     "fullWriteFlowRepeated": false
+  },
+  "supplementOnMergedMain": {
+    "at": "2026-11-19T04:03:47.277Z",
+    "feSha": "c211075c9ce12e4207d4d68d08b70e72c770b512",
+    "nutritionTaskId": 7,
+    "careIncidentId": 12,
+    "completedAt": "2026-11-19T04:03:44.967Z",
+    "stockBefore": 13,
+    "stockAfter": 13,
+    "reported": "PASS",
+    "refreshReadback": "PASS",
+    "headTrainerAvailability": "AVAILABLE",
+    "trainerRiderHandoff": "NOT_RUN: QA horse has no assigned training program or Rider session; direct reads correctly 403",
+    "responses": [
+      {
+        "at": "2026-11-19T04:03:43.789Z",
+        "role": "CLUB_MANAGER",
+        "via": "verification/setup API",
+        "method": "GET",
+        "path": "/api/stable-care/inventory",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:43.986Z",
+        "role": "CLUB_MANAGER",
+        "via": "verification/setup API",
+        "method": "POST",
+        "path": "/api/stable-care/nutrition-plans",
+        "status": 201
+      },
+      {
+        "at": "2026-11-19T04:03:44.093Z",
+        "role": "GROOM",
+        "via": "verification/setup API",
+        "method": "GET",
+        "path": "/api/stable-care/tasks?date=2026-11-19",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:44.744Z",
+        "role": "GROOM",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/notifications/unread-count",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:44.770Z",
+        "role": "GROOM",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/stable-care/tasks",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:44.770Z",
+        "role": "GROOM",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/stable-care/tasks",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:45.006Z",
+        "role": "GROOM",
+        "via": "FE main browser",
+        "method": "POST",
+        "path": "/api/stable-care/tasks/7/complete",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:45.150Z",
+        "role": "GROOM",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/notifications/unread-count",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:45.167Z",
+        "role": "GROOM",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/stable-care/tasks",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:45.173Z",
+        "role": "GROOM",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/stable-care/tasks",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:45.239Z",
+        "role": "GROOM",
+        "via": "verification/setup API",
+        "method": "GET",
+        "path": "/api/stable-care/tasks?date=2026-11-19",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:45.307Z",
+        "role": "CLUB_MANAGER",
+        "via": "verification/setup API",
+        "method": "GET",
+        "path": "/api/stable-care/inventory",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:45.584Z",
+        "role": "GROOM",
+        "via": "FE main browser",
+        "method": "POST",
+        "path": "/api/incidents",
+        "status": 201
+      },
+      {
+        "at": "2026-11-19T04:03:45.716Z",
+        "role": "GROOM",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/incidents/12",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:45.717Z",
+        "role": "GROOM",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/incidents/12",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:45.863Z",
+        "role": "GROOM",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/incidents/12",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:45.864Z",
+        "role": "GROOM",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/notifications/unread-count",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:45.865Z",
+        "role": "GROOM",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/incidents/12",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:45.978Z",
+        "role": "GROOM",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/horses/7",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:45.979Z",
+        "role": "GROOM",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/horses/7",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:45.980Z",
+        "role": "GROOM",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/horses/7",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:45.988Z",
+        "role": "GROOM",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/horses/7",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:46.036Z",
+        "role": "VETERINARIAN",
+        "via": "verification/setup API",
+        "method": "GET",
+        "path": "/api/incidents/12",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:46.661Z",
+        "role": "VETERINARIAN",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/incidents/12",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:46.663Z",
+        "role": "VETERINARIAN",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/incidents/12",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:46.665Z",
+        "role": "VETERINARIAN",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/notifications/unread-count",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:46.675Z",
+        "role": "VETERINARIAN",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/incidents/12",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:46.699Z",
+        "role": "VETERINARIAN",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/horses/7",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:46.705Z",
+        "role": "VETERINARIAN",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/horses/7",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:46.711Z",
+        "role": "VETERINARIAN",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/horses/7",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:46.718Z",
+        "role": "VETERINARIAN",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/horses/7",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:46.739Z",
+        "role": "VETERINARIAN",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/medical/cases",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:46.803Z",
+        "role": "VETERINARIAN",
+        "via": "FE main browser",
+        "method": "POST",
+        "path": "/api/incidents/12/review",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:46.811Z",
+        "role": "VETERINARIAN",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/incidents/12",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:46.955Z",
+        "role": "VETERINARIAN",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/incidents/12",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:46.959Z",
+        "role": "VETERINARIAN",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/incidents/12",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:46.960Z",
+        "role": "VETERINARIAN",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/notifications/unread-count",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:46.971Z",
+        "role": "VETERINARIAN",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/incidents/12",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:46.990Z",
+        "role": "VETERINARIAN",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/horses/7",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:46.996Z",
+        "role": "VETERINARIAN",
+        "via": "verification/setup API",
+        "method": "GET",
+        "path": "/api/incidents/12",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:46.998Z",
+        "role": "VETERINARIAN",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/horses/7",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:47.005Z",
+        "role": "VETERINARIAN",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/horses/7",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:47.010Z",
+        "role": "VETERINARIAN",
+        "via": "FE main browser",
+        "method": "GET",
+        "path": "/api/horses/7",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:47.145Z",
+        "role": "HEAD_TRAINER",
+        "via": "verification/setup API",
+        "method": "GET",
+        "path": "/api/horses/7/training-availability",
+        "status": 200
+      },
+      {
+        "at": "2026-11-19T04:03:47.210Z",
+        "role": "TRAINER",
+        "via": "verification/setup API",
+        "method": "GET",
+        "path": "/api/horses/7/training-availability",
+        "status": 403
+      },
+      {
+        "at": "2026-11-19T04:03:47.276Z",
+        "role": "WORK_RIDER",
+        "via": "verification/setup API",
+        "method": "GET",
+        "path": "/api/horses/7/training-availability",
+        "status": 403
+      },
+      {
+        "at": "2026-11-19T04:03:47.339Z",
+        "role": "CLUB_MANAGER",
+        "via": "verification/setup API",
+        "method": "GET",
+        "path": "/api/stable-care/inventory",
+        "status": 200
+      }
+    ]
   }
 }
