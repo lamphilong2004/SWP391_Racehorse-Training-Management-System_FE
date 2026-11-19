@@ -83,7 +83,7 @@ describe('CORE-008 auth flow', () => {
     window.sessionStorage.setItem('racehorse.auth.session.v1', JSON.stringify({ accessToken: 'stale-session-jwt', expiresAt: Date.now() + 60_000 }));
     await actor.click(screen.getByRole('button', { name: 'Đăng nhập' }));
 
-    expect(await screen.findByRole('heading', { name: 'Không gian Head Trainer' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Tổng quan Head Trainer' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/dashboard');
     expect(fetchMock).toHaveBeenCalledWith(
       'http://localhost:8080/api/auth/login',
@@ -108,7 +108,7 @@ describe('CORE-008 auth flow', () => {
     window.sessionStorage.setItem('racehorse.auth.session.v1', JSON.stringify({ accessToken: 'stale-session-jwt', expiresAt: Date.now() + 60_000 }));
     await actor.click(screen.getByRole('button', { name: 'Đăng nhập' }));
 
-    await screen.findByRole('heading', { name: 'Không gian Head Trainer' });
+    await screen.findByRole('heading', { name: 'Tổng quan Head Trainer' });
     expect(window.localStorage.getItem('racehorse.auth.local.v1')).toBeNull();
     expect(window.sessionStorage.getItem('racehorse.auth.session.v1')).toContain('tab-jwt');
   });
@@ -137,7 +137,7 @@ describe('CORE-008 auth flow', () => {
     vi.stubGlobal('fetch', fetchMock);
     const router = renderApp('/dashboard');
 
-    expect(await screen.findByRole('heading', { name: 'Không gian Head Trainer' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Tổng quan Head Trainer' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/dashboard');
     expect(fetchMock).toHaveBeenCalledWith(
       'http://localhost:8080/api/auth/me',
@@ -149,7 +149,7 @@ describe('CORE-008 auth flow', () => {
 
   it.each([
     ['CLUB_MANAGER', 'Tổng quan Club Manager', 'Nhân sự & người dùng', '/admin/users'],
-    ['HEAD_TRAINER', 'Không gian Head Trainer', 'Chương trình huấn luyện ngựa', '/training/programs'],
+    ['HEAD_TRAINER', 'Tổng quan Head Trainer', 'Chương trình huấn luyện ngựa', '/training/programs'],
     ['TRAINER', 'Tổng quan Trainer', 'Chương trình được giao', '/training/programs/assigned'],
     ['WORK_RIDER', 'Không gian Work Rider', 'Lượt cưỡi của tôi', '/rider'],
     ['VETERINARIAN', 'Không gian Veterinarian', 'Y tế / sức khỏe', '/medical'],
@@ -206,9 +206,9 @@ describe('CORE-008 auth flow', () => {
     savedSession('sessionStorage');
     vi.stubGlobal('fetch', vi.fn(async () => envelope(user)));
     renderApp('/dashboard', <ApiErrorProbe error={new ApiError(403, 'FORBIDDEN', 'You do not have permission to perform this action.')} />);
-    expect(await screen.findByRole('heading', { name: 'Không gian Head Trainer' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Tổng quan Head Trainer' })).toBeInTheDocument();
     await userEvent.setup().click(screen.getByRole('button', { name: 'Handle API error' }));
-    expect(screen.getByRole('heading', { name: 'Không gian Head Trainer' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Tổng quan Head Trainer' })).toBeInTheDocument();
     expect(window.sessionStorage.getItem('racehorse.auth.session.v1')).toContain('fixture-jwt');
   });
 

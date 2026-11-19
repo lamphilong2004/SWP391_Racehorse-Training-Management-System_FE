@@ -32,7 +32,7 @@ it.each(ROLE_CODES)('opens the %s workspace without credentials, network or samp
   expect(await screen.findByRole('heading', { name: 'Đăng nhập thử theo vai trò' })).toBeInTheDocument();
   expect(screen.queryByLabelText('Mật khẩu')).not.toBeInTheDocument();
   await enter(role);
-  expect(await screen.findByRole('heading', { name: role === 'CLUB_MANAGER' ? 'Tổng quan Club Manager' : role === 'TRAINER' ? 'Tổng quan Trainer' : NAVIGATION[role].workspaceLabel })).toBeInTheDocument();
+  expect(await screen.findByRole('heading', { name: role === 'CLUB_MANAGER' ? 'Tổng quan Club Manager' : role === 'TRAINER' ? 'Tổng quan Trainer' : role === 'HEAD_TRAINER' ? 'Tổng quan Head Trainer' : NAVIGATION[role].workspaceLabel })).toBeInTheDocument();
   expect(screen.getByText('Đăng nhập thử được bảo vệ — chỉ để xem giao diện')).toBeInTheDocument();
   expect(authSession.read()?.accessToken).toBe(`role-test:${role}`);
   expect(localStorage.getItem('racehorse.auth.local.v1')).toBeNull();
