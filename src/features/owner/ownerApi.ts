@@ -23,6 +23,9 @@ function enumeration<const T extends string>(value: unknown, allowed: readonly T
   if (!allowed.includes(value as T)) throw invalid(); return value as T;
 }
 function array(value: unknown, maximum = Infinity): unknown[] { if (!Array.isArray(value) || value.length > maximum) throw invalid(); return value; }
+// Card dùng schema Owner, không lấy toàn bộ danh sách ngựa rồi tự lọc ở FE.
+// Các projection chưa được API cấp (ảnh, chuồng, phả hệ ở bước card) để null;
+// null là chưa có thông tin phù hợp ở projection này, không phải số liệu bằng 0.
 function card(value: unknown): OwnerHorse {
   const data = row(value);
   return {
@@ -42,6 +45,9 @@ function programOf(training: Row): OwnerHorse['program'] {
     ...(program.sessionsPlanned === undefined ? {} : { planned: integer(program.sessionsPlanned) }),
   };
 }
+// Trang chi tiết ghép ba phản hồi: profile, health-summary, training-summary.
+// Chỉ ghép khi profile.horse.id đúng id đang xem. Tỷ lệ sở hữu và managing owner
+// được đọc từ API, không tự gán dựa trên tài khoản đăng nhập hay tên hiển thị.
 function detail(profileValue: unknown, healthValue: unknown, trainingValue: unknown, id: number): OwnerHorse {
   const profile = row(profileValue), health = row(healthValue), training = row(trainingValue);
   const horse = card(profile.horse);
@@ -84,6 +90,10 @@ export function createOwnerApi(options: { fetcher?: typeof fetch; baseUrl?: stri
   };
   return {
     source: 'api',
+    // Sau danh sách ngựa sở hữu, đọc thêm training-summary của từng ngựa để card
+    // không nhầm 'không tải được chương trình' thành 'không có chương trình'.
+    // program = undefined là chưa biết vì đọc lỗi; program = null mới là không có
+    // chương trình trong phản hồi hợp lệ. Không biến lỗi thành dữ liệu mẫu.
     async list(context) {
       const horses = array(await read('/api/owner/horses', context)).map(card);
       // The card projection has no program; read each owned horse's training summary so the card
@@ -94,6 +104,9 @@ export function createOwnerApi(options: { fetcher?: typeof fetch; baseUrl?: stri
       }));
       return horses;
     },
+    // Đọc profile trước để link trực tiếp bị từ chối sẽ dừng tại đây, không tiếp tục
+    // gửi thêm hai summary. AbortSignal ngăn kết quả cũ cập nhật sau khi đổi trang
+    // hoặc đổi tài khoản. Việc này hỗ trợ UX, không thay thế JWT/RBAC Backend.
     async detail(id, context) {
       if (!Number.isSafeInteger(id) || id <= 0) throw new ApiError(400, 'VALIDATION_ERROR', 'Hãy chọn ngựa hợp lệ.');
       // Authorize/profile first: a denied direct link never triggers summary requests.
