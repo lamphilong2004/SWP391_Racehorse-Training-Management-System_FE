@@ -57,3 +57,5 @@ Phần hướng dẫn này không đổi giao diện, nghiệp vụ, quyền ho�
 Chọn đúng test theo thay đổi: [DUC-TEST-MAP.md](DUC-TEST-MAP.md).
 
 Gỡ vướng khi demo: [DUC-DEMO-TROUBLESHOOTING.md](DUC-DEMO-TROUBLESHOOTING.md).
+
+Dữ liệu đang nhập được giữ đến đâu: [DUC-FORM-STATE-BOUNDARIES.md](DUC-FORM-STATE-BOUNDARIES.md).
