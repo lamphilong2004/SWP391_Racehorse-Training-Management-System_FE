@@ -45,9 +45,11 @@ Hạn chế **gắn caseId** được tạo qua API setup vì màn tạo restric
 
 ## Ảnh thực tế
 
-- [Chặn đóng ca](evidence/duc-local-main-20261119/local-closure-blocked.png) · [Groom đã làm](evidence/duc-local-main-20261119/local-groom-treatment-done.png) · [Ca đã đóng](evidence/duc-local-main-20261119/local-case-closed.png).
+- [Chặn đóng ca](evidence/duc-local-main-20261119/local-closure-blocked.png) · [Groom đã làm](evidence/duc-local-main-20261119/local-groom-treatment-done.png) · [Ca đã đóng — đọc lại trên c211075 lúc 10:57 UTC+7](evidence/duc-local-main-20261119/local-latest-main-closed.png).
 - [Chăm sóc](evidence/duc-local-main-20261119/local-daily-care.png) · [Kho](evidence/duc-local-main-20261119/local-inventory.png).
 - [HT summary](evidence/duc-local-main-20261119/local-head-summary.png) · [Herd Health](evidence/duc-local-main-20261119/local-herd-health.png) · [Danh sách ca](evidence/duc-local-main-20261119/local-case-list.png).
+
+Ảnh `local-case-closed.png` cũ chỉ chụp màn đang tải, không dùng làm bằng chứng trạng thái ca đã đóng. Đính chính liên kết ảnh, giữ nguyên SHA, thời gian, SQL readback và nội dung các lượt thử cũ.
 
 ## PR #61 và phần còn lại
 
