@@ -3,6 +3,7 @@ import { MemoryRouter, RouterProvider, createMemoryRouter } from 'react-router';
 import { IncidentDetailPage, IncidentListPage } from './Incidents';
 import { createIncidentService, readIncident, type IncidentService } from './incidentService';
 import type { Incident } from './models';
+import type { HorseIdentity } from './horseRead';
 import { ApiError } from '../../shared/auth/authApi';
 import { AuthProvider } from '../../shared/auth/AuthProvider';
 import { authSession } from '../../shared/auth/authSession';
@@ -151,4 +152,35 @@ it('names the signed-in reporter "You" on the detail page', async () => {
   const value = service();
   render(<RouterProvider router={createMemoryRouter([{ path: '/incidents/:incidentId', element: <IncidentDetailPage service={value} role="GROOM" actorId={6} /> }], { initialEntries: ['/incidents/1'] })} />);
   await screen.findByText('Limp after exercise'); expect(screen.getByText('Bạn')).toBeInTheDocument();
+});
+
+
+const statusHorse: HorseIdentity = { id: 14, horseCode: 'RH-014', name: 'Status QA', lifecycle: 'ACTIVE', healthStatus: 'FIT', trainingAvailability: 'AVAILABLE' };
+function statusDetail(horse: (id: number) => Promise<HorseIdentity>) {
+  render(<RouterProvider router={createMemoryRouter([{ path: '/incidents/:incidentId', element: <IncidentDetailPage service={service()} role="GROOM" actorId={6} horse={horse} /> }], { initialEntries: ['/incidents/1'] })} />);
+}
+it('shows pending horse status without declaring an error before the read finishes', async () => {
+  let finish!: (horse: HorseIdentity) => void;
+  const pending = new Promise<HorseIdentity>((resolve) => { finish = resolve; });
+  statusDetail(() => pending);
+  await screen.findByText('Limp after exercise');
+  expect(screen.getByText('Đang tải tình trạng ngựa…')).toBeInTheDocument();
+  expect(screen.queryByText('Không tải được tình trạng ngựa.')).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Thử lại' })).not.toBeInTheDocument();
+  await act(async () => { finish(statusHorse); });
+  expect(await screen.findByText('Tình trạng sức khỏe')).toBeInTheDocument();
+  expect(screen.getByText('Khả năng tập luyện')).toBeInTheDocument();
+  expect(screen.queryByText('Đang tải tình trạng ngựa…')).not.toBeInTheDocument();
+});
+it('offers retry after a failed horse status read and recovers without exposing server details', async () => {
+  let online = false;
+  const horse = vi.fn(async () => { if (!online) throw new Error('private backend detail'); return statusHorse; });
+  statusDetail(horse);
+  await screen.findByText('Không tải được tình trạng ngựa.');
+  expect(screen.queryByText('private backend detail')).not.toBeInTheDocument();
+  online = true;
+  fireEvent.click(screen.getByRole('button', { name: 'Thử lại' }));
+  expect(await screen.findByText('Tình trạng sức khỏe')).toBeInTheDocument();
+  expect(screen.queryByText('Không tải được tình trạng ngựa.')).not.toBeInTheDocument();
+  expect(screen.getByText('Limp after exercise')).toBeInTheDocument();
 });
