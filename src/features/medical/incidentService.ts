@@ -14,6 +14,9 @@ export interface IncidentService {
 export interface OpenCase { id: number; openedAt: string; reason?: string | null }
 const invalid = () => new ApiError(200, 'INVALID_RESPONSE', 'Dữ liệu sự cố không có hoặc không hợp lệ.');
 const positive = (v: unknown) => Number.isSafeInteger(v) && Number(v) > 0;
+// Sự cố là báo cáo quan sát, không phải bệnh án. Allowlist từ chối trường lạ
+// để tránh vô tình đưa chẩn đoán/thuốc sang màn báo cáo. Groom thông thường chỉ
+// đọc báo cáo do chính mình gửi; Backend vẫn là nơi quyết định quyền cuối cùng.
 export function readIncident(v: unknown, actor: Pick<CurrentUser, 'id' | 'roles'>): Incident {
   if (!v || typeof v !== 'object' || Array.isArray(v)) throw invalid();
   const x = v as Record<string, unknown>;
@@ -36,11 +39,17 @@ export function createIncidentService(token: string, actor: Pick<CurrentUser, 'i
   return {
     list: async (page) => { if (!Number.isSafeInteger(page) || page < 0) throw new Error('Trang không hợp lệ.'); return readPage(await request(`/api/incidents?page=${page}&size=50`), read, page); },
     get: async (id) => { const result = read(await request(idPath(id))); if (result.id !== id) throw invalid(); return result; },
+    // Chỉ nhận thành công khi server trả đúng ngựa, đúng người báo và REPORTED.
+    // Biên nhận phải dùng id/mã từ phản hồi này, không tự đặt mã hoặc báo thành công
+    // ngay khi bấm Gửi. Các nguồn precheck/session/care-task vẫn thuộc DTO đã duyệt.
     report: async (input) => {
       const result = read(await request('/api/incidents', input));
       if (result.horseId !== input.horseId || result.reportedByUserId !== actor.id || result.status !== 'REPORTED') throw invalid();
       return result;
     },
+    // Chỉ Vet được xử lý: OPEN_CASE tạo ca; LINK_CASE dùng ca đã chọn; RESOLVE đóng
+    // báo cáo. FE kiểm role sớm để không gửi request sai, rồi xác nhận trạng thái
+    // phản hồi. Điều kiện ca phải OPEN và cùng ngựa vẫn được Backend kiểm tra.
     review: async (id, action, caseId) => {
       if (!actor.roles.includes('VETERINARIAN')) throw new ApiError(403, 'FORBIDDEN', 'Chỉ Veterinarian được xem xét sự cố.');
       if (action === 'LINK_CASE' && !positive(caseId)) throw new Error('Nhập mã ca y tế là số dương hợp lệ.');
@@ -48,6 +57,9 @@ export function createIncidentService(token: string, actor: Pick<CurrentUser, 'i
       if (result.id !== id || result.status !== (action === 'RESOLVE' ? 'RESOLVED' : 'UNDER_REVIEW') || (action !== 'RESOLVE' && !result.medicalCaseId)) throw invalid();
       return result;
     },
+    // Danh sách chọn ca ở đây lọc các ca OPEN của đúng ngựa từ tối đa 100 dòng
+    // đầu API trả về. Đây không phải cam kết đã đọc mọi trang lịch sử; không tự
+    // đoán id ca nếu không có lựa chọn phù hợp trong phản hồi.
     openCases: actor.roles.includes('VETERINARIAN') ? async (horseId) => {
       const page = await request('/api/medical/cases?page=0&size=100') as { items?: unknown };
       const items = Array.isArray(page?.items) ? page.items : [];
