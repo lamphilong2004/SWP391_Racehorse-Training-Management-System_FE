@@ -35,6 +35,10 @@ function useEditorFocus() {
 function EditorProtection({ dirty, discard, onKeep, onDiscard }: { dirty: boolean; discard: boolean; onKeep: () => void; onDiscard: () => void }) {
   return <><UnsavedChangesGuard dirty={dirty} /><Modal open={discard} title="Hủy thay đổi chưa lưu?" onClose={onKeep} footer={<><Button variant="secondary" autoFocus onClick={onKeep}>Tiếp tục chỉnh sửa</Button><Button variant="danger" onClick={onDiscard}>Hủy thay đổi</Button></>}><p>Nội dung đang nhập chưa được lưu. Bạn có muốn bỏ các thay đổi này không?</p></Modal></>;
 }
+// Ref lock khóa ngay lần bấm đầu, trước cả lần React render busy=true tiếp theo;
+// nhờ vậy nhấp đúp không gửi hai request ghi. Chỉ gọi confirmed và hiện success
+// sau khi await action thành công. Lỗi giữ editor để người dùng sửa/thử lại,
+// không tự biến API lỗi thành đã lưu hoặc tự thao tác SQL từ trình duyệt.
 function useAction() {
   const lock = useRef(false); const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const [notice, setNotice] = useState('');
   async function run(action: () => Promise<unknown>, confirmed: () => void, success = 'Đã lưu thay đổi.') {
@@ -66,6 +70,11 @@ function Daily({ api, role }: { api: StableCareApi; role: RoleCode }) {
   const [date, setDate] = useState(today()); const [editing, setEditing] = useState(false);
   return <><div className={styles.dayHeader}><div><h2>Lịch chăm sóc theo ngày</h2><p>{role === 'GROOM' ? 'Chọn ngày để xem việc của bạn. Khi đến giờ được giao, bấm Hoàn thành sau khi làm xong.' : 'Chọn ngày để xem ai phụ trách. Việc quá giờ hiện trên cùng; mở Thao tác ở dòng cần đổi Groom hoặc hủy.'}</p></div><div className={styles.dateActions}><TextField label="Ngày công việc (giờ Việt Nam)" type="date" disabled={editing} value={date} onChange={e => setDate(e.target.value)} /><Button variant="secondary" disabled={editing || date === today()} onClick={() => setDate(today())}>Hôm nay</Button></div></div>{date && <DayTasks key={date} api={api} role={role} date={date} onEditing={setEditing} />}</>;
 }
+// Một DayTasks gắn với ngày đang chọn. Trong lúc sửa phân công/báo sự cố,
+// parent khóa đổi ngày để không trộn editor của ngày cũ vào bảng ngày mới.
+// Search/status/Groom chỉ lọc các task đã tải; quyền xem và quyền ghi cuối cùng
+// vẫn do Backend. Bảng refresh không được dùng như bằng chứng request ghi đã
+// thành công nếu bản thân POST chưa được server xác nhận.
 function DayTasks({ api, role, date, onEditing }: { api: StableCareApi; role: RoleCode; date: string; onEditing: (value: boolean) => void }) {
   const data = useSupportingLoad(() => api.tasks(date), [api, date]); const action = useAction();
   const [clubNow, setClubNow] = useState(() => clubDateTime());
@@ -177,6 +186,10 @@ function PlanEditor({ api, horseId, nutrition, plan, onClose, onSaved }: { api: 
       <div className={styles.actions}><Button variant="secondary" disabled={action.busy || (nutrition ? food.length : care.length) >= 20} onClick={() => nutrition ? setFood([...food, { meal: '', component: 'HAY', quantity: 0, unit: 'kg' }]) : setCare([...care, { taskType: 'CLEANING', timeSlot: '', instructions: '' }])}>Thêm {nutrition ? 'khẩu phần' : 'công việc'}</Button><span className={styles.saveActions}><Button variant="secondary" disabled={action.busy} onClick={() => dirty ? setDiscard(true) : onClose()}>Hủy</Button><Button type="submit" loading={action.busy} disabled={!groom || !grooms.data || !!dateError || !!endError || !validSlots}>Lưu kế hoạch & giao việc</Button></span></div></fieldset>
     </form></Card>;
 }
+// Kho dùng cùng component nhưng action khác theo role: Club Manager ghi nhập/
+// xuất, Groom chỉ đề nghị bổ sung, role đọc chỉ xem sổ. Ẩn nút trên FE chỉ giúp
+// tránh thao tác sai; Backend vẫn phải trả 403 khi người không có quyền tự gọi
+// endpoint ghi. Không gộp các đơn vị vật tư thành một tổng số lượng vô nghĩa.
 function Inventory({ api, role }: { api: StableCareApi; role: RoleCode }) {
   const data = useSupportingLoad(api.inventory, [api]);
   const [query, setQuery] = useState(''), [stockFilter, setStockFilter] = useState('');
