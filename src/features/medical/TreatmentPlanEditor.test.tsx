@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { TreatmentPlanEditor } from './TreatmentPlanEditor';
 
 it('preserves loaded Groom assignments when saving an existing treatment plan', async () => {
@@ -71,4 +71,37 @@ it('lets the Vet pick the Groom by name and prefills today as the task date', as
   fireEvent.change(screen.getByLabelText('Hướng dẫn cho Groom 1'), { target: { value: 'Chườm lạnh 15 phút' } });
   fireEvent.click(screen.getByRole('button', { name: 'Lưu phác đồ điều trị' }));
   await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ groomTasks: [expect.objectContaining({ assignedGroomUserId: 8, instruction: 'Chườm lạnh 15 phút' })] })));
+});
+
+it('keeps failed changes dirty and clears dirty only after server confirmation', async () => {
+  const onSave = vi.fn().mockRejectedValueOnce(new Error('Network unavailable')).mockResolvedValue(undefined);
+  const onDirtyChange = vi.fn();
+  render(<TreatmentPlanEditor initial={{ treatmentMedicationInstructions: 'Ban đầu' }} onSave={onSave} onDirtyChange={onDirtyChange} />);
+  fireEvent.change(screen.getByLabelText('Hướng dẫn điều trị và dùng thuốc'), { target: { value: 'Đã sửa' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Lưu phác đồ điều trị' }));
+  await screen.findByText('Network unavailable');
+  expect(screen.getByLabelText('Hướng dẫn điều trị và dùng thuốc')).toHaveValue('Đã sửa');
+  expect(onDirtyChange).toHaveBeenLastCalledWith(true);
+  fireEvent.click(screen.getByRole('button', { name: 'Lưu phác đồ điều trị' }));
+  await waitFor(() => expect(onDirtyChange).toHaveBeenLastCalledWith(false));
+  expect(onSave).toHaveBeenCalledTimes(2);
+});
+
+it.each(['success', 'failure'] as const)('keeps the draft protected throughout a delayed %s', async outcome => {
+  let resolve!: () => void, reject!: (error: Error) => void;
+  const onSave = vi.fn(() => new Promise<void>((yes, no) => { resolve = yes; reject = no; }));
+  const onDirtyChange = vi.fn();
+  render(<TreatmentPlanEditor initial={{ treatmentMedicationInstructions: 'Ban đầu' }} onSave={onSave} onDirtyChange={onDirtyChange} />);
+  const instructions = screen.getByLabelText('Hướng dẫn điều trị và dùng thuốc');
+  fireEvent.change(instructions, { target: { value: 'Bản nháp cần giữ' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Lưu phác đồ điều trị' }));
+  expect(onSave).toHaveBeenCalledOnce();
+  expect(onDirtyChange).toHaveBeenLastCalledWith(true);
+  expect(instructions).toHaveValue('Bản nháp cần giữ');
+  expect(instructions).toBeDisabled();
+  await act(async () => { if(outcome === 'success') resolve(); else reject(new Error('Mạng chậm rồi thất bại')); });
+  expect(onDirtyChange).toHaveBeenLastCalledWith(outcome !== 'success');
+  expect(instructions).toHaveValue('Bản nháp cần giữ');
+  expect(instructions).toBeEnabled();
+  if(outcome === 'failure') expect(screen.getByText('Mạng chậm rồi thất bại')).toBeInTheDocument();
 });

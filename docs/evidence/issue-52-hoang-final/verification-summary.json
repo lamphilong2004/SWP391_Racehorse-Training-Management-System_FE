@@ -1,0 +1,54 @@
+{
+  "verifiedAt": "2026-11-19T11:25:49.1059651+07:00",
+  "feBaseSha": "c211075c9ce12e4207d4d68d08b70e72c770b512",
+  "beSha": "ee7fde6bc1789795ae0d7b561df2d13d4878c61d",
+  "focusedTests": {
+    "files": 13,
+    "passed": 129,
+    "log": "outputs/issue52-hoang-final-tests.log",
+    "failed": 0
+  },
+  "eslint": "PASS: seven changed/new source and test files",
+  "typecheck": "PASS",
+  "productionBuild": "PASS",
+  "bundle": "PRODUCTION_BUNDLE_OK",
+  "policy": {
+    "passed": 7,
+    "failed": 0
+  },
+  "diffCheck": "PASS",
+  "apiSmoke": "PASS: 50 real HTTP requests including expected 400 and 403",
+  "directSql": "SQL_READBACK_PASS",
+  "browser": "BLOCKED: native Windows browser URL could not be verified; no screenshots or browser E2E",
+  "warning": "Unchanged AppShell.module.css emits Unknown at rule: @reference",
+  "sources": [
+    {
+      "path": "src/features/program-creation/TemplateLibraryPage.tsx",
+      "sha256": "6183892ed71e7f9f273a41064b59020720d97120157d3f740fa7b0beaadd4ec0"
+    },
+    {
+      "path": "src/features/program-creation/TemplateLibraryPage.test.tsx",
+      "sha256": "14d24c3671e617aca346daed9bbb4fbfd94f224cd2186f69868998865ec894ef"
+    },
+    {
+      "path": "src/features/program-creation/AdjustmentRequestsPage.tsx",
+      "sha256": "bca58fe92afc6eb439bf0ee4d9df466885ef42190aa36bf29cf38d35c5082918"
+    },
+    {
+      "path": "src/features/program-creation/AdjustmentRequestsPage.test.tsx",
+      "sha256": "f1128c8a782dc789d6a5b8903cff8d96a855afc24293eaf6fbf7b75fabf2f27b"
+    },
+    {
+      "path": "src/features/administration/NotificationsPage.tsx",
+      "sha256": "fffde1fa2f9932e74bda1a99cb76cc80371da211ca0e0b4c275443ae1dd10277"
+    },
+    {
+      "path": "src/shared/notifications/NotificationsProvider.test.tsx",
+      "sha256": "d4fadbb65ec4c41a131e0f0bd1c573ad52a5af86b18818cfbf9006b3155b7c7d"
+    },
+    {
+      "path": "src/pages/AccountPage.test.tsx",
+      "sha256": "56c07f5ca75243cfb694a03ff881326386ff03e7ad6cd42a984d8d14fd127184"
+    }
+  ]
+}

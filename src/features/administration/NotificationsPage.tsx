@@ -58,7 +58,7 @@ function NotificationContent({ role, roles, compact = false }: { role: RoleCode;
   const resource = useResource(load);
   async function mark(id?: number) {
     if (inFlight.current) return; inFlight.current = true; setBusy(true); setError('');
-    try { if (!notifications) throw new Error('Đăng nhập lại để xem thông báo.'); await notifications.markRead(id); }
+    try { if (!notifications) throw new Error('Đăng nhập lại để xem thông báo.'); await notifications.markRead(id); if (read === 'false') setPage(0); }
     catch (failure) { setError(errorMessage(failure)); } finally { inFlight.current = false; setBusy(false); }
   }
   const content = <div className={styles.stack}><div className={styles.filters}>

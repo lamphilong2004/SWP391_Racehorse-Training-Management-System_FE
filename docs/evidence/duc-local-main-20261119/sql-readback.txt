@@ -1,0 +1,58 @@
+database_name checked_at_utc
+------------- --------------
+racehorse_local_duc_20261111 2026-11-19 03:51:14.1812098
+id horse_code name lifecycle health_status
+-- ---------- ---- --------- -------------
+7 RH-007 QA-DUC-20261119-612344 ACTIVE FIT
+id horse_id status closed_at
+-- -------- ------ ---------
+7 7 CLOSED 2026-11-19 03:42:58.050
+id medical_case_id exam_type recovery_outcome health_status_set
+-- --------------- --------- ---------------- -----------------
+16 7 EXAMINATION NULL INJURED
+17 7 RE_EXAMINATION RECOVERED FIT
+id horse_id status medical_case_id
+-- -------- ------ ---------------
+9 7 RESOLVED 7
+id horse_id status closed_at
+-- -------- ------ ---------
+8 7 CLOSED 2026-11-19 03:46:42.163
+id horse_id status closed_at
+-- -------- ------ ---------
+9 7 CLOSED 2026-11-19 03:49:29.050
+id horse_id status medical_case_id
+-- -------- ------ ---------------
+10 7 RESOLVED 8
+11 7 RESOLVED NULL
+id medical_case_id lifted_at
+-- --------------- ---------
+5 7 2026-11-19 03:42:57.022
+id horse_id treatment_plan_id completed_by_user_id completed_at scheduled_slot
+-- -------- ----------------- -------------------- ------------ --------------
+4 7 NULL 6 2026-11-19 03:42:59.387 00:00
+5 7 NULL NULL NULL 23:59
+6 7 4 6 2026-11-19 03:42:04.694 00:00
+id name unit current_quantity
+-- ---- ---- ----------------
+1 QA-DUC-20261119-612344 hay kg 13.000
+id change_quantity recorded_by_user_id
+-- --------------- -------------------
+1 15.000 1
+2 -2.000 1
+id quantity requested_by_user_id
+-- -------- --------------------
+1 3.000 6
+id horse_code name lifecycle
+-- ---------- ---- ---------
+1 RH-001 Sương Mai ACTIVE
+2 RH-002 Hắc Phong ACTIVE
+3 RH-003 Tuyết Sơn ACTIVE
+4 RH-004 Thiên Mã ACTIVE
+5 RH-005 Liên Hoa ACTIVE
+6 RH-006 Phi Vân ACTIVE
+accounts_count
+--------------
+19
+result
+------
+SQL_READBACK_PASS

@@ -20,7 +20,7 @@ afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
 
 it.each(ROLE_CODES)('retains the intended dashboard for %s', async (role) => {
   mount(role);
-  expect(await screen.findByRole('heading', { name: role === 'CLUB_MANAGER' ? 'Tổng quan Club Manager' : role === 'TRAINER' ? 'Tổng quan Trainer' : NAVIGATION[role].workspaceLabel })).toBeInTheDocument();
+  expect(await screen.findByRole('heading', { name: role === 'CLUB_MANAGER' ? 'Tổng quan Club Manager' : role === 'TRAINER' ? 'Tổng quan Trainer' : role === 'HEAD_TRAINER' ? 'Tổng quan Head Trainer' : NAVIGATION[role].workspaceLabel })).toBeInTheDocument();
   if (role === 'CLUB_MANAGER') {
     expect(await screen.findByRole('link', { name: 'Xem danh sách ngựa' })).toHaveAttribute('href', '/horses');
     expect(screen.getByRole('link', { name: 'Xem ngựa chờ kích hoạt' })).toHaveAttribute('href', '/horses/pending-activation');

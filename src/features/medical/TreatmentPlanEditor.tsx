@@ -8,7 +8,7 @@
 // plan chỉ là bản đang sửa trong bộ nhớ; chưa gọi onSave thành công thì chưa được coi là đã lưu SQL.
 // Không cất hướng dẫn y tế vào bộ nhớ trình duyệt lâu dài. Rời/refresh có thể mất state này.
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActionBar, AlertBanner, Button, Card, SelectField, TextAreaField, TextField } from '../../design-system';
 import { clubDate } from '../../shared/clubCalendar';
 import type { GroomTaskInstruction, TreatmentPlanRequest } from './models';
@@ -16,11 +16,12 @@ import { medicalErrorMessage } from './errors';
 import { validDate } from './groomService';
 import { dateTime } from '../evaluation/models';
 
-export function TreatmentPlanEditor({ initial, onSave, onCancel, openedAt, retainedTaskCount = 0, grooms }: {
+export function TreatmentPlanEditor({ initial, onSave, onCancel, openedAt, retainedTaskCount = 0, grooms, onDirtyChange }: {
   /** Active Grooms the Vet may assign; when absent the editor falls back to the numeric id field. */
   grooms?: { id: number; fullName: string }[];
   initial?: Partial<TreatmentPlanRequest>; onSave: (input: TreatmentPlanRequest) => Promise<void>;
   onCancel?: () => void;
+  onDirtyChange?: (dirty: boolean) => void;
   openedAt?: string;
   retainedTaskCount?: number;
 }) {
@@ -36,6 +37,13 @@ export function TreatmentPlanEditor({ initial, onSave, onCancel, openedAt, retai
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const submitting = useRef(false);
+  // Only keep this medical draft in component memory; never persist clinical text in browser storage.
+  const serialized = JSON.stringify(plan);
+  const [savedSnapshot, setSavedSnapshot] = useState(serialized);
+  const dirty = serialized !== savedSnapshot;
+  // Đang gửi chưa có nghĩa đã lưu: giữ guard cho đến khi server xác nhận và snapshot được cập nhật.
+  useEffect(() => { onDirtyChange?.(dirty); }, [dirty, onDirtyChange]);
+  useEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
   const tasks = plan.groomTasks ?? [];
   // Cập nhật đúng công việc ở vị trí index, giữ nguyên những công việc khác.
   // map tạo mảng mới để React nhận ra dữ liệu thay đổi và cập nhật đúng UI.
@@ -69,10 +77,11 @@ export function TreatmentPlanEditor({ initial, onSave, onCancel, openedAt, retai
       restInstructions: plan.restInstructions?.trim(),
       careInstructions: plan.careInstructions?.trim(),
       groomTasks: tasks.map((task, index) => index < retainedTaskCount ? task : ({ ...task, instruction: task.instruction.trim(), scheduledSlot: task.scheduledSlot?.trim() })),
-    }); }
+    }); setSavedSnapshot(serialized); }
     catch (failure) { setError(medicalErrorMessage(failure, 'Không lưu được phác đồ điều trị.')); }
     finally { submitting.current = false; setSaving(false); }
   }}>
+    {dirty && <p role="status" className="text-rh-muted">Có thay đổi chưa lưu. Nội dung chỉ được giữ trong màn đang mở, không khôi phục sau khi tải lại trang.</p>}
     <Card title="Thời gian phác đồ"><div className="medical-grid">
       <TextField label="Bắt đầu (ngày mở ca)" value={openedAt ? dateTime(openedAt) : 'Không có'} readOnly />
       <TextField label="Ngày tái khám" type="date" value={plan.reexaminationDate ?? ''} disabled={saving} onChange={(event) => setPlan({ ...plan, reexaminationDate: event.target.value || undefined })} />

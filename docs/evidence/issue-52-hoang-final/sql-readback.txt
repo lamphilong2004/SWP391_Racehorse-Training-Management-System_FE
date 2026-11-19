@@ -1,0 +1,8 @@
+SQL Server direct readback; strict TLS; isolated issue52 database
+program=1 name=QA-HOANG52-111932 Program status=ACTIVE templateVersionId=2 sourceVersion=2 latestVersion=3 horse=1 code=RH-001 lifecycle=ACTIVE trainer=3 objective=Controlled recovery customized=true
+request=1 status=APPROVED reason=Approved safe recovery objective reviewer=2
+request=2 status=REJECTED reason=Keep safe recovery intensity reviewer=2
+applyAuditCount=1
+headTrainerProfilePersisted=true
+trainerNotificationCount=3 unread=0
+SQL_READBACK_PASS

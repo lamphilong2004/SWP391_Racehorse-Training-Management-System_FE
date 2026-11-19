@@ -156,6 +156,11 @@ function IncidentReporter({ userId, actorId, read, name }: { userId: number; act
 function IncidentHorseStatus({ horseId, read }: { horseId: number; read?: HorseReader }) {
   const load = useCallback(() => read ? read(horseId) : Promise.reject(new Error('Identity unavailable')), [read, horseId]);
   const state = useIncidentRead(load);
+  // Chưa có dữ liệu có thể vì request còn chạy, không đồng nghĩa API đã lỗi.
+  // Chỉ cho thử lại sau lỗi thật; không thay đổi sức khỏe hay quyền xem của người dùng.
+  if (!state.data) return <Card title="Tình trạng ngựa hiện tại">{state.error
+    ? <ErrorState title="Không tải được tình trạng ngựa." description="Hãy thử lại để xem tình trạng sức khỏe và khả năng tập luyện." onRetry={state.reload} />
+    : <LoadingState label="Đang tải tình trạng ngựa…" />}</Card>;
   return <Card title="Tình trạng ngựa hiện tại">{state.data ? <div className="medical-stack"><KeyValue label="Tình trạng sức khỏe" value={state.data.healthStatus ? <StatusBadge family="health" status={state.data.healthStatus} /> : 'Chưa đánh giá'} /><KeyValue label="Khả năng tập luyện" value={<StatusBadge family="availability" status={state.data.trainingAvailability} />} /><p className="text-caption">Báo cáo sự cố không thay đổi các trạng thái này. Chỉ đội thú y được cập nhật.</p></div> : <p>Không tải được tình trạng ngựa.</p>}</Card>;
 }
 export function IncidentDetailPage({ service, role, actorId, horse, reporter }: { service: IncidentService; role: RoleCode; actorId?: number; horse?: HorseReader; reporter?: UserReader }) {

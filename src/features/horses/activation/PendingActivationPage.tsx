@@ -71,14 +71,15 @@ function PendingActivationPageContent() {
   const completed = pending?.find((p) => p.horse.id === location.state?.completedHorseId);
 
   return (
-    <div className={shared.page}>
+    <div className={`${shared.page} ${styles.page}`}>
       <button type="button" className={shared.back} onClick={() => navigate('/horses')}>{'← Quay lại danh sách ngựa'}</button>
 
       <div data-page-banner className={shared.titleBlock}>
         <h1 className={shared.title}>Chờ kích hoạt</h1>
         <p className={shared.subtitle}>
-          {`Ngựa ở trạng thái Nháp và những gì còn thiếu trước khi chuyển sang Hoạt động${pending ? ` · ${metadata.totalItems} con ngựa` : ''}`}
+          Ngựa ở trạng thái Nháp và những gì còn thiếu trước khi chuyển sang Hoạt động
         </p>
+        {pending && <span className={styles.pendingCount}>{metadata.totalItems} con ngựa</span>}
       </div>
 
       {completed && completed.horse.currentBoxCode && missingItems(completed.status).every((item) => item === 'VETERINARIAN_BASELINE') && (
@@ -151,9 +152,11 @@ function PendingHorseCard({ status, horse, onView, onComplete }: PendingHorse & 
         <div className={styles.nextAction} role="status">
           <Icon name="clock" size={16} />
           <span>
-            {onlyBaseline
-              ? 'Đang chờ khám ban đầu của Veterinarian — yêu cầu cuối cùng. '
-              : missing.length ? `Còn thiếu: ${missing.map((m) => ITEMS[m]?.label.toLowerCase() ?? m).join(', ')}. ` : 'Đã đáp ứng danh mục bắt buộc. '}
+            <strong>
+              {onlyBaseline
+                ? 'Đang chờ khám ban đầu của Veterinarian — yêu cầu cuối cùng. '
+                : missing.length ? `Còn thiếu: ${missing.map((m) => ITEMS[m]?.label.toLowerCase() ?? m).join(', ')}. ` : 'Đã đáp ứng danh mục bắt buộc. '}
+            </strong>
             {`${horse.name} tự chuyển sang Hoạt động khi đủ mọi yêu cầu bắt buộc — không cần duyệt thủ công.`}
           </span>
         </div>
@@ -170,7 +173,7 @@ function PendingHorseCard({ status, horse, onView, onComplete }: PendingHorse & 
             const complete = c.state === 'SATISFIED';
             return (
               <ChecklistRow key={c.id} icon={complete ? 'check-circle' : 'clock'} tone={complete ? 'success' : 'warning'}
-                label={serverText(c.label)} sub={serverText(c.description)} value={complete ? 'Hoàn tất' : `Đang chờ — ${spec.who}`} />
+                label={serverText(c.label)} sub={serverText(c.description)} value={complete ? `Hoàn tất · Phụ trách: ${spec.who}` : `Đang chờ — ${spec.who}`} />
             );
           })}
           <ChecklistRow icon={reviewed ? 'check-circle' : 'circle'} tone="muted" label="Đánh giá sẵn sàng của Head Trainer"

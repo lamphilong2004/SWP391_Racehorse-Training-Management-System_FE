@@ -99,9 +99,13 @@ function DayTasks({ api, role, date, onEditing }: { api: StableCareApi; role: Ro
     {counts && <section className={styles.summary} aria-label="Tổng hợp công việc trong ngày"><MetricCard className={styles.summaryTotal} label="Tổng công việc" value={String(counts.total)} caption={isGroom ? 'Chỉ công việc được giao cho bạn' : 'Trong ngày đã chọn'} /><MetricCard className={counts.overdue ? styles.summaryOverdue : styles.summaryPending} label="Cần thực hiện" value={String(counts.pending)} caption={counts.overdue ? `${counts.overdue} việc quá giờ` : date > today() ? 'Chưa đến ngày thực hiện' : 'Không có việc quá giờ'} captionTone={counts.overdue ? 'danger' : 'warning'} /><MetricCard className={styles.summaryDone} label="Đã hoàn thành" value={String(counts.done)} caption="Có người và thời điểm thực hiện" captionTone="success" /><MetricCard className={styles.summaryCancelled} label="Đã hủy" value={String(counts.cancelled)} caption="Giữ lại lịch sử và lý do" /></section>}
     {counts && counts.overdue > 0 && status !== 'overdue' && <AlertBanner type="warning" title={isGroom ? `Bạn có ${counts.overdue} việc đã quá giờ` : `${counts.overdue} việc đã quá giờ nhưng chưa hoàn thành`}><div className={styles.alertBody}><p>{isGroom ? 'Làm xong rồi bấm Hoàn thành. Nếu ngựa có vấn đề, chọn Báo bất thường.' : 'Liên hệ Groom phụ trách, hoặc mở Thao tác ở dòng đó để đổi Groom.'}</p><Button size="sm" variant="secondary" onClick={() => setStatus('overdue')}>Xem việc quá giờ</Button></div></AlertBanner>}
     <div className={styles.dayHeader}><p className={styles.guidance}>{isGroom ? 'Thấy ngựa có dấu hiệu bất thường? Chọn Báo bất thường trên dòng công việc.' : 'Việc quá giờ hiện trên cùng. Kiểm tra trước buổi tập và công việc điều trị được theo dõi ở màn riêng.'}</p><Button variant="secondary" size="sm" disabled={action.busy || !!edit || !!report} onClick={data.retry}>Tải lại công việc</Button></div>
+    {counts && <div className={styles.quickFilters} role="group" aria-label="Lọc nhanh công việc">
+      {[{ value: '', label: 'Tất cả', count: counts.total }, { value: 'open', label: 'Chưa hoàn thành', count: counts.pending }, { value: 'overdue', label: 'Quá giờ', count: counts.overdue }, { value: 'done', label: 'Đã hoàn thành', count: counts.done }].map(item =>
+        <Button key={item.value} variant="secondary" className={status === item.value ? styles.filterSelected : undefined} aria-pressed={status === item.value} onClick={() => setStatus(item.value)}>{item.label} · {item.count}</Button>)}
+    </div>}
     <TableToolbar label="Lọc công việc đã tải" scope="page" resultCount={loaded ? rows.length : undefined} hasFilters={!!search || !!status || !!groomFilter} onClear={() => { setSearch(''); setStatus(''); setGroomFilter(''); }}><TextField label="Tìm ngựa / công việc" value={search} onChange={e => setSearch(e.target.value)} /><SelectField label="Trạng thái" value={status} onChange={e => setStatus(e.target.value)} options={[{ value: '', label: 'Tất cả' }, { value: 'open', label: 'Chưa hoàn thành' }, { value: 'overdue', label: 'Quá giờ' }, { value: 'due', label: 'Cần làm' }, { value: 'upcoming', label: 'Chưa đến giờ' }, { value: 'done', label: 'Đã hoàn thành' }, { value: 'cancelled', label: 'Đã hủy' }]} />{!isGroom && <SelectField label="Groom phụ trách" value={groomFilter} onChange={e => setGroomFilter(e.target.value)} options={[{ value: '', label: 'Tất cả Groom' }, ...grooms.map(([id, name]) => ({ value: String(id), label: name }))]} />}</TableToolbar>
     <p role="status" className={styles.guidance}>{counts ? `${counts.done}/${counts.total} công việc của ngày đã hoàn thành · ${counts.overdue} quá giờ · ${counts.cancelled} đã hủy · ${counts.pending} còn lại` : 'Đang tải tổng số công việc…'}</p>
-    {loaded && <DataTable rows={rows} rowKey={t => t.id} caption="Công việc chăm sóc theo ngày" empty={<EmptyState title="Không có công việc phù hợp" description="Chọn ngày khác hoặc xóa bộ lọc để kiểm tra lại." />} columns={[
+    {loaded && <DataTable className={rows.length ? 'min-w-4xl' : undefined} rows={rows} rowKey={t => t.id} caption="Công việc chăm sóc theo ngày" empty={<div className="grid justify-items-center gap-3"><EmptyState title="Không có công việc phù hợp" description="Chọn ngày khác hoặc xóa bộ lọc để kiểm tra lại." />{(search || status || groomFilter) && <Button variant="secondary" onClick={() => { setSearch(''); setStatus(''); setGroomFilter(''); }}>Xóa bộ lọc công việc</Button>}</div>} columns={[
       { key: 'horse', header: 'Ngựa / chuồng', render: t => <><strong>{t.horseName}</strong><p>{t.horseCode} · {t.boxCode ?? 'Chưa xác định chuồng'}</p></> },
       { key: 'work', header: 'Công việc', render: t => <><strong className={styles.taskTitle}>{slotTime(t.slot) ?? t.slot} · {labels[t.taskType] ?? t.taskType}</strong><p>{instructionText(t.instructions)}</p></> },
       ...(isGroom ? [] : [{ key: 'groom', header: 'Groom phụ trách', render: (t: Task) => t.groomName }]),
@@ -174,18 +178,49 @@ function PlanEditor({ api, horseId, nutrition, plan, onClose, onSaved }: { api: 
     </form></Card>;
 }
 function Inventory({ api, role }: { api: StableCareApi; role: RoleCode }) {
-  const data = useSupportingLoad(api.inventory, [api]); const [query, setQuery] = useState(''); const [editor, setEditor] = useState<StockItem | 'new' | null>(null); const [selected, setSelected] = useState<StockItem | null>(null); const [revision, setRevision] = useState(0); const [notice, setNotice] = useState('');
-  const rows = (data.data ?? []).filter(i => `${i.name} ${labels[i.category]}`.toLocaleLowerCase('vi').includes(query.toLocaleLowerCase('vi')));
-  return <>{notice && <AlertBanner feedback type="success" title={notice} />}<AlertBanner type="info" title="Sổ kho ghi nhận thực tế">Club Manager ghi nhập/xuất. Chăm sóc hoặc cho ăn không tự trừ kho. Yêu cầu bổ sung chỉ là yêu cầu, không phải đã nhập hàng.</AlertBanner><ReadState loading={!data.data} error={data.error} retry={data.retry} />
-    <TableToolbar label="Lọc vật tư đã tải" scope="page" hasFilters={!!query} resultCount={data.data && !data.error ? rows.length : undefined} onClear={() => setQuery('')}><TextField label="Tìm vật tư / nhóm" value={query} onChange={e => setQuery(e.target.value)} /></TableToolbar>
-    {role === 'CLUB_MANAGER' && <div className={styles.listActions}><Button disabled={editor !== null || selected !== null} onClick={() => { setSelected(null); setNotice(''); setEditor('new'); }}>Thêm vật tư</Button></div>}
+  const data = useSupportingLoad(api.inventory, [api]);
+  const [query, setQuery] = useState(''), [stockFilter, setStockFilter] = useState('');
+  const [editor, setEditor] = useState<StockItem | 'new' | null>(null), [selected, setSelected] = useState<StockItem | null>(null);
+  const [revision, setRevision] = useState(0), [notice, setNotice] = useState('');
+  const loaded = data.data && !data.error ? data.data : null;
+  // UI filter only: keep the existing threshold comparison, never create a replenishment or stock write here.
+  const needsStock = (item: StockItem) => item.active && item.threshold !== null && item.currentQuantity <= item.threshold;
+  const rows = (loaded ?? []).filter(item => `${item.name} ${labels[item.category]}`.toLocaleLowerCase('vi').includes(query.toLocaleLowerCase('vi'))
+    && (!stockFilter || (stockFilter === 'low' ? needsStock(item) : stockFilter === 'active' ? item.active : !item.active)));
+  const filtered = Boolean(query || stockFilter);
+  const clear = () => { setQuery(''); setStockFilter(''); };
+  return <>
+    {notice && <AlertBanner feedback type="success" title={notice} />}
+    <div className={styles.panelHeader}>
+      <div><h2 className="text-h2">Vật tư trong kho</h2><p className="text-rh-muted">{role === 'GROOM' ? 'Kiểm tra tồn thực tế và gửi đề nghị bổ sung cho Club Manager.' : 'Theo dõi từng vật tư theo đơn vị quản lý; mở sổ kho để xem lịch sử.'}</p></div>
+      {role === 'CLUB_MANAGER' && <Button disabled={editor !== null || selected !== null} onClick={() => { setSelected(null); setNotice(''); setEditor('new'); }}><Icon name="plus" size={16} />Thêm vật tư</Button>}
+    </div>
+    <AlertBanner type="info" title="Sổ kho ghi nhận thực tế">Club Manager ghi nhập/xuất. Chăm sóc hoặc cho ăn không tự trừ kho. Yêu cầu bổ sung chỉ là yêu cầu, không phải đã nhập hàng.</AlertBanner>
+    <ReadState loading={!data.data} error={data.error} retry={data.retry} />
+    {loaded && <section className="grid min-w-0 gap-4 sm:grid-cols-3" aria-label="Tổng hợp vật tư đã tải">
+      <MetricCard label="Loại vật tư" value={String(loaded.length)} caption="Số dòng vật tư, không cộng các đơn vị" />
+      <MetricCard label="Cần kiểm tra bổ sung" value={String(loaded.filter(needsStock).length)} caption="Đang sử dụng và tồn không vượt ngưỡng" captionTone="warning" captionIcon="alert-triangle" />
+      <MetricCard label="Đang sử dụng" value={String(loaded.filter(item => item.active).length)} caption="Vật tư có thể ghi nhận biến động" />
+    </section>}
     {editor && <ItemEditor key={editor === 'new' ? 'new' : editor.id} api={api} item={editor === 'new' ? undefined : editor} onClose={() => setEditor(null)} onSaved={() => { setEditor(null); data.retry(); setSelected(null); setNotice('Đã lưu thông tin vật tư.'); }} />}
-    {data.data && !data.error && <DataTable rows={rows} rowKey={i => i.id} caption="Kho vật tư" empty={<EmptyState title="Không có vật tư phù hợp" description="Thử xóa bộ lọc hoặc thêm vật tư mới." />} columns={[
-      { key: 'name', header: 'Vật tư', render: i => <><strong>{i.name}</strong><p>{labels[i.category]}</p></> }, { key: 'quantity', header: 'Tồn thực tế', render: i => `${i.currentQuantity} ${i.unit}` },
-      { key: 'threshold', header: 'Ngưỡng nhắc', render: i => <>{i.threshold ?? 'Chưa đặt'} {i.unit}{i.threshold !== null && i.currentQuantity <= i.threshold && <p>Cần kiểm tra bổ sung</p>}</> },
-      { key: 'active', header: 'Trạng thái', render: i => i.active ? 'Đang sử dụng' : 'Ngừng sử dụng' },
-      { key: 'actions', header: 'Thao tác', render: i => <div className={styles.actions}><Button variant="secondary" disabled={editor !== null || selected !== null} onClick={() => { setNotice(''); setSelected(i); }}>Sổ kho / thao tác</Button>{role === 'CLUB_MANAGER' && <Button variant="tertiary" disabled={editor !== null || selected !== null} onClick={() => { setSelected(null); setNotice(''); setEditor(i); }}>Sửa thông tin</Button>}</div> },
-    ]} />}
+    <Card title="Danh sách vật tư" className="min-w-0">
+      <TableToolbar label="Lọc vật tư đã tải" scope="page" hasFilters={filtered} resultCount={loaded ? rows.length : undefined} onClear={clear}>
+        <TextField label="Tìm vật tư / nhóm" type="search" value={query} onChange={e => setQuery(e.target.value)} />
+        <SelectField label="Tình trạng tồn kho" value={stockFilter} onChange={e => setStockFilter(e.target.value)} options={[{ value: '', label: 'Tất cả vật tư' }, { value: 'low', label: 'Cần kiểm tra bổ sung' }, { value: 'active', label: 'Đang sử dụng' }, { value: 'inactive', label: 'Ngừng sử dụng' }]} />
+      </TableToolbar>
+      {loaded && <DataTable className={rows.length ? 'min-w-3xl' : undefined} rows={rows} rowKey={item => item.id} caption="Kho vật tư"
+        empty={<div className="grid justify-items-center gap-3"><EmptyState title="Không có vật tư phù hợp" description={filtered ? 'Đổi từ khóa hoặc xóa bộ lọc để xem lại danh sách.' : role === 'CLUB_MANAGER' ? 'Dùng Thêm vật tư để khai báo vật tư đầu tiên.' : 'Chưa có vật tư. Liên hệ Club Manager để kiểm tra.'} />{filtered && <Button variant="secondary" onClick={clear}>Xóa bộ lọc vật tư</Button>}</div>}
+        columns={[
+          { key: 'name', header: 'Vật tư', render: item => <><strong>{item.name}</strong><p className="text-rh-muted">{labels[item.category]}</p></> },
+          { key: 'quantity', header: 'Tồn thực tế', align: 'right', nowrap: true, render: item => <><strong className="tabular-nums">{item.currentQuantity}</strong> {item.unit}</> },
+          { key: 'threshold', header: 'Ngưỡng nhắc', render: item => <>{item.threshold === null ? 'Chưa đặt' : `${item.threshold} ${item.unit}`}{needsStock(item) && <p className={styles.stockWarning}><Icon name="alert-triangle" size={14} />Cần kiểm tra bổ sung</p>}</> },
+          { key: 'active', header: 'Trạng thái', render: item => <span className={item.active ? styles.stockActive : styles.stockInactive}>{item.active ? 'Đang sử dụng' : 'Ngừng sử dụng'}</span> },
+          { key: 'actions', header: 'Thao tác', render: item => <div className={styles.rowMutations}>
+            <Button variant="secondary" disabled={editor !== null || selected !== null} onClick={() => { setNotice(''); setSelected(item); }}>{role === 'CLUB_MANAGER' ? 'Nhập / xuất' : role === 'GROOM' ? 'Đề nghị bổ sung' : 'Xem sổ kho'}</Button>
+            {role === 'CLUB_MANAGER' && <Button variant="tertiary" disabled={editor !== null || selected !== null} onClick={() => { setSelected(null); setNotice(''); setEditor(item); }}>Sửa thông tin</Button>}
+          </div> },
+        ]} />}
+    </Card>
     {selected && <StockActions key={`${selected.id}:${selected.currentQuantity}`} api={api} item={selected} role={role} onClose={() => setSelected(null)} refresh={() => { setSelected(null); data.retry(); setRevision(value => value + 1); setNotice(role === 'GROOM' ? 'Đã gửi yêu cầu bổ sung. Tồn kho chưa thay đổi.' : 'Đã ghi nhận biến động tồn kho.'); }} />}
     {(role === 'CLUB_MANAGER' || role === 'GROOM') && <Requests key={revision} api={api} />}
   </>;

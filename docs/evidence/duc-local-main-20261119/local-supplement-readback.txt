@@ -1,0 +1,18 @@
+database_name checked_at_utc
+------------- --------------
+racehorse_local_duc_20261111 2026-11-19 04:04:10.8166357
+id horse_id completed_by_user_id completed_at nutrition_plan_item_id
+-- -------- -------------------- ------------ ----------------------
+7 7 6 2026-11-19 04:03:44.967 1
+id horse_id care_task_id reported_by_user_id status
+-- -------- ------------ ------------------- ------
+12 7 7 6 RESOLVED
+id current_quantity
+-- ----------------
+1 13.000
+movement_count
+--------------
+2
+result
+------
+SUPPLEMENT_SQL_READBACK_PASS
