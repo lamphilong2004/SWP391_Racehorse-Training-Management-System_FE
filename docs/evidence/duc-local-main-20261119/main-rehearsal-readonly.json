@@ -1,0 +1,44 @@
+{
+  "feSha": "0e49e04a160bdb476a528565fefea35476023aac",
+  "beSha": "ee7fde6bc1789795ae0d7b561df2d13d4878c61d",
+  "database": "racehorse_local_duc_20261111",
+  "tag": "QA-DUC-20261119-612344",
+  "startedAt": "2026-11-19T04:42:00.241Z",
+  "finishedAt": "2026-11-19T04:42:04.714Z",
+  "scope": "Read-only rehearsal on merged main; no full write flow repeated",
+  "status": "PASS",
+  "routes": [
+    {
+      "role": "VETERINARIAN",
+      "path": "/medical/cases/7"
+    },
+    {
+      "role": "VETERINARIAN",
+      "path": "/incidents/12"
+    },
+    {
+      "role": "GROOM",
+      "path": "/care/tasks"
+    },
+    {
+      "role": "GROOM",
+      "path": "/care/daily"
+    },
+    {
+      "role": "CLUB_MANAGER",
+      "path": "/inventory"
+    },
+    {
+      "role": "HEAD_TRAINER",
+      "path": "/medical/summary?horseId=7"
+    }
+  ],
+  "businessWrites": [],
+  "getResponses": 46,
+  "assertions": [
+    "Case 7 CLOSED, read-only tabs; incident 12 RESOLVED and horse status loaded",
+    "Groom task 6 checked and disabled; future daily care has no Complete button",
+    "Inventory remains 13 kg",
+    "HT summary excludes clinical fields; horse availability AVAILABLE"
+  ]
+}
