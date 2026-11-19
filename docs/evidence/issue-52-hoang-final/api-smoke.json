@@ -1,0 +1,536 @@
+{
+  "status": "API_SQL_BACKED_SMOKE_PASS",
+  "startedAt": "2026-11-19T11:19:32.8987809+07:00",
+  "finishedAt": "2026-11-19T11:19:37.3147730+07:00",
+  "database": "racehorse_local_hoang_issue52_20261119",
+  "feBaseSha": "c211075c9ce12e4207d4d68d08b70e72c770b512",
+  "beSha": "ee7fde6bc1789795ae0d7b561df2d13d4878c61d",
+  "source": "FE candidate worktree with uncommitted issue52 fixes; BE main; HTTP via real FE proxy; no fixture",
+  "browser": "BLOCKED: Windows CUA URL verification; no browser PASS claim",
+  "dataset": "QA-HOANG52-111932",
+  "horseId": 1,
+  "templateId": 1,
+  "templateVersionId": 2,
+  "programId": 1,
+  "trainerId": 3,
+  "approveRequestId": 1,
+  "rejectRequestId": 2,
+  "finalProgram": {
+    "id": 1,
+    "horse": {
+      "id": 1,
+      "horseCode": "RH-001",
+      "name": "QA-HOANG52-111932 Horse"
+    },
+    "name": "QA-HOANG52-111932 Program",
+    "status": "ACTIVE",
+    "periodStart": "2026-11-19",
+    "periodEnd": "2026-12-03",
+    "sourceTemplateId": 1,
+    "sourceTemplateVersion": 2,
+    "currentTrainer": {
+      "id": 3,
+      "userCode": "C7-CORE007-TR01",
+      "fullName": "CORE-007 Local Trainer"
+    },
+    "currentPhaseName": "Foundation",
+    "trainingAvailability": "AVAILABLE",
+    "sourceTemplateCode": "TPLC13D180895284FC1",
+    "sourceTemplateName": "QA-HOANG52-111932 Template",
+    "goals": "Version two aerobic base",
+    "targetMetrics": null,
+    "notes": "Real API and SQL local verification",
+    "activatedAt": "2026-11-19T04:19:36.395Z",
+    "createdBy": {
+      "id": 2,
+      "userCode": "C7-CORE007-HT01",
+      "fullName": "CORE-007 Local Head Trainer"
+    },
+    "phases": [
+      {
+        "id": 1,
+        "templateVersionPhaseId": 2,
+        "phaseOrder": 1,
+        "name": "Foundation",
+        "objective": "Controlled recovery",
+        "startDate": "2026-11-19",
+        "endDate": "2026-12-03",
+        "intensityMin": "LOW",
+        "intensityMax": "MEDIUM",
+        "workload": "Walk and trot",
+        "isCustomized": true
+      }
+    ],
+    "pendingAdjustmentRequests": 0
+  },
+  "decisions": {
+    "items": [
+      {
+        "id": 2,
+        "programId": 1,
+        "horseProgramPhaseId": 1,
+        "requestType": "PHASE_OBJECTIVE",
+        "currentValue": "Aerobic base",
+        "requestedValue": "Higher intensity",
+        "reason": "QA-HOANG52-111932 rejected request",
+        "evidenceNotes": "Local test only",
+        "status": "REJECTED",
+        "requestedBy": {
+          "id": 3,
+          "userCode": "C7-CORE007-TR01",
+          "fullName": "CORE-007 Local Trainer"
+        },
+        "requestedAt": "2026-11-19T04:19:36.921Z",
+        "reviewedBy": {
+          "id": 2,
+          "userCode": "C7-CORE007-HT01",
+          "fullName": "CORE-007 Local Head Trainer"
+        },
+        "reviewedAt": "2026-11-19T04:19:36.994Z",
+        "decisionReason": "Keep safe recovery intensity",
+        "horse": {
+          "id": 1,
+          "horseCode": "RH-001",
+          "name": "QA-HOANG52-111932 Horse"
+        }
+      },
+      {
+        "id": 1,
+        "programId": 1,
+        "horseProgramPhaseId": 1,
+        "requestType": "PHASE_OBJECTIVE",
+        "currentValue": "Aerobic base",
+        "requestedValue": "Controlled recovery",
+        "reason": "QA-HOANG52-111932 recovery request",
+        "evidenceNotes": "Local test only",
+        "status": "APPROVED",
+        "requestedBy": {
+          "id": 3,
+          "userCode": "C7-CORE007-TR01",
+          "fullName": "CORE-007 Local Trainer"
+        },
+        "requestedAt": "2026-11-19T04:19:36.723Z",
+        "reviewedBy": {
+          "id": 2,
+          "userCode": "C7-CORE007-HT01",
+          "fullName": "CORE-007 Local Head Trainer"
+        },
+        "reviewedAt": "2026-11-19T04:19:36.813Z",
+        "decisionReason": "Approved safe recovery objective",
+        "horse": {
+          "id": 1,
+          "horseCode": "RH-001",
+          "name": "QA-HOANG52-111932 Horse"
+        }
+      }
+    ],
+    "page": 0,
+    "size": 20,
+    "totalItems": 2,
+    "totalPages": 1
+  },
+  "unreadBefore": 3,
+  "unreadAfter": 0,
+  "ledger": [
+    {
+      "time": "2026-11-19T11:19:34.4274035+07:00",
+      "role": "CLUB_MANAGER",
+      "method": "POST",
+      "path": "/api/auth/login",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:34.5248412+07:00",
+      "role": "HEAD_TRAINER",
+      "method": "POST",
+      "path": "/api/auth/login",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:34.6050129+07:00",
+      "role": "TRAINER",
+      "method": "POST",
+      "path": "/api/auth/login",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:34.6893107+07:00",
+      "role": "HORSE_OWNER",
+      "method": "POST",
+      "path": "/api/auth/login",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:34.7649589+07:00",
+      "role": "VETERINARIAN",
+      "method": "POST",
+      "path": "/api/auth/login",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:35.1099333+07:00",
+      "role": "CLUB_MANAGER",
+      "method": "POST",
+      "path": "/api/horses",
+      "http": 201,
+      "expected": 201
+    },
+    {
+      "time": "2026-11-19T11:19:35.2411437+07:00",
+      "role": "CLUB_MANAGER",
+      "method": "PUT",
+      "path": "/api/horses/1/pedigree",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:35.3420619+07:00",
+      "role": "CLUB_MANAGER",
+      "method": "POST",
+      "path": "/api/horses/1/ownerships",
+      "http": 201,
+      "expected": 201
+    },
+    {
+      "time": "2026-11-19T11:19:35.3740428+07:00",
+      "role": "CLUB_MANAGER",
+      "method": "GET",
+      "path": "/api/stable-boxes?status=FREE",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:35.4790795+07:00",
+      "role": "CLUB_MANAGER",
+      "method": "POST",
+      "path": "/api/horses/1/stable-assignments",
+      "http": 201,
+      "expected": 201
+    },
+    {
+      "time": "2026-11-19T11:19:35.6224870+07:00",
+      "role": "VETERINARIAN",
+      "method": "POST",
+      "path": "/api/horses/1/baseline-examinations",
+      "http": 201,
+      "expected": 201
+    },
+    {
+      "time": "2026-11-19T11:19:35.6690240+07:00",
+      "role": "HEAD_TRAINER",
+      "method": "GET",
+      "path": "/api/horses/1/activation-status",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:35.7103267+07:00",
+      "role": "HEAD_TRAINER",
+      "method": "POST",
+      "path": "/api/horses/1/readiness-review",
+      "http": 204,
+      "expected": 204
+    },
+    {
+      "time": "2026-11-19T11:19:35.9668833+07:00",
+      "role": "HEAD_TRAINER",
+      "method": "POST",
+      "path": "/api/program-templates",
+      "http": 201,
+      "expected": 201
+    },
+    {
+      "time": "2026-11-19T11:19:36.0035896+07:00",
+      "role": "HEAD_TRAINER",
+      "method": "POST",
+      "path": "/api/program-templates/1/versions",
+      "http": 201,
+      "expected": 201
+    },
+    {
+      "time": "2026-11-19T11:19:36.0317226+07:00",
+      "role": "HEAD_TRAINER",
+      "method": "GET",
+      "path": "/api/program-templates/1?versionNo=1",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:36.1101227+07:00",
+      "role": "HEAD_TRAINER",
+      "method": "GET",
+      "path": "/api/program-templates?status=ACTIVE&q=QA-HOANG52-111932&page=0&size=20",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:36.1575769+07:00",
+      "role": "HEAD_TRAINER",
+      "method": "POST",
+      "path": "/api/program-templates/1/duplicate",
+      "http": 201,
+      "expected": 201
+    },
+    {
+      "time": "2026-11-19T11:19:36.1849245+07:00",
+      "role": "HEAD_TRAINER",
+      "method": "POST",
+      "path": "/api/program-templates/2/archive",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:36.2010503+07:00",
+      "role": "HEAD_TRAINER",
+      "method": "GET",
+      "path": "/api/program-templates/2",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:36.2666555+07:00",
+      "role": "HEAD_TRAINER",
+      "method": "GET",
+      "path": "/api/horses/1/template-recommendations",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:36.3145494+07:00",
+      "role": "HEAD_TRAINER",
+      "method": "GET",
+      "path": "/api/horses/1/trainer-recommendations?templateVersionId=2",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:36.5227011+07:00",
+      "role": "HEAD_TRAINER",
+      "method": "POST",
+      "path": "/api/training-programs",
+      "http": 201,
+      "expected": 201
+    },
+    {
+      "time": "2026-11-19T11:19:36.5495620+07:00",
+      "role": "HEAD_TRAINER",
+      "method": "GET",
+      "path": "/api/training-programs/1",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:36.5781097+07:00",
+      "role": "HEAD_TRAINER",
+      "method": "GET",
+      "path": "/api/training-programs/1",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:36.6305116+07:00",
+      "role": "HEAD_TRAINER",
+      "method": "POST",
+      "path": "/api/program-templates/1/versions",
+      "http": 201,
+      "expected": 201
+    },
+    {
+      "time": "2026-11-19T11:19:36.6604474+07:00",
+      "role": "HEAD_TRAINER",
+      "method": "GET",
+      "path": "/api/training-programs/1",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:36.7706772+07:00",
+      "role": "TRAINER",
+      "method": "POST",
+      "path": "/api/training-programs/1/adjustment-requests",
+      "http": 201,
+      "expected": 201
+    },
+    {
+      "time": "2026-11-19T11:19:36.7989291+07:00",
+      "role": "TRAINER",
+      "method": "POST",
+      "path": "/api/adjustment-requests/1/approve",
+      "http": 403,
+      "expected": 403
+    },
+    {
+      "time": "2026-11-19T11:19:36.8354664+07:00",
+      "role": "HEAD_TRAINER",
+      "method": "POST",
+      "path": "/api/adjustment-requests/1/approve",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:36.8627672+07:00",
+      "role": "HEAD_TRAINER",
+      "method": "GET",
+      "path": "/api/training-programs/1",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:36.9076741+07:00",
+      "role": "HEAD_TRAINER",
+      "method": "PUT",
+      "path": "/api/training-programs/1/phases",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:36.9299723+07:00",
+      "role": "TRAINER",
+      "method": "POST",
+      "path": "/api/training-programs/1/adjustment-requests",
+      "http": 201,
+      "expected": 201
+    },
+    {
+      "time": "2026-11-19T11:19:36.9814256+07:00",
+      "role": "HEAD_TRAINER",
+      "method": "POST",
+      "path": "/api/adjustment-requests/2/reject",
+      "http": 400,
+      "expected": 400
+    },
+    {
+      "time": "2026-11-19T11:19:37.0058148+07:00",
+      "role": "HEAD_TRAINER",
+      "method": "POST",
+      "path": "/api/adjustment-requests/2/reject",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:37.0236610+07:00",
+      "role": "HEAD_TRAINER",
+      "method": "GET",
+      "path": "/api/training-programs/1",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:37.0516643+07:00",
+      "role": "TRAINER",
+      "method": "GET",
+      "path": "/api/adjustment-requests?programId=1&page=0&size=20",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:37.0856921+07:00",
+      "role": "HEAD_TRAINER",
+      "method": "GET",
+      "path": "/api/training-programs/1/history",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:37.1101301+07:00",
+      "role": "TRAINER",
+      "method": "GET",
+      "path": "/api/notifications/unread-count",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:37.1309067+07:00",
+      "role": "TRAINER",
+      "method": "GET",
+      "path": "/api/notifications?read=false&page=0&size=20",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:37.1550867+07:00",
+      "role": "TRAINER",
+      "method": "PATCH",
+      "path": "/api/notifications/5/read",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:37.1647634+07:00",
+      "role": "TRAINER",
+      "method": "GET",
+      "path": "/api/notifications/unread-count",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:37.1826667+07:00",
+      "role": "TRAINER",
+      "method": "PATCH",
+      "path": "/api/notifications/5/read",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:37.1920639+07:00",
+      "role": "TRAINER",
+      "method": "GET",
+      "path": "/api/notifications/unread-count",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:37.2102153+07:00",
+      "role": "TRAINER",
+      "method": "POST",
+      "path": "/api/notifications/read-all",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:37.2216124+07:00",
+      "role": "TRAINER",
+      "method": "GET",
+      "path": "/api/notifications/unread-count",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:37.2452866+07:00",
+      "role": "TRAINER",
+      "method": "GET",
+      "path": "/api/notifications?read=true&page=0&size=20",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:37.2716233+07:00",
+      "role": "HEAD_TRAINER",
+      "method": "GET",
+      "path": "/api/account",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:37.2988617+07:00",
+      "role": "HEAD_TRAINER",
+      "method": "PUT",
+      "path": "/api/account",
+      "http": 200,
+      "expected": 200
+    },
+    {
+      "time": "2026-11-19T11:19:37.3129410+07:00",
+      "role": "HEAD_TRAINER",
+      "method": "GET",
+      "path": "/api/account",
+      "http": 200,
+      "expected": 200
+    }
+  ]
+}

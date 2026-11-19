@@ -50,6 +50,27 @@ async function signIn() { await userEvent.click(await screen.findByRole('button'
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); });
 afterEach(() => { vi.unstubAllGlobals(); localStorage.clear(); sessionStorage.clear(); });
 
+it('returns to the first page after reading the last unread notice on a later page', async () => {
+  let marked = false;
+  vi.stubGlobal('fetch', vi.fn<typeof fetch>(async (url) => {
+    const parsed = new URL(String(url), 'http://localhost:8080');
+    if (parsed.pathname.endsWith('/unread-count')) return ok({ unread: marked ? 20 : 21 });
+    if (parsed.pathname.endsWith('/11/read')) { marked = true; return ok({ ...notice, readAt: '2026-11-19T04:00:00Z' }); }
+    const index = Number(parsed.searchParams.get('page') ?? 0);
+    return ok({ items: index === 0 ? [{ ...notice, id: 12, title: 'First page unread' }] : marked ? [] : [notice],
+      page: index, size: 20, totalItems: marked ? 20 : 21, totalPages: marked ? 1 : 2 });
+  }));
+  mount(); await signIn();
+  await userEvent.click(await screen.findByRole('link', { name: 'Open center fixture' }));
+  await userEvent.selectOptions(await screen.findByLabelText('Trạng thái đọc'), 'false');
+  await userEvent.click(await screen.findByRole('button', { name: 'Sau' }));
+  await screen.findByText('Fixture notice');
+  await userEvent.click(screen.getByRole('button', { name: 'Đánh dấu đã đọc' }));
+  expect(await screen.findByText('First page unread')).toBeInTheDocument();
+  expect(screen.getByText('Trang 1 · 20 thông báo')).toBeInTheDocument();
+  expect(screen.getByLabelText('Trạng thái đọc')).toHaveValue('false');
+});
+
 it('opens real TRAINING_PROGRAM targets and formats dates without crashing the center', async () => {
   vi.stubGlobal('fetch', vi.fn<typeof fetch>(async (url) => pathOf(url).endsWith('/unread-count') ? ok({ unread: 1 }) : ok({
     items: [{ ...notice, targetType: 'TRAINING_PROGRAM', targetId: 42, title: 'Training program assigned',
