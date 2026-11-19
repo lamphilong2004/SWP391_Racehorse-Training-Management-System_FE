@@ -55,3 +55,5 @@ Tài liệu để tìm nhanh file khi học code hoặc trình bày. Nó không 
 Phần hướng dẫn này không đổi giao diện, nghiệp vụ, quyền hoặc dữ liệu. Các hướng dẫn Backend nằm trong thư mục `docs/duc-guides` của repo BE; đọc controller/service của đúng checkout, không lấy tài liệu làm bằng chứng API mới được triển khai.
 
 Chọn đúng test theo thay đổi: [DUC-TEST-MAP.md](DUC-TEST-MAP.md).
+
+Gỡ vướng khi demo: [DUC-DEMO-TROUBLESHOOTING.md](DUC-DEMO-TROUBLESHOOTING.md).
