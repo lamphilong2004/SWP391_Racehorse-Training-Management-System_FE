@@ -78,19 +78,21 @@ export function HorseListPage() {
   // Counts are read only after the list itself loaded, so a failing list stays a single request.
   useEffect(() => { if (!listed || counts) return; let active = true; loadCounts(() => active).then((value) => { if (active && value) setCounts(value); }, () => undefined); return () => { active = false; }; }, [listed, counts, loadCounts]);
   const apply = (next: Partial<typeof query>) => setQuery((current) => ({ ...current, ...next, page: 0 }));
-  return <div className={styles.page} data-ui-v3>
+  return <div className={`${styles.page} ${styles.registryPage}`} data-ui-v3>
     <div data-page-banner className={styles.titleRow}><div className={styles.titleBlock}><h1 className="text-h1">Danh sách ngựa</h1><p>Danh sách ngựa của câu lạc bộ · nhận dạng, phả hệ, sở hữu và ô chuồng</p></div>{canManage && <><ButtonLink to="/horses/pending-activation">Chờ kích hoạt</ButtonLink><ButtonLink variant="primary" to="/horses/new">Thêm ngựa</ButtonLink></>}</div>
-    <TableToolbar label="Bộ lọc danh sách ngựa" scope="server" resultCount={data?.totalItems}
-      hasFilters={Boolean(search || lifecycle || availability || query.q || query.lifecycle || query.availability)}
-      onClear={() => { setSearch(''); setLifecycle(''); setAvailability(''); setQuery((current) => ({ q: '', lifecycle: '', availability: '', page: 0, size: current.size })); }}
-      onSubmit={(e) => { e.preventDefault(); apply({ q: search.trim() }); }}>
-      <TextField label="Tìm ngựa" type="search" placeholder="Tên hoặc mã ngựa, nhấn Enter" value={search} onChange={(e) => { setSearch(e.target.value); if (!e.target.value) apply({ q: '' }); }} />
-      <SelectField label="Khả năng tập luyện" value={availability} options={[{ value: '', label: 'Tất cả' }, ...['AVAILABLE', 'LIMITED', 'LOCKED'].map((value) => ({ value, label: viLabel(value) }))]} onChange={(e) => { setAvailability(e.target.value); apply({ availability: e.target.value }); }} />
-    </TableToolbar>
+    <div className={styles.registryToolbar}>
+      <TableToolbar label="Bộ lọc danh sách ngựa" scope="server" resultCount={data?.totalItems}
+        hasFilters={Boolean(search || lifecycle || availability || query.q || query.lifecycle || query.availability)}
+        onClear={() => { setSearch(''); setLifecycle(''); setAvailability(''); setQuery((current) => ({ q: '', lifecycle: '', availability: '', page: 0, size: current.size })); }}
+        onSubmit={(e) => { e.preventDefault(); apply({ q: search.trim() }); }}>
+        <TextField className={styles.registrySearch} label="Tìm ngựa" type="search" placeholder="Tên hoặc mã ngựa, nhấn Enter" value={search} onChange={(e) => { setSearch(e.target.value); if (!e.target.value) apply({ q: '' }); }} />
+        <SelectField className={styles.registryAvailability} label="Khả năng tập luyện" value={availability} options={[{ value: '', label: 'Tất cả' }, ...['AVAILABLE', 'LIMITED', 'LOCKED'].map((value) => ({ value, label: viLabel(value) }))]} onChange={(e) => { setAvailability(e.target.value); apply({ availability: e.target.value }); }} />
+      </TableToolbar>
+    </div>
     <div className={styles.lifecycleTabs} role="group" aria-label="Lọc theo vòng đời">{LIFECYCLE_TABS.map((tab) => <button key={tab.value} type="button" aria-pressed={query.lifecycle === tab.value}
       onClick={() => { setLifecycle(tab.value); apply({ lifecycle: tab.value }); }}><span>{tab.label}</span><strong>{counts?.[tab.value] ?? '…'}</strong></button>)}</div>
     {!data ? <HorseState error={error} retry={reload} /> : <>
-      <Card><div className={styles.registryHeading}><h2>Hồ sơ ngựa</h2><span>{data.items.length} ngựa trên trang này</span></div><div className={styles.table}><DataTable<HorseDetail> caption="Danh sách ngựa" rows={data.items} rowKey={(h) => h.id} empty={<EmptyState title="Không có ngựa phù hợp" />} columns={[
+      <Card className={styles.registryCard}><div className={styles.registryHeading}><h2>Hồ sơ ngựa</h2><span>{data.items.length} ngựa trên trang này</span></div>{data.items.length > 0 && <p className={styles.registryScrollHint}>Cuộn ngang để xem trạng thái và thao tác.</p>}<div className={styles.registryTableFrame}><DataTable<HorseDetail> className={data.items.length ? styles.registryTable : styles.registryEmptyTable} caption="Danh sách ngựa" rows={data.items} rowKey={(h) => h.id} empty={<EmptyState title="Không có ngựa phù hợp" />} columns={[
         { key: 'name', header: 'Ngựa', width: '26%', render: (h) => <Link className={styles.horseIdentity} to={`/horses/${h.id}`}>
           {businessDataMode() === 'api' && <HorsePhotoImage thumbnail name={h.name} path={`/api/horses/${h.id}/photos/primary`} />}
           <div className={styles.horseIdentityText}><strong>{h.name}</strong><span>{h.horseCode}</span><small>{h.breed ?? 'Chưa ghi giống'} · {ageInYears(h.foaledDate) ?? '—'} tuổi · {sexLabel(h.sex)}</small></div>
@@ -98,7 +100,7 @@ export function HorseListPage() {
         { key: 'lifecycle', header: 'Vòng đời', render: (h) => <StatusBadge family="lifecycle" status={h.lifecycle} /> },
         { key: 'health', header: 'Sức khỏe', render: (h) => h.healthStatus ? <StatusBadge family="health" status={h.healthStatus} /> : <span className={styles.pendingPill}>Chờ khám ban đầu</span> },
         { key: 'availability', header: 'Tập luyện', render: (h) => h.lifecycle === 'DRAFT' ? <span className={styles.mutedValue}>Chưa kích hoạt</span> : <StatusBadge family="availability" status={h.trainingAvailability} /> },
-        { key: 'box', header: 'Ô chuồng', render: (h) => boxLabel(h.currentBoxCode) ?? <span className={styles.mutedValue}>Chưa xếp chuồng</span> },
+        { key: 'box', header: 'Ô chuồng', render: (h) => <span className={styles.registryBox}>{boxLabel(h.currentBoxCode) ?? <span className={styles.mutedValue}>Chưa xếp chuồng</span>}</span> },
         { key: 'action', header: 'Thao tác', nowrap: true, render: (h) => canManage && h.lifecycle === 'DRAFT'
           ? (h.currentBoxCode ? <ButtonLink size="sm" variant="secondary" to="/horses/pending-activation">Còn thiếu</ButtonLink> : <ButtonLink size="sm" variant="primary" to={`/horses/${h.id}/edit`}>Hoàn tất</ButtonLink>)
           : <ButtonLink size="sm" variant="secondary" to={`/horses/${h.id}`}>{canManage ? 'Quản lý' : 'Xem'}</ButtonLink> },

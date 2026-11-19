@@ -475,6 +475,8 @@ it('shows server checklist progress and opens the missing setup directly without
   expect(screen.getByText('PEDIGREE')).not.toBeVisible();
   await userEvent.click(screen.getByText('Xem danh mục điều kiện'));
   expect(screen.getByText('PEDIGREE')).toBeVisible();
+  expect(screen.getByText('Hoàn tất · Phụ trách: Club Manager')).toBeVisible();
+  expect(screen.getByText('Đang chờ — Veterinarian')).toBeVisible();
   expect(screen.queryByRole('button', { name: 'Yêu cầu khám ban đầu' })).not.toBeInTheDocument();
   await userEvent.click(screen.getByRole('button', { name: 'Hoàn tất hồ sơ' }));
   await screen.findByRole('heading', { name: 'Phả hệ & quyền sở hữu · Fixture Draft' });

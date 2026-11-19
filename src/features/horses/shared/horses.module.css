@@ -196,3 +196,41 @@
 /* The banner is dark navy; secondary ink is unreadable there. */
 [data-page-banner] .startsAs { color: rgb(226 232 240 / 92%); }
 .horseIdentityText small { color: var(--color-text-secondary); font-size: 12px; line-height: 16px; }
+
+/* Horse list only: retain the shared controls and scrollable DataTable. */
+.registryPage { container-type: inline-size; gap: 20px; }
+.registryToolbar { min-width: 0; }
+.registryPage .registryToolbar form > .registrySearch { flex: 2 1 280px; }
+.registryPage .registryToolbar form > .registryAvailability { flex: 1 1 200px; }
+.registryPage .lifecycleTabs { gap: 8px; }
+.registryPage .lifecycleTabs button { min-height: 44px; padding: 8px 14px; gap: 8px; }
+.registryPage .lifecycleTabs button strong { min-width: 28px; padding: 1px 8px; }
+.registryPage .lifecycleTabs button[aria-pressed='true'] { box-shadow: var(--elev-1); }
+.registryCard { gap: 16px; min-width: 0; }
+.registryPage .registryHeading { gap: 8px 16px; }
+.registryPage .registryHeading h2 { font-size: 17px; }
+.registryPage .registryHeading > span { padding: 4px 10px; border-radius: var(--radius-full); background: var(--color-bg-subtle); }
+.registryScrollHint { display: none; color: var(--color-text-secondary); font-size: 12px; line-height: 18px; }
+.registryTableFrame { min-width: 0; }
+.registryPage .registryTable { min-width: 58rem; }
+.registryPage .registryEmptyTable thead { display: none; }
+.registryPage .registryTable .horseIdentity { min-width: 200px; gap: 12px; }
+.registryPage .horseIdentity > [data-photo-state] { width: 52px; height: 52px; flex: 0 0 52px; }
+.registryPage .horseIdentityText { gap: 3px; }
+.registryPage .horseIdentityText strong { font-size: 15px; line-height: 21px; }
+.registryPage .horseIdentityText span { font-size: 12px; font-weight: 600; line-height: 18px; letter-spacing: 0; }
+.registryPage .horseIdentityText small { line-height: 18px; overflow-wrap: anywhere; }
+.registryPage .pendingPill { box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 18%, transparent); }
+.registryBox { font-weight: 600; overflow-wrap: anywhere; }
+.registryBox .mutedValue { font-weight: 400; }
+.registryPage .registryPagination { gap: 12px; padding-top: 4px; }
+@container (max-width: 62rem) {
+  .registryScrollHint { display: block; }
+}
+@media (max-width: 600px) {
+  .registryPage { gap: 16px; }
+  .registryPage .registryToolbar form > .registrySearch,
+  .registryPage .registryToolbar form > .registryAvailability { flex-basis: 100%; }
+  .registryCard { padding: 16px; }
+  .registryPage .registryPagination > div { flex-wrap: wrap; }
+}
