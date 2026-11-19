@@ -14,6 +14,9 @@ export interface Replenishment { id: number; inventoryItemId: number; itemName: 
 export const STABLE_CARE_READ_TIMEOUT_MS = 15_000;
 
 /** Bound read-only loading, including JSON decoding. Never time out/replay a database write here. */
+// Giới hạn 15 giây chỉ áp dụng GET, bao gồm chờ giải mã response. Khi quá hạn
+// thì hủy đọc và cho người dùng thử lại. Không dùng timer này cho POST/PUT vì
+// request ghi có thể đã tới DB: tự gửi lại sẽ gây ghi trùng mà UI không biết.
 async function readStableCare<T>(path: string, token: string): Promise<T> {
   const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -27,6 +30,9 @@ async function readStableCare<T>(path: string, token: string): Promise<T> {
     return await Promise.race([requestApi<T>(path, { method: 'GET', signal: controller.signal }, { token }), timeout]);
   } finally { clearTimeout(timer); }
 }
+// Adapter gom endpoint đã có, không định nghĩa quyền mới. Các đường /tasks,
+// /inventory... được gắn prefix stable-care; báo sự cố dùng /api/incidents riêng.
+// 401/403 vẫn đi qua xử lý lỗi auth, không chuyển sang transport mẫu.
 export function createStableCareApi(token: string, onError: (cause: unknown) => boolean) {
   async function call<T>(path: string, method = 'GET', body?: unknown): Promise<T> {
     const endpoint = path === '/api/incidents' ? path : `/api/stable-care${path}`;
@@ -42,12 +48,18 @@ export function createStableCareApi(token: string, onError: (cause: unknown) => 
     savePlan: (nutrition: boolean, body: PlanRequest, id?: number) => call<Plan>(`/${nutrition ? 'nutrition' : 'care'}-plans${id ? `/${id}` : ''}`, id ? 'PUT' : 'POST', body),
     tasks: (date: string) => call<Task[]>(`/tasks?date=${encodeURIComponent(date)}`),
     complete: (id: number) => call<Task>(`/tasks/${id}/complete`, 'POST', {}),
+    // expectedGroomUserId giúp Backend biết UI đang sửa dựa trên phân công nào.
+    // Nếu người khác đã đổi Groom, server có thể từ chối thay vì ghi đè âm thầm.
     reassign: (id: number, expectedGroomUserId: number, groomUserId: number, reason: string) => call<Task>(`/tasks/${id}/reassign`, 'POST', { expectedGroomUserId, groomUserId, reason }),
     cancel: (id: number, expectedGroomUserId: number, reason: string) => call<Task>(`/tasks/${id}/cancel`, 'POST', { expectedGroomUserId, reason }),
     changes: (id: number) => call<TaskChange[]>(`/tasks/${id}/changes`),
     reportIncident: (body: IncidentCreateRequest) => call<{ id: number; incidentCode: string }>('/api/incidents', 'POST', body),
     inventory: () => call<StockItem[]>('/inventory'),
     saveItem: (body: Omit<StockItem, 'id' | 'currentQuantity'>, id?: number) => call<StockItem>(`/inventory${id ? `/${id}` : ''}`, id ? 'PUT' : 'POST', body),
+    // Ghi kho gửi cả biến động và expectedQuantity để kiểm tra xung đột.
+    // Nhập dùng số dương, xuất số âm; gửi yêu cầu bổ sung là endpoint khác và không
+    // đồng nghĩa hàng đã về kho. Hoàn thành task cũng là lời gọi khác, không kèm
+    // phiếu xuất ngầm. Chỉ server xác nhận mới được báo thao tác đã thành công.
     move: (id: number, changeQuantity: number, expectedQuantity: number, note: string) => call<StockItem>(`/inventory/${id}/movements`, 'POST', { changeQuantity, expectedQuantity, note }),
     movements: (id: number) => call<Movement[]>(`/movements?inventoryItemId=${id}`),
     requests: () => call<Replenishment[]>('/replenishments'),
