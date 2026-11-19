@@ -19,7 +19,10 @@ export function AdjustmentRequestsPage() {
   const headTrainer = user?.roles.includes('HEAD_TRAINER') ?? false;
   const [status, setStatus] = useState<AdjustmentStatus | ''>('PENDING'), [page, setPage] = useState(0);
   const [decision, setDecision] = useState<{ item: AdjustmentRequest; approve: boolean } | null>(null);
+  // Giữ kết quả API ngoài danh sách vì hàng vừa xử lý có thể biến mất khỏi bộ lọc PENDING.
   const [decided, setDecided] = useState<AdjustmentRequest | null>(null);
+  // APPROVED chỉ là quyết định; modal áp dụng gửi các giai đoạn riêng,
+  // không tự suy ra thay đổi cấu trúc từ nội dung đề xuất dạng văn bản.
   const [applying, setApplying] = useState<AdjustmentRequest | null>(null), [applied, setApplied] = useState<{ item: AdjustmentRequest; programName: string } | null>(null);
   const load = useCallback((signal: AbortSignal) => api.adjustments({ status, page }, signal), [api, status, page]);
   const resource = useResource(load), data = resource.data;
@@ -65,6 +68,7 @@ export function AdjustmentRequestsPage() {
 function DecisionModal({ item, approve, onClose, onDone }: { item: AdjustmentRequest; approve: boolean; onClose: () => void; onDone: (result: AdjustmentRequest) => void }) {
   const request = useFlowRequest(), api = useMemo(() => createProgramManagementApi(request), [request]);
   const [reason, setReason] = useState(''), [busy, setBusy] = useState(false), [error, setError] = useState('');
+  // Ref khóa ngay trong nhịp submit, trước khi busy được render để vô hiệu hóa nút.
   const inFlight = useRef(false);
   async function submit(event: FormEvent) {
     event.preventDefault();
