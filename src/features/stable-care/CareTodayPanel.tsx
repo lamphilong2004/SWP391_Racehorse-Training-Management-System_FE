@@ -19,6 +19,9 @@ function listOrFail<T>(value: T[]): T[] {
  * Vietnam club clock that keeps moving while the dashboard stays open: tasks cross into "overdue" without a reload,
  * and a new club day changes `date`, which reloads that day's tasks. Same-minute ticks do not re-render.
  */
+// Đồng hồ cập nhật theo giờ CLB khi tab vẫn mở, quay lại cửa sổ hoặc tab được
+// hiện lại. Qua ngày mới sẽ đổi date và đọc lại công việc ngày đó. Timer và
+// event listener được dọn khi rời màn, tránh tạo nhiều đồng hồ sau mỗi lần mở.
 function useClubClock(intervalMs = 30_000) {
   const [now, setNow] = useState(() => clubDateTime());
   useEffect(() => {
@@ -33,6 +36,10 @@ function useClubClock(intervalMs = 30_000) {
 }
 
 /** Flow 4 step 4.4 at a glance: today's care progress for the Groom (own tasks) or the Club Manager (whole stable). */
+// Khối dashboard chỉ đọc tiến độ và dẫn sang màn thao tác. manager quyết định
+// cách ghi nhãn của UI, không tự cấp quyền đọc mọi task; response Backend phải
+// được lọc theo phiên người dùng. Chỉ hiển thị tối đa 5 việc quá giờ trong khối
+// tóm tắt, còn lại mở Chăm sóc hằng ngày để xem.
 export function CareTodayPanel({ manager }: { manager: boolean }) {
   const request = useFlowRequest();
   const clubNow = useClubClock(); const date = clubNow.slice(0, 10);
@@ -61,6 +68,9 @@ export function CareTodayPanel({ manager }: { manager: boolean }) {
   </section>;
 }
 
+// Nhắc kho chỉ xét vật tư active có threshold và tồn không vượt threshold.
+// Nó không tự đặt hàng, cộng kho hay trừ kho. Số đếm là số loại vật tư, không
+// phải tổng số lượng vì mỗi vật tư có thể dùng đơn vị khác nhau.
 function LowStock() {
   const request = useFlowRequest();
   const load = useCallback((signal: AbortSignal) => request<StockItem[]>('/api/stable-care/inventory', { signal }).then(listOrFail), [request]);
