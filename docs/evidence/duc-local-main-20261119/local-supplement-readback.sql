@@ -1,0 +1,12 @@
+SET NOCOUNT ON;
+SELECT DB_NAME() AS database_name, SYSUTCDATETIME() AS checked_at_utc;
+SELECT id, horse_id, completed_by_user_id, completed_at, nutrition_plan_item_id FROM dbo.care_task WHERE id=7;
+SELECT id, horse_id, care_task_id, reported_by_user_id, status FROM dbo.incident WHERE id=12;
+SELECT id, current_quantity FROM dbo.inventory_item WHERE id=1;
+SELECT COUNT(*) AS movement_count FROM dbo.stock_movement WHERE inventory_item_id=1;
+IF NOT EXISTS(SELECT 1 FROM dbo.care_task WHERE id=7 AND horse_id=7 AND completed_by_user_id=6 AND completed_at IS NOT NULL AND nutrition_plan_item_id IS NOT NULL) THROW 51000,'QA_NUTRITION_COMPLETION_MISSING',1;
+IF NOT EXISTS(SELECT 1 FROM dbo.incident WHERE id=12 AND horse_id=7 AND care_task_id=7 AND reported_by_user_id=6 AND status='RESOLVED') THROW 51000,'QA_CARE_INCIDENT_LINK_MISMATCH',1;
+IF NOT EXISTS(SELECT 1 FROM dbo.inventory_item WHERE id=1 AND current_quantity=13) THROW 51000,'QA_COMPLETION_CHANGED_STOCK',1;
+IF (SELECT COUNT(*) FROM dbo.stock_movement WHERE inventory_item_id=1)<>2 THROW 51000,'QA_COMPLETION_ADDED_MOVEMENT',1;
+IF (SELECT COUNT(*) FROM dbo.app_user)<>19 THROW 51000,'ACCOUNT_COUNT_CHANGED',1;
+SELECT 'SUPPLEMENT_SQL_READBACK_PASS' AS result;
