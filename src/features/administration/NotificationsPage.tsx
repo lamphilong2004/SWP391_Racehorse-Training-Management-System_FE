@@ -13,6 +13,8 @@ import { dateTime } from '../evaluation/models';
 
 const CATEGORY_LABELS: Record<string, string> = { ALERTS: 'Cảnh báo', MEDICAL: 'Y tế', SCHEDULE: 'Lịch' };
 interface Notice { id: number; category: 'ALERTS' | 'MEDICAL' | 'SCHEDULE'; notificationType: string; title: string; message: string; readAt: string | null; targetType: string | null; targetId: number | null; isSimulated: boolean; createdAt: string }
+// Vai trò hiện trường chỉ nhận thông báo sự cố để nắm tình hình;
+// thông báo tóm tắt không tạo lối mở chi tiết sự cố ngoài quyền hiện có.
 function isIncidentSummary(notice: Notice, roles: RoleCode[]) {
   return notice.targetType === 'INCIDENT' && notice.notificationType === 'INCIDENT_REPORTED'
     && roles.some(role => role === 'TRAINER' || role === 'WORK_RIDER' || role === 'GROOM');
@@ -50,12 +52,16 @@ function NotificationContent({ role, roles, compact = false }: { role: RoleCode;
   const revision = notifications?.revision;
   const [category, setCategory] = useState(''), [read, setRead] = useState(''), [page, setPage] = useState(0);
   const [busy, setBusy] = useState(false), [error, setError] = useState(''); const inFlight = useRef(false);
+  // Provider tăng revision sau khi server xác nhận đã đọc, để center và drawer
+  // tải lại cùng nguồn dữ liệu thay vì tự sửa danh sách hoặc trừ badge cục bộ.
   const load = useMemo(() => async (signal: AbortSignal) => {
     const query = new URLSearchParams({ ...(category ? { category } : {}), ...(read ? { read } : {}), page: String(page), size: '20' });
     if (!request || revision === undefined) throw new Error('Đăng nhập lại để xem thông báo.');
     return request<Page<Notice>>(`/api/notifications?${query}`, { signal });
   }, [request, category, read, page, revision]);
   const resource = useResource(load);
+  // Đọc mục cuối có thể làm trang hiện tại của bộ lọc Chưa đọc không còn tồn tại.
+  // Chỉ về trang đầu sau khi cập nhật thành công; lỗi giữ nguyên trang để thử lại.
   async function mark(id?: number) {
     if (inFlight.current) return; inFlight.current = true; setBusy(true); setError('');
     try { if (!notifications) throw new Error('Đăng nhập lại để xem thông báo.'); await notifications.markRead(id); if (read === 'false') setPage(0); }
