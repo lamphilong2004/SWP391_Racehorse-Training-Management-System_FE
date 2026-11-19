@@ -5,6 +5,10 @@ import type { EvaluationResult } from '../evaluation/models';
 /** View projection of CORE-004 Owner schemas, pinned at f8e7895 (BE PR #9).
  * Presentation-only missing fields stay null; they are never added to the HTTP DTO.
  */
+// OwnerHorse là dữ liệu phục vụ giao diện sau khi adapter đã chuyển đổi DTO.
+// Tên born/code/health dùng cho component, không có nghĩa Backend nhận các tên
+// đó khi ghi. Owner Portal là luồng xem: đừng dùng model này như form sửa bệnh án.
+// Sức khỏe, vòng đời và khả năng tập vẫn là ba thuộc tính khác nhau.
 export interface OwnerHorse {
   id: number; name: string; code: string; breed: string | null; sex: string | null; born: string | null; country: string | null;
   lifecycle: StatusOf<'lifecycle'> | null; health: StatusOf<'health'> | null; availability: StatusOf<'availability'> | null;
@@ -17,6 +21,8 @@ export interface OwnerHorse {
   sessions: { id: number; date: string; title: string | null; distanceM: number | null; status: StatusOf<'session'>; evaluationResult?: EvaluationResult }[];
   nextSession: { date: string; end: string | null; title: string | null; phase: string | null } | null;
 }
+// actorId xác định người xem trong ngữ cảnh UI; signal giúp hủy lượt đọc đã lỗi
+// thời. API xác thực bằng JWT, không tin actorId từ FE để cấp quyền sở hữu.
 export interface OwnerContext { actorId: number; signal?: AbortSignal }
 export interface OwnerService {
   readonly source?: 'sample' | 'api';
@@ -24,6 +30,9 @@ export interface OwnerService {
   detail(id: number, context: OwnerContext): Promise<OwnerHorse>;
 }
 /** Structural subset of canonical readSamples(); never a second store or an HTTP response schema. */
+// Các kiểu CanonicalOwner* bên dưới chỉ mô tả nguồn fixture/test được tiêm vào.
+// Chúng không phải DTO HTTP thứ hai và không cho phép runtime API lỗi tự chuyển
+// sang sample. Đọc tên kiểu này không được suy ra Production đang có dữ liệu mẫu.
 export interface CanonicalOwnerSnapshot {
   horseRegistry?: { records: {
     id: number; name: string; horseCode: string; breed?: string | null; sex?: string | null; foaledDate?: string | null;
