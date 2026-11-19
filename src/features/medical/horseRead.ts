@@ -10,6 +10,9 @@ export interface HerdHorse extends HorseIdentity { lifecycle: 'ACTIVE' }
 function object(v: unknown): v is Record<string, unknown> { return typeof v === 'object' && v !== null && !Array.isArray(v); }
 const integer = (v: unknown, min = 0): v is number => Number.isSafeInteger(v) && Number(v) >= min;
 const invalid = () => new ApiError(200, 'INVALID_RESPONSE', 'Dữ liệu tổng quan ngựa chưa đầy đủ hoặc không hợp lệ. Hãy tải lại để thử lại.');
+// Horse Detail có thể chứa nhiều trường hơn màn y tế cần. Hàm này chỉ tạo
+// object mới gồm các trường nhận dạng/sức khỏe/khả năng tập đã cho phép;
+// không chuyển nguyên JSON sang component và không tự điền FIT khi healthStatus thiếu.
 export function readHorseIdentityData(v: unknown): HorseIdentity {
   if (!object(v) || !integer(v.id, 1) || typeof v.horseCode !== 'string' || typeof v.name !== 'string' || !['DRAFT', 'ACTIVE', 'INACTIVE'].includes(String(v.lifecycle)) ||
     !['AVAILABLE', 'LIMITED', 'LOCKED'].includes(String(v.trainingAvailability)) ||
@@ -24,6 +27,9 @@ function horse(v: unknown): HerdHorse {
   return { ...result, lifecycle: 'ACTIVE' };
 }
 /** Read only the already-assigned horse IDs for Groom; the approved GET is non-clinical. */
+// GET vẫn phải qua quyền Backend của người đang đăng nhập. Truyền id của ngựa
+// khác không làm phát sinh quyền mới; phản hồi còn phải có cùng id được yêu cầu.
+// Callback onApiError dành cho xử lý phiên/quyền chung, không phải sample fallback.
 export async function readHorseIdentity(token: string, id: number, onApiError?: (error: unknown) => boolean, options: { baseUrl?: string; fetcher?: typeof fetch } = {}): Promise<HorseIdentity> {
   if (!integer(id, 1)) throw new Error('Mã ngựa không hợp lệ.');
   try {
@@ -32,6 +38,10 @@ export async function readHorseIdentity(token: string, id: number, onApiError?: 
     return result;
   } catch (error) { onApiError?.(error); throw error; }
 }
+// Tổng quan đàn không được chỉ đọc trang đầu rồi coi là toàn bộ câu lạc bộ.
+// Đọc lần lượt hết trang ACTIVE, kiểm tổng/kích thước giữa các trang và phát hiện
+// id trùng hoặc tổng số không khớp; dữ liệu đổi giữa lúc đọc sẽ báo lỗi thay vì
+// âm thầm vẽ dashboard có số lượng sai.
 export async function readActiveHerd(token: string, onApiError?: (error: unknown) => boolean, options: { baseUrl?: string; fetcher?: typeof fetch } = {}): Promise<HerdHorse[]> {
   async function page(number: number) {
     let v: unknown;
