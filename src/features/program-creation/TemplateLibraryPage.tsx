@@ -44,6 +44,8 @@ function TemplateDrawer({ id, api, onClose, onEdit, onChanged }: { id: number; a
   async function action() {
     if (pending.current || !data || !confirm || confirm === 'duplicate' && !name.trim()) return;
     pending.current = true; setBusy(true); setError('');
+    // Sao chép lấy phiên bản đang xem; lưu trữ chỉ đổi trạng thái mẫu theo id,
+    // không sửa phiên bản nguồn của những chương trình đã tạo.
     try { if (confirm === 'archive') { await api.archive(id); onChanged('Đã lưu trữ mẫu; các chương trình của ngựa vẫn giữ phiên bản gốc.'); }
       else { await api.duplicate(id, name.trim(), data.version.versionNo); onChanged('Hệ thống đã xác nhận sao chép mẫu.'); } }
     catch (failure) { setError(errorMessage(failure)); }
@@ -74,6 +76,8 @@ function TemplateEditor({ api, initial, onClose, onSaved }: { api: Api; initial?
   const [starting] = useState(() => JSON.stringify(templateInput(initial?.version)));
   const loadSpecializations = useCallback((signal: AbortSignal) => api.trainerSpecializations(signal), [api]);
   const specializations = useResource(loadSpecializations);
+  // Giữ chuyên môn đã lưu trong phiên bản kể cả khi danh mục hiện tại tải lỗi;
+  // không biến lỗi đọc danh mục thành thao tác xóa yêu cầu chuyên môn khi lưu lại.
   const skills = [...new Map([...(initial?.version.requiredSkills ?? []), ...(specializations.data ?? [])].map((skill) => [skill.id, skill])).values()];
   const pending = useRef(false), formId = useId();
   const dirty = JSON.stringify(input) !== starting;
@@ -84,6 +88,8 @@ function TemplateEditor({ api, initial, onClose, onSaved }: { api: Api; initial?
   async function save() {
     if (pending.current) return;
     pending.current = true; setBusy(true); setError('');
+    // templateInput đã bỏ ID giai đoạn của bản nguồn. Đánh lại thứ tự sau khi
+    // thêm/xóa giai đoạn để DTO phiên bản mới có phaseOrder liên tục từ 1.
     try { const body = { ...input, name: input.name.trim(), strengthFocus: sortStrengths(input.strengthFocus), phases: input.phases.map((phase, index) => ({ ...phase, phaseOrder: index + 1, name: phase.name.trim() })) };
       const result = initial ? await api.version(initial.template.id, body) : await api.create(body); onSaved(result); }
     catch (failure) { setError(errorMessage(failure)); }

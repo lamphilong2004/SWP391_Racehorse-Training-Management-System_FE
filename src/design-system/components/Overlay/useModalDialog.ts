@@ -26,10 +26,12 @@ export function useModalDialog(open: boolean, onClose: () => void) {
     };
   }, [open]);
 
+  // Cập nhật callback đóng riêng để render lại không đóng/mở dialog và làm đổi focus.
   useEffect(() => {
     const dialog = ref.current;
     if (!dialog) return;
     const onCancel = (event: Event) => {
+      // Chặn Escape tự đóng dialog; Modal/Drawer có thể từ chối đóng khi form đang bẩn hoặc đang lưu.
       event.preventDefault();
       onClose();
     };

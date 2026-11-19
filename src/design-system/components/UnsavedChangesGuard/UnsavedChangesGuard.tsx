@@ -13,8 +13,10 @@ export function UnsavedChangesGuard({ dirty, allowSameRoute = false }: UnsavedCh
   const blocker = useBlocker(({ currentLocation, nextLocation }) => dirty && nextLocation.pathname !== '/login'
     && !(allowSameRoute && nextLocation.pathname === currentLocation.pathname));
   useEffect(() => {
+    // Khi form đã sạch, bỏ lượt rời trang đang chờ; không tự điều hướng nếu chưa chọn Hủy thay đổi.
     if (!dirty && blocker.state === 'blocked') blocker.reset();
   }, [dirty, blocker]);
+  // Router chỉ chặn điều hướng trong app; tải lại/đóng tab cần cảnh báo beforeunload riêng của trình duyệt.
   useBeforeUnload(useCallback((event: BeforeUnloadEvent) => {
     if (dirty) { event.preventDefault(); event.returnValue = ''; }
   }, [dirty]));

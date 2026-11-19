@@ -36,8 +36,11 @@ function AccountForm({ profile }: { profile: UserDetail }) {
   const { hash } = useLocation();
   useEffect(() => { if (hash === '#doi-mat-khau') document.getElementById('doi-mat-khau')?.scrollIntoView({ block: 'start' }); }, [hash]);
   const request = useFlowRequest();
+  // savedName là mốc server đã xác nhận, không phải lần nhập gần nhất;
+  // so với mốc này để guard vẫn nhận ra phần hồ sơ chưa lưu hoặc lưu thất bại.
   const [name, setName] = useState(profile.fullName), [savedName, setSavedName] = useState(profile.fullName);
   const [currentPassword, setCurrentPassword] = useState(''), [newPassword, setNewPassword] = useState(''), [confirmPassword, setConfirmPassword] = useState('');
+  // Cả hai form dùng chung khóa để lưu hồ sơ và đổi mật khẩu không chạy chồng nhau.
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState(''); const inFlight = useRef(false);
   async function save(event: FormEvent, password: boolean) {
     event.preventDefault(); if (inFlight.current) return;
@@ -46,6 +49,7 @@ function AccountForm({ profile }: { profile: UserDetail }) {
     try {
       if (password) {
         await request<void>('/api/account/password', { method: 'PUT', body: JSON.stringify({ currentPassword, newPassword, confirmPassword }) });
+        // Chỉ xóa bản nháp mật khẩu sau thành công; nhánh catch giữ nội dung để sửa và thử lại.
         setCurrentPassword(''); setNewPassword(''); setConfirmPassword(''); setMessage('Đã đổi mật khẩu.');
       } else {
         const updated = await request<UserDetail>('/api/account', { method: 'PUT', body: JSON.stringify({ fullName: name.trim() }) });
