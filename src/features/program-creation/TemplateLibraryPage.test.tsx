@@ -87,3 +87,31 @@ it('keeps existing required skills when the catalog is unavailable', async () =>
   const write = fixture.request.mock.calls.find(([path]) => path.endsWith('/versions'));
   expect(JSON.parse(write?.[1].body).requiredSkillIds).toEqual([12]);
 });
+
+it('explains a historical version and opens the latest version before editing', async () => {
+  const latest = { ...detail, template: { ...detail.template, latestVersionNo: 2 }, version: { ...detail.version, versionNo: 2 },
+    versions: [...detail.versions, { id: 101, versionNo: 2, createdAt: '2026-11-19T00:00:00Z' }] };
+  fixture.request.mockImplementation(async (path: string) => isCatalog(path) ? catalog : path.startsWith('/api/program-templates?')
+    ? { page: 0, totalItems: 1, totalPages: 1, items: [latest.template] }
+    : path.endsWith('?versionNo=1') ? { ...latest, version: detail.version } : latest);
+  mount(); fireEvent.click(await screen.findByRole('button', { name: 'Xem Base conditioning' }));
+  fireEvent.change(await screen.findByLabelText('Phiên bản mẫu'), { target: { value: '1' } });
+  expect(await screen.findByText(/Bạn đang xem phiên bản cũ/)).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Lưu phiên bản mới' })).toBeDisabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Xem phiên bản mới nhất' }));
+  await waitFor(() => expect(screen.getByLabelText('Phiên bản mẫu')).toHaveValue('2'));
+  fireEvent.click(screen.getByRole('button', { name: 'Lưu phiên bản mới' }));
+  expect(await screen.findByRole('heading', { name: 'Lưu phiên bản mẫu mới' })).toBeInTheDocument();
+});
+
+it('clears an archive failure before starting a different template action', async () => {
+  mount(); fireEvent.click(await screen.findByRole('button', { name: 'Xem Base conditioning' }));
+  fireEvent.click(await screen.findByRole('button', { name: /^Lưu trữ$/ }));
+  fixture.request.mockRejectedValueOnce(new Error('Archive refused'));
+  fireEvent.click(screen.getByRole('button', { name: 'Xác nhận lưu trữ' }));
+  expect(await screen.findByText('Archive refused')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Hủy' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Sao chép' }));
+  expect(screen.queryByText('Archive refused')).not.toBeInTheDocument();
+  expect(screen.getByLabelText('Tên mẫu sao chép')).toHaveValue('Base conditioning copy');
+});

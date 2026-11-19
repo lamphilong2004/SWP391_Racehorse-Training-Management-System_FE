@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type FormEvent } from 'react';
+import { useCallback, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import { ApplyAdjustmentModal } from './ApplyAdjustmentModal';
 import { viLabel } from '../../shared/viLabels';
@@ -19,11 +19,17 @@ export function AdjustmentRequestsPage() {
   const headTrainer = user?.roles.includes('HEAD_TRAINER') ?? false;
   const [status, setStatus] = useState<AdjustmentStatus | ''>('PENDING'), [page, setPage] = useState(0);
   const [decision, setDecision] = useState<{ item: AdjustmentRequest; approve: boolean } | null>(null);
+  const [decided, setDecided] = useState<AdjustmentRequest | null>(null);
   const [applying, setApplying] = useState<AdjustmentRequest | null>(null), [applied, setApplied] = useState<{ item: AdjustmentRequest; programName: string } | null>(null);
   const load = useCallback((signal: AbortSignal) => api.adjustments({ status, page }, signal), [api, status, page]);
   const resource = useResource(load), data = resource.data;
   return <FlowShell title="Yêu cầu điều chỉnh chương trình" description={headTrainer ? 'Xem xét các thay đổi chiến lược do Trainer đề xuất. Phê duyệt chỉ ghi nhận quyết định; hãy chủ động áp dụng thay đổi đã duyệt vào chương trình.' : 'Các yêu cầu thay đổi chiến lược của bạn và quyết định của Head Trainer.'}
     section="Chương trình huấn luyện ngựa" role={headTrainer ? 'HEAD_TRAINER' : 'TRAINER'}>
+    {decided && <AlertBanner feedback type="success" title={decided.status === 'APPROVED' ? 'Đã duyệt yêu cầu điều chỉnh' : 'Đã từ chối yêu cầu điều chỉnh'}>
+      {decided.horse ? `${decided.horse.name} · ${decided.horse.horseCode}. ` : `Chương trình ${decided.programId}. `}
+      {decided.status === 'APPROVED' ? 'Quyết định đã được lưu. Chọn trạng thái Đã duyệt để áp dụng vào giai đoạn; chương trình chưa tự thay đổi.' : 'Quyết định và lý do từ chối đã được lưu cho Trainer.'}
+      {' '}<Link to={`/training/programs/${decided.programId}`}>Xem chương trình vừa xử lý</Link>
+    </AlertBanner>}
     {applied && <AlertBanner feedback type="success" title="Đã áp dụng điều chỉnh">{applied.programName} đã dùng các giai đoạn mới điều chỉnh. <Link to={`/training/programs/${applied.item.programId}`}>Mở chương trình</Link></AlertBanner>}
     {applied && <NextStep title="Lên lịch buổi tập theo giai đoạn mới" owner={`Trainer · ${applied.item.requestedBy.fullName}`}
       action={{ label: 'Mở chương trình', to: `/training/programs/${applied.item.programId}` }}>
@@ -45,27 +51,29 @@ export function AdjustmentRequestsPage() {
         { key: 'by', header: 'Người đề xuất', render: (item) => <span>{item.requestedBy.fullName}<br /><span className={styles.muted}>{dateTime(item.requestedAt)}</span></span> },
         { key: 'status', header: 'Trạng thái', render: (item) => <span><StatusBadge family="adjustment" status={item.status} />{item.decisionReason && <><br /><span className={styles.muted}>{item.decisionReason}</span></>}</span> },
         ...(headTrainer ? [{ key: 'actions', header: 'Quyết định', render: (item: AdjustmentRequest) => item.status === 'PENDING'
-          ? <div className={styles.row}><Button size="sm" onClick={() => setDecision({ item, approve: true })}>Duyệt</Button><Button size="sm" variant="secondary" onClick={() => setDecision({ item, approve: false })}>Từ chối</Button></div>
+          ? <div className={styles.row}><Button size="sm" onClick={() => { setDecided(null); setDecision({ item, approve: true }); }}>Duyệt</Button><Button size="sm" variant="secondary" onClick={() => { setDecided(null); setDecision({ item, approve: false }); }}>Từ chối</Button></div>
           : <div className={styles.stack}><span>{item.reviewedBy ? `${item.reviewedBy.fullName}, ${dateTime(item.reviewedAt ?? undefined)}` : 'Đã quyết định'}</span>
             {item.status === 'APPROVED' && <Button size="sm" variant="secondary" onClick={() => { setApplied(null); setApplying(item); }}>Áp dụng vào giai đoạn</Button>}</div> }] : []),
       ]} />
       <div className={styles.row}><Button variant="secondary" disabled={page === 0} onClick={() => setPage(page - 1)}>Trước</Button><span>Trang {data.page + 1}/{Math.max(1, data.totalPages)}</span><Button variant="secondary" disabled={page + 1 >= data.totalPages} onClick={() => setPage(page + 1)}>Sau</Button></div>
     </div>}
     {applying && <ApplyAdjustmentModal item={applying} onClose={() => setApplying(null)} onApplied={(program) => { setApplied({ item: applying, programName: `${program.horse.name} · ${program.name}` }); setApplying(null); resource.reload(); }} />}
-    {decision && <DecisionModal item={decision.item} approve={decision.approve} onClose={() => setDecision(null)} onDone={() => { setDecision(null); resource.reload(); }} />}
+    {decision && <DecisionModal item={decision.item} approve={decision.approve} onClose={() => setDecision(null)} onDone={(result) => { setDecided(result); setDecision(null); setPage(0); resource.reload(); }} />}
   </FlowShell>;
 }
 
-function DecisionModal({ item, approve, onClose, onDone }: { item: AdjustmentRequest; approve: boolean; onClose: () => void; onDone: () => void }) {
+function DecisionModal({ item, approve, onClose, onDone }: { item: AdjustmentRequest; approve: boolean; onClose: () => void; onDone: (result: AdjustmentRequest) => void }) {
   const request = useFlowRequest(), api = useMemo(() => createProgramManagementApi(request), [request]);
   const [reason, setReason] = useState(''), [busy, setBusy] = useState(false), [error, setError] = useState('');
+  const inFlight = useRef(false);
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (busy) return;
+    if (inFlight.current) return;
     if (!approve && !reason.trim()) { setError('Hãy nêu lý do từ chối cho Trainer.'); return; }
-    setBusy(true); setError('');
-    try { await (approve ? api.approve(item.id, reason.trim()) : api.reject(item.id, reason.trim())); onDone(); }
-    catch (cause) { setError(errorMessage(cause)); setBusy(false); }
+    inFlight.current = true; setBusy(true); setError('');
+    try { const result = await (approve ? api.approve(item.id, reason.trim()) : api.reject(item.id, reason.trim())); onDone(result); }
+    catch (cause) { setError(errorMessage(cause)); }
+    finally { inFlight.current = false; setBusy(false); }
   }
   const title = approve ? 'Duyệt yêu cầu điều chỉnh' : 'Từ chối yêu cầu điều chỉnh';
   return <Modal open title={title} dismissible={!busy} onClose={onClose} footer={<><Button variant="secondary" disabled={busy} onClick={onClose}>Hủy</Button><Button type="submit" form="adjustment-decision-form" variant={approve ? 'primary' : 'destructive'} disabled={busy}>{busy ? 'Đang lưu…' : approve ? 'Duyệt' : 'Từ chối'}</Button></>}>

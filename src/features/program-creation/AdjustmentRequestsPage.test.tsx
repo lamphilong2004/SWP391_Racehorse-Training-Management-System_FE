@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { AdjustmentRequestsPage } from './AdjustmentRequestsPage';
 
@@ -77,4 +77,39 @@ it('offers Apply only to the Head Trainer on approved requests', async () => {
   roles.value = ['TRAINER']; request.mockResolvedValue(page([approved])); mount();
   expect(await screen.findByText('Extend Base by one week')).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Áp dụng vào giai đoạn' })).not.toBeInTheDocument();
+});
+
+it.each([true, false])('confirms the saved decision after the pending row disappears: approve=%s', async (approve) => {
+  let decided = false;
+  request.mockImplementation(async (path: string) => {
+    if (path.startsWith('/api/adjustment-requests?')) return page(decided ? [] : [pending]);
+    decided = true; return { ...pending, status: approve ? 'APPROVED' : 'REJECTED' };
+  });
+  mount(); fireEvent.click(await screen.findByRole('button', { name: approve ? 'Duyệt' : 'Từ chối' }));
+  const modal = screen.getByRole('dialog');
+  if (!approve) fireEvent.change(within(modal).getByLabelText('Lý do từ chối'), { target: { value: 'Giữ lịch hiện tại' } });
+  fireEvent.click(within(modal).getByRole('button', { name: approve ? 'Duyệt' : 'Từ chối' }));
+  expect(await screen.findByText(approve ? 'Đã duyệt yêu cầu điều chỉnh' : 'Đã từ chối yêu cầu điều chỉnh')).toBeInTheDocument();
+  expect(await screen.findByText('Chưa có yêu cầu điều chỉnh')).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Xem chương trình vừa xử lý' })).toHaveAttribute('href', '/training/programs/9');
+  expect(request.mock.calls.filter(([, init]) => init?.method === 'POST')).toHaveLength(1);
+  expect(request.mock.calls.some(([path]) => path.endsWith('/phases'))).toBe(false);
+});
+
+it('keeps the decision draft on a delayed failure and prevents duplicate writes', async () => {
+  let reject!: (error: Error) => void;
+  const delayed = new Promise((_, fail) => { reject = fail; });
+  request.mockImplementation(async (path: string) => path.startsWith('/api/adjustment-requests?') ? page([pending]) : delayed);
+  mount(); fireEvent.click(await screen.findByRole('button', { name: 'Từ chối' }));
+  const modal = screen.getByRole('dialog');
+  fireEvent.change(within(modal).getByLabelText('Lý do từ chối'), { target: { value: 'Giữ lịch đã duyệt' } });
+  fireEvent.click(within(modal).getByRole('button', { name: 'Từ chối' }));
+  expect(within(modal).getByRole('button', { name: 'Đang lưu…' })).toBeDisabled();
+  expect(within(modal).getByRole('button', { name: 'Đóng' })).toBeDisabled();
+  fireEvent.submit(modal.querySelector('form')!);
+  expect(request.mock.calls.filter(([, init]) => init?.method === 'POST')).toHaveLength(1);
+  await act(async () => reject(new Error('Decision conflict')));
+  expect(await screen.findByText('Decision conflict')).toBeInTheDocument();
+  expect(within(modal).getByLabelText('Lý do từ chối')).toHaveValue('Giữ lịch đã duyệt');
+  expect(screen.queryByText('Đã từ chối yêu cầu điều chỉnh')).not.toBeInTheDocument();
 });
