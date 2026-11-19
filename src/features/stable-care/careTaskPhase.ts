@@ -22,6 +22,11 @@ export const instructionText = (text: string) =>
 const minutes = (hhmm: string) => Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5));
 
 /** Phase of one task on `date`, judged against the club clock `clubNow` (YYYY-MM-DDTHH:mm, Vietnam time). */
+// Thứ tự ưu tiên: hủy trước, đã làm sau, rồi mới xét lịch; một việc đã hoàn thành
+// không tự đổi thành quá giờ khi đồng hồ chạy tiếp. clubNow phải là lịch Việt Nam
+// từ clubCalendar, không phải chuỗi UTC dùng để so sánh trực tiếp.
+// Việc chưa làm quá hơn 60 phút mới mang nhãn overdue; đúng 60 phút vẫn due.
+// Đây là phân loại trình bày, server còn kiểm điều kiện thật khi bấm Hoàn thành.
 export function taskPhase(task: Pick<Task, 'slot' | 'completedAt' | 'cancelledAt'>, date: string, clubNow: string): CarePhase {
   if (task.cancelledAt) return 'cancelled';
   if (task.completedAt) return 'done';
@@ -34,12 +39,17 @@ export function taskPhase(task: Pick<Task, 'slot' | 'completedAt' | 'cancelledAt
   return now - minutes(slot) > OVERDUE_AFTER_MINUTES ? 'overdue' : 'due';
 }
 
+// Đưa việc quá giờ/cần làm lên trước, rồi mới so khung giờ và tên ngựa.
+// Sort chỉ thay thứ tự nhìn thấy, không đổi taskDate hay phân công của task.
 export function comparePhase(a: { phase: CarePhase; slot: string; horseName: string }, b: { phase: CarePhase; slot: string; horseName: string }) {
   return PHASE_ORDER[a.phase] - PHASE_ORDER[b.phase]
     || (slotTime(a.slot) ?? '').localeCompare(slotTime(b.slot) ?? '')
     || a.horseName.localeCompare(b.horseName, 'vi');
 }
 
+// pending gồm việc quá giờ, đến giờ và tương lai nhưng chưa xong/chưa hủy.
+// Không cộng cancelled vào việc còn phải làm; tổng ở đây dựa trên đúng mảng
+// đã tải, không giả là toàn bộ dữ liệu ở các trang/role khác.
 export function summarize(tasks: Task[], date: string, clubNow: string) {
   const phases = tasks.map(task => taskPhase(task, date, clubNow));
   const count = (phase: CarePhase) => phases.filter(value => value === phase).length;
