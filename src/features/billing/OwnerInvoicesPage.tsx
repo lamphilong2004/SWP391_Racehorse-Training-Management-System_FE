@@ -5,7 +5,7 @@ import { AppShell } from '../../layout/AppShell';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { authSession } from '../../shared/auth/authSession';
 import { useSupportingLoad } from '../training/assigned/supportingHooks';
-import { createBillingApi, monthLabel, viDate, vnd, type BillingApi, type PaymentResult } from './billingApi';
+import { createBillingApi, invoiceDisplayStatus, monthLabel, paymentDisplayStatus, viDateTime, viDate, vnd, type BillingApi, type PaymentResult } from './billingApi';
 import { InvoiceView, StatusPill } from './InvoiceView';
 import styles from './billing.module.css';
 
@@ -57,7 +57,7 @@ function OwnerList({ api }: { api: BillingApi }) {
         { key: 'horse', header: 'Ngựa', render: (row) => `${row.horse.name} (${row.horse.horseCode})` },
         { key: 'total', header: 'Số tiền', align: 'right', nowrap: true, render: (row) => <span className={styles.amount}>{vnd(row.totalAmount)}</span> },
         { key: 'due', header: 'Hạn', nowrap: true, render: (row) => viDate(row.dueDate) },
-        { key: 'status', header: 'Trạng thái', render: (row) => <StatusPill status={row.status} /> },
+        { key: 'status', header: 'Trạng thái', render: (row) => <StatusPill status={invoiceDisplayStatus(row)} /> },
       ]} />
   </>;
 }
@@ -94,7 +94,8 @@ function OwnerInvoice({ api, id }: { api: BillingApi; id: number }) {
     catch (cause) { setError(message(cause)); }
     finally { lock.current = false; setBusy(false); }
   };
-  const pending = detail.payments.some((payment) => payment.status === 'PENDING');
+  const open = detail.payments.find((payment) => paymentDisplayStatus(payment) === 'PENDING');
+  const pending = Boolean(open);
   return <>
     <header data-page-banner className={styles.header}>
       <div>
@@ -115,10 +116,13 @@ function OwnerInvoice({ api, id }: { api: BillingApi; id: number }) {
         </label>)}
       </fieldset>
       <p className={styles.hint}>Bạn sẽ được chuyển sang cổng VNPay (môi trường sandbox). Hóa đơn chỉ được ghi nhận đã thanh toán sau khi VNPay xác nhận giao dịch với máy chủ.</p>
+      {open && <AlertBanner type="info" title="Đang có một giao dịch VNPay chưa hoàn tất">
+        {`Để tránh trừ tiền hai lần, chỉ mở giao dịch mới khi giao dịch này hết hạn (${viDateTime(open.expiresAt)}). Nếu bạn đã trả tiền, bấm "Kiểm tra lại thanh toán".`}
+      </AlertBanner>}
       {error && <AlertBanner feedback type="danger" title="Chưa mở được cổng thanh toán">{error}</AlertBanner>}
       <div className={styles.actions}>
         {pending && <Button variant="secondary" onClick={recheck} disabled={busy}>Kiểm tra lại thanh toán</Button>}
-        <Button onClick={pay} disabled={busy || !detail.paymentConfigured}>{`Thanh toán ${vnd(detail.invoice.totalAmount)}`}</Button>
+        <Button onClick={pay} disabled={busy || !detail.paymentConfigured || pending}>{`Thanh toán ${vnd(detail.invoice.totalAmount)}`}</Button>
       </div>
     </Card>}
   </>;

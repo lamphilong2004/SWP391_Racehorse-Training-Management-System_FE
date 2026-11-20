@@ -1,9 +1,12 @@
 import { DataTable } from '../../design-system';
-import { monthLabel, PAYMENT_LABEL, STATUS_LABEL, viDate, viDateTime, vnd, type InvoiceDetail, type InvoiceStatus, type Payment } from './billingApi';
+import { invoiceDisplayStatus, monthLabel, PAYMENT_LABEL, paymentDisplayStatus, STATUS_LABEL, viDate, viDateTime, vnd, type InvoiceDetail, type InvoiceStatus, type Payment } from './billingApi';
 import styles from './billing.module.css';
 
-export function StatusPill({ status }: { status: InvoiceStatus | Payment['status'] }) {
-  const label = status in STATUS_LABEL ? STATUS_LABEL[status as InvoiceStatus] : PAYMENT_LABEL[status as Payment['status']];
+type PillStatus = InvoiceStatus | Payment['status'] | 'OVERDUE' | 'EXPIRED';
+const EXTRA_LABEL: Record<string, string> = { OVERDUE: 'Quá hạn thanh toán', EXPIRED: 'Hết hạn (chưa thanh toán)' };
+
+export function StatusPill({ status }: { status: PillStatus }) {
+  const label = EXTRA_LABEL[status] ?? (status in STATUS_LABEL ? STATUS_LABEL[status as InvoiceStatus] : PAYMENT_LABEL[status as Payment['status']]);
   return <span className={styles.badge} data-status={status}>{label}</span>;
 }
 
@@ -15,7 +18,7 @@ export function InvoiceView({ detail, showOwner }: { detail: InvoiceDetail; show
   return <div className={styles.form}>
     <dl className={styles.meta}>
       <div><dt>Mã hóa đơn</dt><dd>{invoice.invoiceCode}</dd></div>
-      <div><dt>Trạng thái</dt><dd><StatusPill status={invoice.status} /></dd></div>
+      <div><dt>Trạng thái</dt><dd><StatusPill status={invoiceDisplayStatus(invoice)} /></dd></div>
       <div><dt>Ngựa</dt><dd>{`${invoice.horse.name} (${invoice.horse.horseCode})`}</dd></div>
       <div><dt>Kỳ tính phí</dt><dd>{`${monthLabel(invoice.billingMonth)} · ${viDate(invoice.periodStart)} – ${viDate(invoice.periodEnd)}`}</dd></div>
       {showOwner && <div><dt>Chủ ngựa</dt><dd>{`${invoice.owner.fullName} · ${invoice.owner.email}`}</dd></div>}
@@ -36,7 +39,7 @@ export function InvoiceView({ detail, showOwner }: { detail: InvoiceDetail; show
       { key: 'ref', header: 'Mã giao dịch', render: (payment) => payment.providerTransactionNo ? `${payment.txnRef} · VNPay ${payment.providerTransactionNo}` : payment.txnRef },
       { key: 'method', header: 'Phương thức', render: (payment) => METHOD[payment.cardType ?? ''] ?? METHOD[payment.bankCode ?? ''] ?? payment.bankCode ?? '—' },
       { key: 'amount', header: 'Số tiền', align: 'right', nowrap: true, render: (payment) => <span className={styles.amount}>{vnd(payment.amount)}</span> },
-      { key: 'status', header: 'Kết quả', render: (payment) => <StatusPill status={payment.status} /> },
+      { key: 'status', header: 'Kết quả', render: (payment) => <StatusPill status={paymentDisplayStatus(payment)} /> },
       { key: 'via', header: 'Xác nhận', render: (payment) => payment.confirmedVia === 'IPN' ? 'VNPay IPN' : payment.confirmedVia === 'QUERYDR' ? 'Tra cứu VNPay' : '—' },
     ]} />}
   </div>;

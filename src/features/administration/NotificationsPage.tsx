@@ -34,6 +34,8 @@ function destination(notice: Notice, roles: RoleCode[]): string | undefined {
   if (notice.targetType === 'CARE_TASK' && roles.includes('GROOM')) return '/care/tasks';
   if (notice.targetType === 'STABLE_CARE' && roles.some(role => ['GROOM', 'CLUB_MANAGER', 'HEAD_TRAINER', 'VETERINARIAN'].includes(role))) return '/care/daily';
   if (['HORSE_TRAINING_PROGRAM', 'TRAINING_PROGRAM'].includes(notice.targetType ?? '') && roles.some((r) => ['HEAD_TRAINER', 'TRAINER'].includes(r))) return `/training/programs/${id}`;
+  // DEC-016: an owner opens the own invoice; the Club Manager opens the invoice list.
+  if (notice.targetType === 'SERVICE_INVOICE') return roles.includes('HORSE_OWNER') ? `/owner/invoices/${id}` : roles.includes('CLUB_MANAGER') ? '/billing' : undefined;
   return undefined;
 }
 export function NotificationsPage() {

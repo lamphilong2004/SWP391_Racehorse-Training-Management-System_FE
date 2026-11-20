@@ -342,7 +342,9 @@ export const SERVER_ERROR_TEXT: Record<string, string> = {
   'The box changed while saving. Reload the stable map.': 'Ô chuồng vừa thay đổi. Hãy tải lại sơ đồ chuồng.',
   // DEC-016 service billing
   'Enter at least one price.': 'Nhập ít nhất một giá mới.',
-  'Price must be between 1,000 and 100,000,000 VND.': 'Giá phải từ 1.000 đến 100.000.000 ₫.',
+  'Price must be between 5,000 and 10,000,000 VND.': 'Giá phải từ 5.000 đến 10.000.000 ₫.',
+  'This invoice is above the online payment limit. Settle it with the club.': 'Hóa đơn vượt hạn mức thanh toán trực tuyến. Hãy thanh toán trực tiếp với câu lạc bộ.',
+  'A VNPay payment for this invoice is still open. Finish it, or wait until it expires.': 'Đang có một giao dịch VNPay chưa hoàn tất cho hóa đơn này. Hãy hoàn tất giao dịch đó hoặc chờ đến khi hết hạn.',
   'Cannot bill a future month.': 'Không thể lập hóa đơn cho tháng chưa đến.',
   'billingMonth must be YYYY-MM.': 'Tháng tính phí không hợp lệ.',
   'Set both service prices before issuing invoices.': 'Hãy đặt đủ giá lưu chuồng & chăm sóc và giá huấn luyện trước khi phát hành hóa đơn.',

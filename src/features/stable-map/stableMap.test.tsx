@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { currentMonth, monthLabel, viDate, vnd } from '../billing/billingApi';
+import { currentMonth, invoiceDisplayStatus, monthLabel, paymentDisplayStatus, viDate, vnd } from '../billing/billingApi';
 import { gridCells, toGridBox, type MapBox } from './stableMapApi';
 import { StableYardGrid } from './StableYardGrid';
 
@@ -45,5 +45,16 @@ describe('DEC-016 billing display helpers', () => {
     expect(viDate('2026-11-20')).toBe('20/11/2026');
     expect(monthLabel('2026-11')).toBe('Tháng 11/2026');
     expect(currentMonth()).toMatch(/^\d{4}-\d{2}$/);
+  });
+
+  it('shows an unpaid invoice past its due date as overdue and an expired VNPay link as expired', () => {
+    expect(invoiceDisplayStatus({ status: 'ISSUED', dueDate: '2000-01-01' })).toBe('OVERDUE');
+    expect(invoiceDisplayStatus({ status: 'PAID', dueDate: '2000-01-01' })).toBe('PAID');
+    expect(invoiceDisplayStatus({ status: 'ISSUED', dueDate: '2999-01-01' })).toBe('ISSUED');
+    const payment = { id: 1, provider: 'VNPAY', txnRef: 'T', amount: 1, status: 'PENDING' as const, bankCode: null, cardType: null,
+      providerTransactionNo: null, responseCode: null, confirmedVia: null, createdAt: '2026-11-20T01:00:00Z', confirmedAt: null,
+      expiresAt: '2026-11-20T01:15:00Z' };
+    expect(paymentDisplayStatus(payment, Date.parse('2026-11-20T01:10:00Z'))).toBe('PENDING');
+    expect(paymentDisplayStatus(payment, Date.parse('2026-11-20T01:20:00Z'))).toBe('EXPIRED');
   });
 });

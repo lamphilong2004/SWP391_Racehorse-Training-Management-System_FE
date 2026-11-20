@@ -5,7 +5,7 @@ import { AppShell } from '../../layout/AppShell';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { authSession } from '../../shared/auth/authSession';
 import { useSupportingLoad } from '../training/assigned/supportingHooks';
-import { createBillingApi, currentMonth, monthLabel, SKIP_LABEL, STATUS_LABEL, viDate, viDateTime, vnd, type BillingApi, type GenerateResult, type InvoiceSummary, type Price } from './billingApi';
+import { createBillingApi, currentMonth, invoiceDisplayStatus, monthLabel, SKIP_LABEL, STATUS_LABEL, viDate, viDateTime, vnd, type BillingApi, type GenerateResult, type InvoiceSummary, type Price, paymentDisplayStatus } from './billingApi';
 import { InvoiceView, StatusPill } from './InvoiceView';
 import styles from './billing.module.css';
 
@@ -55,7 +55,7 @@ function PricesPanel({ api }: { api: BillingApi }) {
     const body = { boardingCareDaily: parse(boarding), trainingSession: parse(training) };
     const values = [body.boardingCareDaily, body.trainingSession].filter((value) => value !== undefined) as number[];
     if (values.length === 0) { setError('Nhập ít nhất một giá mới.'); return; }
-    if (values.some((value) => !Number.isInteger(value) || value < 1000 || value > 100_000_000)) { setError('Giá phải là số nguyên từ 1.000 đến 100.000.000 ₫.'); return; }
+    if (values.some((value) => !Number.isInteger(value) || value < 5000 || value > 10_000_000)) { setError('Giá phải là số nguyên từ 5.000 đến 10.000.000 ₫.'); return; }
     if (lock.current) return;
     lock.current = true; setBusy(true); setError(''); setNotice('');
     try { setSaved(await api.updatePrices(body)); setBoarding(''); setTraining(''); setNotice('Đã lưu bảng giá. Giá mới áp dụng cho hóa đơn phát hành từ bây giờ; hóa đơn đã phát hành giữ nguyên giá cũ.'); }
@@ -129,7 +129,7 @@ function InvoicesPanel({ api }: { api: BillingApi }) {
             { key: 'owner', header: 'Chủ ngựa', render: (row) => row.owner.fullName },
             { key: 'period', header: 'Kỳ', nowrap: true, render: (row) => `${viDate(row.periodStart)} – ${viDate(row.periodEnd)}` },
             { key: 'total', header: 'Tổng tiền', align: 'right', nowrap: true, render: (row) => <span className={styles.amount}>{vnd(row.totalAmount)}</span> },
-            { key: 'status', header: 'Trạng thái', render: (row) => <StatusPill status={row.status} /> },
+            { key: 'status', header: 'Trạng thái', render: (row) => <StatusPill status={invoiceDisplayStatus(row)} /> },
             { key: 'action', header: '', render: (row) => <Button size="sm" variant="secondary" onClick={(event) => { event.stopPropagation(); setOpenId(row.id); }}>Xem</Button> },
           ]} />}
     {openId && <ManagerInvoiceModal api={api} id={openId} onClose={() => setOpenId(undefined)} onChanged={() => setVersion((value) => value + 1)} />}
@@ -153,7 +153,7 @@ function ManagerInvoiceModal({ api, id, onClose, onChanged }: { api: BillingApi;
     finally { lock.current = false; setBusy(false); }
   };
   const detail = load.data;
-  const pending = detail?.payments.some((payment) => payment.status === 'PENDING');
+  const pending = detail?.payments.some((payment) => paymentDisplayStatus(payment) === 'PENDING');
   return <Modal open size="lg" title={detail ? `Hóa đơn ${detail.invoice.invoiceCode}` : 'Hóa đơn'} onClose={busy ? () => undefined : onClose}
     footer={<>
       <Button variant="secondary" onClick={onClose} disabled={busy}>Đóng</Button>

@@ -40,8 +40,9 @@ export function PublicOnly({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   if (auth.status === 'loading') return <p role="status">Đang khôi phục phiên đăng nhập…</p>;
   if (auth.status === 'authenticated') {
-    const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
-    return <Navigate to={from?.startsWith('/') ? from : ROUTES.dashboard} replace />;
+    const origin = (location.state as { from?: { pathname?: string; search?: string } } | null)?.from;
+    const from = origin?.pathname;
+    return <Navigate to={from?.startsWith('/') ? `${from}${origin?.search ?? ''}` : ROUTES.dashboard} replace />;
   }
   if (auth.status === 'error') return <RequireAuth>{children}</RequireAuth>;
   return children;
