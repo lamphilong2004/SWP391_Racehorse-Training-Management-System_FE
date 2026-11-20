@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { currentMonth, invoiceDisplayStatus, monthLabel, paymentDisplayStatus, viDate, vnd } from '../billing/billingApi';
+import { currentMonth, invoiceDisplayStatus, monthLabel, paymentDisplayStatus, viDate, vietQrImageUrl, vnd } from '../billing/billingApi';
 import { gridCells, toGridBox, type MapBox } from './stableMapApi';
 import { StableYardGrid } from './StableYardGrid';
 
@@ -56,5 +56,12 @@ describe('DEC-016 billing display helpers', () => {
       expiresAt: '2026-11-20T01:15:00Z' };
     expect(paymentDisplayStatus(payment, Date.parse('2026-11-20T01:10:00Z'))).toBe('PENDING');
     expect(paymentDisplayStatus(payment, Date.parse('2026-11-20T01:20:00Z'))).toBe('EXPIRED');
+  });
+});
+
+describe('DEC-016 VietQR transfer', () => {
+  it('builds the VietQR quick link with the club account, the exact total and the invoice code', () => {
+    const url = vietQrImageUrl({ bankBin: '970436', bankName: 'Vietcombank', accountNo: '0123456789', accountName: 'CLB DUA NGUA G2', amount: 750000, content: 'HD2026110018' });
+    expect(url).toBe('https://img.vietqr.io/image/970436-0123456789-compact2.png?amount=750000&addInfo=HD2026110018&accountName=CLB%20DUA%20NGUA%20G2');
   });
 });

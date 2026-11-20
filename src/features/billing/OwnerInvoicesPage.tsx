@@ -5,7 +5,7 @@ import { AppShell } from '../../layout/AppShell';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { authSession } from '../../shared/auth/authSession';
 import { useSupportingLoad } from '../training/assigned/supportingHooks';
-import { createBillingApi, invoiceDisplayStatus, monthLabel, paymentDisplayStatus, viDateTime, viDate, vnd, type BillingApi, type PaymentResult } from './billingApi';
+import { createBillingApi, createQrApi, invoiceDisplayStatus, monthLabel, paymentDisplayStatus, viDateTime, viDate, vietQrImageUrl, vnd, type BillingApi, type PaymentResult, type QrApi } from './billingApi';
 import { InvoiceView, StatusPill } from './InvoiceView';
 import styles from './billing.module.css';
 
@@ -15,19 +15,20 @@ function useOwnerApi() {
   const auth = useAuth();
   const token = authSession.read()?.accessToken;
   const api = useMemo(() => token ? createBillingApi(token, auth.handleApiError) : null, [token, auth.handleApiError]);
-  return { auth, api };
+  const qrApi = useMemo(() => token ? createQrApi(token, auth.handleApiError) : null, [token, auth.handleApiError]);
+  return { auth, api, qrApi };
 }
 
 /** DEC-016 Horse Owner "Hóa đơn & thanh toán": own invoices (/owner/invoices) and one invoice (/owner/invoices/:id). */
 export function OwnerInvoicesPage() {
-  const { auth, api } = useOwnerApi();
+  const { auth, api, qrApi } = useOwnerApi();
   const { id } = useParams();
-  if (!auth.user?.roles.includes('HORSE_OWNER') || !api) return <AlertBanner type="danger" title="Đăng nhập bằng tài khoản Horse Owner để xem hóa đơn." />;
+  if (!auth.user?.roles.includes('HORSE_OWNER') || !api || !qrApi) return <AlertBanner type="danger" title="Đăng nhập bằng tài khoản Horse Owner để xem hóa đơn." />;
   const invoiceId = id ? Number(id) : undefined;
   return <AppShell designSystem="v2" user={{ fullName: auth.user.fullName, role: 'HORSE_OWNER' }}
     breadcrumb={invoiceId ? [{ label: 'Hóa đơn & thanh toán', to: '/owner/invoices' }, { label: 'Chi tiết' }] : [{ label: 'Hóa đơn & thanh toán' }]}>
     <section className={styles.stack}>
-      {invoiceId && Number.isSafeInteger(invoiceId) ? <OwnerInvoice api={api} id={invoiceId} /> : <OwnerList api={api} />}
+      {invoiceId && Number.isSafeInteger(invoiceId) ? <OwnerInvoice api={api} qrApi={qrApi} id={invoiceId} /> : <OwnerList api={api} />}
     </section>
   </AppShell>;
 }
@@ -68,7 +69,47 @@ const METHODS = [
   { value: '', title: 'Chọn trên trang VNPay', text: 'Mở cổng VNPay và chọn phương thức tại đó.' },
 ];
 
-function OwnerInvoice({ api, id }: { api: BillingApi; id: number }) {
+/**
+ * DEC-016 VietQR: the QR carries the club's receiving account, the invoice total and the invoice code as transfer
+ * content. "Thanh toán" records the transfer as declared by the owner (VIETQR / OWNER) and the invoice becomes paid.
+ */
+function QrPayCard({ qrApi, invoiceId, onPaid }: { qrApi: QrApi; invoiceId: number; onPaid: (result: PaymentResult) => void }) {
+  const load = useSupportingLoad(() => qrApi.qrTransfer(invoiceId), [qrApi, invoiceId]);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const lock = useRef(false);
+  const transfer = load.data;
+  const pay = async () => {
+    if (lock.current) return;
+    lock.current = true; setBusy(true); setError('');
+    try { onPaid(await qrApi.confirmQrTransfer(invoiceId)); }
+    catch (cause) { setError(message(cause)); }
+    finally { lock.current = false; setBusy(false); }
+  };
+  return <Card className={styles.form}>
+    <h2>Thanh toán bằng mã QR</h2>
+    {load.error ? <AlertBanner type="warning" title="Chưa thể hiện mã QR">{message(load.error)}</AlertBanner>
+      : !transfer ? <LoadingState label="Đang tạo mã QR…" />
+        : <div className={styles.qr}>
+          <img className={styles.qrImage} src={vietQrImageUrl(transfer)} width={270} height={320}
+            alt={`Mã VietQR chuyển ${vnd(transfer.amount)} đến ${transfer.bankName} ${transfer.accountNo}`} />
+          <div className={styles.qrInfo}>
+            <dl className={styles.qrInfo}>
+            <div><dt>Ngân hàng</dt><dd>{transfer.bankName}</dd></div>
+            <div><dt>Số tài khoản</dt><dd className={styles.amount}>{transfer.accountNo}</dd></div>
+            <div><dt>Chủ tài khoản</dt><dd>{transfer.accountName}</dd></div>
+            <div><dt>Số tiền</dt><dd className={styles.qrTotal}>{vnd(transfer.amount)}</dd></div>
+            <div><dt>Nội dung chuyển khoản</dt><dd className={styles.amount}>{transfer.content}</dd></div>
+            </dl>
+            <p className={styles.hint}>Mở ứng dụng ngân hàng, quét mã để chuyển đúng số tiền và nội dung, rồi bấm Thanh toán.</p>
+            {error && <AlertBanner feedback type="danger" title="Chưa ghi nhận được thanh toán">{error}</AlertBanner>}
+            <Button onClick={pay} disabled={busy}>{`Thanh toán ${vnd(transfer.amount)}`}</Button>
+          </div>
+        </div>}
+  </Card>;
+}
+
+function OwnerInvoice({ api, qrApi, id }: { api: BillingApi; qrApi: QrApi; id: number }) {
   const [version, setVersion] = useState(0);
   const load = useSupportingLoad(() => api.myInvoice(id), [api, id, version]);
   const [method, setMethod] = useState('VNPAYQR');
@@ -104,9 +145,10 @@ function OwnerInvoice({ api, id }: { api: BillingApi; id: number }) {
       </div>
     </header>
     {check && <AlertBanner feedback type={check.paymentStatus === 'SUCCESS' ? 'success' : 'info'} title={check.message} />}
+    {detail.invoice.status === 'ISSUED' && <QrPayCard qrApi={qrApi} invoiceId={id} onPaid={(result) => { setCheck(result); setVersion((value) => value + 1); }} />}
     <Card><InvoiceView detail={detail} showOwner={false} /></Card>
     {detail.invoice.status === 'ISSUED' && <Card className={styles.form}>
-      <h2>Thanh toán qua VNPay</h2>
+      <h2>Hoặc thanh toán thẻ qua VNPay</h2>
       {!detail.paymentConfigured && <AlertBanner type="warning" title="Cổng VNPay chưa được cấu hình trên máy chủ. Liên hệ Club Manager." />}
       <fieldset className={styles.methods}>
         <legend className={styles.hint}>Chọn phương thức</legend>

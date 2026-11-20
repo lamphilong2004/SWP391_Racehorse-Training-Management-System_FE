@@ -358,6 +358,10 @@ export const SERVER_ERROR_TEXT: Record<string, string> = {
   'bankCode must be VNPAYQR, VNBANK or INTCARD.': 'Phương thức thanh toán không hợp lệ.',
   'The VNPay response signature is invalid.': 'Chữ ký phản hồi VNPay không hợp lệ. Giao dịch không được ghi nhận.',
   'Payment not found.': 'Không tìm thấy giao dịch thanh toán.',
+  'Choose a bank.': 'Chọn ngân hàng.',
+  'Account number must be 4-19 letters or digits.': 'Số tài khoản gồm 4–19 chữ số hoặc chữ cái.',
+  'Account holder name is required (at most 100 characters).': 'Nhập tên chủ tài khoản (tối đa 100 ký tự).',
+  'The club has not set a receiving bank account yet.': 'Câu lạc bộ chưa cài đặt tài khoản nhận tiền. Hãy liên hệ Club Manager.',
 };
 
 /** Internal persistence failures and Jakarta Bean Validation defaults (field names are shown by the form). */

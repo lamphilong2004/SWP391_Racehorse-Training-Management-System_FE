@@ -5,6 +5,7 @@ import { AppShell } from '../../layout/AppShell';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { authSession } from '../../shared/auth/authSession';
 import { useSupportingLoad } from '../training/assigned/supportingHooks';
+import { BANKS, createQrApi, type PaymentAccount, type QrApi } from './billingApi';
 import { createBillingApi, currentMonth, invoiceDisplayStatus, monthLabel, SKIP_LABEL, STATUS_LABEL, viDate, viDateTime, vnd, type BillingApi, type GenerateResult, type InvoiceSummary, type Price, paymentDisplayStatus } from './billingApi';
 import { InvoiceView, StatusPill } from './InvoiceView';
 import styles from './billing.module.css';
@@ -17,7 +18,8 @@ export function BillingPage() {
   const { pathname } = useLocation();
   const token = authSession.read()?.accessToken;
   const api = useMemo(() => token ? createBillingApi(token, auth.handleApiError) : null, [token, auth.handleApiError]);
-  if (!auth.user?.roles.includes('CLUB_MANAGER') || !api) return <AlertBanner type="danger" title="Chỉ Club Manager quản lý phí dịch vụ." />;
+  const qrApi = useMemo(() => token ? createQrApi(token, auth.handleApiError) : null, [token, auth.handleApiError]);
+  if (!auth.user?.roles.includes('CLUB_MANAGER') || !api || !qrApi) return <AlertBanner type="danger" title="Chỉ Club Manager quản lý phí dịch vụ." />;
   const prices = pathname === '/billing/prices';
   return <AppShell designSystem="v2" user={{ fullName: auth.user.fullName, role: 'CLUB_MANAGER' }} breadcrumb={[{ label: 'Phí dịch vụ' }, { label: prices ? 'Bảng giá' : 'Hóa đơn' }]}>
     <section className={styles.stack}>
@@ -25,14 +27,14 @@ export function BillingPage() {
         <div>
           <p className={styles.eyebrow}>Vận hành · Thanh toán</p>
           <h1>{prices ? 'Bảng giá dịch vụ' : 'Hóa đơn dịch vụ'}</h1>
-          <p>Chủ ngựa trả phí lưu chuồng & chăm sóc theo ngày và phí huấn luyện theo buổi đã hoàn thành. Hóa đơn tháng được tính từ dữ liệu xếp chuồng và buổi tập thật, chủ ngựa thanh toán qua VNPay.</p>
+          <p>Chủ ngựa trả phí lưu chuồng & chăm sóc theo ngày và phí huấn luyện theo buổi đã hoàn thành. Hóa đơn tháng được tính từ dữ liệu xếp chuồng và buổi tập thật; chủ ngựa thanh toán bằng mã QR chuyển khoản vào tài khoản của CLB hoặc thẻ qua VNPay.</p>
         </div>
         <nav aria-label="Phí dịch vụ" className={styles.tabs}>
           <Link to="/billing" aria-current={!prices ? 'page' : undefined}>Hóa đơn</Link>
           <Link to="/billing/prices" aria-current={prices ? 'page' : undefined}>Bảng giá</Link>
         </nav>
       </header>
-      {prices ? <PricesPanel api={api} /> : <InvoicesPanel api={api} />}
+      {prices ? <><PricesPanel api={api} /><PaymentAccountPanel qrApi={qrApi} /></> : <InvoicesPanel api={api} />}
     </section>
   </AppShell>;
 }
@@ -170,4 +172,52 @@ function ManagerInvoiceModal({ api, id, onClose, onChanged }: { api: BillingApi;
           {error && <AlertBanner feedback type="danger" title="Không thực hiện được">{error}</AlertBanner>}
         </div>}
   </Modal>;
+}
+
+/** DEC-016 VietQR: the club's receiving bank account shown in every owner's payment QR (kept as history). */
+function PaymentAccountPanel({ qrApi }: { qrApi: QrApi }) {
+  const load = useSupportingLoad(() => qrApi.paymentAccount(), [qrApi]);
+  const [saved, setSaved] = useState<PaymentAccount>();
+  const current = saved ?? load.data ?? undefined;
+  const [bankBin, setBankBin] = useState('');
+  const [accountNo, setAccountNo] = useState('');
+  const [accountName, setAccountName] = useState('');
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [busy, setBusy] = useState(false);
+  const lock = useRef(false);
+  if (load.error && !current) return <ErrorState title="Không tải được tài khoản nhận tiền" description={message(load.error)} onRetry={load.retry} />;
+  if (load.data === undefined && !saved) return <LoadingState label="Đang tải tài khoản nhận tiền…" />;
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    const bank = BANKS.find((item) => item.bin === bankBin);
+    const number = accountNo.replace(/\s/g, '');
+    if (!bank) { setError('Chọn ngân hàng.'); return; }
+    if (!/^[0-9A-Za-z]{4,19}$/.test(number)) { setError('Số tài khoản gồm 4–19 chữ số hoặc chữ cái.'); return; }
+    if (!accountName.trim()) { setError('Nhập tên chủ tài khoản.'); return; }
+    if (lock.current) return;
+    lock.current = true; setBusy(true); setError(''); setNotice('');
+    try {
+      setSaved(await qrApi.updatePaymentAccount({ bankBin: bank.bin, bankName: bank.name, accountNo: number, accountName: accountName.trim().toUpperCase() }));
+      setBankBin(''); setAccountNo(''); setAccountName('');
+      setNotice('Đã lưu tài khoản nhận tiền. Mã QR của các hóa đơn chưa thanh toán dùng tài khoản này.');
+    } catch (cause) { setError(message(cause)); }
+    finally { lock.current = false; setBusy(false); }
+  };
+  return <Card className={styles.form}>
+    <h3>Tài khoản nhận tiền (mã QR chuyển khoản)</h3>
+    <p className={styles.hint}>Thông tin này hiện trong mã VietQR khi chủ ngựa thanh toán: ngân hàng, số tài khoản, tên chủ tài khoản, kèm số tiền và mã hóa đơn.</p>
+    {current
+      ? <p>{`Đang dùng: ${current.bankName} · ${current.accountNo} · ${current.accountName}`}<br /><span className={styles.hint}>{current.updatedAt ? `Cập nhật ${viDateTime(current.updatedAt)} · ${current.updatedBy}` : ''}</span></p>
+      : <AlertBanner type="warning" title="Chưa có tài khoản nhận tiền. Chủ ngựa chưa thể thanh toán bằng QR." />}
+    {notice && <AlertBanner feedback type="success" title={notice} />}
+    <form className={styles.prices} onSubmit={submit} noValidate>
+      <SelectField label="Ngân hàng" value={bankBin} onChange={(event) => setBankBin(event.target.value)}
+        options={[{ value: '', label: 'Chọn ngân hàng' }, ...BANKS.map((bank) => ({ value: bank.bin, label: bank.name }))]} />
+      <TextField label="Số tài khoản" inputMode="numeric" maxLength={23} value={accountNo} onChange={(event) => setAccountNo(event.target.value)} />
+      <TextField label="Tên chủ tài khoản" maxLength={100} value={accountName} placeholder="VD: NGUYEN VAN A" onChange={(event) => setAccountName(event.target.value)} />
+      <div className={styles.actions}><Button type="submit" disabled={busy}>Lưu tài khoản nhận tiền</Button></div>
+    </form>
+    {error && <AlertBanner feedback type="danger" title="Chưa lưu được tài khoản">{error}</AlertBanner>}
+  </Card>;
 }

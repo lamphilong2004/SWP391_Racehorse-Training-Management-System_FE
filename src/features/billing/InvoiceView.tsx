@@ -36,11 +36,11 @@ export function InvoiceView({ detail, showOwner }: { detail: InvoiceDetail; show
     <div className={styles.total}><span>Tổng cộng</span><span className={styles.amount}>{vnd(invoice.totalAmount)}</span></div>
     {detail.payments.length > 0 && <DataTable caption="Lịch sử thanh toán VNPay" rowKey={(payment) => payment.id} rows={detail.payments} columns={[
       { key: 'created', header: 'Thời điểm', nowrap: true, render: (payment) => viDateTime(payment.createdAt) },
-      { key: 'ref', header: 'Mã giao dịch', render: (payment) => payment.providerTransactionNo ? `${payment.txnRef} · VNPay ${payment.providerTransactionNo}` : payment.txnRef },
-      { key: 'method', header: 'Phương thức', render: (payment) => METHOD[payment.cardType ?? ''] ?? METHOD[payment.bankCode ?? ''] ?? payment.bankCode ?? '—' },
+      { key: 'ref', header: 'Mã giao dịch', render: (payment) => payment.provider === 'VNPAY' && payment.providerTransactionNo ? `${payment.txnRef} · VNPay ${payment.providerTransactionNo}` : payment.txnRef },
+      { key: 'method', header: 'Phương thức', render: (payment) => payment.provider === 'VIETQR' ? 'Chuyển khoản QR (VietQR)' : METHOD[payment.cardType ?? ''] ?? METHOD[payment.bankCode ?? ''] ?? payment.bankCode ?? '—' },
       { key: 'amount', header: 'Số tiền', align: 'right', nowrap: true, render: (payment) => <span className={styles.amount}>{vnd(payment.amount)}</span> },
       { key: 'status', header: 'Kết quả', render: (payment) => <StatusPill status={paymentDisplayStatus(payment)} /> },
-      { key: 'via', header: 'Xác nhận', render: (payment) => payment.confirmedVia === 'IPN' ? 'VNPay IPN' : payment.confirmedVia === 'QUERYDR' ? 'Tra cứu VNPay' : payment.confirmedVia === 'RETURN' ? 'Chữ ký VNPay (trang trả về)' : '—' },
+      { key: 'via', header: 'Xác nhận', render: (payment) => payment.confirmedVia === 'IPN' ? 'VNPay IPN' : payment.confirmedVia === 'QUERYDR' ? 'Tra cứu VNPay' : payment.confirmedVia === 'RETURN' ? 'Chữ ký VNPay (trang trả về)' : payment.confirmedVia === 'OWNER' ? 'Chủ ngựa xác nhận đã chuyển khoản' : '—' },
     ]} />}
   </div>;
 }

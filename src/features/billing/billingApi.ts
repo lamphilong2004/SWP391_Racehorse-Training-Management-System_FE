@@ -85,3 +85,42 @@ export function monthLabel(month: string): string {
 export function currentMonth(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit' }).format(new Date()).slice(0, 7);
 }
+
+/* ---------- DEC-016 VietQR bank transfer ---------- */
+export interface PaymentAccount { bankBin: string; bankName: string; accountNo: string; accountName: string; updatedAt: string | null; updatedBy: string | null }
+export interface QrTransfer { bankBin: string; bankName: string; accountNo: string; accountName: string; amount: number; content: string }
+
+/** NAPAS BINs as returned by https://api.vietqr.io/v2/banks (checked 2026-11-20). */
+export const BANKS: { bin: string; name: string }[] = [
+  { bin: '970436', name: 'Vietcombank' }, { bin: '970415', name: 'VietinBank' }, { bin: '970418', name: 'BIDV' },
+  { bin: '970405', name: 'Agribank' }, { bin: '970407', name: 'Techcombank' }, { bin: '970422', name: 'MBBank' },
+  { bin: '970416', name: 'ACB' }, { bin: '970432', name: 'VPBank' }, { bin: '970423', name: 'TPBank' },
+  { bin: '970403', name: 'Sacombank' }, { bin: '970441', name: 'VIB' }, { bin: '970443', name: 'SHB' },
+  { bin: '970437', name: 'HDBank' }, { bin: '970448', name: 'OCB' }, { bin: '970426', name: 'MSB' },
+  { bin: '970431', name: 'Eximbank' }, { bin: '970440', name: 'SeABank' }, { bin: '970449', name: 'LPBank' },
+  { bin: '970428', name: 'NamABank' }, { bin: '970409', name: 'BacABank' }, { bin: '970438', name: 'BaoVietBank' },
+  { bin: '963388', name: 'Timo' }, { bin: '546034', name: 'CAKE' }, { bin: '970452', name: 'KienLongBank' },
+  { bin: '970412', name: 'PVcomBank' },
+];
+
+/** VietQR Quick Link image (https://www.vietqr.io/danh-sach-api/link-tao-ma-nhanh/): scannable by any Vietnamese bank app. */
+export function vietQrImageUrl(transfer: QrTransfer): string {
+  const query = new URLSearchParams({ amount: String(transfer.amount), addInfo: transfer.content, accountName: transfer.accountName });
+  return `https://img.vietqr.io/image/${encodeURIComponent(transfer.bankBin)}-${encodeURIComponent(transfer.accountNo)}-compact2.png?${query.toString().replace(/\+/g, '%20')}`;
+}
+
+export function createQrApi(token: string, onError: (cause: unknown) => boolean) {
+  async function call<T>(path: string, method = 'GET', body?: unknown): Promise<T> {
+    try {
+      return await requestApi<T>(path, { method, ...(body === undefined ? {} : { body: JSON.stringify(body) }) }, { token });
+    } catch (cause) { onError(cause); throw cause; }
+  }
+  return {
+    // The API omits a null data field (NON_NULL envelope): no account yet arrives as undefined, normalised to null.
+    paymentAccount: async () => (await call<PaymentAccount | null | undefined>('/api/billing/payment-account')) ?? null,
+    updatePaymentAccount: (body: Omit<PaymentAccount, 'updatedAt' | 'updatedBy'>) => call<PaymentAccount>('/api/billing/payment-account', 'PUT', body),
+    qrTransfer: (invoiceId: number) => call<QrTransfer>(`/api/owner/invoices/${invoiceId}/qr-transfer`),
+    confirmQrTransfer: (invoiceId: number) => call<PaymentResult>(`/api/owner/invoices/${invoiceId}/qr-transfer`, 'POST', {}),
+  };
+}
+export type QrApi = ReturnType<typeof createQrApi>;
