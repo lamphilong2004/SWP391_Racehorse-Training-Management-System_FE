@@ -40,7 +40,7 @@ export function InvoiceView({ detail, showOwner }: { detail: InvoiceDetail; show
       { key: 'method', header: 'Phương thức', render: (payment) => METHOD[payment.cardType ?? ''] ?? METHOD[payment.bankCode ?? ''] ?? payment.bankCode ?? '—' },
       { key: 'amount', header: 'Số tiền', align: 'right', nowrap: true, render: (payment) => <span className={styles.amount}>{vnd(payment.amount)}</span> },
       { key: 'status', header: 'Kết quả', render: (payment) => <StatusPill status={paymentDisplayStatus(payment)} /> },
-      { key: 'via', header: 'Xác nhận', render: (payment) => payment.confirmedVia === 'IPN' ? 'VNPay IPN' : payment.confirmedVia === 'QUERYDR' ? 'Tra cứu VNPay' : '—' },
+      { key: 'via', header: 'Xác nhận', render: (payment) => payment.confirmedVia === 'IPN' ? 'VNPay IPN' : payment.confirmedVia === 'QUERYDR' ? 'Tra cứu VNPay' : payment.confirmedVia === 'RETURN' ? 'Chữ ký VNPay (trang trả về)' : '—' },
     ]} />}
   </div>;
 }
