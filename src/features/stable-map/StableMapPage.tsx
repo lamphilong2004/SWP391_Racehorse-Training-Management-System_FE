@@ -102,6 +102,14 @@ function BoxModal({ api, manager, canOpenHorse, yard, box, onClose, onSaved }: {
   const lock = useRef(false);
   const position = `hàng ${String.fromCharCode(64 + box.rowNo)}, cột ${box.columnNo}`;
   const maintenance = box.boxStatus === 'MAINTENANCE';
+  const release = async () => {
+    if (lock.current || !box.horse) return;
+    if (!reason.trim()) { setError('Nhập lý do ngựa rời chuồng.'); return; }
+    lock.current = true; setBusy(true); setError('');
+    try { onSaved(await api.releaseBox(box.id, reason.trim()), `Đã trả ô ${box.boxCode}: ${box.horse.name} rời chuồng từ hôm nay.`); }
+    catch (cause) { setError(message(cause)); }
+    finally { lock.current = false; setBusy(false); }
+  };
   const save = async () => {
     if (lock.current) return;
     if (!maintenance && !reason.trim()) { setError('Nhập lý do bảo trì.'); return; }
@@ -117,12 +125,15 @@ function BoxModal({ api, manager, canOpenHorse, yard, box, onClose, onSaved }: {
     footer={<>
       <Button variant="secondary" onClick={onClose} disabled={busy}>Đóng</Button>
       {canChange && <Button variant={maintenance ? 'primary' : 'danger'} onClick={save} disabled={busy}>{maintenance ? 'Mở lại ô' : 'Chuyển sang bảo trì'}</Button>}
+      {manager && box.horse && <Button variant="danger" onClick={release} disabled={busy}>Trả ô chuồng</Button>}
     </>}>
     <div className={styles.form}>
       <p className={styles.hint}>{`Vị trí: ${position}.`}</p>
       {box.horse
-        ? <p>Đang có ngựa {canOpenHorse ? <Link className={styles.mapLink} to={`/horses/${box.horse.id}`}>{box.horse.name} ({box.horse.horseCode})</Link> : <strong>{box.horse.name} ({box.horse.horseCode})</strong>}. {manager ? 'Muốn bảo trì ô này, hãy chuyển ngựa sang ô khác trước.' : ''}</p>
+        ? <p>Đang có ngựa {canOpenHorse ? <Link className={styles.mapLink} to={`/horses/${box.horse.id}`}>{box.horse.name} ({box.horse.horseCode})</Link> : <strong>{box.horse.name} ({box.horse.horseCode})</strong>}. {manager ? 'Muốn bảo trì ô này, hãy chuyển ngựa sang ô khác hoặc trả ô trước.' : ''}</p>
         : <p>{maintenance ? 'Ô đang bảo trì nên không thể xếp ngựa.' : 'Ô đang trống, có thể xếp ngựa.'}</p>}
+      {manager && box.horse && <TextAreaField label="Lý do ngựa rời chuồng (bán, nghỉ hưu, đi thi đấu dài ngày…)" value={reason} maxLength={300} onChange={(event) => setReason(event.target.value)} />}
+      {manager && box.horse && <p className={styles.hint}>Trả ô: ngựa rời chuồng từ hôm nay, ô trống ngay, phí lưu chuồng dừng tính từ hôm nay. Lịch sử xếp chuồng được giữ lại.</p>}
       {canChange && !maintenance && <TextAreaField label="Lý do bảo trì" value={reason} maxLength={300} onChange={(event) => setReason(event.target.value)} />}
       {error && <AlertBanner feedback type="danger" title="Không lưu được">{error}</AlertBanner>}
     </div>

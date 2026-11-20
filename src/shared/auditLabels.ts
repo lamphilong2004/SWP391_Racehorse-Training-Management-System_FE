@@ -42,7 +42,7 @@ const ACTIONS: Record<string, string> = {
   INVENTORY_ITEM_SAVED: 'Lưu vật tư', STOCK_MOVEMENT_RECORDED: 'Ghi nhận xuất nhập kho', REPLENISHMENT_REQUESTED: 'Yêu cầu bổ sung vật tư',
   USER_PASSWORD_SET_BY_MANAGER: 'Club Manager đặt mật khẩu ban đầu',
   // stable layout and service billing (DEC-016)
-  STABLE_YARD_CREATED: 'Thêm khu chuồng', STABLE_BOX_MAINTENANCE_STARTED: 'Chuyển ô chuồng sang bảo trì', STABLE_BOX_REOPENED: 'Mở lại ô chuồng',
+  STABLE_YARD_CREATED: 'Thêm khu chuồng', STABLE_BOX_MAINTENANCE_STARTED: 'Chuyển ô chuồng sang bảo trì', STABLE_BOX_REOPENED: 'Mở lại ô chuồng', STABLE_BOX_RELEASED: 'Trả ô chuồng (ngựa rời chuồng)',
   SERVICE_INVOICE_ISSUED: 'Phát hành hóa đơn dịch vụ', SERVICE_INVOICE_CANCELLED: 'Hủy hóa đơn dịch vụ',
   SERVICE_INVOICE_PAYMENT_STARTED: 'Chủ ngựa mở thanh toán VNPay', SERVICE_INVOICE_PAID: 'VNPay xác nhận thanh toán',
   SERVICE_PAYMENT_REFUND_REQUIRED: 'VNPay thu trùng — cần hoàn tiền',

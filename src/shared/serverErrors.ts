@@ -340,6 +340,9 @@ export const SERVER_ERROR_TEXT: Record<string, string> = {
   'The box already has this status.': 'Ô chuồng đã ở trạng thái này.',
   'Move the horse out before putting this box under maintenance.': 'Hãy chuyển ngựa sang ô khác trước khi bảo trì ô này.',
   'The box changed while saving. Reload the stable map.': 'Ô chuồng vừa thay đổi. Hãy tải lại sơ đồ chuồng.',
+  'A reason is required to release a box (at most 300 characters).': 'Nhập lý do ngựa rời chuồng (tối đa 300 ký tự).',
+  'This box has no horse to release.': 'Ô này không có ngựa để trả.',
+  'The horse is in a training session right now. Release the box after the session ends.': 'Ngựa đang trong buổi tập. Hãy trả ô sau khi buổi tập kết thúc.',
   // DEC-016 service billing
   'Enter at least one price.': 'Nhập ít nhất một giá mới.',
   'Price must be between 5,000 and 10,000,000 VND.': 'Giá phải từ 5.000 đến 10.000.000 ₫.',

@@ -25,6 +25,8 @@ export function createStableMapApi(token: string, onError: (cause: unknown) => b
     createYard: (body: CreateYardBody) => call<StableMap>('/api/stable-yards', 'POST', body),
     setBoxStatus: (boxId: number, status: BoxOperatingStatus, reason: string) =>
       call<StableMap>(`/api/stable-boxes/${boxId}/status`, 'PATCH', { status, reason }),
+    /** The horse leaves the stable from today; the box is free at once and history is kept. */
+    releaseBox: (boxId: number, reason: string) => call<StableMap>(`/api/stable-boxes/${boxId}/release`, 'POST', { reason }),
   };
 }
 export type StableMapApi = ReturnType<typeof createStableMapApi>;
