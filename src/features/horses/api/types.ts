@@ -101,6 +101,11 @@ export interface StableBox {
   yard: string | null;
   status: BoxStatus;
   currentHorse: { id: number; horseCode: string; name: string } | null;
+  /** DEC-016 (additive): position in the yard grid and operating status. Null for a legacy box outside every yard. */
+  yardCode?: string | null;
+  rowNo?: number | null;
+  columnNo?: number | null;
+  boxStatus?: 'ACTIVE' | 'MAINTENANCE' | null;
 }
 
 export interface StableAssignmentRequest {

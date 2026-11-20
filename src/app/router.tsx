@@ -26,6 +26,7 @@ import { ownerApplicationRoutes } from '../features/owner/ownerApplicationRoutes
 import { registrationRoutes } from '../features/registration/routes';
 import { TemplateLibraryPage } from '../features/program-creation/TemplateLibraryPage';
 import { StableCareEntry } from '../features/stable-care/StableCareEntry';
+import { BillingEntry, OwnerInvoicesEntry, StableMapEntry, VnpayReturnEntry } from '../features/billing/BillingEntries';
 
 
 /**
@@ -77,6 +78,12 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
     { path: '/stable', element: <RequireAuth allowedRoles={['CLUB_MANAGER', 'HEAD_TRAINER', 'VETERINARIAN']}><StableCareEntry /></RequireAuth> },
     { path: '/care/daily', element: <RequireAuth allowedRoles={['CLUB_MANAGER', 'HEAD_TRAINER', 'VETERINARIAN', 'GROOM']}><StableCareEntry /></RequireAuth> },
     { path: '/inventory', element: <RequireAuth allowedRoles={['CLUB_MANAGER', 'VETERINARIAN', 'GROOM']}><StableCareEntry /></RequireAuth> },
+    { path: ROUTES.stableMap, element: <RequireAuth allowedRoles={['CLUB_MANAGER', 'HEAD_TRAINER', 'TRAINER', 'VETERINARIAN', 'GROOM', 'WORK_RIDER']}><StableMapEntry /></RequireAuth> },
+    { path: ROUTES.billing, element: <RequireAuth allowedRoles={['CLUB_MANAGER']}><BillingEntry /></RequireAuth> },
+    { path: ROUTES.billingPrices, element: <RequireAuth allowedRoles={['CLUB_MANAGER']}><BillingEntry /></RequireAuth> },
+    { path: ROUTES.myInvoices, element: <RequireAuth allowedRoles={['HORSE_OWNER']}><OwnerInvoicesEntry /></RequireAuth> },
+    { path: `${ROUTES.myInvoices}/:id`, element: <RequireAuth allowedRoles={['HORSE_OWNER']}><OwnerInvoicesEntry /></RequireAuth> },
+    { path: ROUTES.vnpayReturn, element: <RequireAuth allowedRoles={['HORSE_OWNER', 'CLUB_MANAGER']}><VnpayReturnEntry /></RequireAuth> },
     // CORE-048 (DEC-008): public access request and Club Manager review; each page enforces its own boundary.
     ...registrationRoutes,
     // CORE-056 candidate mount: canonical API provider plus legacy deep-link aliases.

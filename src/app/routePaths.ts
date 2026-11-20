@@ -66,6 +66,12 @@ export const ROUTES = {
   registrations: '/admin/registrations',
   myHorses: '/owner/horses',
   notifications: '/notifications',
+  /** DEC-016: stable layout map, service billing (Club Manager), owner invoices and the VNPay return URL. */
+  stableMap: '/stable-map',
+  billing: '/billing',
+  billingPrices: '/billing/prices',
+  myInvoices: '/owner/invoices',
+  vnpayReturn: '/thanh-toan/vnpay',
 } as const;
 
 export function devShellPath(role: string): string {

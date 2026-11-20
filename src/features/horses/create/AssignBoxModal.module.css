@@ -46,3 +46,6 @@
     width: 100%;
   }
 }
+
+/* DEC-016 yard grid inside the modal: scroll sideways when a yard is wider than the dialog. */
+.gridScroll { overflow-x: auto; padding-bottom: 4px; max-width: 100%; }

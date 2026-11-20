@@ -38,7 +38,8 @@ describe('router', () => {
 
   it('does not register the dev-only routes in production', async () => {
     const paths = buildRoutes(false).map((route) => route.path);
-    expect(paths).toEqual(['/', '/login', '/dashboard', '/admin/audit-log', '/account', '/admin/users', '/admin/users/new', '/admin/users/:id/edit', '/admin/roles', '/notifications', '/stable', '/care/daily', '/inventory', '/register', '/forgot-password', '/reset-password', '/admin/registrations', '/owner/horses', '/owner/horses/:horseId', '/my-horses', '/my-horses/:id', undefined, '/training/programs/new', '/training/templates',
+    expect(paths).toEqual(['/', '/login', '/dashboard', '/admin/audit-log', '/account', '/admin/users', '/admin/users/new', '/admin/users/:id/edit', '/admin/roles', '/notifications', '/stable', '/care/daily', '/inventory',
+      '/stable-map', '/billing', '/billing/prices', '/owner/invoices', '/owner/invoices/:id', '/thanh-toan/vnpay', '/register', '/forgot-password', '/reset-password', '/admin/registrations', '/owner/horses', '/owner/horses/:horseId', '/my-horses', '/my-horses/:id', undefined, '/training/programs/new', '/training/templates',
       '/horses/:id/baseline', '/medical/restrictions', '/training/monitoring', '/training/programs/assigned', '/training/schedule', '/training/calendar', '/training/exercise-library', '/training/exercise-library/new', '/training/exercises',
       '/training/adjustment-requests', '/training/programs/:id', '/training/session/:id', '/training/schedule/session/new',
       '/training/sessions/:id/evaluation', '/training/performance', '/groom/today', '/training/my-sessions/:id/pre-check',

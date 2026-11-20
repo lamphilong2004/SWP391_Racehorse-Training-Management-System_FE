@@ -40,6 +40,7 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
         items: [
           { label: 'Tổng quan', icon: 'dashboard', to: ROUTES.dashboard },
           { label: 'Ngựa', icon: 'horseshoe', to: ROUTES.horses },
+          { label: 'Sơ đồ chuồng', icon: 'warehouse', to: ROUTES.stableMap },
         ],
       },
       {
@@ -81,6 +82,7 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
           { label: 'Hạn chế tập luyện', icon: 'shield-alert', to: ROUTES.restrictions },
           { label: 'Sự cố', icon: 'alert-triangle', to: ROUTES.incidents },
           { label: 'Ngựa', icon: 'horseshoe', to: ROUTES.horses },
+          { label: 'Sơ đồ chuồng', icon: 'warehouse', to: ROUTES.stableMap },
         ],
       },
     ],
@@ -94,6 +96,7 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
           { label: 'Lịch phân công', icon: 'clipboard-list', to: ROUTES.assignments },
           { label: 'Lịch sử cưỡi', icon: 'history', to: ROUTES.ridingHistory },
           { label: 'Báo cáo vấn đề', icon: 'alert-triangle', to: ROUTES.reportIssue },
+          { label: 'Sơ đồ chuồng', icon: 'warehouse', to: ROUTES.stableMap },
         ],
       },
     ],
@@ -105,6 +108,7 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
         items: [
           { label: 'Tổng quan', icon: 'dashboard', to: ROUTES.dashboard },
           { label: 'Ngựa', icon: 'horseshoe', to: ROUTES.horses },
+          { label: 'Sơ đồ chuồng', icon: 'warehouse', to: ROUTES.stableMap },
         ],
       },
       {
@@ -135,6 +139,7 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
           { label: 'Tổng quan', icon: 'dashboard', to: ROUTES.dashboard },
           { label: 'Ngựa', icon: 'horseshoe', to: ROUTES.horses },
           { label: 'Chờ kích hoạt', icon: 'clipboard-list', to: ROUTES.pendingActivation },
+          { label: 'Sơ đồ chuồng', icon: 'warehouse', to: ROUTES.stableMap },
           { label: 'Chăm sóc & dinh dưỡng', icon: 'warehouse', to: ROUTES.stable },
           { label: 'Chăm sóc hằng ngày', icon: 'calendar', to: ROUTES.dailyCare },
         ],
@@ -151,6 +156,7 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
         heading: 'Vận hành',
         items: [
           { label: 'Cuộc đua', icon: 'target', to: ROUTES.races, deferred: DEFERRED_REASON },
+          { label: 'Phí dịch vụ & hóa đơn', icon: 'file-text', to: ROUTES.billing },
           { label: 'Kho', icon: 'package', to: ROUTES.inventory },
           { label: 'Báo cáo', icon: 'bar-chart', to: ROUTES.reports, deferred: DEFERRED_REASON },
           { label: 'Nhật ký hệ thống', icon: 'history', to: ROUTES.auditLog },
@@ -162,7 +168,7 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
     workspaceLabel: 'Không gian Groom',
     sections: [
       {
-        items: [{ label: 'Hôm nay', icon: 'dashboard', to: ROUTES.groomToday }],
+        items: [{ label: 'Hôm nay', icon: 'dashboard', to: ROUTES.groomToday }, { label: 'Sơ đồ chuồng', icon: 'warehouse', to: ROUTES.stableMap }],
       },
       {
         heading: 'Công việc của tôi',
@@ -187,6 +193,7 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
       {
         items: [
           { label: 'Ngựa của tôi', icon: 'horseshoe', to: ROUTES.myHorses },
+          { label: 'Hóa đơn & thanh toán', icon: 'file-text', to: ROUTES.myInvoices },
           { label: 'Thông báo', icon: 'bell', to: ROUTES.notifications },
         ],
       },
