@@ -132,7 +132,7 @@ export function AssignBoxModal({ open, horse, onClose, onAssigned }: AssignBoxMo
                       state: box.status === 'OCCUPIED' ? 'occupied' : box.boxStatus === 'MAINTENANCE' ? 'maintenance' : box.id === selectedId ? 'selected' : 'free',
                     }))}
                     onSelect={(cell) => setSelectedId(cell.id)}
-                    selectable={(cell) => cell.state === 'free' || cell.state === 'selected'} />
+                    selectable={(cell) => cell.state === 'free' || cell.state === 'selected'} compact />
                 </div>
               </section>
             ))}

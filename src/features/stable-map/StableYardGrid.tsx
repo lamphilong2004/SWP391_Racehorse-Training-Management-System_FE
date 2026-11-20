@@ -12,14 +12,16 @@ const STATE_LABEL: Record<CellState, string> = { free: 'Còn trống', occupied:
  * DEC-016: one yard drawn as its real rows x columns grid (row 1 at the top, column 1 on the left). Each cell is one
  * box; the horse in it is shown by name. `onSelect` makes a cell clickable; `selectable` limits which cells are.
  */
-export function StableYardGrid({ name, rowCount, columnCount, boxes, onSelect, selectable, footer }: {
+export function StableYardGrid({ name, rowCount, columnCount, boxes, onSelect, selectable, footer, compact }: {
   name: string; rowCount: number; columnCount: number; boxes: GridBox[];
   onSelect?: (box: GridBox) => void; selectable?: (box: GridBox) => boolean; footer?: ReactNode;
+  /** Narrower cells, so a 10-column yard fits inside a dialog without scrolling sideways. */
+  compact?: boolean;
 }) {
   const cells = gridCells(rowCount, columnCount, boxes);
   return (
-    <div className={styles.yardGrid} role="grid" aria-label={`${name}: ${rowCount} hàng × ${columnCount} cột`}
-      style={{ gridTemplateColumns: `28px repeat(${columnCount}, minmax(76px, 1fr))` }}>
+    <div className={styles.yardGrid} role="grid" aria-label={`${name}: ${rowCount} hàng × ${columnCount} cột`} data-compact={compact || undefined}
+      style={{ gridTemplateColumns: `${compact ? 20 : 28}px repeat(${columnCount}, minmax(${compact ? 62 : 76}px, 1fr))` }}>
       <span aria-hidden className={styles.corner} />
       {Array.from({ length: columnCount }, (_, index) => <span key={`c${index}`} aria-hidden className={styles.axis}>{index + 1}</span>)}
       {Array.from({ length: rowCount }, (_, row) => (
@@ -38,9 +40,9 @@ export function StableYardGrid({ name, rowCount, columnCount, boxes, onSelect, s
             </>;
             const clickable = onSelect && (!selectable || selectable(box));
             return clickable
-              ? <button key={box.id} type="button" role="gridcell" aria-label={label} aria-pressed={box.state === 'selected'}
+              ? <button key={box.id} type="button" role="gridcell" aria-label={label} title={label} aria-pressed={box.state === 'selected'}
                 className={styles.cell} data-state={box.state} onClick={() => onSelect(box)}>{content}</button>
-              : <span key={box.id} role="gridcell" aria-label={label} className={styles.cell} data-state={box.state}>{content}</span>;
+              : <span key={box.id} role="gridcell" aria-label={label} title={label} className={styles.cell} data-state={box.state}>{content}</span>;
           })}
         </div>
       ))}

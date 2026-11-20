@@ -48,3 +48,9 @@ button.cell:focus-visible { outline: 2px solid var(--color-primary-600); outline
 .mapLink { color: var(--color-primary-600); font-weight: 600; }
 
 @media (max-width: 1100px) { .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* Compact grid inside dialogs: smaller gaps, padding and text. */
+.yardGrid[data-compact] { gap: 6px; min-width: 0; }
+.yardGrid[data-compact] .cellState { white-space: nowrap; overflow: hidden; }
+.yardGrid[data-compact] .cell, .yardGrid[data-compact] .cellEmpty { min-height: 64px; padding: 6px; }
+.yardGrid[data-compact] .cell[data-state='selected'] { padding: 5px; }
+.yardGrid[data-compact] .cellState { font-size: 10px; }
