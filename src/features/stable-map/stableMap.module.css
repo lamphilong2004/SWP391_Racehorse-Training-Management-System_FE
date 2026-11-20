@@ -54,3 +54,4 @@ button.cell:focus-visible { outline: 2px solid var(--color-primary-600); outline
 .yardGrid[data-compact] .cell, .yardGrid[data-compact] .cellEmpty { min-height: 64px; padding: 6px; }
 .yardGrid[data-compact] .cell[data-state='selected'] { padding: 5px; }
 .yardGrid[data-compact] .cellState { font-size: 10px; }
+.cell[data-highlight] { outline: 3px solid var(--color-primary-600); outline-offset: 2px; }

@@ -12,11 +12,13 @@ const STATE_LABEL: Record<CellState, string> = { free: 'Còn trống', occupied:
  * DEC-016: one yard drawn as its real rows x columns grid (row 1 at the top, column 1 on the left). Each cell is one
  * box; the horse in it is shown by name. `onSelect` makes a cell clickable; `selectable` limits which cells are.
  */
-export function StableYardGrid({ name, rowCount, columnCount, boxes, onSelect, selectable, footer, compact }: {
+export function StableYardGrid({ name, rowCount, columnCount, boxes, onSelect, selectable, footer, compact, highlight }: {
   name: string; rowCount: number; columnCount: number; boxes: GridBox[];
   onSelect?: (box: GridBox) => void; selectable?: (box: GridBox) => boolean; footer?: ReactNode;
   /** Narrower cells, so a 10-column yard fits inside a dialog without scrolling sideways. */
   compact?: boolean;
+  /** Box code to emphasise (e.g. opened from a horse profile). */
+  highlight?: string | null;
 }) {
   const cells = gridCells(rowCount, columnCount, boxes);
   return (
@@ -40,9 +42,9 @@ export function StableYardGrid({ name, rowCount, columnCount, boxes, onSelect, s
             </>;
             const clickable = onSelect && (!selectable || selectable(box));
             return clickable
-              ? <button key={box.id} type="button" role="gridcell" aria-label={label} title={label} aria-pressed={box.state === 'selected'}
-                className={styles.cell} data-state={box.state} onClick={() => onSelect(box)}>{content}</button>
-              : <span key={box.id} role="gridcell" aria-label={label} title={label} className={styles.cell} data-state={box.state}>{content}</span>;
+              ? <button key={box.id} type="button" role="gridcell" aria-label={label} title={label} aria-pressed={box.state === 'selected'} id={`box-${box.boxCode}`}
+                className={styles.cell} data-state={box.state} data-highlight={highlight === box.boxCode || undefined} onClick={() => onSelect(box)}>{content}</button>
+              : <span key={box.id} role="gridcell" aria-label={label} title={label} id={`box-${box.boxCode}`} className={styles.cell} data-state={box.state} data-highlight={highlight === box.boxCode || undefined}>{content}</span>;
           })}
         </div>
       ))}

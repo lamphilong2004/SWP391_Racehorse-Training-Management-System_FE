@@ -77,6 +77,7 @@ function QrPayCard({ qrApi, invoiceId, onPaid }: { qrApi: QrApi; invoiceId: numb
   const load = useSupportingLoad(() => qrApi.qrTransfer(invoiceId), [qrApi, invoiceId]);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
   const lock = useRef(false);
   const transfer = load.data;
   const pay = async () => {
@@ -91,8 +92,10 @@ function QrPayCard({ qrApi, invoiceId, onPaid }: { qrApi: QrApi; invoiceId: numb
     {load.error ? <AlertBanner type="warning" title="Chưa thể hiện mã QR">{message(load.error)}</AlertBanner>
       : !transfer ? <LoadingState label="Đang tạo mã QR…" />
         : <div className={styles.qr}>
-          <img className={styles.qrImage} src={vietQrImageUrl(transfer)} width={270} height={320}
-            alt={`Mã VietQR chuyển ${vnd(transfer.amount)} đến ${transfer.bankName} ${transfer.accountNo}`} />
+          {imageFailed
+            ? <div className={styles.qrFallback} role="status">Không tải được ảnh mã QR (máy cần kết nối Internet). Bạn vẫn có thể chuyển khoản theo thông tin bên cạnh.</div>
+            : <img className={styles.qrImage} src={vietQrImageUrl(transfer)} width={270} height={320} onError={() => setImageFailed(true)}
+              alt={`Mã VietQR chuyển ${vnd(transfer.amount)} đến ${transfer.bankName} ${transfer.accountNo}`} />}
           <div className={styles.qrInfo}>
             <dl className={styles.qrInfo}>
             <div><dt>Ngân hàng</dt><dd>{transfer.bankName}</dd></div>

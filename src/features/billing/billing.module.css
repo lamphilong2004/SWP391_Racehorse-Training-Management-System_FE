@@ -45,3 +45,4 @@
 .qrInfo > button { justify-self: start; margin-top: 4px; }
 .qrTotal { font-size: 22px; color: var(--color-primary-600); }
 @media (max-width: 800px) { .qr { grid-template-columns: minmax(0, 1fr); } }
+.qrFallback { width: 270px; padding: 16px; border: 1px dashed var(--color-border-default); border-radius: var(--radius-md); color: var(--color-text-secondary); font-size: 13px; }
