@@ -26,7 +26,7 @@ import { ownerApplicationRoutes } from '../features/owner/ownerApplicationRoutes
 import { registrationRoutes } from '../features/registration/routes';
 import { TemplateLibraryPage } from '../features/program-creation/TemplateLibraryPage';
 import { StableCareEntry } from '../features/stable-care/StableCareEntry';
-import { BillingEntry, OwnerInvoicesEntry, StableMapEntry, VnpayReturnEntry } from '../features/billing/BillingEntries';
+import { BillingEntry, MomoReturnEntry, OwnerInvoicesEntry, StableMapEntry, VnpayReturnEntry } from '../features/billing/BillingEntries';
 
 
 /**
@@ -84,6 +84,7 @@ export function buildRoutes(includeDevRoutes: boolean): RouteObject[] {
     { path: ROUTES.myInvoices, element: <RequireAuth allowedRoles={['HORSE_OWNER']}><OwnerInvoicesEntry /></RequireAuth> },
     { path: `${ROUTES.myInvoices}/:id`, element: <RequireAuth allowedRoles={['HORSE_OWNER']}><OwnerInvoicesEntry /></RequireAuth> },
     { path: ROUTES.vnpayReturn, element: <RequireAuth allowedRoles={['HORSE_OWNER', 'CLUB_MANAGER']}><VnpayReturnEntry /></RequireAuth> },
+    { path: ROUTES.momoReturn, element: <RequireAuth allowedRoles={['HORSE_OWNER', 'CLUB_MANAGER']}><MomoReturnEntry /></RequireAuth> },
     // CORE-048 (DEC-008): public access request and Club Manager review; each page enforces its own boundary.
     ...registrationRoutes,
     // CORE-056 candidate mount: canonical API provider plus legacy deep-link aliases.

@@ -20,3 +20,6 @@ export function OwnerInvoicesEntry() {
 export function VnpayReturnEntry() {
   return <Suspense fallback={loading('Đang xác nhận thanh toán…')}><VnpayReturnPage /></Suspense>;
 }
+export function MomoReturnEntry() {
+  return <Suspense fallback={loading('Đang xác nhận thanh toán…')}><VnpayReturnPage provider="MOMO" /></Suspense>;
+}

@@ -15,9 +15,10 @@ export interface Payment {
   cardType: string | null; providerTransactionNo: string | null; responseCode: string | null; confirmedVia: string | null;
   createdAt: string; confirmedAt: string | null; expiresAt: string | null;
 }
-export interface InvoiceDetail { invoice: InvoiceSummary; lines: InvoiceLine[]; payments: Payment[]; issuedBy: Party; cancelledAt: string | null; cancellationReason: string | null; paymentConfigured: boolean }
+export interface InvoiceDetail { invoice: InvoiceSummary; lines: InvoiceLine[]; payments: Payment[]; issuedBy: Party; cancelledAt: string | null; cancellationReason: string | null; paymentConfigured: boolean; momoConfigured?: boolean }
 export interface GenerateResult { billingMonth: string; periodStart: string; periodEnd: string; created: InvoiceSummary[]; skipped: { horseId: number; horseCode: string; horseName: string; reason: string }[] }
 export interface PaymentLink { paymentUrl: string; txnRef: string; amount: number; expiresAt: string }
+export interface MomoPaymentLink { payUrl: string; txnRef: string; amount: number; expiresAt: string }
 export interface PaymentResult { invoiceId: number; invoiceCode: string; invoiceStatus: InvoiceStatus; paymentStatus: string; responseCode: string | null; message: string }
 
 export function createBillingApi(token: string, onError: (cause: unknown) => boolean) {
@@ -45,19 +46,21 @@ export function createBillingApi(token: string, onError: (cause: unknown) => boo
     pay: (id: number, bankCode: string) => call<PaymentLink>(`/api/owner/invoices/${id}/vnpay-payment`, 'POST', bankCode ? { bankCode } : {}),
     ownerCheck: (id: number) => call<PaymentResult>(`/api/owner/invoices/${id}/payment-check`, 'POST', {}),
     confirmReturn: (params: Record<string, string>) => call<PaymentResult>('/api/payments/vnpay/return', 'POST', { params }),
+    payMomo: (id: number) => call<MomoPaymentLink>(`/api/owner/invoices/${id}/momo-payment`, 'POST', {}),
+    confirmMomoReturn: (params: Record<string, string>) => call<PaymentResult>('/api/payments/momo/return', 'POST', { params }),
   };
 }
 export type BillingApi = ReturnType<typeof createBillingApi>;
 
 export const STATUS_LABEL: Record<InvoiceStatus, string> = { ISSUED: 'Chờ thanh toán', PAID: 'Đã thanh toán', CANCELLED: 'Đã hủy' };
-export const PAYMENT_LABEL: Record<Payment['status'], string> = { PENDING: 'Đang chờ VNPay xác nhận', SUCCESS: 'Thành công', FAILED: 'Không thành công', REFUND_REQUIRED: 'Thu trùng — cần hoàn tiền' };
+export const PAYMENT_LABEL: Record<Payment['status'], string> = { PENDING: 'Đang chờ xác nhận', SUCCESS: 'Thành công', FAILED: 'Không thành công', REFUND_REQUIRED: 'Thu trùng — cần hoàn tiền' };
 /** Display state of an invoice: an unpaid invoice past its due date (Vietnam date) is shown as overdue. */
 export function invoiceDisplayStatus(invoice: { status: InvoiceStatus; dueDate: string }): InvoiceStatus | 'OVERDUE' {
   return invoice.status === 'ISSUED' && invoice.dueDate < todayVn() ? 'OVERDUE' : invoice.status;
 }
 /** A PENDING link past its expiry can no longer be paid; it is shown as expired, not as waiting. */
 export function paymentDisplayStatus(payment: Payment, now = Date.now()): Payment['status'] | 'EXPIRED' {
-  return payment.status === 'PENDING' && payment.expiresAt && Date.parse(payment.expiresAt) < now ? 'EXPIRED' : payment.status;
+  return payment.provider !== 'MOMO' && payment.status === 'PENDING' && payment.expiresAt && Date.parse(payment.expiresAt) < now ? 'EXPIRED' : payment.status;
 }
 export function todayVn(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
