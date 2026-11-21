@@ -41,6 +41,11 @@ const ACTIONS: Record<string, string> = {
   DAILY_CARE_COMPLETED: 'Hoàn tất công việc chăm sóc', DAILY_CARE_CANCELLED: 'Hủy công việc chăm sóc', DAILY_CARE_REASSIGNED: 'Giao lại công việc chăm sóc',
   INVENTORY_ITEM_SAVED: 'Lưu vật tư', STOCK_MOVEMENT_RECORDED: 'Ghi nhận xuất nhập kho', REPLENISHMENT_REQUESTED: 'Yêu cầu bổ sung vật tư',
   USER_PASSWORD_SET_BY_MANAGER: 'Club Manager đặt mật khẩu ban đầu',
+  // stable layout and service billing (DEC-016)
+  STABLE_YARD_CREATED: 'Thêm khu chuồng', STABLE_BOX_MAINTENANCE_STARTED: 'Chuyển ô chuồng sang bảo trì', STABLE_BOX_REOPENED: 'Mở lại ô chuồng', STABLE_BOX_RELEASED: 'Trả ô chuồng (ngựa rời chuồng)',
+  SERVICE_INVOICE_ISSUED: 'Phát hành hóa đơn dịch vụ', SERVICE_INVOICE_CANCELLED: 'Hủy hóa đơn dịch vụ',
+  SERVICE_INVOICE_PAYMENT_STARTED: 'Chủ ngựa mở thanh toán VNPay', SERVICE_INVOICE_PAID: 'VNPay xác nhận thanh toán',
+  SERVICE_PAYMENT_REFUND_REQUIRED: 'VNPay thu trùng — cần hoàn tiền',
 };
 
 const TARGETS: Record<string, string> = {
@@ -49,9 +54,10 @@ const TARGETS: Record<string, string> = {
   CARE_TASK: 'Công việc chăm sóc', MEDICAL_CASE: 'Ca y tế', INCIDENT: 'Sự cố', STABLE_BOX: 'Ô chuồng',
   CARE_PLAN: 'Kế hoạch chăm sóc', NUTRITION_PLAN: 'Kế hoạch dinh dưỡng', INVENTORY_ITEM: 'Vật tư', STOCK_MOVEMENT: 'Xuất nhập kho',
   REPLENISHMENT_REQUEST: 'Yêu cầu bổ sung vật tư',
+  STABLE_YARD: 'Khu chuồng', SERVICE_INVOICE: 'Hóa đơn dịch vụ',
 };
 
-const SOURCES: Record<string, string> = { WEB: 'Web', HTTP: 'Web', API: 'API', SYSTEM: 'Hệ thống' };
+const SOURCES: Record<string, string> = { WEB: 'Web', HTTP: 'Web', API: 'API', SYSTEM: 'Hệ thống', VNPAY: 'VNPay' };
 
 export function auditActionLabel(code: string | null | undefined): string {
   if (!code) return '—';

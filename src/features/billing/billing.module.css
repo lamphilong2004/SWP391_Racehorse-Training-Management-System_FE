@@ -1,0 +1,48 @@
+.stack { display: grid; gap: 20px; min-width: 0; }
+.header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
+.header h1 { margin: 4px 0; font-family: var(--font-family-headline); font-size: clamp(24px, 2.5vw, 32px); }
+.header p { margin: 0; color: var(--color-text-secondary); max-width: 80ch; }
+.eyebrow { color: var(--color-primary-600); font-weight: 600; margin: 0; }
+.tabs { display: flex; gap: 12px; flex-wrap: wrap; }
+.tabs a { color: var(--color-primary-600); padding: 10px 4px; font-weight: 600; }
+.tabs a[aria-current='page'] { background: var(--color-bg-subtle); border-radius: var(--radius-md); box-shadow: inset 0 -2px var(--color-primary-600); text-decoration: none; }
+.toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+.toolbar > * { flex: 0 1 240px; min-width: 180px; }
+.toolbar > button { flex: 0 0 auto; }
+.summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.prices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.price { display: grid; gap: 8px; }
+.price h3 { margin: 0; font-size: 16px; }
+.price p { margin: 0; color: var(--color-text-secondary); font-size: 13px; }
+.form { display: grid; gap: 16px; }
+.amount { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.total { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding-top: 12px; border-top: 1px solid var(--color-border-default); font-size: 18px; font-weight: 700; }
+.meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 24px; margin: 0; }
+.meta dt { font-size: 12px; color: var(--color-text-secondary); }
+.meta dd { margin: 0 0 4px; font-weight: 600; }
+.badge { display: inline-block; border: 1px solid var(--color-border-default); border-radius: var(--radius-full); padding: 3px 10px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.badge[data-status='ISSUED'], .badge[data-status='PENDING'] { color: var(--color-warning-600); background: var(--color-warning-50); }
+.badge[data-status='PAID'], .badge[data-status='SUCCESS'] { color: var(--color-success-600); background: var(--color-success-50); }
+.badge[data-status='CANCELLED'], .badge[data-status='FAILED'] { color: var(--color-neutral-600, var(--color-text-secondary)); background: var(--color-bg-subtle); }
+.methods { display: grid; gap: 8px; margin: 0; padding: 0; border: 0; }
+.methods label { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border: 1px solid var(--color-border-default); border-radius: var(--radius-md); cursor: pointer; }
+.methods label:has(input:checked) { border-color: var(--color-primary-600); background: var(--color-primary-50); }
+.methods strong { display: block; }
+.methods small { color: var(--color-text-secondary); }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: flex-end; }
+.hint { margin: 0; font-size: 13px; color: var(--color-text-secondary); }
+.link { color: var(--color-primary-600); font-weight: 600; }
+.result { display: grid; gap: 16px; max-width: 640px; }
+@media (max-width: 1100px) { .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 800px) { .prices, .meta { grid-template-columns: minmax(0, 1fr); } }
+.badge[data-status='OVERDUE'], .badge[data-status='REFUND_REQUIRED'] { color: var(--color-danger-600); background: var(--color-danger-50); }
+.badge[data-status='EXPIRED'] { color: var(--color-text-secondary); background: var(--color-bg-subtle); }
+.qr { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 24px; align-items: start; }
+.qrImage { width: 270px; height: auto; border: 1px solid var(--color-border-default); border-radius: var(--radius-md); background: #fff; }
+.qrInfo { display: grid; gap: 10px; margin: 0; align-content: start; }
+.qrInfo dt { font-size: 12px; color: var(--color-text-secondary); }
+.qrInfo dd { margin: 0; font-weight: 600; }
+.qrInfo > button { justify-self: start; margin-top: 4px; }
+.qrTotal { font-size: 22px; color: var(--color-primary-600); }
+@media (max-width: 800px) { .qr { grid-template-columns: minmax(0, 1fr); } }
+.qrFallback { width: 270px; padding: 16px; border: 1px dashed var(--color-border-default); border-radius: var(--radius-md); color: var(--color-text-secondary); font-size: 13px; }

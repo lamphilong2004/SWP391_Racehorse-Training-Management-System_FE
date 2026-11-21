@@ -8,6 +8,7 @@ import { todayIsoDate } from '../shared/format';
 import styles from './AssignBoxModal.module.css';
 import shared from '../shared/horses.module.css';
 import { viLabel } from '../../../shared/viLabels';
+import { GridLegend, StableYardGrid } from '../../stable-map/StableYardGrid';
 
 export interface AssignBoxModalProps {
   open: boolean;
@@ -61,8 +62,20 @@ export function AssignBoxModal({ open, horse, onClose, onAssigned }: AssignBoxMo
     }
     return [...groups.entries()];
   }, [inYard]);
-  const free = inYard.filter((b) => b.status === 'FREE').length;
+  const assignable = (b: StableBox) => b.status === 'FREE' && (b.boxStatus ?? 'ACTIVE') === 'ACTIVE';
+  const free = inYard.filter(assignable).length;
   const selected = boxes?.find((b) => b.id === selectedId);
+  // DEC-016: boxes with a grid position are drawn as their yard's real rows x columns.
+  const grids = useMemo(() => {
+    const placed = inYard.filter((b) => b.yardCode && b.rowNo && b.columnNo);
+    if (placed.length === 0) return [];
+    const byYard = new Map<string, StableBox[]>();
+    for (const box of placed) byYard.set(box.yardCode as string, [...(byYard.get(box.yardCode as string) ?? []), box]);
+    return [...byYard.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([code, list]) => ({
+      code, name: list[0].yard ?? `Khu ${code}`,
+      rowCount: Math.max(...list.map((b) => b.rowNo as number)), columnCount: Math.max(...list.map((b) => b.columnNo as number)), list,
+    }));
+  }, [inYard]);
 
   const assign = async () => {
     if (!selected || pending.current) return;
@@ -104,9 +117,26 @@ export function AssignBoxModal({ open, horse, onClose, onAssigned }: AssignBoxMo
                 </div>
               )}
               <span className={styles.spacer} />
-              <span className={styles.counts}>{`${free} ô trống · ${inYard.length - free} ô có ngựa`}</span>
+              <span className={styles.counts}>{`${free} ô trống · ${inYard.filter((b) => b.status === 'OCCUPIED').length} ô có ngựa`}</span>
             </div>
-            {rows.map(([row, list]) => (
+            {free === 0 && <AlertBanner type="warning" title="Không còn ô trống">Chuồng đã đầy theo sơ đồ. Cần chuyển bớt ngựa hoặc mở lại ô đang bảo trì trước khi xếp ngựa mới.</AlertBanner>}
+            {grids.length > 0 && <GridLegend />}
+            {grids.map((grid) => (
+              <section key={grid.code} className={styles.row} aria-label={grid.name}>
+                <h3 className={styles.rowLabel}>{`${yardLabel(grid.name) ?? grid.name} · ${grid.rowCount} hàng × ${grid.columnCount} cột`}</h3>
+                <div className={styles.gridScroll}>
+                  <StableYardGrid name={grid.name} rowCount={grid.rowCount} columnCount={grid.columnCount}
+                    boxes={grid.list.map((box) => ({
+                      id: box.id, boxCode: box.boxCode, rowNo: box.rowNo as number, columnNo: box.columnNo as number,
+                      horseName: box.currentHorse?.name, horseCode: box.currentHorse?.horseCode,
+                      state: box.status === 'OCCUPIED' ? 'occupied' : box.boxStatus === 'MAINTENANCE' ? 'maintenance' : box.id === selectedId ? 'selected' : 'free',
+                    }))}
+                    onSelect={(cell) => setSelectedId(cell.id)}
+                    selectable={(cell) => cell.state === 'free' || cell.state === 'selected'} compact />
+                </div>
+              </section>
+            ))}
+            {grids.length === 0 && rows.map(([row, list]) => (
               <section key={row} className={styles.row} aria-label={row ? `Dãy ${row}` : 'Ô chuồng'}>
                 {row && <h3 className={styles.rowLabel}>Dãy {row}</h3>}
                 <div className={styles.tiles}>

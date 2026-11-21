@@ -11,7 +11,7 @@ import styles from './LoginPage.module.css';
 import { ROUTES } from '../app/routePaths';
 
 interface LoginLocationState {
-  from?: { pathname?: string };
+  from?: { pathname?: string; search?: string };
 }
 
 export function LoginPage() {
@@ -35,8 +35,10 @@ export function LoginPage() {
     setPasswordError(undefined);
     try {
       await auth.login(email, password, remember);
-      const from = (location.state as LoginLocationState | null)?.from?.pathname;
-      navigate(from?.startsWith('/') ? from : '/dashboard', { replace: true });
+      const origin = (location.state as LoginLocationState | null)?.from;
+      const from = origin?.pathname;
+      // Keep the query of the page that required sign-in (e.g. the VNPay return parameters, DEC-016).
+      navigate(from?.startsWith('/') ? `${from}${origin?.search ?? ''}` : '/dashboard', { replace: true });
     } catch (error) {
       if (error instanceof ApiError) {
         for (const detail of error.details) {
