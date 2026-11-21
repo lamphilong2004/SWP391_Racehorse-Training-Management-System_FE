@@ -3,6 +3,12 @@
  * Keys are the exact server strings; the Backend is unchanged. Merged into serverText().
  */
 export const SERVER_ERROR_TEXT: Record<string, string> = {
+  MOMO_NOT_CONFIGURED: 'MoMo test chưa được cấu hình trên máy chủ. Liên hệ Club Manager.',
+  MOMO_ATM_AMOUNT_LIMIT: 'Thanh toán ATM qua MoMo test hỗ trợ từ 10.000 đến 50.000.000 đồng.',
+  MOMO_PAYMENT_STILL_OPEN: 'Đang có giao dịch chưa hoàn tất. Kiểm tra kết quả trước khi thanh toán thêm.',
+  MOMO_CREATE_UNCONFIRMED: 'Chưa xác nhận được việc mở cổng MoMo. Giao dịch được giữ chờ kiểm tra để tránh thanh toán trùng. Hãy bấm Kiểm tra lại thanh toán.',
+  MOMO_INVALID_RESPONSE: 'Thông tin xác nhận MoMo không hợp lệ. Hóa đơn chưa được ghi nhận thanh toán.',
+  'A payment for this invoice is still open. Check it before using another method.': 'Giao dịch cũ chưa hoàn tất. Kiểm tra kết quả trước khi chọn cách thanh toán khác.',
   // generic / authentication
   'Request validation failed.': 'Dữ liệu gửi lên chưa hợp lệ. Hãy kiểm tra lại các trường được đánh dấu.',
   'The request is malformed or has invalid parameters.': 'Yêu cầu không hợp lệ. Hãy tải lại trang và thử lại.',
