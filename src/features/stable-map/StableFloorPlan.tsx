@@ -61,11 +61,12 @@ export function StableFloorPlan({ yard, highlight, onSelect, selectable, onMove 
   const start = (box: MapBox) => (event: PointerEvent<SVGGElement>) => {
     if (!onMove || !box.horse || event.button !== 0) return;
     drag.current = { from: box, x: event.clientX, y: event.clientY, moved: false };
-    svgRef.current?.setPointerCapture?.(event.pointerId);
   };
   const move = (event: PointerEvent<SVGSVGElement>) => {
     const current = drag.current; if (!current) return;
     if (!current.moved && Math.hypot(event.clientX - current.x, event.clientY - current.y) < 6) return;
+    // Capture only once it is a real drag: capturing on press would retarget a plain click to the svg.
+    if (!current.moved) svgRef.current?.setPointerCapture?.(event.pointerId);
     current.moved = true;
     setGhost({ ...toSvg(event.clientX, event.clientY), name: current.from.horse?.name ?? '' });
     const target = boxUnder(event.clientX, event.clientY);
@@ -75,7 +76,9 @@ export function StableFloorPlan({ yard, highlight, onSelect, selectable, onMove 
     const current = drag.current; drag.current = null;
     setGhost(null); setDropTarget(null);
     if (!current?.moved) return;
+    // Swallow only the click the browser may fire for this same drag; a drop on another stall fires none.
     suppressClick.current = true;
+    setTimeout(() => { suppressClick.current = false; }, 0);
     const target = boxUnder(event.clientX, event.clientY);
     if (onMove && target && canDrop(target)) onMove(current.from, target);
   };
@@ -103,7 +106,7 @@ export function StableFloorPlan({ yard, highlight, onSelect, selectable, onMove 
       style={{ cursor: onMove && box.horse ? 'grab' : clickable ? 'pointer' : 'default' }}>
       <title>{label}</title>
       <rect className={styles.stallFloor} x={x + 2} y={y + 2} width={STALL_W - 4} height={STALL_H - 4} rx={3}
-        fill={state === 'maintenance' ? `url(#${patternId})` : undefined} />
+        style={state === 'maintenance' ? { fill: `url(#${patternId})` } : undefined} />
       <rect className={styles.feeder} x={x + STALL_W - 26} y={feederY} width={18} height={8} rx={2} />
       <line className={styles.door} x1={x + 22} x2={x + STALL_W - 22} y1={doorY} y2={doorY} />
       <text className={styles.stallCode} x={x + 8} y={rect.doorSide === 'bottom' ? y + 18 : y + STALL_H - 8}>{box.boxCode}</text>

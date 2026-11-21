@@ -48,9 +48,13 @@ function MapContent({ api, manager, canOpenHorse }: { api: StableMapApi; manager
   const chooseView = (next: '2d' | 'grid') => { setView(next); try { localStorage.setItem(VIEW_KEY, next); } catch { /* per-viewer convenience only */ } };
 
   const focusBox = focus && current ? current.yards.flatMap((yard) => yard.boxes.map((box) => ({ yard, box }))).find(({ box }) => box.boxCode === focus) : undefined;
+  const focusCode = focusBox?.box.boxCode;
   useEffect(() => {
-    if (focusBox) document.getElementById(`box-${focusBox.box.boxCode}`)?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
-  }, [focusBox]);
+    if (!focusCode) return undefined;
+    // Deferred until the page has settled, and instant: a smooth scroll started during the first renders is dropped.
+    const timer = setTimeout(() => document.getElementById(`box-${focusCode}`)?.scrollIntoView?.({ block: 'center' }), 80);
+    return () => clearTimeout(timer);
+  }, [focusCode, view]);
 
   if (load.error && !current) return <ErrorState title="Không tải được sơ đồ chuồng" description={message(load.error)} onRetry={load.retry} />;
   if (!current) return <LoadingState label="Đang tải sơ đồ chuồng…" />;

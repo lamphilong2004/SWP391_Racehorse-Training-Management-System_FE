@@ -41,7 +41,9 @@ describe('DEC-016 2D floor plan', () => {
       onSelect={vi.fn()} selectable={() => true} />);
     expect(screen.getByRole('group', { name: 'Mặt bằng Khu chuồng A: 2 dãy × 2 ô' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'A-01: Có ngựa — Lam Kiếm' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'A-03: Đang bảo trì' })).toBeInTheDocument();
+    const maintenance = screen.getByRole('button', { name: 'A-03: Đang bảo trì' });
+    // Inline style, because the stylesheet's fill would beat a fill attribute and hide the hatch.
+    expect(maintenance.querySelector('rect')?.getAttribute('style')).toMatch(/fill: url\("?#hatch-/);
     expect(screen.getAllByText('Lối đi')).toHaveLength(1);
   });
 
@@ -79,5 +81,26 @@ describe('DEC-016 2D floor plan', () => {
     } finally {
       document.elementFromPoint = original;
     }
+  });
+
+  it('opens a stall on the next click after a drag that ended on another stall', async () => {
+    const onSelect = vi.fn();
+    const free = box(2, 1, 2);
+    render(<StableFloorPlan yard={yard([box(1, 1, 1, { horse }), free, box(3, 2, 1), box(4, 2, 2)])}
+      onSelect={onSelect} selectable={() => true} onMove={vi.fn()} />);
+    const group = screen.getByRole('group');
+    const source = screen.getByRole('button', { name: 'A-01: Có ngựa — Lam Kiếm' });
+    const original = document.elementFromPoint;
+    try {
+      document.elementFromPoint = () => screen.getByRole('button', { name: 'A-02: Còn trống' });
+      fireEvent.pointerDown(source, { button: 0, clientX: 10, clientY: 10, pointerId: 1 });
+      fireEvent.pointerMove(group, { clientX: 120, clientY: 10, pointerId: 1 });
+      fireEvent.pointerUp(group, { clientX: 120, clientY: 10, pointerId: 1 });
+    } finally {
+      document.elementFromPoint = original;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    fireEvent.click(screen.getByRole('button', { name: 'A-03: Còn trống' }));
+    expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 3 }));
   });
 });
