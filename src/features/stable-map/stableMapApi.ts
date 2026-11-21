@@ -1,5 +1,6 @@
 import { requestApi } from '../../shared/auth/authApi';
 import type { GridBox } from './StableYardGrid';
+import { clubDate } from '../../shared/clubCalendar';
 
 /** DEC-016 stable layout contract (GET /api/stable-map, POST /api/stable-yards, PATCH /api/stable-boxes/{id}/status). */
 export type BoxOperatingStatus = 'ACTIVE' | 'MAINTENANCE';
@@ -27,6 +28,11 @@ export function createStableMapApi(token: string, onError: (cause: unknown) => b
       call<StableMap>(`/api/stable-boxes/${boxId}/status`, 'PATCH', { status, reason }),
     /** The horse leaves the stable from today; the box is free at once and history is kept. */
     releaseBox: (boxId: number, reason: string) => call<StableMap>(`/api/stable-boxes/${boxId}/release`, 'POST', { reason }),
+    /** Move a horse to another box from today (existing Flow 1 API: the old stay ends yesterday), then reload the map. */
+    moveHorse: async (horseId: number, toBoxId: number, reason: string) => {
+      await call<unknown>(`/api/horses/${horseId}/stable-assignments`, 'POST', { stableBoxId: toBoxId, effectiveFrom: clubDate(), reason });
+      return call<StableMap>('/api/stable-map');
+    },
   };
 }
 export type StableMapApi = ReturnType<typeof createStableMapApi>;

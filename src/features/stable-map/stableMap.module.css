@@ -55,3 +55,46 @@ button.cell:focus-visible { outline: 2px solid var(--color-primary-600); outline
 .yardGrid[data-compact] .cell[data-state='selected'] { padding: 5px; }
 .yardGrid[data-compact] .cellState { font-size: 10px; }
 .cell[data-highlight] { outline: 3px solid var(--color-primary-600); outline-offset: 2px; }
+
+/* ---------- DEC-016 2D floor plan (top-down shed-row barn) ---------- */
+.floorPlan { display: block; height: auto; touch-action: none; user-select: none; }
+.barnWall { fill: none; stroke: #6b5a48; stroke-width: 10; }
+.barnInside { fill: #efe6d6; }
+.aisle { fill: #d9cdb8; }
+.aisleLine { stroke: #b9aa90; stroke-width: 2; stroke-dasharray: 10 8; }
+.aisleText, .gateText, .rowText { font-size: 12px; font-weight: 600; fill: #6b5a48; }
+.gate { fill: #c9a46a; }
+.stall { outline: none; }
+.stallFloor { fill: #f7f1e6; stroke: #8f7b63; stroke-width: 2; transition: fill .15s; }
+.stall[data-state='occupied'] .stallFloor { fill: #e8f3ec; stroke: #2f7d55; }
+.stall[data-state='maintenance'] .stallFloor { stroke: #b7791f; }
+.stall:hover .stallFloor, .stall:focus-visible .stallFloor { stroke: var(--color-primary-600); stroke-width: 3; }
+.stall[data-highlight] .stallFloor { stroke: var(--color-primary-600); stroke-width: 4; }
+.stall[data-drop] .stallFloor { fill: #d6f0df; stroke: #1f8a4c; stroke-width: 4; stroke-dasharray: 6 4; }
+.stallEmpty { fill: none; stroke: #c9bba4; stroke-dasharray: 4 4; }
+.hatchBase { fill: #fff4df; }
+.hatchLine { stroke: #e0b25e; stroke-width: 3; }
+.feeder { fill: #b08b57; }
+.door { stroke: #efe6d6; stroke-width: 5; stroke-linecap: round; }
+.stall[data-state='occupied'] .door { stroke: #c9a46a; }
+.stallCode { font-size: 12px; font-weight: 700; fill: #3d3328; }
+.stallName { font-size: 11px; font-weight: 600; fill: #1f5c3d; }
+.stallState { font-size: 11px; fill: #8f7b63; }
+.stall[data-state='maintenance'] .stallState { fill: #9a5b06; font-weight: 600; }
+.horse ellipse { fill: #8b5a2b; stroke: #5e3b1a; stroke-width: 1; }
+.horse .horseEar { fill: #5e3b1a; stroke: none; }
+.horseTail { fill: none; stroke: #3b2512; stroke-width: 3; stroke-linecap: round; }
+.ghost circle { fill: rgba(139, 90, 43, .35); stroke: #5e3b1a; stroke-width: 2; }
+.ghost text { font-size: 12px; font-weight: 700; fill: #3d3328; }
+.viewSwitch { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--color-border-default); border-radius: var(--radius-md); background: var(--color-bg-surface); }
+.viewSwitch button { font: inherit; font-size: 13px; font-weight: 600; padding: 6px 12px; border: 0; border-radius: var(--radius-sm, 6px); background: transparent; color: var(--color-text-secondary); cursor: pointer; }
+.viewSwitch button[aria-pressed='true'] { background: var(--color-primary-600); color: #fff; }
+.occupancy { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--color-text-secondary); }
+.occupancyBar { width: 160px; height: 8px; border-radius: 4px; background: var(--color-bg-subtle); overflow: hidden; }
+.occupancyBar > span { display: block; height: 100%; background: #2f7d55; }
+.planHint { margin: 0; font-size: 13px; color: var(--color-text-secondary); }
+.siteOverview { display: flex; flex-wrap: wrap; gap: 12px; }
+.siteYard { display: grid; gap: 6px; min-width: 150px; padding: 10px 12px; border: 2px solid #6b5a48; border-radius: 8px; background: #efe6d6; color: #3d3328; font: inherit; text-align: left; cursor: pointer; }
+.siteYard strong { font-size: 14px; }
+.siteYard span { font-size: 12px; }
+.moveAction { display: flex; align-items: flex-end; }

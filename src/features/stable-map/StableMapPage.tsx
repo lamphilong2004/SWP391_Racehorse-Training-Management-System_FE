@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { AlertBanner, Button, Card, EmptyState, ErrorState, LoadingState, MetricCard, Modal, TextAreaField, TextField } from '../../design-system';
+import { AlertBanner, Button, Card, EmptyState, ErrorState, LoadingState, MetricCard, Modal, SelectField, TextAreaField, TextField } from '../../design-system';
 import { AppShell } from '../../layout/AppShell';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { authSession } from '../../shared/auth/authSession';
@@ -8,10 +8,16 @@ import type { RoleCode } from '../../shared/auth/roles';
 import { useSupportingLoad } from '../training/assigned/supportingHooks';
 import { createStableMapApi, toGridBox, type MapBox, type MapYard, type StableMap, type StableMapApi } from './stableMapApi';
 import { GridLegend, StableYardGrid } from './StableYardGrid';
+import { StableFloorPlan } from './StableFloorPlan';
 import styles from './stableMap.module.css';
 
 const READERS: RoleCode[] = ['CLUB_MANAGER', 'HEAD_TRAINER', 'TRAINER', 'VETERINARIAN', 'GROOM', 'WORK_RIDER'];
 const message = (cause: unknown) => cause instanceof Error ? cause.message : 'Không thực hiện được thao tác. Hãy thử lại.';
+const VIEW_KEY = 'racehorse.stable-map.view';
+function initialView(): '2d' | 'grid' {
+  try { return localStorage.getItem(VIEW_KEY) === 'grid' ? 'grid' : '2d'; } catch { return '2d'; }
+}
+type Located = { yard: MapYard; box: MapBox };
 
 /**
  * DEC-016 "Sơ đồ chuồng": every yard as its real grid with the horse in each box. Capacity = sum of the yard grids.
@@ -37,6 +43,9 @@ function MapContent({ api, manager, canOpenHorse }: { api: StableMapApi; manager
   const [boxAction, setBoxAction] = useState<{ yard: MapYard; box: MapBox }>();
   const [addYard, setAddYard] = useState(false);
   const [notice, setNotice] = useState('');
+  const [view, setView] = useState<'2d' | 'grid'>(initialView);
+  const [moving, setMoving] = useState<{ from: Located; to: Located }>();
+  const chooseView = (next: '2d' | 'grid') => { setView(next); try { localStorage.setItem(VIEW_KEY, next); } catch { /* per-viewer convenience only */ } };
 
   const focusBox = focus && current ? current.yards.flatMap((yard) => yard.boxes.map((box) => ({ yard, box }))).find(({ box }) => box.boxCode === focus) : undefined;
   useEffect(() => {
@@ -46,13 +55,16 @@ function MapContent({ api, manager, canOpenHorse }: { api: StableMapApi; manager
   if (load.error && !current) return <ErrorState title="Không tải được sơ đồ chuồng" description={message(load.error)} onRetry={load.retry} />;
   if (!current) return <LoadingState label="Đang tải sơ đồ chuồng…" />;
   const used = current.yards.length;
+  const locate = (box: MapBox): Located | undefined => { const yard = current.yards.find((item) => item.boxes.some((b) => b.id === box.id)); return yard ? { yard, box } : undefined; };
+  const freeBoxes = current.yards.flatMap((yard) => yard.boxes.filter((b) => !b.horse && b.boxStatus === 'ACTIVE').map((box) => ({ yard, box })));
+  const askMove = (from: MapBox, to: MapBox) => { const a = locate(from); const b = locate(to); if (a && b) setMoving({ from: a, to: b }); };
 
   return <section className={styles.stack}>
     <header data-page-banner className={styles.header}>
       <div>
         <p className={styles.eyebrow}>Chuồng trại</p>
         <h1>Sơ đồ chuồng</h1>
-        <p>Mỗi khu chuồng là một lưới hàng × cột cố định; mỗi ô chứa tối đa một con ngựa. Sức chứa của trang trại bằng tổng số ô của các khu.</p>
+        <p>Mặt bằng nhìn từ trên xuống: mỗi khu là một dãy nhà chuồng, các ô quay cửa ra lối đi giữa; mỗi ô chứa tối đa một con ngựa. Sức chứa của trang trại bằng tổng số ô của các khu.</p>
       </div>
       {manager && <Button onClick={() => setAddYard(true)} disabled={used >= current.limits.maxYards}>Thêm khu chuồng</Button>}
     </header>
@@ -64,7 +76,22 @@ function MapContent({ api, manager, canOpenHorse }: { api: StableMapApi; manager
       <MetricCard label="Còn trống" value={String(current.free)} caption={current.free === 0 ? 'Chuồng đã đầy — không nhận thêm ngựa' : 'Có thể xếp ngựa mới'} />
       <MetricCard label="Đang bảo trì" value={String(current.maintenance)} caption="Không xếp ngựa vào ô bảo trì" />
     </div>
-    <GridLegend />
+    <div className={styles.toolbar}>
+      <GridLegend />
+      <div className={styles.viewSwitch} role="group" aria-label="Kiểu hiển thị">
+        <button type="button" aria-pressed={view === '2d'} onClick={() => chooseView('2d')}>Mặt bằng 2D</button>
+        <button type="button" aria-pressed={view === 'grid'} onClick={() => chooseView('grid')}>Dạng lưới</button>
+      </div>
+    </div>
+    {view === '2d' && manager && <p className={styles.planHint}>Kéo con ngựa sang một ô trống để chuyển chuồng (sẽ hỏi xác nhận). Bấm vào ô để xem chi tiết, bảo trì hoặc trả ô.</p>}
+    {current.yards.length > 1 && <nav className={styles.siteOverview} aria-label="Các khu chuồng">{current.yards.map((yard) => {
+      const capacity = yard.rowCount * yard.columnCount;
+      return <button key={yard.id} type="button" className={styles.siteYard} onClick={() => document.getElementById(`yard-${yard.yardCode}`)?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })}>
+        <strong>{yard.name}</strong>
+        <span className={styles.occupancyBar}><span style={{ width: `${capacity ? Math.round(yard.occupied * 100 / capacity) : 0}%` }} /></span>
+        <span>{`${yard.occupied}/${capacity} ô có ngựa · ${yard.free} trống`}</span>
+      </button>;
+    })}</nav>}
     {current.outsideLayout.length > 0 && <AlertBanner type="warning" title="Có ngựa đang ở ô ngoài sơ đồ">
       <p>Các ô này thuộc dữ liệu cũ, không nằm trong khu chuồng nào. Hãy chuyển ngựa sang một ô trống trong sơ đồ; ô cũ sẽ tự ngừng sử dụng.</p>
       <ul className={styles.outside}>{current.outsideLayout.map((box) => <li key={box.id}>
@@ -73,30 +100,39 @@ function MapContent({ api, manager, canOpenHorse }: { api: StableMapApi; manager
     </AlertBanner>}
     {current.yards.length === 0 && <EmptyState title="Chưa có khu chuồng" description={manager ? 'Thêm khu chuồng đầu tiên để tạo các ô.' : 'Club Manager chưa cấu hình khu chuồng.'} />}
     {current.yards.map((yard) => <Card key={yard.id} className={styles.yardCard}>
-      <div className={styles.yardHead}>
+      <div className={styles.yardHead} id={`yard-${yard.yardCode}`}>
         <h2>{yard.name}</h2>
+        <span className={styles.occupancy}><span className={styles.occupancyBar}><span style={{ width: `${Math.round(yard.occupied * 100 / (yard.rowCount * yard.columnCount))}%` }} /></span>{`${Math.round(yard.occupied * 100 / (yard.rowCount * yard.columnCount))}% lấp đầy`}</span>
         <span>{`${yard.rowCount} hàng × ${yard.columnCount} cột = ${yard.rowCount * yard.columnCount} ô · ${yard.occupied} có ngựa · ${yard.free} trống · ${yard.maintenance} bảo trì`}</span>
       </div>
-      <div className={styles.scroll}>
+      {view === '2d'
+        ? <StableFloorPlan yard={yard} highlight={focus} selectable={(box) => !!box.horse || manager}
+          onSelect={(box) => setBoxAction({ yard, box })} onMove={manager ? askMove : undefined} />
+        : <div className={styles.scroll}>
         <StableYardGrid name={yard.name} rowCount={yard.rowCount} columnCount={yard.columnCount} boxes={yard.boxes.map(toGridBox)} highlight={focus}
           onSelect={(cell) => {
             const box = yard.boxes.find((item) => item.id === cell.id);
             if (box) setBoxAction({ yard, box });
           }}
           selectable={(cell) => cell.state === 'occupied' || manager} />
-      </div>
+      </div>}
     </Card>)}
-    {boxAction && <BoxModal api={api} manager={manager} canOpenHorse={canOpenHorse} yard={boxAction.yard} box={boxAction.box} onClose={() => setBoxAction(undefined)}
+    {boxAction && <BoxModal api={api} manager={manager} canOpenHorse={canOpenHorse} freeBoxes={freeBoxes}
+      onRequestMove={(to) => { setMoving({ from: boxAction, to }); setBoxAction(undefined); }} yard={boxAction.yard} box={boxAction.box} onClose={() => setBoxAction(undefined)}
       onSaved={(next, text) => { setMap(next); setBoxAction(undefined); setNotice(text); }} />}
+    {moving && <MoveModal api={api} moving={moving} onClose={() => setMoving(undefined)}
+      onSaved={(next, text) => { setMap(next); setMoving(undefined); setNotice(text); }} />}
     {addYard && <AddYardModal api={api} map={current} onClose={() => setAddYard(false)}
       onSaved={(next, code) => { setMap(next); setAddYard(false); setNotice(`Đã thêm khu chuồng ${code}.`); }} />}
   </section>;
 }
 
-function BoxModal({ api, manager, canOpenHorse, yard, box, onClose, onSaved }: {
-  api: StableMapApi; manager: boolean; canOpenHorse: boolean; yard: MapYard; box: MapBox; onClose: () => void; onSaved: (map: StableMap, notice: string) => void;
+function BoxModal({ api, manager, canOpenHorse, freeBoxes, onRequestMove, yard, box, onClose, onSaved }: {
+  api: StableMapApi; manager: boolean; canOpenHorse: boolean; freeBoxes: Located[]; onRequestMove: (to: Located) => void;
+  yard: MapYard; box: MapBox; onClose: () => void; onSaved: (map: StableMap, notice: string) => void;
 }) {
   const [reason, setReason] = useState('');
+  const [target, setTarget] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const lock = useRef(false);
@@ -132,10 +168,39 @@ function BoxModal({ api, manager, canOpenHorse, yard, box, onClose, onSaved }: {
       {box.horse
         ? <p>Đang có ngựa {canOpenHorse ? <Link className={styles.mapLink} to={`/horses/${box.horse.id}`}>{box.horse.name} ({box.horse.horseCode})</Link> : <strong>{box.horse.name} ({box.horse.horseCode})</strong>}. {manager ? 'Muốn bảo trì ô này, hãy chuyển ngựa sang ô khác hoặc trả ô trước.' : ''}</p>
         : <p>{maintenance ? 'Ô đang bảo trì nên không thể xếp ngựa.' : 'Ô đang trống, có thể xếp ngựa.'}</p>}
+      {manager && box.horse && freeBoxes.length > 0 && <div className={styles.formRow}>
+        <SelectField label="Chuyển sang ô" value={target} onChange={(event) => setTarget(event.target.value)}
+          options={[{ value: '', label: 'Chọn ô trống' }, ...freeBoxes.map(({ yard: y, box: b }) => ({ value: String(b.id), label: `${b.boxCode} · ${y.name}` }))]} />
+        <div className={styles.moveAction}><Button variant="secondary" disabled={!target || busy} onClick={() => { const to = freeBoxes.find(({ box: b }) => String(b.id) === target); if (to) onRequestMove(to); }}>Chuyển ô…</Button></div>
+      </div>}
       {manager && box.horse && <TextAreaField label="Lý do ngựa rời chuồng (bán, nghỉ hưu, đi thi đấu dài ngày…)" value={reason} maxLength={300} onChange={(event) => setReason(event.target.value)} />}
       {manager && box.horse && <p className={styles.hint}>Trả ô: ngựa rời chuồng từ hôm nay, ô trống ngay, phí lưu chuồng dừng tính từ hôm nay. Lịch sử xếp chuồng được giữ lại.</p>}
       {canChange && !maintenance && <TextAreaField label="Lý do bảo trì" value={reason} maxLength={300} onChange={(event) => setReason(event.target.value)} />}
       {error && <AlertBanner feedback type="danger" title="Không lưu được">{error}</AlertBanner>}
+    </div>
+  </Modal>;
+}
+
+function MoveModal({ api, moving, onClose, onSaved }: { api: StableMapApi; moving: { from: Located; to: Located }; onClose: () => void; onSaved: (map: StableMap, notice: string) => void }) {
+  const [reason, setReason] = useState('Chuyển ô trên sơ đồ chuồng');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const lock = useRef(false);
+  const horse = moving.from.box.horse!;
+  const confirm = async () => {
+    if (lock.current) return;
+    lock.current = true; setBusy(true); setError('');
+    try { onSaved(await api.moveHorse(horse.id, moving.to.box.id, reason.trim() || 'Chuyển ô trên sơ đồ chuồng'), `Đã chuyển ${horse.name} từ ${moving.from.box.boxCode} sang ${moving.to.box.boxCode}.`); }
+    catch (cause) { setError(message(cause)); }
+    finally { lock.current = false; setBusy(false); }
+  };
+  return <Modal open title="Chuyển ngựa sang ô khác?" onClose={busy ? () => undefined : onClose}
+    footer={<><Button variant="secondary" onClick={onClose} disabled={busy}>Hủy</Button><Button onClick={confirm} disabled={busy}>Xác nhận chuyển</Button></>}>
+    <div className={styles.form}>
+      <p><strong>{`${horse.name} (${horse.horseCode})`}</strong>{`: ${moving.from.box.boxCode} · ${moving.from.yard.name} → ${moving.to.box.boxCode} · ${moving.to.yard.name}`}</p>
+      <p className={styles.hint}>Ngựa ở ô mới từ hôm nay; lượt xếp ở ô cũ kết thúc hôm qua và được giữ trong lịch sử. Ô cũ trống ngay.</p>
+      <TextField label="Lý do chuyển" value={reason} maxLength={500} onChange={(event) => setReason(event.target.value)} />
+      {error && <AlertBanner feedback type="danger" title="Chưa chuyển được">{error}</AlertBanner>}
     </div>
   </Modal>;
 }
