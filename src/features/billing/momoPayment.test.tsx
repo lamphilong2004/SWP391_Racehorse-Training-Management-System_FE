@@ -53,6 +53,7 @@ describe('MoMo sandbox and shared payment guard (fixtures only)', () => {
     const button = await screen.findByRole('button', { name: 'Thanh toán bằng MoMo' });
     fireEvent.click(button); fireEvent.click(button);
     expect(mocks.payMomo).toHaveBeenCalledTimes(1); expect(button).toBeDisabled();
+    for (const otherMethod of screen.getAllByRole('button', { name: /^Thanh toán 50/ })) expect(otherMethod).toBeDisabled();
     await act(async () => { reject(new Error('Mạng đang lỗi, hãy kiểm tra lại.')); });
     expect(await screen.findByText('Mạng đang lỗi, hãy kiểm tra lại.')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Hóa đơn HD-TEST' })).toBeInTheDocument();

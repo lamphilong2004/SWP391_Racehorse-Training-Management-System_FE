@@ -19,7 +19,7 @@ These screenshots use an **explicit local UI fixture**, with synthetic names, a 
 
 `npm run typecheck`, `npm run lint`, `npm run build`: PASS.
 
-Full `npm test`: **1263 passed**, 112 files. New tests cover unavailable configuration, shared pending locks (including locally expired MoMo orders), double-click, failure/retry without losing invoice context, and a successful-looking browser return that remains pending until server confirmation.
+Full `npm test` after integrating FE #70 at `37db8f7`: **1266 passed**, 113 files. The existing VietQR/VNPay shared lock is also used by MoMo. Tests cover unavailable configuration, shared pending locks (including locally expired MoMo orders), double-click across methods, failure/retry without losing invoice context, and a successful-looking browser return that remains pending until server confirmation.
 
 Recheck:
 
@@ -29,4 +29,4 @@ Recheck:
 4. Return through `/thanh-toan/momo`; verify PAID and MoMo history only after the BE query/IPN confirms.
 5. Repeat with cancellation, incorrect signature/amount, lost network and two tabs. No extra payable transaction should be created.
 
-**PENDING:** no merchant test keys are available; live sandbox ATM payment, its screenshots, and full authenticated browser flow have not been verified. The PR stays Draft until that acceptance is complete. No merge/deploy or demo DB migration was performed.
+**PENDING:** no issued merchant test keys are available; a separate probe using MoMo's official public ATM example received HTTP 403 before an API result. Live sandbox ATM payment, its screenshots, and full authenticated browser flow have not been verified. The PR stays Draft until that acceptance is complete. No merge to main, deploy or demo DB migration was performed.

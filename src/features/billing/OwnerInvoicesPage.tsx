@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { AlertBanner, Button, Card, DataTable, EmptyState, ErrorState, LoadingState, MetricCard } from '../../design-system';
 import { AppShell } from '../../layout/AppShell';
@@ -73,22 +73,25 @@ const METHODS = [
  * DEC-016 VietQR: the QR carries the club's receiving account, the invoice total and the invoice code as transfer
  * content. "Thanh toán" records the transfer as declared by the owner (VIETQR / OWNER) and the invoice becomes paid.
  */
-function QrPayCard({ qrApi, invoiceId, onPaid, disabled, begin, end }: {
+function QrPayCard({ qrApi, invoiceId, onPaid, openPaymentUntil, openProvider = 'VNPAY', lockRef, busy, setBusy }: {
   qrApi: QrApi; invoiceId: number; onPaid: (result: PaymentResult) => void;
-  disabled: boolean; begin: () => boolean; end: () => void;
+  /** Defined while an online order may still be paid. MoMo remains pending beyond its advisory local timer. */
+  openPaymentUntil?: string | null;
+  openProvider?: string;
+  /** Shared with the VNPay card, so only one payment action runs at a time on this page. */
+  lockRef: RefObject<boolean>; busy: boolean; setBusy: (value: boolean) => void;
 }) {
   const load = useSupportingLoad(() => qrApi.qrTransfer(invoiceId), [qrApi, invoiceId]);
   const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
-  const lock = useRef(false);
   const transfer = load.data;
+  const blocked = openPaymentUntil !== undefined;
   const pay = async () => {
-    if (lock.current || disabled || !begin()) return;
-    lock.current = true; setBusy(true); setError('');
+    if (lockRef.current || blocked) return;
+    lockRef.current = true; setBusy(true); setError('');
     try { onPaid(await qrApi.confirmQrTransfer(invoiceId)); }
     catch (cause) { setError(message(cause)); }
-    finally { lock.current = false; setBusy(false); end(); }
+    finally { lockRef.current = false; setBusy(false); }
   };
   return <Card className={styles.form}>
     <h2>Thanh toán bằng mã QR</h2>
@@ -108,14 +111,17 @@ function QrPayCard({ qrApi, invoiceId, onPaid, disabled, begin, end }: {
             <div><dt>Nội dung chuyển khoản</dt><dd className={styles.amount}>{transfer.content}</dd></div>
             </dl>
             <p className={styles.hint}>Mở ứng dụng ngân hàng, quét mã để chuyển đúng số tiền và nội dung, rồi bấm Thanh toán.</p>
+            {blocked && <AlertBanner type="warning" title={`Đang có một giao dịch ${openProvider === 'MOMO' ? 'MoMo' : 'VNPay'} chưa hoàn tất`}>
+              {openProvider === 'MOMO' ? 'Hãy bấm Kiểm tra lại thanh toán. Chỉ chọn cách khác sau khi MoMo xác nhận giao dịch cũ đã kết thúc; thời gian chờ trên máy không chứng minh giao dịch đã hủy.' : `Để không bị trừ tiền hai lần, chỉ thanh toán bằng QR khi giao dịch VNPay đó hết hạn${openPaymentUntil ? ` (${viDateTime(openPaymentUntil)})` : ''}. Nếu bạn đã trả qua VNPay, bấm "Kiểm tra lại thanh toán" bên dưới.`}
+            </AlertBanner>}
             {error && <AlertBanner feedback type="danger" title="Chưa ghi nhận được thanh toán">{error}</AlertBanner>}
-            <Button onClick={pay} disabled={busy || disabled}>{`Thanh toán ${vnd(transfer.amount)}`}</Button>
+            <Button onClick={pay} disabled={busy || blocked}>{`Thanh toán ${vnd(transfer.amount)}`}</Button>
           </div>
         </div>}
   </Card>;
 }
 
-function OwnerInvoice({ api, qrApi, id }: { api: BillingApi; qrApi: QrApi; id: number }) {
+export function OwnerInvoice({ api, qrApi, id }: { api: BillingApi; qrApi: QrApi; id: number }) {
   const [version, setVersion] = useState(0);
   const load = useSupportingLoad(() => api.myInvoice(id), [api, id, version]);
   const [method, setMethod] = useState('VNPAYQR');
@@ -164,8 +170,8 @@ function OwnerInvoice({ api, qrApi, id }: { api: BillingApi; qrApi: QrApi; id: n
       </div>
     </header>
     {check && <AlertBanner feedback type={check.paymentStatus === 'SUCCESS' ? 'success' : 'info'} title={check.message} />}
-    {pending && <AlertBanner type="info" title="Đang có giao dịch chưa hoàn tất">Kiểm tra kết quả trước khi chọn phương thức khác để tránh thanh toán hai lần.</AlertBanner>}
-    {detail.invoice.status === 'ISSUED' && <QrPayCard qrApi={qrApi} invoiceId={id} disabled={busy || pending} begin={begin} end={end} onPaid={(result) => { setCheck(result); setVersion((value) => value + 1); }} />}
+    {detail.invoice.status === 'ISSUED' && <QrPayCard qrApi={qrApi} invoiceId={id} openPaymentUntil={open ? open.expiresAt ?? null : undefined} openProvider={open?.provider}
+      lockRef={lock} busy={busy} setBusy={setBusy} onPaid={(result) => { setCheck(result); setVersion((value) => value + 1); }} />}
     <Card><InvoiceView detail={detail} showOwner={false} /></Card>
     {detail.invoice.status === 'ISSUED' && <Card className={styles.form}>
       <h2>Hoặc thanh toán thẻ qua VNPay</h2>
