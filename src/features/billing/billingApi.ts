@@ -47,6 +47,8 @@ export function createBillingApi(token: string, onError: (cause: unknown) => boo
     ownerCheck: (id: number) => call<PaymentResult>(`/api/owner/invoices/${id}/payment-check`, 'POST', {}),
     /** Give up the open VNPay link so the invoice can be paid again at once (VNPay or VietQR). */
     cancelPayment: (id: number) => call<PaymentResult>(`/api/owner/invoices/${id}/vnpay-payment/cancel`, 'POST', {}),
+    /** Give up the open MoMo order (MoMo is asked first; an order already paid is recorded instead). */
+    cancelMomoPayment: (id: number) => call<PaymentResult>(`/api/owner/invoices/${id}/momo-payment/cancel`, 'POST', {}),
     confirmReturn: (params: Record<string, string>) => call<PaymentResult>('/api/payments/vnpay/return', 'POST', { params }),
     payMomo: (id: number) => call<MomoPaymentLink>(`/api/owner/invoices/${id}/momo-payment`, 'POST', {}),
     confirmMomoReturn: (params: Record<string, string>) => call<PaymentResult>('/api/payments/momo/return', 'POST', { params }),
@@ -65,7 +67,7 @@ export function invoiceDisplayStatus(invoice: { status: InvoiceStatus; dueDate: 
  * cancelled (FAILED, confirmed by OWNER) is shown as cancelled.
  */
 export function paymentDisplayStatus(payment: Payment, now = Date.now()): Payment['status'] | 'EXPIRED' | 'CANCELLED' {
-  if (payment.status === 'FAILED' && payment.confirmedVia === 'OWNER' && payment.provider === 'VNPAY') return 'CANCELLED';
+  if (payment.status === 'FAILED' && payment.confirmedVia === 'OWNER' && (payment.provider === 'VNPAY' || payment.provider === 'MOMO')) return 'CANCELLED';
   return payment.provider !== 'MOMO' && payment.status === 'PENDING' && payment.expiresAt && Date.parse(payment.expiresAt) < now ? 'EXPIRED' : payment.status;
 }
 export function todayVn(): string {

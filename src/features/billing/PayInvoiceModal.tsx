@@ -91,20 +91,23 @@ export function PayInvoiceModal({ api, qrApi, invoice, onClose, onPaid }: {
     else { setNotice(result.message); reloadDetail(); }
   };
   const cancelVnpay = () => run(async () => settleOrReload(await api.cancelPayment(invoice.id)));
+  const cancelMomo = () => run(async () => settleOrReload(await api.cancelMomoPayment(invoice.id)));
   const recheck = () => run(async () => settleOrReload(await api.ownerCheck(invoice.id)));
   const payQr = () => run(async () => { onPaid(await qrApi.confirmQrTransfer(invoice.id)); });
 
   const pendingNotice = open && <AlertBanner type="warning" title={`Đang có một giao dịch ${open.provider === 'MOMO' ? 'MoMo' : 'VNPay'} chưa hoàn tất`}>
     {open.provider === 'MOMO'
-      ? 'Bấm "Kiểm tra lại" để máy chủ tra cứu với MoMo. Chỉ chọn cách khác khi cổng xác nhận giao dịch cũ đã kết thúc; thời gian chờ trên máy không chứng minh MoMo đã hủy giao dịch.'
+      ? 'Để không bị trừ tiền hai lần, hãy hoàn tất giao dịch đó, bấm "Kiểm tra lại" nếu đã trả, hoặc bấm "Hủy giao dịch MoMo" để thanh toán lại ngay. Nếu MoMo vẫn thu tiền sau khi hủy, khoản đó được ghi nhận hoặc hoàn lại.'
       : `Để không bị trừ tiền hai lần, hãy hoàn tất giao dịch đó, bấm "Kiểm tra lại" nếu đã trả, hoặc bấm "Hủy giao dịch VNPay" để thanh toán lại ngay (giao dịch tự hết hạn lúc ${viDateTime(open.expiresAt)}).`}
   </AlertBanner>;
 
-  const close = <Button variant="secondary" onClick={onClose} disabled={busy}>{ready ? 'Hủy' : 'Đóng'}</Button>;
+  // With an open transaction the footer also has "Hủy giao dịch …": the close button then reads "Đóng" to avoid two "Hủy".
+  const close = <Button variant="secondary" onClick={onClose} disabled={busy}>{ready && !open ? 'Hủy' : 'Đóng'}</Button>;
   const footer = !ready
     ? close
     : open
       ? <>{close}{open.provider === 'VNPAY' && <Button variant="danger" onClick={cancelVnpay} disabled={busy}>Hủy giao dịch VNPay</Button>}
+        {open.provider === 'MOMO' && <Button variant="danger" onClick={cancelMomo} disabled={busy}>Hủy giao dịch MoMo</Button>}
         <Button variant="secondary" onClick={recheck} disabled={busy}>Kiểm tra lại</Button>
         {tab === 'momo' && <Button disabled>Thanh toán qua MoMo</Button>}
         {tab === 'vietqr' && <Button disabled>{`Thanh toán ${vnd(invoice.totalAmount)}`}</Button>}</>

@@ -45,7 +45,7 @@ const ACTIONS: Record<string, string> = {
   STABLE_YARD_CREATED: 'Thêm khu chuồng', STABLE_BOX_MAINTENANCE_STARTED: 'Chuyển ô chuồng sang bảo trì', STABLE_BOX_REOPENED: 'Mở lại ô chuồng', STABLE_BOX_RELEASED: 'Trả ô chuồng (ngựa rời chuồng)',
   SERVICE_INVOICE_ISSUED: 'Phát hành hóa đơn dịch vụ', SERVICE_INVOICE_CANCELLED: 'Hủy hóa đơn dịch vụ',
   SERVICE_INVOICE_PAYMENT_STARTED: 'Chủ ngựa mở thanh toán VNPay', SERVICE_INVOICE_PAID: 'VNPay xác nhận thanh toán',
-  SERVICE_PAYMENT_REFUND_REQUIRED: 'VNPay thu trùng — cần hoàn tiền', SERVICE_INVOICE_PAYMENT_CANCELLED: 'Chủ ngựa hủy giao dịch VNPay',
+  SERVICE_PAYMENT_REFUND_REQUIRED: 'VNPay thu trùng — cần hoàn tiền', SERVICE_INVOICE_PAYMENT_CANCELLED: 'Chủ ngựa hủy giao dịch VNPay / MoMo',
 };
 
 const TARGETS: Record<string, string> = {

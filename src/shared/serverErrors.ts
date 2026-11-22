@@ -6,7 +6,8 @@ export const SERVER_ERROR_TEXT: Record<string, string> = {
   MOMO_NOT_CONFIGURED: 'MoMo test chưa được cấu hình trên máy chủ. Liên hệ Club Manager.',
   MOMO_ATM_AMOUNT_LIMIT: 'Thanh toán ATM qua MoMo test hỗ trợ từ 10.000 đến 50.000.000 đồng.',
   MOMO_PAYMENT_STILL_OPEN: 'Đang có giao dịch chưa hoàn tất. Kiểm tra kết quả trước khi thanh toán thêm.',
-  MOMO_CREATE_UNCONFIRMED: 'Chưa xác nhận được việc mở cổng MoMo. Giao dịch được giữ chờ kiểm tra để tránh thanh toán trùng. Hãy bấm Kiểm tra lại thanh toán.',
+  MOMO_CREATE_UNCONFIRMED: 'Chưa xác nhận được việc mở cổng MoMo. Giao dịch được giữ để tránh thanh toán trùng: bấm "Kiểm tra lại", hoặc "Hủy giao dịch MoMo" để chọn cách khác.',
+  MOMO_CREATE_REJECTED: 'MoMo từ chối tạo giao dịch. Hóa đơn chưa bị trừ tiền; bạn có thể thanh toán bằng VNPay hoặc mã QR.',
   MOMO_INVALID_RESPONSE: 'Thông tin xác nhận MoMo không hợp lệ. Hóa đơn chưa được ghi nhận thanh toán.',
   'A payment for this invoice is still open. Check it before using another method.': 'Giao dịch cũ chưa hoàn tất. Kiểm tra kết quả trước khi chọn cách thanh toán khác.',
   // generic / authentication

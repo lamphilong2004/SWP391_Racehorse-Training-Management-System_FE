@@ -5,7 +5,7 @@ import { OwnerInvoicesPage, VnpayReturnPage } from './OwnerInvoicesPage';
 import { paymentDisplayStatus, type InvoiceDetail, type Payment } from './billingApi';
 
 const mocks = vi.hoisted(() => ({
-  myInvoice: vi.fn(), payMomo: vi.fn(), ownerCheck: vi.fn(), confirmMomoReturn: vi.fn(),
+  myInvoice: vi.fn(), payMomo: vi.fn(), ownerCheck: vi.fn(), confirmMomoReturn: vi.fn(), cancelMomoPayment: vi.fn(),
   pay: vi.fn(), qrTransfer: vi.fn(), confirmQrTransfer: vi.fn(),
   handleApiError: vi.fn(),
 }));
@@ -40,11 +40,42 @@ beforeEach(() => {
   mocks.qrTransfer.mockResolvedValue({ bankBin: '970436', bankName: 'Test Bank', accountNo: '000000', accountName: 'TEST', amount: 50000, content: 'HDTEST' });
 });
 describe('MoMo sandbox and shared payment guard (fixtures only)', () => {
+  it('lets the owner give up an outstanding MoMo order and pay again at once', async () => {
+    let cancelled = false;
+    mocks.myInvoice.mockImplementation(() => Promise.resolve(detail([cancelled
+      ? { ...pending, status: 'FAILED', confirmedVia: 'OWNER' } : pending])));
+    mocks.cancelMomoPayment.mockImplementation(() => {
+      cancelled = true;
+      return Promise.resolve({ invoiceId: 1, invoiceCode: 'HD-TEST', invoiceStatus: 'ISSUED', paymentStatus: 'CANCELLED', responseCode: null,
+        message: 'Đã hủy giao dịch MoMo đang mở. Bạn có thể thanh toán lại bằng VNPay, MoMo hoặc mã QR.' });
+    });
+    await openMomoPopup();
+    fireEvent.click(await screen.findByRole('button', { name: 'Hủy giao dịch MoMo' }));
+    // Next to "Hủy giao dịch MoMo" the close button reads "Đóng", never a second "Hủy".
+    expect(screen.queryByRole('button', { name: 'Hủy' })).not.toBeInTheDocument();
+    expect(mocks.cancelMomoPayment).toHaveBeenCalledWith(1);
+    expect(await screen.findByText('Đã hủy giao dịch MoMo đang mở. Bạn có thể thanh toán lại bằng VNPay, MoMo hoặc mã QR.')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Thanh toán qua MoMo' })).toBeEnabled());
+    expect(screen.queryByRole('button', { name: 'Hủy giao dịch MoMo' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: 'VietQR' }));
+    expect(await screen.findByRole('button', { name: /^Thanh toán 50/ })).toBeEnabled();
+    expect(paymentDisplayStatus({ ...pending, status: 'FAILED', confirmedVia: 'OWNER' })).toBe('CANCELLED');
+  });
+  it('closes the popup when cancelling finds the MoMo order already paid', async () => {
+    mocks.myInvoice.mockResolvedValue(detail([pending]));
+    mocks.cancelMomoPayment.mockResolvedValue({ invoiceId: 1, invoiceCode: 'HD-TEST', invoiceStatus: 'PAID', paymentStatus: 'SUCCESS', responseCode: null,
+      message: 'MoMo đã xác nhận thanh toán. Hóa đơn đã thanh toán.' });
+    await openMomoPopup();
+    fireEvent.click(await screen.findByRole('button', { name: 'Hủy giao dịch MoMo' }));
+    expect(await screen.findByText('Đã thanh toán hóa đơn HD-TEST.')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
   it('keeps every pay action blocked until an outstanding MoMo order is confirmed, even after local expiry', async () => {
     mocks.myInvoice.mockResolvedValue(detail([pending])); await openMomoPopup();
     expect(await screen.findByRole('button', { name: 'Thanh toán qua MoMo' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Kiểm tra lại' })).toBeEnabled();
     expect(screen.queryByRole('button', { name: 'Hủy giao dịch VNPay' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Hủy giao dịch MoMo' })).toBeEnabled();
     fireEvent.click(screen.getByRole('tab', { name: 'VietQR' }));
     expect(await screen.findByRole('button', { name: /^Thanh toán 50/ })).toBeDisabled();
     expect(paymentDisplayStatus(pending)).toBe('PENDING');
