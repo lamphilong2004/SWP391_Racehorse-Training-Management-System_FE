@@ -21,16 +21,23 @@ const detail = (payments: Payment[]): InvoiceDetail => ({
   lines: [], payments, issuedBy: party, cancelledAt: null, cancellationReason: null, paymentConfigured: true,
 });
 
-function setup(payments: Payment[]) {
+function setup(payments: Payment[], afterCancel: Payment[] = payments) {
   const confirmQrTransfer = vi.fn(() => new Promise<never>(() => undefined));
   const pay = vi.fn(() => new Promise<never>(() => undefined));
-  const api = { myInvoice: vi.fn().mockResolvedValue(detail(payments)), pay, ownerCheck: vi.fn() } as unknown as BillingApi;
+  let cancelled = false;
+  const myInvoice = vi.fn(() => Promise.resolve(detail(cancelled ? afterCancel : payments)));
+  const cancelPayment = vi.fn(() => {
+    cancelled = true;
+    return Promise.resolve({ invoiceId: 1, invoiceCode: 'HD-2026-11-0001', invoiceStatus: 'ISSUED', paymentStatus: 'CANCELLED',
+      responseCode: '24', message: 'Đã hủy giao dịch VNPay đang mở. Bạn có thể thanh toán lại bằng VNPay hoặc mã QR.' });
+  });
+  const api = { myInvoice, pay, ownerCheck: vi.fn(), cancelPayment } as unknown as BillingApi;
   const qrApi = {
     qrTransfer: vi.fn().mockResolvedValue({ bankBin: '970436', bankName: 'Vietcombank', accountNo: '0123456789', accountName: 'CLB', amount: 750000, content: 'HD2026110001' }),
     confirmQrTransfer,
   } as unknown as QrApi;
   render(<MemoryRouter><OwnerInvoice api={api} qrApi={qrApi} id={1} /></MemoryRouter>);
-  return { confirmQrTransfer, pay };
+  return { confirmQrTransfer, pay, cancelPayment };
 }
 
 const payButtons = async () => {
@@ -56,6 +63,27 @@ describe('DEC-016 owner invoice payment guards', () => {
     const { qr } = await payButtons();
     expect(qr).toBeEnabled();
     fireEvent.click(qr);
+    expect(confirmQrTransfer).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers the ATM card by default and no VNPay QR option (the sandbox answers it with code 76)', async () => {
+    setup([]);
+    await payButtons();
+    expect(screen.getByRole('radio', { name: /Thẻ ATM/ })).toBeChecked();
+    expect(screen.queryByText('Quét mã QR')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Hủy giao dịch VNPay này' })).not.toBeInTheDocument();
+  });
+
+  it('cancels the open VNPay link so the owner can pay again at once', async () => {
+    const { cancelPayment, confirmQrTransfer } = setup([vnpay()], [vnpay({ status: 'FAILED', responseCode: '24', confirmedVia: 'OWNER' })]);
+    const { qr } = await payButtons();
+    expect(qr).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Hủy giao dịch VNPay này' }));
+    expect(cancelPayment).toHaveBeenCalledWith(1);
+    expect(await screen.findByText('Đã hủy giao dịch VNPay đang mở. Bạn có thể thanh toán lại bằng VNPay hoặc mã QR.')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getAllByRole('button', { name: /^Thanh toán / })[0]).toBeEnabled());
+    expect(screen.getByText('Chủ ngựa đã hủy')).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole('button', { name: /^Thanh toán / })[0]);
     expect(confirmQrTransfer).toHaveBeenCalledTimes(1);
   });
 
