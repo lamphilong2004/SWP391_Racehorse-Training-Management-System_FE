@@ -40,6 +40,7 @@ describe('MoMo sandbox and shared payment guard (fixtures only)', () => {
     await screen.findByText('Test Bank');
     for (const button of screen.getAllByRole('button', { name: /^Thanh toán 50/ })) expect(button).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Kiểm tra lại thanh toán' })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: 'Hủy giao dịch VNPay này' })).not.toBeInTheDocument();
     expect(paymentDisplayStatus(pending)).toBe('PENDING');
   });
   it('disables MoMo if server configuration is absent', async () => {

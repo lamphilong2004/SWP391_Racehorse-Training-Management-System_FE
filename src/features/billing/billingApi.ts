@@ -45,6 +45,8 @@ export function createBillingApi(token: string, onError: (cause: unknown) => boo
     myInvoice: (id: number) => call<InvoiceDetail>(`/api/owner/invoices/${id}`),
     pay: (id: number, bankCode: string) => call<PaymentLink>(`/api/owner/invoices/${id}/vnpay-payment`, 'POST', bankCode ? { bankCode } : {}),
     ownerCheck: (id: number) => call<PaymentResult>(`/api/owner/invoices/${id}/payment-check`, 'POST', {}),
+    /** Give up the open VNPay link so the invoice can be paid again at once (VNPay or VietQR). */
+    cancelPayment: (id: number) => call<PaymentResult>(`/api/owner/invoices/${id}/vnpay-payment/cancel`, 'POST', {}),
     confirmReturn: (params: Record<string, string>) => call<PaymentResult>('/api/payments/vnpay/return', 'POST', { params }),
     payMomo: (id: number) => call<MomoPaymentLink>(`/api/owner/invoices/${id}/momo-payment`, 'POST', {}),
     confirmMomoReturn: (params: Record<string, string>) => call<PaymentResult>('/api/payments/momo/return', 'POST', { params }),
@@ -58,8 +60,12 @@ export const PAYMENT_LABEL: Record<Payment['status'], string> = { PENDING: 'Đan
 export function invoiceDisplayStatus(invoice: { status: InvoiceStatus; dueDate: string }): InvoiceStatus | 'OVERDUE' {
   return invoice.status === 'ISSUED' && invoice.dueDate < todayVn() ? 'OVERDUE' : invoice.status;
 }
-/** A PENDING link past its expiry can no longer be paid; it is shown as expired, not as waiting. */
-export function paymentDisplayStatus(payment: Payment, now = Date.now()): Payment['status'] | 'EXPIRED' {
+/**
+ * A PENDING link past its expiry can no longer be paid; it is shown as expired, not as waiting. A VNPay link the owner
+ * cancelled (FAILED, confirmed by OWNER) is shown as cancelled.
+ */
+export function paymentDisplayStatus(payment: Payment, now = Date.now()): Payment['status'] | 'EXPIRED' | 'CANCELLED' {
+  if (payment.status === 'FAILED' && payment.confirmedVia === 'OWNER' && payment.provider === 'VNPAY') return 'CANCELLED';
   return payment.provider !== 'MOMO' && payment.status === 'PENDING' && payment.expiresAt && Date.parse(payment.expiresAt) < now ? 'EXPIRED' : payment.status;
 }
 export function todayVn(): string {

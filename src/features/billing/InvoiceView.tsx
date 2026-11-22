@@ -40,7 +40,7 @@ export function InvoiceView({ detail, showOwner }: { detail: InvoiceDetail; show
       { key: 'method', header: 'Phương thức', render: (payment) => payment.provider === 'MOMO' ? 'MoMo (ATM test)' : payment.provider === 'VIETQR' ? 'Chuyển khoản QR (VietQR)' : METHOD[payment.cardType ?? ''] ?? METHOD[payment.bankCode ?? ''] ?? payment.bankCode ?? '—' },
       { key: 'amount', header: 'Số tiền', align: 'right', nowrap: true, render: (payment) => <span className={styles.amount}>{vnd(payment.amount)}</span> },
       { key: 'status', header: 'Kết quả', render: (payment) => <StatusPill status={paymentDisplayStatus(payment)} /> },
-      { key: 'via', header: 'Xác nhận', render: (payment) => payment.confirmedVia === 'MOMO_IPN' ? 'MoMo IPN' : payment.confirmedVia === 'MOMO_QUERY' ? 'Tra cứu MoMo' : payment.confirmedVia === 'IPN' ? 'VNPay IPN' : payment.confirmedVia === 'QUERYDR' ? 'Tra cứu VNPay' : payment.confirmedVia === 'RETURN' ? 'Chữ ký VNPay (trang trả về)' : payment.confirmedVia === 'OWNER' ? 'Chủ ngựa xác nhận đã chuyển khoản' : '—' },
+      { key: 'via', header: 'Xác nhận', render: (payment) => payment.confirmedVia === 'MOMO_IPN' ? 'MoMo IPN' : payment.confirmedVia === 'MOMO_QUERY' ? 'Tra cứu MoMo' : payment.confirmedVia === 'IPN' ? 'VNPay IPN' : payment.confirmedVia === 'QUERYDR' ? 'Tra cứu VNPay' : payment.confirmedVia === 'RETURN' ? 'Chữ ký VNPay (trang trả về)' : payment.confirmedVia === 'OWNER' ? (payment.provider === 'VNPAY' ? 'Chủ ngựa đã hủy' : 'Chủ ngựa xác nhận đã chuyển khoản') : '—' },
     ]} />}
   </div>;
 }
