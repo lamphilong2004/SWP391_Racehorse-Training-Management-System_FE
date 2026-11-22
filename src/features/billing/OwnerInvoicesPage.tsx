@@ -63,8 +63,8 @@ function OwnerList({ api }: { api: BillingApi }) {
   </>;
 }
 
+/** VNPAYQR is not offered: the sandbox merchant answers it with code 76 (bank not supported). */
 const METHODS = [
-  { value: 'VNPAYQR', title: 'Quét mã QR', text: 'Quét bằng ứng dụng ngân hàng hoặc ví hỗ trợ VNPAY-QR.' },
   { value: 'VNBANK', title: 'Thẻ ATM / tài khoản ngân hàng', text: 'Nhập thẻ nội địa trên trang VNPay (môi trường thử nghiệm: thẻ NCB).' },
   { value: '', title: 'Chọn trên trang VNPay', text: 'Mở cổng VNPay và chọn phương thức tại đó.' },
 ];
@@ -111,7 +111,7 @@ function QrPayCard({ qrApi, invoiceId, onPaid, openVnpayUntil, lockRef, busy, se
             </dl>
             <p className={styles.hint}>Mở ứng dụng ngân hàng, quét mã để chuyển đúng số tiền và nội dung, rồi bấm Thanh toán.</p>
             {blocked && <AlertBanner type="warning" title="Đang có một giao dịch VNPay chưa hoàn tất">
-              {`Để không bị trừ tiền hai lần, chỉ thanh toán bằng QR khi giao dịch VNPay đó hết hạn${openVnpayUntil ? ` (${viDateTime(openVnpayUntil)})` : ''}. Nếu bạn đã trả qua VNPay, bấm "Kiểm tra lại thanh toán" bên dưới.`}
+              {`Để không bị trừ tiền hai lần, chỉ thanh toán bằng QR khi giao dịch VNPay đó hết hạn${openVnpayUntil ? ` (${viDateTime(openVnpayUntil)})` : ''}. Nếu bạn đã trả qua VNPay, bấm "Kiểm tra lại thanh toán" bên dưới; nếu không trả nữa, bấm "Hủy giao dịch VNPay này" rồi thanh toán bằng QR.`}
             </AlertBanner>}
             {error && <AlertBanner feedback type="danger" title="Chưa ghi nhận được thanh toán">{error}</AlertBanner>}
             <Button onClick={pay} disabled={busy || blocked}>{`Thanh toán ${vnd(transfer.amount)}`}</Button>
@@ -123,7 +123,7 @@ function QrPayCard({ qrApi, invoiceId, onPaid, openVnpayUntil, lockRef, busy, se
 export function OwnerInvoice({ api, qrApi, id }: { api: BillingApi; qrApi: QrApi; id: number }) {
   const [version, setVersion] = useState(0);
   const load = useSupportingLoad(() => api.myInvoice(id), [api, id, version]);
-  const [method, setMethod] = useState('VNPAYQR');
+  const [method, setMethod] = useState('VNBANK');
   const [error, setError] = useState('');
   const [check, setCheck] = useState<PaymentResult>();
   const [busy, setBusy] = useState(false);
@@ -143,6 +143,13 @@ export function OwnerInvoice({ api, qrApi, id }: { api: BillingApi; qrApi: QrApi
     if (lock.current) return;
     lock.current = true; setBusy(true); setError('');
     try { setCheck(await api.ownerCheck(id)); setVersion((value) => value + 1); }
+    catch (cause) { setError(message(cause)); }
+    finally { lock.current = false; setBusy(false); }
+  };
+  const cancelOpen = async () => {
+    if (lock.current) return;
+    lock.current = true; setBusy(true); setError('');
+    try { setCheck(await api.cancelPayment(id)); setVersion((value) => value + 1); }
     catch (cause) { setError(message(cause)); }
     finally { lock.current = false; setBusy(false); }
   };
@@ -171,10 +178,11 @@ export function OwnerInvoice({ api, qrApi, id }: { api: BillingApi; qrApi: QrApi
       </fieldset>
       <p className={styles.hint}>Bạn sẽ được chuyển sang cổng VNPay (môi trường sandbox). Hóa đơn chỉ được ghi nhận đã thanh toán sau khi VNPay xác nhận giao dịch với máy chủ.</p>
       {open && <AlertBanner type="info" title="Đang có một giao dịch VNPay chưa hoàn tất">
-        {`Để tránh trừ tiền hai lần, chỉ mở giao dịch mới khi giao dịch này hết hạn (${viDateTime(open.expiresAt)}). Nếu bạn đã trả tiền, bấm "Kiểm tra lại thanh toán".`}
+        {`Để tránh trừ tiền hai lần, chỉ mở giao dịch mới khi giao dịch này hết hạn (${viDateTime(open.expiresAt)}) hoặc bị hủy. Nếu bạn đã trả tiền, bấm "Kiểm tra lại thanh toán"; nếu không trả nữa, bấm "Hủy giao dịch VNPay này" để thanh toán lại ngay.`}
       </AlertBanner>}
       {error && <AlertBanner feedback type="danger" title="Chưa mở được cổng thanh toán">{error}</AlertBanner>}
       <div className={styles.actions}>
+        {pending && <Button variant="danger" onClick={cancelOpen} disabled={busy}>Hủy giao dịch VNPay này</Button>}
         {pending && <Button variant="secondary" onClick={recheck} disabled={busy}>Kiểm tra lại thanh toán</Button>}
         <Button onClick={pay} disabled={busy || !detail.paymentConfigured || pending}>{`Thanh toán ${vnd(detail.invoice.totalAmount)}`}</Button>
       </div>
