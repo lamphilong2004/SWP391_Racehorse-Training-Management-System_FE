@@ -4,7 +4,11 @@ import { describe, expect, it, vi } from 'vitest';
 import type { BillingApi, InvoiceDetail, Payment, QrApi } from './billingApi';
 import { OwnerInvoice } from './OwnerInvoicesPage';
 
-vi.mock('../../shared/auth/AuthProvider', () => ({ useAuth: () => ({ handleApiError: () => false }) }));
+vi.mock('../../shared/auth/AuthProvider', () => {
+  // Stable like the real provider: the load hook re-runs when handleApiError changes.
+  const auth = { handleApiError: () => false };
+  return { useAuth: () => auth };
+});
 
 const party = { id: 7, fullName: 'Chủ ngựa', email: 'owner@example.test' };
 const vnpay = (extra: Partial<Payment> = {}): Payment => ({

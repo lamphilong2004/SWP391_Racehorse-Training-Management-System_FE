@@ -130,3 +130,9 @@ export function createQrApi(token: string, onError: (cause: unknown) => boolean)
   };
 }
 export type QrApi = ReturnType<typeof createQrApi>;
+
+/** VNPAYQR is not offered: the sandbox merchant answers it with code 76 (bank not supported). */
+export const VNPAY_METHODS = [
+  { value: 'VNBANK', title: 'Thẻ ATM / tài khoản ngân hàng', text: 'Nhập thẻ nội địa trên trang VNPay (môi trường thử nghiệm: thẻ NCB).' },
+  { value: '', title: 'Chọn trên trang VNPay', text: 'Mở cổng VNPay và chọn phương thức tại đó.' },
+];

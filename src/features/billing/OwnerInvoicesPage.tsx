@@ -5,8 +5,9 @@ import { AppShell } from '../../layout/AppShell';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { authSession } from '../../shared/auth/authSession';
 import { useSupportingLoad } from '../training/assigned/supportingHooks';
-import { createBillingApi, createQrApi, invoiceDisplayStatus, monthLabel, paymentDisplayStatus, viDateTime, viDate, vietQrImageUrl, vnd, type BillingApi, type PaymentResult, type QrApi } from './billingApi';
+import { createBillingApi, createQrApi, invoiceDisplayStatus, monthLabel, paymentDisplayStatus, viDateTime, viDate, VNPAY_METHODS, vnd, type BillingApi, type InvoiceSummary, type PaymentResult, type QrApi } from './billingApi';
 import { InvoiceView, StatusPill } from './InvoiceView';
+import { PayInvoiceModal, QrTransferInfo } from './PayInvoiceModal';
 import styles from './billing.module.css';
 
 const message = (cause: unknown) => cause instanceof Error ? cause.message : 'Không thực hiện được thao tác. Hãy thử lại.';
@@ -28,13 +29,16 @@ export function OwnerInvoicesPage() {
   return <AppShell designSystem="v2" user={{ fullName: auth.user.fullName, role: 'HORSE_OWNER' }}
     breadcrumb={invoiceId ? [{ label: 'Hóa đơn & thanh toán', to: '/owner/invoices' }, { label: 'Chi tiết' }] : [{ label: 'Hóa đơn & thanh toán' }]}>
     <section className={styles.stack}>
-      {invoiceId && Number.isSafeInteger(invoiceId) ? <OwnerInvoice api={api} qrApi={qrApi} id={invoiceId} /> : <OwnerList api={api} />}
+      {invoiceId && Number.isSafeInteger(invoiceId) ? <OwnerInvoice api={api} qrApi={qrApi} id={invoiceId} /> : <OwnerList api={api} qrApi={qrApi} />}
     </section>
   </AppShell>;
 }
 
-function OwnerList({ api }: { api: BillingApi }) {
-  const load = useSupportingLoad(() => api.myInvoices(), [api]);
+export function OwnerList({ api, qrApi }: { api: BillingApi; qrApi: QrApi }) {
+  const [version, setVersion] = useState(0);
+  const load = useSupportingLoad(() => api.myInvoices(), [api, version]);
+  const [paying, setPaying] = useState<InvoiceSummary>();
+  const [paid, setPaid] = useState<PaymentResult>();
   if (load.error) return <ErrorState title="Không tải được hóa đơn" description={message(load.error)} onRetry={load.retry} />;
   if (!load.data) return <LoadingState label="Đang tải hóa đơn…" />;
   const unpaid = load.data.filter((row) => row.status === 'ISSUED');
@@ -43,9 +47,12 @@ function OwnerList({ api }: { api: BillingApi }) {
       <div>
         <p className={styles.eyebrow}>Cổng thông tin Horse Owner</p>
         <h1>Hóa đơn & thanh toán</h1>
-        <p>Phí lưu chuồng, chăm sóc và huấn luyện ngựa của bạn, tính theo tháng. Thanh toán trực tuyến qua VNPay (quét QR hoặc thẻ ngân hàng).</p>
+        <p>Phí lưu chuồng, chăm sóc và huấn luyện ngựa của bạn, tính theo tháng. Bấm Thanh toán ở cuối mỗi hóa đơn để trả qua VNPay, MoMo hoặc mã VietQR.</p>
       </div>
     </header>
+    {paid && <AlertBanner feedback type="success" title={`Đã thanh toán hóa đơn ${paid.invoiceCode}.`}>{paid.message}</AlertBanner>}
+    {paying && <PayInvoiceModal api={api} qrApi={qrApi} invoice={paying} onClose={() => setPaying(undefined)}
+      onPaid={(result) => { setPaying(undefined); setPaid(result); setVersion((value) => value + 1); }} />}
     <div className={styles.summary}>
       <MetricCard label="Cần thanh toán" value={vnd(unpaid.reduce((sum, row) => sum + row.totalAmount, 0))} caption={`${unpaid.length} hóa đơn`} />
       <MetricCard label="Tổng hóa đơn" value={String(load.data.length)} />
@@ -58,16 +65,15 @@ function OwnerList({ api }: { api: BillingApi }) {
         { key: 'horse', header: 'Ngựa', render: (row) => `${row.horse.name} (${row.horse.horseCode})` },
         { key: 'total', header: 'Số tiền', align: 'right', nowrap: true, render: (row) => <span className={styles.amount}>{vnd(row.totalAmount)}</span> },
         { key: 'due', header: 'Hạn', nowrap: true, render: (row) => viDate(row.dueDate) },
-        { key: 'status', header: 'Trạng thái', render: (row) => <StatusPill status={invoiceDisplayStatus(row)} /> },
+        { key: 'pay', header: 'Thanh toán', align: 'right', nowrap: true, render: (row) => row.status === 'ISSUED'
+          ? <span className={styles.payCell}>
+            {invoiceDisplayStatus(row) === 'OVERDUE' && <StatusPill status="OVERDUE" />}
+            <Button size="sm" onClick={() => { setPaid(undefined); setPaying(row); }} aria-label={`Thanh toán hóa đơn ${row.invoiceCode}`}>Thanh toán</Button>
+          </span>
+          : <StatusPill status={row.status} /> },
       ]} />
   </>;
 }
-
-/** VNPAYQR is not offered: the sandbox merchant answers it with code 76 (bank not supported). */
-const METHODS = [
-  { value: 'VNBANK', title: 'Thẻ ATM / tài khoản ngân hàng', text: 'Nhập thẻ nội địa trên trang VNPay (môi trường thử nghiệm: thẻ NCB).' },
-  { value: '', title: 'Chọn trên trang VNPay', text: 'Mở cổng VNPay và chọn phương thức tại đó.' },
-];
 
 /**
  * DEC-016 VietQR: the QR carries the club's receiving account, the invoice total and the invoice code as transfer
@@ -82,7 +88,6 @@ function QrPayCard({ qrApi, invoiceId, onPaid, openVnpayUntil, lockRef, busy, se
 }) {
   const load = useSupportingLoad(() => qrApi.qrTransfer(invoiceId), [qrApi, invoiceId]);
   const [error, setError] = useState('');
-  const [imageFailed, setImageFailed] = useState(false);
   const transfer = load.data;
   const blocked = openVnpayUntil !== undefined;
   const pay = async () => {
@@ -96,19 +101,9 @@ function QrPayCard({ qrApi, invoiceId, onPaid, openVnpayUntil, lockRef, busy, se
     <h2>Thanh toán bằng mã QR</h2>
     {load.error ? <AlertBanner type="warning" title="Chưa thể hiện mã QR">{message(load.error)}</AlertBanner>
       : !transfer ? <LoadingState label="Đang tạo mã QR…" />
-        : <div className={styles.qr}>
-          {imageFailed
-            ? <div className={styles.qrFallback} role="status">Không tải được ảnh mã QR (máy cần kết nối Internet). Bạn vẫn có thể chuyển khoản theo thông tin bên cạnh.</div>
-            : <img className={styles.qrImage} src={vietQrImageUrl(transfer)} width={270} height={320} onError={() => setImageFailed(true)}
-              alt={`Mã VietQR chuyển ${vnd(transfer.amount)} đến ${transfer.bankName} ${transfer.accountNo}`} />}
+        : <div className={styles.form}>
+          <QrTransferInfo transfer={transfer} />
           <div className={styles.qrInfo}>
-            <dl className={styles.qrInfo}>
-            <div><dt>Ngân hàng</dt><dd>{transfer.bankName}</dd></div>
-            <div><dt>Số tài khoản</dt><dd className={styles.amount}>{transfer.accountNo}</dd></div>
-            <div><dt>Chủ tài khoản</dt><dd>{transfer.accountName}</dd></div>
-            <div><dt>Số tiền</dt><dd className={styles.qrTotal}>{vnd(transfer.amount)}</dd></div>
-            <div><dt>Nội dung chuyển khoản</dt><dd className={styles.amount}>{transfer.content}</dd></div>
-            </dl>
             <p className={styles.hint}>Mở ứng dụng ngân hàng, quét mã để chuyển đúng số tiền và nội dung, rồi bấm Thanh toán.</p>
             {blocked && <AlertBanner type="warning" title="Đang có một giao dịch VNPay chưa hoàn tất">
               {`Để không bị trừ tiền hai lần, chỉ thanh toán bằng QR khi giao dịch VNPay đó hết hạn${openVnpayUntil ? ` (${viDateTime(openVnpayUntil)})` : ''}. Nếu bạn đã trả qua VNPay, bấm "Kiểm tra lại thanh toán" bên dưới; nếu không trả nữa, bấm "Hủy giao dịch VNPay này" rồi thanh toán bằng QR.`}
@@ -171,7 +166,7 @@ export function OwnerInvoice({ api, qrApi, id }: { api: BillingApi; qrApi: QrApi
       {!detail.paymentConfigured && <AlertBanner type="warning" title="Cổng VNPay chưa được cấu hình trên máy chủ. Liên hệ Club Manager." />}
       <fieldset className={styles.methods}>
         <legend className={styles.hint}>Chọn phương thức</legend>
-        {METHODS.map((item) => <label key={item.value || 'any'}>
+        {VNPAY_METHODS.map((item) => <label key={item.value || 'any'}>
           <input type="radio" name="method" value={item.value} checked={method === item.value} onChange={() => setMethod(item.value)} />
           <span><strong>{item.title}</strong><small>{item.text}</small></span>
         </label>)}
