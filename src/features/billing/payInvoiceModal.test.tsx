@@ -69,11 +69,14 @@ describe('DEC-016 owner invoice list: pay popup', () => {
     expect(screen.getByText('Đã thanh toán')).toBeInTheDocument();
   });
 
-  it('opens a popup with VNPay, MoMo and VietQR tabs, VNPay first with the ATM card selected', async () => {
+  it('opens a popup with VNPay, MoMo and VietQR tabs, VNPay first with the ATM card as its only method', async () => {
     const { pay } = setup();
     const dialog = await openPopup();
     expect(within(dialog).getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['VNPay', 'MoMo', 'VietQR']);
-    expect(await within(dialog).findByRole('radio', { name: /Thẻ ATM/ })).toBeChecked();
+    await within(dialog).findByRole('button', { name: 'Thanh toán qua VNPay' });
+    expect(within(dialog).getByText('Thẻ ATM / tài khoản ngân hàng')).toBeInTheDocument();
+    expect(within(dialog).queryByRole('radio')).not.toBeInTheDocument();
+    expect(within(dialog).queryByText('Chọn trên trang VNPay')).not.toBeInTheDocument();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Thanh toán qua VNPay' }));
     expect(pay).toHaveBeenCalledWith(11, 'VNBANK');
 

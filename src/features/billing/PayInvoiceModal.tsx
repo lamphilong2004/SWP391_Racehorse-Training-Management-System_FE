@@ -1,7 +1,7 @@
 import { useId, useRef, useState } from 'react';
 import { AlertBanner, Button, LoadingState, Modal, Tabs } from '../../design-system';
 import { useSupportingLoad } from '../training/assigned/supportingHooks';
-import { paymentDisplayStatus, viDateTime, vietQrImageUrl, VNPAY_METHODS, vnd, type BillingApi, type InvoiceSummary, type PaymentResult, type QrApi, type QrTransfer } from './billingApi';
+import { paymentDisplayStatus, viDateTime, vietQrImageUrl, VNPAY_ATM, vnd, type BillingApi, type InvoiceSummary, type PaymentResult, type QrApi, type QrTransfer } from './billingApi';
 import { MomoPayTab } from './MomoPayTab';
 import styles from './billing.module.css';
 
@@ -45,7 +45,6 @@ export function PayInvoiceModal({ api, qrApi, invoice, onClose, onPaid }: {
   const detail = useSupportingLoad(() => api.myInvoice(invoice.id), [api, invoice.id, version]);
   const qr = useSupportingLoad(() => qrApi.qrTransfer(invoice.id), [qrApi, invoice.id]);
   const [tab, setTab] = useState<Tab>('vnpay');
-  const [method, setMethod] = useState('VNBANK');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
@@ -64,7 +63,7 @@ export function PayInvoiceModal({ api, qrApi, invoice, onClose, onPaid }: {
     catch (cause) { setError(message(cause)); }
     finally { lock.current = false; setBusy(false); }
   };
-  const payVnpay = () => run(async () => { window.location.assign((await api.pay(invoice.id, method)).paymentUrl); });
+  const payVnpay = () => run(async () => { window.location.assign((await api.pay(invoice.id, VNPAY_ATM.bankCode)).paymentUrl); });
   // Cancel asks VNPay first and may find the link already paid: that result settles the invoice like a recheck.
   const settleOrReload = (result: PaymentResult) => {
     if (result.invoiceStatus === 'PAID') onPaid(result);
@@ -111,13 +110,11 @@ export function PayInvoiceModal({ api, qrApi, invoice, onClose, onPaid }: {
         {ready && tab === 'vnpay' && <>
               {!detail.data?.paymentConfigured && <AlertBanner type="warning" title="Cổng VNPay chưa được cấu hình trên máy chủ. Liên hệ Club Manager." />}
               {pendingNotice}
-              <fieldset className={styles.methods} disabled={Boolean(open)}>
-                <legend className={styles.hint}>Chọn phương thức</legend>
-                {VNPAY_METHODS.map((item) => <label key={item.value || 'any'}>
-                  <input type="radio" name={`${prefix}-method`} value={item.value} checked={method === item.value} onChange={() => setMethod(item.value)} />
-                  <span><strong>{item.title}</strong><small>{item.text}</small></span>
-                </label>)}
-              </fieldset>
+              <div className={styles.method}>
+                <span className={styles.hint}>Phương thức</span>
+                <strong>{VNPAY_ATM.title}</strong>
+                <small>{VNPAY_ATM.text}</small>
+              </div>
               <p className={styles.hint}>Bạn sẽ được chuyển sang cổng VNPay (môi trường sandbox). Hóa đơn chỉ được ghi nhận đã thanh toán sau khi VNPay xác nhận giao dịch với máy chủ.</p>
             </>}
         {ready && tab === 'momo' && <MomoPayTab />}
