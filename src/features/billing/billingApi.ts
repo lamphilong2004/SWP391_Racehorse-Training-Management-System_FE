@@ -130,3 +130,9 @@ export function createQrApi(token: string, onError: (cause: unknown) => boolean)
   };
 }
 export type QrApi = ReturnType<typeof createQrApi>;
+
+/**
+ * The only VNPay method offered: the domestic ATM card / bank account. VNPAYQR, and the gateway's own method page that
+ * lists it, are left out because the sandbox merchant answers VNPAYQR with code 76 (bank not supported).
+ */
+export const VNPAY_ATM = { bankCode: 'VNBANK', title: 'Thẻ ATM / tài khoản ngân hàng', text: 'Nhập thẻ nội địa trên trang VNPay (môi trường thử nghiệm: thẻ NCB).' };
