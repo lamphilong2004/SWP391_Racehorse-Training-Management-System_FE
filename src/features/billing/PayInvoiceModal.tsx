@@ -53,6 +53,10 @@ export function PayInvoiceModal({ api, qrApi, invoice, onClose, onPaid }: {
   const prefix = `pay-${useId().replace(/[^a-zA-Z0-9-]/g, '')}`;
 
   const open = detail.data?.payments.find((payment) => paymentDisplayStatus(payment) === 'PENDING');
+  // Payment is offered only once the invoice itself is loaded and still unpaid: while it loads or fails to load, an open
+  // VNPay link cannot be ruled out, and a bank transfer made from a displayed QR cannot be undone by the server.
+  const ready = detail.data?.invoice.status === 'ISSUED';
+  const canPay = ready && !open;
   const run = async (action: () => Promise<void>) => {
     if (lock.current) return;
     lock.current = true; setBusy(true); setError(''); setNotice('');
@@ -61,27 +65,37 @@ export function PayInvoiceModal({ api, qrApi, invoice, onClose, onPaid }: {
     finally { lock.current = false; setBusy(false); }
   };
   const payVnpay = () => run(async () => { window.location.assign((await api.pay(invoice.id, method)).paymentUrl); });
-  const cancelVnpay = () => run(async () => { setNotice((await api.cancelPayment(invoice.id)).message); setVersion((value) => value + 1); });
-  const recheck = () => run(async () => {
-    const result = await api.ownerCheck(invoice.id);
+  // Cancel asks VNPay first and may find the link already paid: that result settles the invoice like a recheck.
+  const settleOrReload = (result: PaymentResult) => {
     if (result.invoiceStatus === 'PAID') onPaid(result);
     else { setNotice(result.message); setVersion((value) => value + 1); }
-  });
+  };
+  const cancelVnpay = () => run(async () => settleOrReload(await api.cancelPayment(invoice.id)));
+  const recheck = () => run(async () => settleOrReload(await api.ownerCheck(invoice.id)));
   const payQr = () => run(async () => { onPaid(await qrApi.confirmQrTransfer(invoice.id)); });
 
   const pendingNotice = open && <AlertBanner type="warning" title="Đang có một giao dịch VNPay chưa hoàn tất">
     {`Để không bị trừ tiền hai lần, hãy hoàn tất giao dịch đó, bấm "Kiểm tra lại" nếu đã trả, hoặc bấm "Hủy giao dịch VNPay" để thanh toán lại ngay (giao dịch tự hết hạn lúc ${viDateTime(open.expiresAt)}).`}
   </AlertBanner>;
 
-  const close = <Button variant="secondary" onClick={onClose} disabled={busy}>Hủy</Button>;
-  const footer = tab === 'vnpay'
-    ? open
-      ? <><Button variant="danger" onClick={cancelVnpay} disabled={busy}>Hủy giao dịch VNPay</Button>
-        <Button variant="secondary" onClick={recheck} disabled={busy}>Kiểm tra lại</Button></>
-      : <>{close}<Button onClick={payVnpay} disabled={busy || !detail.data || !detail.data.paymentConfigured}>Thanh toán qua VNPay</Button></>
-    : tab === 'momo'
-      ? <>{close}<Button disabled>Thanh toán qua MoMo</Button></>
-      : <>{close}<Button onClick={payQr} disabled={busy || !qr.data || Boolean(open)}>{`Thanh toán ${vnd(invoice.totalAmount)}`}</Button></>;
+  const close = <Button variant="secondary" onClick={onClose} disabled={busy}>{ready ? 'Hủy' : 'Đóng'}</Button>;
+  const footer = !ready
+    ? close
+    : tab === 'vnpay'
+      ? open
+        ? <><Button variant="danger" onClick={cancelVnpay} disabled={busy}>Hủy giao dịch VNPay</Button>
+          <Button variant="secondary" onClick={recheck} disabled={busy}>Kiểm tra lại</Button></>
+        : <>{close}<Button onClick={payVnpay} disabled={busy || !canPay || !detail.data?.paymentConfigured}>Thanh toán qua VNPay</Button></>
+      : tab === 'momo'
+        ? <>{close}<Button disabled>Thanh toán qua MoMo</Button></>
+        : <>{close}<Button onClick={payQr} disabled={busy || !canPay || !qr.data}>{`Thanh toán ${vnd(invoice.totalAmount)}`}</Button></>;
+  const invoiceState = detail.error
+    ? <AlertBanner type="danger" title="Không tải được hóa đơn">
+      {message(detail.error)} <Button variant="secondary" size="sm" onClick={detail.retry}>Thử lại</Button>
+    </AlertBanner>
+    : !detail.data ? <LoadingState label="Đang tải hóa đơn…" />
+      : !ready ? <AlertBanner type="info" title={detail.data.invoice.status === 'PAID' ? 'Hóa đơn này đã được thanh toán.' : 'Hóa đơn này không còn chờ thanh toán.'} />
+        : null;
 
   return <Modal open size="lg" title={`Thanh toán hóa đơn ${invoice.invoiceCode}`} onClose={onClose} dismissible={!busy} footer={footer}>
     <div className={styles.form}>
@@ -93,10 +107,9 @@ export function PayInvoiceModal({ api, qrApi, invoice, onClose, onPaid }: {
       {notice && <AlertBanner feedback type="info" title={notice} />}
       {error && <AlertBanner feedback type="danger" title="Chưa thực hiện được">{error}</AlertBanner>}
       <div role="tabpanel" id={`${prefix}-panel-${tab}`} aria-labelledby={`${prefix}-tab-${tab}`} className={styles.form}>
-        {tab === 'vnpay' && (detail.error ? <AlertBanner type="danger" title="Không tải được hóa đơn">{message(detail.error)}</AlertBanner>
-          : !detail.data ? <LoadingState label="Đang tải…" />
-            : <>
-              {!detail.data.paymentConfigured && <AlertBanner type="warning" title="Cổng VNPay chưa được cấu hình trên máy chủ. Liên hệ Club Manager." />}
+        {invoiceState}
+        {ready && tab === 'vnpay' && <>
+              {!detail.data?.paymentConfigured && <AlertBanner type="warning" title="Cổng VNPay chưa được cấu hình trên máy chủ. Liên hệ Club Manager." />}
               {pendingNotice}
               <fieldset className={styles.methods} disabled={Boolean(open)}>
                 <legend className={styles.hint}>Chọn phương thức</legend>
@@ -106,9 +119,9 @@ export function PayInvoiceModal({ api, qrApi, invoice, onClose, onPaid }: {
                 </label>)}
               </fieldset>
               <p className={styles.hint}>Bạn sẽ được chuyển sang cổng VNPay (môi trường sandbox). Hóa đơn chỉ được ghi nhận đã thanh toán sau khi VNPay xác nhận giao dịch với máy chủ.</p>
-            </>)}
-        {tab === 'momo' && <MomoPayTab />}
-        {tab === 'vietqr' && (qr.error ? <AlertBanner type="warning" title="Chưa thể hiện mã QR">{message(qr.error)}</AlertBanner>
+            </>}
+        {ready && tab === 'momo' && <MomoPayTab />}
+        {ready && tab === 'vietqr' && (qr.error ? <AlertBanner type="warning" title="Chưa thể hiện mã QR">{message(qr.error)}</AlertBanner>
           : !qr.data ? <LoadingState label="Đang tạo mã QR…" />
             : <>
               <QrTransferInfo transfer={qr.data} />

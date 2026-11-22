@@ -24,14 +24,21 @@ const vnpay = (extra: Partial<Payment> = {}): Payment => ({
 const detail = (invoice: InvoiceSummary, payments: Payment[]): InvoiceDetail =>
   ({ invoice, lines: [], payments, issuedBy: party, cancelledAt: null, cancellationReason: null, paymentConfigured: true });
 
-function setup(payments: Payment[] = []) {
+function setup(payments: Payment[] = [], options: { detail?: 'pending' | 'error'; cancelFindsPaid?: boolean } = {}) {
   let paid = false;
   let open = payments;
   const myInvoices = vi.fn(() => Promise.resolve([summary(11, paid ? 'PAID' : 'ISSUED'), summary(12, 'PAID')]));
-  const myInvoice = vi.fn(() => Promise.resolve(detail(summary(11, 'ISSUED'), open)));
+  const myInvoice = vi.fn(() => options.detail === 'pending' ? new Promise<never>(() => undefined)
+    : options.detail === 'error' ? Promise.reject(new Error('Máy chủ không phản hồi.'))
+      : Promise.resolve(detail(summary(11, paid ? 'PAID' : 'ISSUED'), open)));
   const pay = vi.fn(() => new Promise<never>(() => undefined));
   const cancelPayment = vi.fn(() => {
     open = [];
+    if (options.cancelFindsPaid) {
+      paid = true;
+      return Promise.resolve({ invoiceId: 11, invoiceCode: 'HD-202611-0011', invoiceStatus: 'PAID', paymentStatus: 'SUCCESS', responseCode: null,
+        message: 'VNPay đã xác nhận thanh toán. Hóa đơn đã được ghi nhận là đã thanh toán.' });
+    }
     return Promise.resolve({ invoiceId: 11, invoiceCode: 'HD-202611-0011', invoiceStatus: 'ISSUED', paymentStatus: 'CANCELLED', responseCode: '24',
       message: 'Đã hủy giao dịch VNPay đang mở. Bạn có thể thanh toán lại bằng VNPay hoặc mã QR.' });
   });
@@ -85,6 +92,37 @@ describe('DEC-016 owner invoice list: pay popup', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     await waitFor(() => expect(myInvoices).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(screen.getAllByText('Đã thanh toán')).toHaveLength(2));
+    expect(screen.queryByRole('button', { name: 'Thanh toán hóa đơn HD-202611-0011' })).not.toBeInTheDocument();
+  });
+
+  it('offers no QR and no payment while the invoice is still loading', async () => {
+    const { confirmQrTransfer } = setup([], { detail: 'pending' });
+    const dialog = await openPopup();
+    fireEvent.click(within(dialog).getByRole('tab', { name: 'VietQR' }));
+    expect(within(dialog).getByText('Đang tải hóa đơn…')).toBeInTheDocument();
+    expect(within(dialog).queryByText('9999888877')).not.toBeInTheDocument();
+    expect(within(dialog).queryByRole('button', { name: 'Thanh toán 500.000 ₫' })).not.toBeInTheDocument();
+    expect(confirmQrTransfer).not.toHaveBeenCalled();
+  });
+
+  it('shows the load error with a retry on every tab and offers no payment when the invoice cannot be loaded', async () => {
+    setup([], { detail: 'error' });
+    const dialog = await openPopup();
+    fireEvent.click(within(dialog).getByRole('tab', { name: 'VietQR' }));
+    expect(await within(dialog).findByText('Không tải được hóa đơn')).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Thử lại' })).toBeInTheDocument();
+    expect(within(dialog).queryByText('9999888877')).not.toBeInTheDocument();
+    expect(within(dialog).queryByRole('button', { name: 'Thanh toán 500.000 ₫' })).not.toBeInTheDocument();
+  });
+
+  it('closes the popup and refreshes the list when cancelling finds the VNPay link already paid', async () => {
+    const { cancelPayment, myInvoices } = setup([vnpay()], { cancelFindsPaid: true });
+    const dialog = await openPopup();
+    fireEvent.click(await within(dialog).findByRole('button', { name: 'Hủy giao dịch VNPay' }));
+    expect(cancelPayment).toHaveBeenCalledWith(11);
+    expect(await screen.findByText('Đã thanh toán hóa đơn HD-202611-0011.')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await waitFor(() => expect(myInvoices).toHaveBeenCalledTimes(2));
     expect(screen.queryByRole('button', { name: 'Thanh toán hóa đơn HD-202611-0011' })).not.toBeInTheDocument();
   });
 
