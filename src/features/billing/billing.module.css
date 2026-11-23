@@ -44,4 +44,7 @@
 @media (max-width: 800px) { .qr { grid-template-columns: minmax(0, 1fr); } }
 .qrFallback { width: 270px; padding: 16px; border: 1px dashed var(--color-border-default); border-radius: var(--radius-md); color: var(--color-text-secondary); font-size: 13px; }
 .payHeading { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin: 0; }
+.payHeading > span { min-width: 0; overflow-wrap: anywhere; }
+.payHeading > strong { white-space: nowrap; flex-shrink: 0; }
+.payModal footer { height: auto; min-height: 72px; padding-block: var(--space-md); flex-wrap: wrap; }
 .payCell { display: inline-flex; align-items: center; gap: 8px; }

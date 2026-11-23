@@ -109,20 +109,22 @@ export function OwnerInvoice({ api, qrApi, id }: { api: BillingApi; qrApi: QrApi
 }
 
 /** Return URL of VNPay (/thanh-toan/vnpay). The server verifies the signature and confirms with VNPay before recording. */
-export function VnpayReturnPage() {
+export function VnpayReturnPage({ provider = 'VNPAY' }: { provider?: 'VNPAY' | 'MOMO' }) {
+  const momo = provider === 'MOMO';
+  const providerLabel = momo ? 'MoMo' : 'VNPay';
   const { auth, api } = useOwnerApi();
   const [params] = useSearchParams();
   const [result, setResult] = useState<PaymentResult>();
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const started = useRef(false);
-  const fields = useMemo(() => Object.fromEntries([...params.entries()].filter(([key]) => key.startsWith('vnp_'))), [params]);
-  const missing = !fields.vnp_TxnRef;
+  const fields = useMemo(() => Object.fromEntries([...params.entries()].filter(([key]) => momo || key.startsWith('vnp_'))), [params, momo]);
+  const missing = momo ? !fields.orderId : !fields.vnp_TxnRef;
   useEffect(() => {
     if (!api || started.current || missing) return;
     started.current = true;
-    api.confirmReturn(fields).then(setResult, (cause: unknown) => setError(message(cause)));
-  }, [api, fields, missing]);
+    (momo ? api.confirmMomoReturn(fields) : api.confirmReturn(fields)).then(setResult, (cause: unknown) => setError(message(cause)));
+  }, [api, fields, missing, momo]);
   const role = auth.user?.roles.includes('HORSE_OWNER') ? 'HORSE_OWNER' : auth.user?.roles.includes('CLUB_MANAGER') ? 'CLUB_MANAGER' : undefined;
   if (!auth.user || !api || !role) return <AlertBanner type="danger" title="Đăng nhập lại để xem kết quả thanh toán." />;
   const recheck = async () => {
@@ -132,15 +134,15 @@ export function VnpayReturnPage() {
     catch (cause) { setError(message(cause)); }
     finally { setBusy(false); }
   };
-  const cancelledByUser = fields.vnp_ResponseCode === '24';
-  return <AppShell designSystem="v2" user={{ fullName: auth.user.fullName, role }} breadcrumb={[{ label: 'Hóa đơn & thanh toán' }, { label: 'Kết quả VNPay' }]}>
+  const cancelledByUser = momo ? fields.resultCode === '1006' : fields.vnp_ResponseCode === '24';
+  return <AppShell designSystem="v2" user={{ fullName: auth.user.fullName, role }} breadcrumb={[{ label: 'Hóa đơn & thanh toán' }, { label: `Kết quả ${providerLabel}` }]}>
     <section className={`${styles.stack} ${styles.result}`}>
-      <header data-page-banner className={styles.header}><div><p className={styles.eyebrow}>VNPay</p><h1>Kết quả thanh toán</h1></div></header>
-      {(error || missing) && <AlertBanner type="danger" title="Không xác nhận được giao dịch">{error || 'Không có thông tin giao dịch từ VNPay.'}</AlertBanner>}
-      {!error && !missing && !result && <LoadingState label="Đang xác nhận giao dịch với VNPay…" />}
+      <header data-page-banner className={styles.header}><div><p className={styles.eyebrow}>{providerLabel}</p><h1>Kết quả thanh toán</h1></div></header>
+      {(error || missing) && <AlertBanner type="danger" title="Không xác nhận được giao dịch">{error || `Không có thông tin giao dịch từ ${providerLabel}.`}</AlertBanner>}
+      {!error && !missing && !result && <LoadingState label={`Đang xác nhận giao dịch với ${providerLabel}…`} />}
       {result && <Card className={styles.form}>
         <AlertBanner type={result.paymentStatus === 'SUCCESS' ? 'success' : result.paymentStatus === 'FAILED' ? 'danger' : 'warning'}
-          title={result.paymentStatus === 'SUCCESS' ? 'Thanh toán thành công' : cancelledByUser ? 'Bạn đã hủy giao dịch' : result.paymentStatus === 'FAILED' ? 'Thanh toán không thành công' : 'Đang chờ VNPay xác nhận'}>
+          title={result.paymentStatus === 'SUCCESS' ? 'Thanh toán thành công' : cancelledByUser && result.paymentStatus === 'FAILED' ? 'Bạn đã hủy giao dịch' : result.paymentStatus === 'FAILED' ? 'Thanh toán không thành công' : `Đang chờ ${providerLabel} xác nhận`}>
           {result.message}
         </AlertBanner>
         <p>{`Hóa đơn ${result.invoiceCode}: `}<StatusPill status={result.invoiceStatus} /></p>

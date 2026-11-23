@@ -2,13 +2,15 @@ import { AlertBanner } from '../../design-system';
 import styles from './billing.module.css';
 
 /**
- * MoMo tab of the pay popup. Placeholder until the MoMo ATM sandbox (issue #63, PR FE #71) completes a real test
- * payment: that PR replaces this component with the MoMo checkout and fills `footer` with its pay action.
+ * The shared popup owns submission and cross-provider locking. This tab explains the sandbox method and configuration;
+ * it never declares an invoice paid. Return/IPN/query verification stays on the server.
  */
-export function MomoPayTab() {
+export function MomoPayTab({ configured }: { configured: boolean }) {
   return <div className={styles.form}>
-    <AlertBanner type="info" title="MoMo đang được tích hợp">
-      Thanh toán qua MoMo (môi trường thử nghiệm) sẽ dùng được khi tích hợp hoàn tất. Hiện bạn có thể thanh toán bằng VNPay hoặc mã VietQR.
+    <AlertBanner type="info" title="MoMo — thẻ ATM thử nghiệm">
+      Bạn sẽ được chuyển sang cổng MoMo test để nhập thẻ ATM thử nghiệm. Không dùng thẻ thật hoặc chuyển tiền thật.
     </AlertBanner>
+    <p className={styles.hint}>Hóa đơn chỉ được ghi nhận đã thanh toán sau khi máy chủ xác minh kết quả với MoMo. Đóng popup không hủy giao dịch đang chờ trên cổng thanh toán.</p>
+    {!configured && <AlertBanner type="warning" title="MoMo test chưa được cấu hình trên máy chủ." />}
   </div>;
 }

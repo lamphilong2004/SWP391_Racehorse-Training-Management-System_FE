@@ -42,7 +42,11 @@ export function PayInvoiceModal({ api, qrApi, invoice, onClose, onPaid }: {
   api: BillingApi; qrApi: QrApi; invoice: InvoiceSummary; onClose: () => void; onPaid: (result: PaymentResult) => void;
 }) {
   const [version, setVersion] = useState(0);
-  const detail = useSupportingLoad(() => api.myInvoice(invoice.id), [api, invoice.id, version]);
+  const [refreshing, setRefreshing] = useState(false);
+  const detail = useSupportingLoad(async () => {
+    try { return await api.myInvoice(invoice.id); }
+    finally { setRefreshing(false); }
+  }, [api, invoice.id, version]);
   const qr = useSupportingLoad(() => qrApi.qrTransfer(invoice.id), [qrApi, invoice.id]);
   const [tab, setTab] = useState<Tab>('vnpay');
   const [error, setError] = useState('');
@@ -54,7 +58,7 @@ export function PayInvoiceModal({ api, qrApi, invoice, onClose, onPaid }: {
   const open = detail.data?.payments.find((payment) => paymentDisplayStatus(payment) === 'PENDING');
   // Payment is offered only once the invoice itself is loaded and still unpaid: while it loads or fails to load, an open
   // VNPay link cannot be ruled out, and a bank transfer made from a displayed QR cannot be undone by the server.
-  const ready = detail.data?.invoice.status === 'ISSUED';
+  const ready = !refreshing && detail.data?.invoice.status === 'ISSUED';
   const canPay = ready && !open;
   const run = async (action: () => Promise<void>) => {
     if (lock.current) return;
@@ -64,39 +68,63 @@ export function PayInvoiceModal({ api, qrApi, invoice, onClose, onPaid }: {
     finally { lock.current = false; setBusy(false); }
   };
   const payVnpay = () => run(async () => { window.location.assign((await api.pay(invoice.id, VNPAY_ATM.bankCode)).paymentUrl); });
+  const reloadDetail = () => { setRefreshing(true); setVersion((value) => value + 1); };
+  const payMomo = () => {
+    if (!canPay || !detail.data?.momoConfigured) return;
+    return run(async () => {
+      try {
+        const link = await api.payMomo(invoice.id);
+        const url = new URL(link.payUrl);
+        if (url.protocol !== 'https:' || url.hostname !== 'test-payment.momo.vn' || url.username || url.password
+          || (url.port && url.port !== '443')) throw new Error('Địa chỉ thanh toán MoMo test không hợp lệ.');
+        window.location.assign(url.href);
+      } catch (cause) {
+        // A failed response may still have reserved an order. Reload before offering any method again.
+        reloadDetail();
+        throw cause;
+      }
+    });
+  };
   // Cancel asks VNPay first and may find the link already paid: that result settles the invoice like a recheck.
   const settleOrReload = (result: PaymentResult) => {
     if (result.invoiceStatus === 'PAID') onPaid(result);
-    else { setNotice(result.message); setVersion((value) => value + 1); }
+    else { setNotice(result.message); reloadDetail(); }
   };
   const cancelVnpay = () => run(async () => settleOrReload(await api.cancelPayment(invoice.id)));
+  const cancelMomo = () => run(async () => settleOrReload(await api.cancelMomoPayment(invoice.id)));
   const recheck = () => run(async () => settleOrReload(await api.ownerCheck(invoice.id)));
   const payQr = () => run(async () => { onPaid(await qrApi.confirmQrTransfer(invoice.id)); });
 
-  const pendingNotice = open && <AlertBanner type="warning" title="Đang có một giao dịch VNPay chưa hoàn tất">
-    {`Để không bị trừ tiền hai lần, hãy hoàn tất giao dịch đó, bấm "Kiểm tra lại" nếu đã trả, hoặc bấm "Hủy giao dịch VNPay" để thanh toán lại ngay (giao dịch tự hết hạn lúc ${viDateTime(open.expiresAt)}).`}
+  const pendingNotice = open && <AlertBanner type="warning" title={`Đang có một giao dịch ${open.provider === 'MOMO' ? 'MoMo' : 'VNPay'} chưa hoàn tất`}>
+    {open.provider === 'MOMO'
+      ? 'Để không bị trừ tiền hai lần, hãy hoàn tất giao dịch đó, bấm "Kiểm tra lại" nếu đã trả, hoặc bấm "Hủy giao dịch MoMo" để thanh toán lại ngay. Nếu MoMo vẫn thu tiền sau khi hủy, khoản đó được ghi nhận hoặc hoàn lại.'
+      : `Để không bị trừ tiền hai lần, hãy hoàn tất giao dịch đó, bấm "Kiểm tra lại" nếu đã trả, hoặc bấm "Hủy giao dịch VNPay" để thanh toán lại ngay (giao dịch tự hết hạn lúc ${viDateTime(open.expiresAt)}).`}
   </AlertBanner>;
 
-  const close = <Button variant="secondary" onClick={onClose} disabled={busy}>{ready ? 'Hủy' : 'Đóng'}</Button>;
+  // With an open transaction the footer also has "Hủy giao dịch …": the close button then reads "Đóng" to avoid two "Hủy".
+  const close = <Button variant="secondary" onClick={onClose} disabled={busy}>{ready && !open ? 'Hủy' : 'Đóng'}</Button>;
   const footer = !ready
     ? close
-    : tab === 'vnpay'
-      ? open
-        ? <><Button variant="danger" onClick={cancelVnpay} disabled={busy}>Hủy giao dịch VNPay</Button>
-          <Button variant="secondary" onClick={recheck} disabled={busy}>Kiểm tra lại</Button></>
-        : <>{close}<Button onClick={payVnpay} disabled={busy || !canPay || !detail.data?.paymentConfigured}>Thanh toán qua VNPay</Button></>
-      : tab === 'momo'
-        ? <>{close}<Button disabled>Thanh toán qua MoMo</Button></>
-        : <>{close}<Button onClick={payQr} disabled={busy || !canPay || !qr.data}>{`Thanh toán ${vnd(invoice.totalAmount)}`}</Button></>;
+    : open
+      ? <>{close}{open.provider === 'VNPAY' && <Button variant="danger" onClick={cancelVnpay} disabled={busy}>Hủy giao dịch VNPay</Button>}
+        {open.provider === 'MOMO' && <Button variant="danger" onClick={cancelMomo} disabled={busy}>Hủy giao dịch MoMo</Button>}
+        <Button variant="secondary" onClick={recheck} disabled={busy}>Kiểm tra lại</Button>
+        {tab === 'momo' && <Button disabled>Thanh toán qua MoMo</Button>}
+        {tab === 'vietqr' && <Button disabled>{`Thanh toán ${vnd(invoice.totalAmount)}`}</Button>}</>
+      : tab === 'vnpay'
+        ? <>{close}<Button onClick={payVnpay} disabled={busy || !canPay || !detail.data?.paymentConfigured}>Thanh toán qua VNPay</Button></>
+        : tab === 'momo'
+          ? <>{close}<Button onClick={payMomo} disabled={busy || !canPay || !detail.data?.momoConfigured}>Thanh toán qua MoMo</Button></>
+          : <>{close}<Button onClick={payQr} disabled={busy || !canPay || !qr.data}>{`Thanh toán ${vnd(invoice.totalAmount)}`}</Button></>;
   const invoiceState = detail.error
     ? <AlertBanner type="danger" title="Không tải được hóa đơn">
       {message(detail.error)} <Button variant="secondary" size="sm" onClick={detail.retry}>Thử lại</Button>
     </AlertBanner>
-    : !detail.data ? <LoadingState label="Đang tải hóa đơn…" />
+    : !detail.data || refreshing ? <LoadingState label="Đang tải hóa đơn…" />
       : !ready ? <AlertBanner type="info" title={detail.data.invoice.status === 'PAID' ? 'Hóa đơn này đã được thanh toán.' : 'Hóa đơn này không còn chờ thanh toán.'} />
         : null;
 
-  return <Modal open size="lg" title={`Thanh toán hóa đơn ${invoice.invoiceCode}`} onClose={onClose} dismissible={!busy} footer={footer}>
+  return <Modal open size="lg" className={styles.payModal} title={`Thanh toán hóa đơn ${invoice.invoiceCode}`} onClose={onClose} dismissible={!busy} footer={footer}>
     <div className={styles.form}>
       <p className={styles.payHeading}>
         <span>{`${invoice.horse.name} (${invoice.horse.horseCode})`}</span>
@@ -117,7 +145,7 @@ export function PayInvoiceModal({ api, qrApi, invoice, onClose, onPaid }: {
               </div>
               <p className={styles.hint}>Bạn sẽ được chuyển sang cổng VNPay (môi trường sandbox). Hóa đơn chỉ được ghi nhận đã thanh toán sau khi VNPay xác nhận giao dịch với máy chủ.</p>
             </>}
-        {ready && tab === 'momo' && <MomoPayTab />}
+        {ready && tab === 'momo' && <><MomoPayTab configured={Boolean(detail.data?.momoConfigured)} />{pendingNotice}</>}
         {ready && tab === 'vietqr' && (qr.error ? <AlertBanner type="warning" title="Chưa thể hiện mã QR">{message(qr.error)}</AlertBanner>
           : !qr.data ? <LoadingState label="Đang tạo mã QR…" />
             : <>
