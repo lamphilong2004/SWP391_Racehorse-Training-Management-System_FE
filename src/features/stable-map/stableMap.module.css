@@ -56,72 +56,53 @@ button.cell:focus-visible { outline: 2px solid var(--color-primary-600); outline
 .yardGrid[data-compact] .cellState { font-size: 10px; }
 .cell[data-highlight] { outline: 3px solid var(--color-primary-600); outline-offset: 2px; }
 
-/* ---------- DEC-016 2D floor plan (top-down shed-row barn) ---------- */
+/* ---------- DEC-016 2D floor plan (architectural style, shed-row barn seen from above) ---------- */
 .floorPlan { display: block; height: auto; touch-action: none; user-select: none; font-family: inherit; }
-/* barn shell: dark timber walls with a light inner trim */
-.barnWall { fill: #4a3524; stroke: #3a2919; stroke-width: 2; }
-.barnInside { fill: #5c4330; }
-.barnTrim { fill: none; stroke: #c9a978; stroke-width: 1.5; opacity: .55; }
-/* concrete aisle with a painted centre line and sliding timber doors at both ends */
-.concreteBase { fill: #d6d3cc; }
-.concreteDot { fill: #b9b5ac; }
-.concreteJoint { stroke: #c6c2b9; stroke-width: 1; }
-.aisle { stroke: #3a2919; stroke-width: 1; }
-.aisleLine { stroke: #f4f1ea; stroke-width: 2; stroke-dasharray: 12 9; }
-.aisleText { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; fill: #6f6a5f; }
-.gate rect { fill: #a8743f; stroke: #5b3c1f; stroke-width: 1.5; }
-.gate path { stroke: #5b3c1f; stroke-width: 1.5; }
-.gateText { font-size: 10px; font-weight: 700; fill: #6f6a5f; }
-.rowPill { fill: #2f2117; stroke: #c9a978; stroke-width: 1; }
-.rowText { font-size: 11px; font-weight: 700; fill: #f6ead6; }
-/* stall: straw bedding, timber partitions, barred door, back-wall fittings, door plate */
+/* shell: slate outer wall, warm light floor */
+.barnWall { fill: #3f4654; }
+.barnInside { fill: #f3efe8; }
+/* aisle: flat light concrete, a faint centre line, sliding doors cut into both end walls */
+.aisle { fill: #e6e1d8; }
+.aisleLine { stroke: #d3ccbf; stroke-width: 1.5; stroke-dasharray: 10 8; }
+.aisleText { font-size: 9.5px; font-weight: 700; letter-spacing: .28em; text-transform: uppercase; fill: #a39a8a; }
+.gate line { stroke: #e6e1d8; stroke-width: 7; }
+.gateText { font-size: 9.5px; font-weight: 600; fill: #8a8172; }
+.rowText { font-size: 11px; font-weight: 700; fill: #5b6270; letter-spacing: .02em; }
+/* stall card */
 .stall { outline: none; }
-.strawBase { fill: #e6cf8f; }
-.strawStroke { stroke: #c9a64f; stroke-width: 1.2; stroke-linecap: round; }
-.freshStrawBase { fill: #f3e7c3; }
-.freshStrawStroke { stroke: #dcc58a; stroke-width: 1.1; stroke-linecap: round; }
-.hatchBase { fill: #f3c64b; }
-.hatchLine { fill: #3b3b3b; opacity: .85; }
-.stallFloor { stroke: #3a2919; stroke-width: 1; transition: filter .15s, stroke .15s; }
-.stall[data-state='maintenance'] .stallFloor { opacity: .55; }
-.stall:hover .stallFloor, .stall:focus-visible .stallFloor { filter: brightness(1.06); stroke: var(--color-primary-600); stroke-width: 3; }
-.stall[data-highlight] .stallFloor { stroke: var(--color-primary-600); stroke-width: 4; }
+.stallFloor { fill: #ffffff; stroke: #ddd6ca; stroke-width: 1; transition: stroke .15s, filter .15s; }
+.stall[data-state='occupied'] .stallFloor { fill: #eef6f1; stroke: #b5d6c2; }
+.stall[data-state='maintenance'] .stallFloor { stroke: #e9c77f; }
+.hatchBase { fill: #fffaf0; }
+.hatchLine { fill: #f5dfae; }
+.stall:hover .stallFloor, .stall:focus-visible .stallFloor { stroke: var(--color-primary-600); stroke-width: 2; filter: drop-shadow(0 3px 6px rgba(31, 41, 51, .12)); }
+.stall[data-highlight] .stallFloor { stroke: var(--color-primary-600); stroke-width: 3; }
 .dropOverlay { fill: transparent; pointer-events: none; }
-.stall[data-drop] .dropOverlay { fill: rgba(31, 138, 76, .22); stroke: #1f8a4c; stroke-width: 3; stroke-dasharray: 6 4; }
-.partition { fill: none; stroke: #6b4a2b; stroke-width: 4; stroke-linecap: square; }
-.signBoard { fill: #2f2117; stroke: #c9a978; stroke-width: .8; }
-.stallCode { font-size: 9.5px; font-weight: 700; fill: #f6ead6; letter-spacing: .02em; }
-.bucket { fill: #3b6ea8; stroke: #24476f; stroke-width: 1; }
-.bucketWater { fill: #8cc3f0; }
-.hayRack { fill: #b5c461; stroke: #5b3c1f; stroke-width: 1.2; }
-.hay { stroke: #6e7e2a; stroke-width: 1.3; stroke-linecap: round; }
-.door { fill: #4f5862; stroke: #2e343a; stroke-width: 1; }
-.doorBar { stroke: #aab3bc; stroke-width: 1.2; }
-.stall[data-state='occupied'] .door { fill: #2f6f4f; stroke: #1d4a33; }
-.plate { fill: rgba(255, 255, 255, .92); stroke: #b9a27c; stroke-width: 1; }
-.plateDot { fill: #9aa3ab; }
-.stall[data-state='occupied'] .plateDot { fill: #2f9e63; }
-.stall[data-state='maintenance'] .plateDot { fill: #d98c0b; }
-.stallName { font-size: 10px; font-weight: 700; fill: #1f3d2c; }
-.stallState { font-size: 10.5px; font-weight: 600; fill: #7d715f; }
-.stall[data-state='maintenance'] .stallState { fill: #9a5b06; }
-.stallEmpty { fill: none; stroke: #8d7458; stroke-dasharray: 4 4; }
-/* horse (bay) */
-.horseShadow { fill: rgba(40, 25, 10, .22); }
-.horseBody { fill: #8a5a2e; stroke: #5a3818; stroke-width: 1; }
-.horseMuzzle { fill: #3b2414; }
-.horseEar { fill: #5a3818; }
-.horseMane { stroke: #24160c; stroke-width: 3.2; stroke-linecap: round; fill: none; }
-.horseEye { fill: #1a0f07; }
-.horseLeg { stroke: #6e4423; stroke-width: 4.2; stroke-linecap: round; fill: none; }
-.horseLegFar { stroke: #4f2f17; stroke-width: 4; stroke-linecap: round; fill: none; }
-.horseHoof { stroke: #1f140b; stroke-width: 3; stroke-linecap: round; }
-.horseTail { fill: none; stroke: #24160c; stroke-width: 4.5; stroke-linecap: round; }
-.cone path { fill: #f07c1f; stroke: #b85410; stroke-width: 1; }
-.cone rect { fill: #3b3b3b; }
-.cone .coneStripe { fill: #fff; stroke: none; }
-.ghost circle { fill: rgba(138, 90, 46, .35); stroke: #5a3818; stroke-width: 2; }
-.ghost text { font-size: 12px; font-weight: 700; fill: #2f2117; }
+.stall[data-drop] .dropOverlay { fill: rgba(31, 138, 76, .12); stroke: #1f8a4c; stroke-width: 2.5; stroke-dasharray: 6 4; }
+/* door: the opening breaks the aisle wall line; the leaf is the sliding panel */
+.doorOpening { stroke: #f3efe8; stroke-width: 5; }
+.doorLeaf { stroke: #9aa1ad; stroke-width: 2.5; stroke-linecap: round; }
+.stall[data-state='occupied'] .doorLeaf { stroke: #3d8c63; }
+.stallCode { font-size: 10.5px; font-weight: 700; fill: #3f4654; letter-spacing: .02em; }
+.statusDot { fill: #c3c8cf; }
+.stall[data-state='occupied'] .statusDot { fill: #2f9e63; }
+.stall[data-state='maintenance'] .statusDot { fill: #e0a21b; }
+.stallName { font-size: 11px; font-weight: 700; fill: #1f2933; }
+.stallSub { font-size: 9px; font-weight: 500; fill: #7b8493; letter-spacing: .02em; }
+.stallState { font-size: 10px; font-weight: 600; fill: #8a93a0; }
+.stall[data-state='maintenance'] .stallState { fill: #a86a08; }
+.stallEmpty { fill: none; stroke: #d6cfc2; stroke-dasharray: 4 4; }
+/* horse avatar and empty / maintenance glyphs */
+.avatarRing { fill: #d8ecdf; stroke: #ffffff; stroke-width: 2; }
+.horseHead { fill: #2f5d46; }
+.horseEye { fill: #d8ecdf; }
+.horseMane { fill: none; stroke: #1d3d2d; stroke-width: 1.6; stroke-linecap: round; }
+.emptyRing { fill: none; stroke: #d9dde3; stroke-width: 1.5; stroke-dasharray: 3 3; }
+.maintRing { fill: #fdf0d2; stroke: #f0d293; stroke-width: 1; }
+.maintIcon { fill: none; stroke: #b7791f; stroke-width: 2; stroke-linecap: round; }
+.ghost text { font-size: 11px; font-weight: 700; fill: #1f2933; }
+.ghostPill { fill: #ffffff; stroke: #b5d6c2; stroke-width: 1; filter: drop-shadow(0 2px 4px rgba(31, 41, 51, .18)); }
+.ghost .avatarRing { filter: drop-shadow(0 4px 8px rgba(31, 41, 51, .25)); }
 .viewSwitch { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--color-border-default); border-radius: var(--radius-md); background: var(--color-bg-surface); }
 .viewSwitch button { font: inherit; font-size: 13px; font-weight: 600; padding: 6px 12px; border: 0; border-radius: var(--radius-sm, 6px); background: transparent; color: var(--color-text-secondary); cursor: pointer; }
 .viewSwitch button[aria-pressed='true'] { background: var(--color-primary-600); color: #fff; }

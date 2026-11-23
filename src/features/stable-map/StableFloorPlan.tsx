@@ -6,37 +6,24 @@ import styles from './stableMap.module.css';
 type StallState = 'free' | 'occupied' | 'maintenance';
 const stateOf = (box: MapBox): StallState => box.horse ? 'occupied' : box.boxStatus === 'MAINTENANCE' ? 'maintenance' : 'free';
 const STATE_LABEL: Record<StallState, string> = { free: 'Còn trống', occupied: 'Có ngựa', maintenance: 'Đang bảo trì' };
-const short = (name: string, max = 10) => name.length > max ? `${name.slice(0, max - 1)}…` : name;
+const short = (name: string, max = 12) => name.length > max ? `${name.slice(0, max - 1)}…` : name;
 
-/**
- * A bay horse standing in the stall, drawn from the side so it reads as a horse at a glance (four legs, raised neck,
- * head with ear and muzzle, mane and tail). Local units: body centred on (0, 0), hooves on y = 26; scaled to fit
- * between the back-wall fittings and the door plate.
- */
-function Horse({ cx, cy }: { cx: number; cy: number }) {
-  return <g className={styles.horse} transform={`translate(${cx} ${cy}) scale(0.82)`} aria-hidden="true">
-    <ellipse className={styles.horseShadow} cx={2} cy={27} rx={27} ry={3.2} />
-    <path className={styles.horseTail} d="M -22 -6 Q -33 0 -31 17" />
-    {/* far legs (darker), then the body, then the near legs */}
-    <path className={styles.horseLegFar} d="M -14 4 L -13 25 M 15 4 L 16 25" />
-    <ellipse className={styles.horseBody} cx={0} cy={-1} rx={24} ry={11} />
-    <path className={styles.horseBody} d="M 12 -9 Q 18 -16 23 -29 L 31 -27 Q 27 -14 22 2 Z" />
-    <ellipse className={styles.horseBody} cx={31} cy={-24} rx={10.5} ry={5.6} transform="rotate(32 31 -24)" />
-    <ellipse className={styles.horseMuzzle} cx={38} cy={-19} rx={3.6} ry={3.2} />
-    <path className={styles.horseEar} d="M 23 -30 L 24.5 -38 L 28 -30 Z" />
-    <circle className={styles.horseEye} cx={30} cy={-26} r={1.3} />
-    <path className={styles.horseMane} d="M 13 -10 Q 19 -19 23.5 -30" />
-    <path className={styles.horseLeg} d="M -18 5 L -19 25 M 10 6 L 11 25" />
-    <path className={styles.horseHoof} d="M -21.5 25.5 L -16.5 25.5 M 8.5 25.5 L 13.5 25.5" />
-  </g>;
-}
+/** Horse head in profile (facing left) on a 24 × 24 grid; drawn inside a round avatar. */
+const HORSE_HEAD = 'M 3.2 16.8 C 2.2 16.4 1.9 15.2 2.4 14.2 L 6.6 7.4 C 7.1 6.5 7.6 5.6 8 4.8 L 8.3 2 L 9.6 4.2 '
+  + 'L 10.6 1.8 L 11.2 4.6 C 15.2 5.4 19 8.6 20.4 13.2 C 21.1 15.6 21.3 18.6 21.3 22 L 13.2 22 '
+  + 'C 13 19.4 12.2 17.4 10.9 15.9 C 10.2 16.9 8.8 17.6 7.2 17.6 C 5.7 17.6 4.3 17.3 3.2 16.8 Z';
 
-/** Orange traffic cone for a stall under maintenance. */
-function Cone({ cx, cy }: { cx: number; cy: number }) {
-  return <g className={styles.cone} aria-hidden="true">
-    <rect x={cx - 11} y={cy + 9} width={22} height={4} rx={1.5} />
-    <path d={`M ${cx - 8} ${cy + 9} L ${cx - 2} ${cy - 13} L ${cx + 2} ${cy - 13} L ${cx + 8} ${cy + 9} Z`} />
-    <path className={styles.coneStripe} d={`M ${cx - 5.2} ${cy - 1} L ${cx + 5.2} ${cy - 1} L ${cx + 4.2} ${cy - 5} L ${cx - 4.2} ${cy - 5} Z`} />
+/** The horse avatar: tinted circle, head silhouette (long face, muzzle, two ears, arched neck), eye, nostril, mane. */
+function HorseAvatar({ cx, cy }: { cx: number; cy: number }) {
+  const scale = 1.3;
+  return <g className={styles.avatar} aria-hidden="true">
+    <circle className={styles.avatarRing} cx={cx} cy={cy} r={18} />
+    <g transform={`translate(${cx - 11.6 * scale} ${cy - 12 * scale}) scale(${scale})`}>
+      <path className={styles.horseHead} d={HORSE_HEAD} />
+      <circle className={styles.horseEye} cx={8.7} cy={8.7} r={0.95} />
+      <circle className={styles.horseEye} cx={3.5} cy={14.7} r={0.65} />
+      <path className={styles.horseMane} d="M 11.2 4.6 C 14.6 5.6 17.6 8.2 19 11.8" />
+    </g>
   </g>;
 }
 
@@ -51,19 +38,15 @@ export interface StableFloorPlanProps {
 }
 
 /**
- * DEC-016 2D floor plan of one yard, drawn as a shed-row barn seen from above: timber outer walls, a concrete aisle
- * with sliding barn doors at both ends, and stalls facing the aisle. Each stall has straw bedding, wooden partitions,
- * a barred sliding door on the aisle side, a code sign on the back wall, a hay rack and a water bucket; the horse in it
- * is drawn facing the door with its name on the door plate. A Club Manager can drag a horse onto a free stall; the page
- * confirms the move before calling the API.
+ * DEC-016 2D floor plan of one yard in an architectural style: a shed-row barn seen from above with thin walls, a
+ * shared aisle with sliding doors at both ends, and stalls whose sliding door opens onto the aisle. Each stall is a
+ * card: code and status at the top, the horse (avatar, name, code) or the free / maintenance state in the middle.
+ * A Club Manager can drag a horse onto a free stall; the page confirms the move before calling the API.
  */
 export function StableFloorPlan({ yard, highlight, onSelect, selectable, onMove }: StableFloorPlanProps) {
   const plan = floorPlan(yard.rowCount, yard.columnCount);
   const uid = useId().replace(/[^a-zA-Z0-9-]/g, '');
   const patternId = `hatch-${uid}`;
-  const strawId = `straw-${uid}`;
-  const freshStrawId = `fresh-straw-${uid}`;
-  const concreteId = `concrete-${uid}`;
   const shadowId = `shadow-${uid}`;
   const svgRef = useRef<SVGSVGElement>(null);
   const drag = useRef<{ from: MapBox; x: number; y: number; moved: boolean } | null>(null);
@@ -120,43 +103,42 @@ export function StableFloorPlan({ yard, highlight, onSelect, selectable, onMove 
     const box = byPosition.get(`${rect.rowNo}:${rect.columnNo}`);
     const { x, y } = rect;
     const doorAtBottom = rect.doorSide === 'bottom';
-    const backY = doorAtBottom ? y : y + STALL_H;
     const doorY = doorAtBottom ? y + STALL_H : y;
-    if (!box) return <g key={`${rect.rowNo}-${rect.columnNo}`}><rect className={styles.stallEmpty} x={x + 3} y={y + 3} width={STALL_W - 6} height={STALL_H - 6} rx={4} /></g>;
+    if (!box) return <g key={`${rect.rowNo}-${rect.columnNo}`}><rect className={styles.stallEmpty} x={x + 4} y={y + 4} width={STALL_W - 8} height={STALL_H - 8} rx={8} /></g>;
     const state = stateOf(box);
     const clickable = selectable(box);
     const label = `${box.boxCode}: ${STATE_LABEL[state]}${box.horse ? ` — ${box.horse.name}` : ''}`;
-    const floorFill = state === 'maintenance' ? `url(#${patternId})` : state === 'occupied' ? `url(#${strawId})` : `url(#${freshStrawId})`;
-    // Back-wall fittings (sign, bucket, hay rack) sit just inside the back wall; the door plate just inside the door.
-    const fittingY = doorAtBottom ? y + 6 : y + STALL_H - 19;
-    const plateY = doorAtBottom ? y + STALL_H - 24 : y + 9;
-    const bars = Array.from({ length: 9 }, (_, index) => x + 18 + index * ((STALL_W - 36) / 8));
+    const midX = x + STALL_W / 2;
+    // Content sits away from the door edge: code row near the back wall, details towards the door.
+    const top = doorAtBottom ? y : y + 8;
     return <g key={box.id} id={`box-${box.boxCode}`} data-box-id={box.id} data-state={state}
       data-highlight={highlight === box.boxCode || undefined} data-drop={dropTarget === box.id || undefined}
       className={styles.stall} role={clickable ? 'button' : 'img'} tabIndex={clickable ? 0 : undefined} aria-label={label}
       onClick={() => activate(box)} onKeyDown={key(box)} onPointerDown={start(box)}
       style={{ cursor: onMove && box.horse ? 'grab' : clickable ? 'pointer' : 'default' }}>
       <title>{label}</title>
-      <rect className={styles.stallFloor} x={x + 2} y={y + 2} width={STALL_W - 4} height={STALL_H - 4} rx={2} style={{ fill: floorFill }} />
-      <rect className={styles.dropOverlay} x={x + 2} y={y + 2} width={STALL_W - 4} height={STALL_H - 4} rx={2} />
-      {/* wooden partitions on three sides; the fourth side is the door onto the aisle */}
-      <path className={styles.partition} d={`M ${x + 2} ${doorY} L ${x + 2} ${backY} L ${x + STALL_W - 2} ${backY} L ${x + STALL_W - 2} ${doorY}`} />
-      <rect className={styles.signBoard} x={x + 6} y={fittingY} width={32} height={13} rx={2.5} />
-      <text className={styles.stallCode} x={x + 22} y={fittingY + 9.5} textAnchor="middle">{box.boxCode}</text>
-      <circle className={styles.bucket} cx={x + 50} cy={fittingY + 6.5} r={5} />
-      <circle className={styles.bucketWater} cx={x + 50} cy={fittingY + 6.5} r={3} />
-      <rect className={styles.hayRack} x={x + STALL_W - 32} y={fittingY + 1} width={24} height={11} rx={2} />
-      <path className={styles.hay} d={`M ${x + STALL_W - 29} ${fittingY + 9} l 4 -6 M ${x + STALL_W - 24} ${fittingY + 10} l 3 -7 M ${x + STALL_W - 19} ${fittingY + 9} l 4 -6 M ${x + STALL_W - 14} ${fittingY + 10} l 3 -7`} />
-      {/* barred sliding door on the aisle side */}
-      <rect className={styles.door} x={x + 12} y={doorY - 3.5} width={STALL_W - 24} height={7} rx={2} />
-      {bars.map((barX) => <line key={barX} className={styles.doorBar} x1={barX} x2={barX} y1={doorY - 2.5} y2={doorY + 2.5} />)}
-      {state === 'occupied' && box.horse && <Horse cx={x + STALL_W / 2 - 4} cy={doorAtBottom ? y + 53 : y + 59} />}
-      {state === 'maintenance' && <Cone cx={x + STALL_W / 2} cy={y + STALL_H / 2} />}
-      <rect className={styles.plate} x={x + 10} y={plateY} width={STALL_W - 20} height={15} rx={7.5} />
-      <circle className={styles.plateDot} cx={x + 18} cy={plateY + 7.5} r={3} />
-      <text className={state === 'occupied' ? styles.stallName : styles.stallState} x={x + 25} y={plateY + 11}>
-        {box.horse ? short(box.horse.name) : state === 'maintenance' ? 'Bảo trì' : 'Trống'}
-      </text>
+      <rect className={styles.stallFloor} x={x + 4} y={y + 4} width={STALL_W - 8} height={STALL_H - 8} rx={8}
+        style={state === 'maintenance' ? { fill: `url(#${patternId})` } : undefined} />
+      <rect className={styles.dropOverlay} x={x + 4} y={y + 4} width={STALL_W - 8} height={STALL_H - 8} rx={8} />
+      {/* sliding stall door: an opening in the aisle wall with the door leaf drawn beside it */}
+      <line className={styles.doorOpening} x1={x + 18} x2={x + STALL_W - 18} y1={doorY} y2={doorY} />
+      <line className={styles.doorLeaf} x1={x + 14} x2={x + STALL_W / 2 + 4} y1={doorY + (doorAtBottom ? -3 : 3)} y2={doorY + (doorAtBottom ? -3 : 3)} />
+      <text className={styles.stallCode} x={x + 11} y={top + 20}>{box.boxCode}</text>
+      <circle className={styles.statusDot} cx={x + STALL_W - 15} cy={top + 16} r={4} />
+      {state === 'occupied' && box.horse && <>
+        <HorseAvatar cx={midX} cy={top + 46} />
+        <text className={styles.stallName} x={midX} y={top + 78} textAnchor="middle">{short(box.horse.name)}</text>
+        <text className={styles.stallSub} x={midX} y={top + 90} textAnchor="middle">{box.horse.horseCode}</text>
+      </>}
+      {state === 'free' && <>
+        <circle className={styles.emptyRing} cx={midX} cy={top + 46} r={18} />
+        <text className={styles.stallState} x={midX} y={top + 82} textAnchor="middle">Còn trống</text>
+      </>}
+      {state === 'maintenance' && <>
+        <circle className={styles.maintRing} cx={midX} cy={top + 46} r={18} />
+        <path className={styles.maintIcon} d={`M ${midX - 7} ${top + 53} L ${midX + 3} ${top + 43} M ${midX + 1} ${top + 39} a 5 5 0 1 0 6 6`} />
+        <text className={styles.stallState} x={midX} y={top + 82} textAnchor="middle">Bảo trì</text>
+      </>}
     </g>;
   };
 
@@ -164,49 +146,33 @@ export function StableFloorPlan({ yard, highlight, onSelect, selectable, onMove 
     style={{ maxWidth: plan.width }} role="group" aria-label={`Mặt bằng ${yard.name}: ${yard.rowCount} dãy × ${yard.columnCount} ô`}
     onPointerMove={move} onPointerUp={end} onPointerCancel={() => { drag.current = null; setGhost(null); setDropTarget(null); }}>
     <defs>
-      <pattern id={patternId} width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-        <rect width="12" height="12" className={styles.hatchBase} /><rect width="6" height="12" className={styles.hatchLine} />
+      <pattern id={patternId} width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="10" height="10" className={styles.hatchBase} /><rect width="3" height="10" className={styles.hatchLine} />
       </pattern>
-      <pattern id={strawId} width="14" height="14" patternUnits="userSpaceOnUse">
-        <rect width="14" height="14" className={styles.strawBase} />
-        <path className={styles.strawStroke} d="M 1 3 l 5 2 M 8 1 l 4 4 M 3 9 l 6 -2 M 9 10 l 4 3 M 0 13 l 4 -1" />
-      </pattern>
-      <pattern id={freshStrawId} width="14" height="14" patternUnits="userSpaceOnUse">
-        <rect width="14" height="14" className={styles.freshStrawBase} />
-        <path className={styles.freshStrawStroke} d="M 1 3 l 5 2 M 8 1 l 4 4 M 3 9 l 6 -2 M 9 10 l 4 3 M 0 13 l 4 -1" />
-      </pattern>
-      <pattern id={concreteId} width="24" height="24" patternUnits="userSpaceOnUse">
-        <rect width="24" height="24" className={styles.concreteBase} />
-        <circle cx="5" cy="6" r="0.9" className={styles.concreteDot} /><circle cx="17" cy="15" r="0.8" className={styles.concreteDot} />
-        <circle cx="11" cy="20" r="0.7" className={styles.concreteDot} /><path d="M 0 0 L 24 0" className={styles.concreteJoint} />
-      </pattern>
-      <filter id={shadowId} x="-5%" y="-5%" width="110%" height="115%">
-        <feDropShadow dx="0" dy="3" stdDeviation="4" floodOpacity="0.18" />
+      <filter id={shadowId} x="-3%" y="-6%" width="106%" height="116%">
+        <feDropShadow dx="0" dy="2" stdDeviation="5" floodOpacity="0.10" />
       </filter>
     </defs>
-    <g filter={`url(#${shadowId})`}>
-      <rect className={styles.barnWall} x={WALL / 2} y={WALL / 2} width={plan.width - WALL} height={plan.height - WALL} rx={8} />
-    </g>
-    <rect className={styles.barnInside} x={plan.inner.x} y={plan.inner.y} width={plan.inner.width} height={plan.inner.height} />
-    <rect className={styles.barnTrim} x={WALL - 1.5} y={WALL - 1.5} width={plan.width - 2 * WALL + 3} height={plan.height - 2 * WALL + 3} rx={3} />
+    <rect className={styles.barnWall} x={WALL / 2} y={WALL / 2} width={plan.width - WALL} height={plan.height - WALL} rx={10} filter={`url(#${shadowId})`} />
+    <rect className={styles.barnInside} x={plan.inner.x} y={plan.inner.y} width={plan.inner.width} height={plan.inner.height} rx={4} />
     {plan.aisles.map((aisle, index) => <g key={index}>
-      <rect className={styles.aisle} x={aisle.x} y={aisle.y} width={aisle.width} height={aisle.height} style={{ fill: `url(#${concreteId})` }} />
-      <line className={styles.aisleLine} x1={aisle.x + 60} x2={aisle.x + aisle.width - 60} y1={aisle.y + AISLE_H / 2} y2={aisle.y + AISLE_H / 2} />
-      <text className={styles.aisleText} x={aisle.x + aisle.width / 2} y={aisle.y + AISLE_H / 2 - 7} textAnchor="middle">Lối đi</text>
-      {[0, plan.width - WALL - 4].map((gateX) => <g key={gateX} className={styles.gate}>
-        <rect x={gateX} y={aisle.y + 5} width={WALL + 4} height={AISLE_H - 10} rx={1.5} />
-        <path d={`M ${gateX} ${aisle.y + 5} L ${gateX + WALL + 4} ${aisle.y + AISLE_H - 5} M ${gateX + WALL + 4} ${aisle.y + 5} L ${gateX} ${aisle.y + AISLE_H - 5}`} />
+      <rect className={styles.aisle} x={aisle.x} y={aisle.y} width={aisle.width} height={aisle.height} />
+      <line className={styles.aisleLine} x1={aisle.x + 70} x2={aisle.x + aisle.width - 40} y1={aisle.y + AISLE_H / 2} y2={aisle.y + AISLE_H / 2} />
+      <rect className={styles.aisle} x={aisle.x + aisle.width / 2 - 34} y={aisle.y + AISLE_H / 2 - 9} width={68} height={18} />
+      <text className={styles.aisleText} x={aisle.x + aisle.width / 2} y={aisle.y + AISLE_H / 2 + 4} textAnchor="middle">Lối đi</text>
+      {/* sliding barn doors at both aisle ends */}
+      {[1.5, plan.width - 1.5].map((gateX) => <g key={gateX} className={styles.gate}>
+        <line x1={gateX} x2={gateX} y1={aisle.y + 6} y2={aisle.y + AISLE_H - 6} />
       </g>)}
-      <text className={styles.gateText} x={WALL + 8} y={aisle.y + AISLE_H / 2 + 15}>Cửa</text>
+      <text className={styles.gateText} x={WALL + 6} y={aisle.y + AISLE_H / 2 + 4}>Cửa</text>
     </g>)}
-    {plan.stalls.filter((rect) => rect.columnNo === 1).map((rect) => <g key={`row-${rect.rowNo}`}>
-      <rect className={styles.rowPill} x={WALL + 5} y={rect.y + STALL_H / 2 - 10} width={44} height={20} rx={10} />
-      <text className={styles.rowText} x={WALL + 27} y={rect.y + STALL_H / 2 + 4} textAnchor="middle">{`Dãy ${rowLetter(rect.rowNo)}`}</text>
-    </g>)}
+    {plan.stalls.filter((rect) => rect.columnNo === 1).map((rect) => <text key={`row-${rect.rowNo}`} className={styles.rowText}
+      x={WALL + 28} y={rect.y + STALL_H / 2 + 4} textAnchor="middle">{`Dãy ${rowLetter(rect.rowNo)}`}</text>)}
     {plan.stalls.map(stall)}
     {ghost && <g className={styles.ghost} pointerEvents="none">
-      <circle cx={ghost.x} cy={ghost.y} r={18} />
-      <text x={ghost.x} y={ghost.y - 24} textAnchor="middle">{ghost.name}</text>
+      <HorseAvatar cx={ghost.x} cy={ghost.y} />
+      <rect className={styles.ghostPill} x={ghost.x - (ghost.name.length * 3.4 + 10)} y={ghost.y + 21} width={ghost.name.length * 6.8 + 20} height={18} rx={9} />
+      <text x={ghost.x} y={ghost.y + 34} textAnchor="middle">{ghost.name}</text>
     </g>}
   </svg>;
 }
