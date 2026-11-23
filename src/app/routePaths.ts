@@ -72,6 +72,7 @@ export const ROUTES = {
   billingPrices: '/billing/prices',
   myInvoices: '/owner/invoices',
   vnpayReturn: '/thanh-toan/vnpay',
+  momoReturn: '/thanh-toan/momo',
 } as const;
 
 export function devShellPath(role: string): string {
