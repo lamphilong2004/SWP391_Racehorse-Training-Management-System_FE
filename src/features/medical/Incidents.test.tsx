@@ -53,7 +53,8 @@ it("links to an open case chosen from the horse's cases and keeps the choice on 
   const value = { ...service(), openCases: vi.fn().mockResolvedValue([{ id: 9, openedAt: '2026-11-02T05:00:00Z', reason: 'Theo dõi chân sau' }]) };
   vi.mocked(value.review).mockRejectedValue(new ApiError(409, 'CONFLICT', 'private diagnosis'));
   detail(value); await screen.findByText('Limp after exercise');
-  expect(value.openCases).toHaveBeenCalledWith(incident.horseId);
+  // The incident can render before its open-case effect runs; wait for that request to start.
+  await waitFor(() => expect(value.openCases).toHaveBeenCalledWith(incident.horseId));
   const select = await screen.findByLabelText('Ca y tế của ngựa này');
   expect(screen.getByRole('button', { name: 'Gắn vào ca' })).toBeDisabled();
   fireEvent.change(select, { target: { value: '9' } }); fireEvent.click(screen.getByRole('button', { name: 'Gắn vào ca' }));
