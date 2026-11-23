@@ -4,6 +4,13 @@ import { afterEach } from 'vitest';
 
 configure({ asyncUtilTimeout: 5000 });
 
+// Unit tests never reach a real server; each test stubs fetch itself. Without this default, a request that is still
+// running after its test ended (the tree is unmounted and vi.unstubAllGlobals() restored fetch) goes to
+// http://localhost:8080. When a local backend runs there it answers 401, and the old AuthProvider then clears the shared
+// session of the next test ("Đăng nhập lại…"). The result depended on whether a backend was running on the machine.
+// vi.unstubAllGlobals() restores this function, not the real fetch.
+globalThis.fetch = (() => Promise.reject(new TypeError('fetch failed: unit tests must not reach the network'))) as typeof fetch;
+
 afterEach(() => {
   cleanup();
 });
