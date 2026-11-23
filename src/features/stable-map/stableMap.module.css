@@ -111,8 +111,12 @@ button.cell:focus-visible { outline: 2px solid var(--color-primary-600); outline
 .horseBody { fill: #8a5a2e; stroke: #5a3818; stroke-width: 1; }
 .horseMuzzle { fill: #3b2414; }
 .horseEar { fill: #5a3818; }
-.horseMane { stroke: #24160c; stroke-width: 2.6; stroke-linecap: round; fill: none; }
-.horseTail { fill: none; stroke: #24160c; stroke-width: 4; stroke-linecap: round; }
+.horseMane { stroke: #24160c; stroke-width: 3.2; stroke-linecap: round; fill: none; }
+.horseEye { fill: #1a0f07; }
+.horseLeg { stroke: #6e4423; stroke-width: 4.2; stroke-linecap: round; fill: none; }
+.horseLegFar { stroke: #4f2f17; stroke-width: 4; stroke-linecap: round; fill: none; }
+.horseHoof { stroke: #1f140b; stroke-width: 3; stroke-linecap: round; }
+.horseTail { fill: none; stroke: #24160c; stroke-width: 4.5; stroke-linecap: round; }
 .cone path { fill: #f07c1f; stroke: #b85410; stroke-width: 1; }
 .cone rect { fill: #3b3b3b; }
 .cone .coneStripe { fill: #fff; stroke: none; }

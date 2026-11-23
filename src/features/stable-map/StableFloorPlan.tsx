@@ -9,21 +9,25 @@ const STATE_LABEL: Record<StallState, string> = { free: 'Còn trống', occupied
 const short = (name: string, max = 10) => name.length > max ? `${name.slice(0, max - 1)}…` : name;
 
 /**
- * Top-down horse drawn facing +y (towards the stall door when the door is at the bottom); `dir = -1` mirrors it for a
- * stall whose door is at the top. Shadow, tail, body, neck, head, muzzle, ears and mane.
+ * A bay horse standing in the stall, drawn from the side so it reads as a horse at a glance (four legs, raised neck,
+ * head with ear and muzzle, mane and tail). Local units: body centred on (0, 0), hooves on y = 26; scaled to fit
+ * between the back-wall fittings and the door plate.
  */
-function Horse({ cx, cy, dir }: { cx: number; cy: number; dir: 1 | -1 }) {
-  // Scaled so tail tip (-34) to muzzle (+38) fits between the back-wall fittings and the door plate.
-  return <g className={styles.horse} transform={`translate(${cx} ${cy}) scale(0.75 ${0.75 * dir})`} aria-hidden="true">
-    <ellipse className={styles.horseShadow} cx={2} cy={2} rx={14} ry={30} />
-    <path className={styles.horseTail} d="M 0 -23 q -5 -6 -1 -11" />
-    <ellipse className={styles.horseBody} cx={0} cy={-5} rx={12} ry={19} />
-    <path className={styles.horseBody} d="M -6 9 L 6 9 L 4 24 L -4 24 Z" />
-    <ellipse className={styles.horseBody} cx={0} cy={29} rx={5.5} ry={8} />
-    <ellipse className={styles.horseMuzzle} cx={0} cy={35} rx={3.6} ry={2.8} />
-    <ellipse className={styles.horseEar} cx={-3.2} cy={21} rx={1.5} ry={3} />
-    <ellipse className={styles.horseEar} cx={3.2} cy={21} rx={1.5} ry={3} />
-    <path className={styles.horseMane} d="M 0 6 L 0 22" />
+function Horse({ cx, cy }: { cx: number; cy: number }) {
+  return <g className={styles.horse} transform={`translate(${cx} ${cy}) scale(0.82)`} aria-hidden="true">
+    <ellipse className={styles.horseShadow} cx={2} cy={27} rx={27} ry={3.2} />
+    <path className={styles.horseTail} d="M -22 -6 Q -33 0 -31 17" />
+    {/* far legs (darker), then the body, then the near legs */}
+    <path className={styles.horseLegFar} d="M -14 4 L -13 25 M 15 4 L 16 25" />
+    <ellipse className={styles.horseBody} cx={0} cy={-1} rx={24} ry={11} />
+    <path className={styles.horseBody} d="M 12 -9 Q 18 -16 23 -29 L 31 -27 Q 27 -14 22 2 Z" />
+    <ellipse className={styles.horseBody} cx={31} cy={-24} rx={10.5} ry={5.6} transform="rotate(32 31 -24)" />
+    <ellipse className={styles.horseMuzzle} cx={38} cy={-19} rx={3.6} ry={3.2} />
+    <path className={styles.horseEar} d="M 23 -30 L 24.5 -38 L 28 -30 Z" />
+    <circle className={styles.horseEye} cx={30} cy={-26} r={1.3} />
+    <path className={styles.horseMane} d="M 13 -10 Q 19 -19 23.5 -30" />
+    <path className={styles.horseLeg} d="M -18 5 L -19 25 M 10 6 L 11 25" />
+    <path className={styles.horseHoof} d="M -21.5 25.5 L -16.5 25.5 M 8.5 25.5 L 13.5 25.5" />
   </g>;
 }
 
@@ -116,7 +120,6 @@ export function StableFloorPlan({ yard, highlight, onSelect, selectable, onMove 
     const box = byPosition.get(`${rect.rowNo}:${rect.columnNo}`);
     const { x, y } = rect;
     const doorAtBottom = rect.doorSide === 'bottom';
-    const dir = doorAtBottom ? 1 : -1;
     const backY = doorAtBottom ? y : y + STALL_H;
     const doorY = doorAtBottom ? y + STALL_H : y;
     if (!box) return <g key={`${rect.rowNo}-${rect.columnNo}`}><rect className={styles.stallEmpty} x={x + 3} y={y + 3} width={STALL_W - 6} height={STALL_H - 6} rx={4} /></g>;
@@ -147,7 +150,7 @@ export function StableFloorPlan({ yard, highlight, onSelect, selectable, onMove 
       {/* barred sliding door on the aisle side */}
       <rect className={styles.door} x={x + 12} y={doorY - 3.5} width={STALL_W - 24} height={7} rx={2} />
       {bars.map((barX) => <line key={barX} className={styles.doorBar} x1={barX} x2={barX} y1={doorY - 2.5} y2={doorY + 2.5} />)}
-      {state === 'occupied' && box.horse && <Horse cx={x + STALL_W / 2} cy={doorAtBottom ? y + 47.5 : y + STALL_H - 47.5} dir={dir} />}
+      {state === 'occupied' && box.horse && <Horse cx={x + STALL_W / 2 - 4} cy={doorAtBottom ? y + 53 : y + 59} />}
       {state === 'maintenance' && <Cone cx={x + STALL_W / 2} cy={y + STALL_H / 2} />}
       <rect className={styles.plate} x={x + 10} y={plateY} width={STALL_W - 20} height={15} rx={7.5} />
       <circle className={styles.plateDot} cx={x + 18} cy={plateY + 7.5} r={3} />
