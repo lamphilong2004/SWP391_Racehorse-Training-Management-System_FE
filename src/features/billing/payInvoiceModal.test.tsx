@@ -81,7 +81,7 @@ describe('DEC-016 owner invoice list: pay popup', () => {
     expect(pay).toHaveBeenCalledWith(11, 'VNBANK');
 
     fireEvent.click(within(dialog).getByRole('tab', { name: 'MoMo' }));
-    expect(within(dialog).getByText('MoMo — thẻ ATM thử nghiệm')).toBeInTheDocument();
+    expect(await within(dialog).findByText(/Quét mọi QR/)).toBeInTheDocument();
   });
 
   it('pays by VietQR from the popup: the popup closes and the row turns paid', async () => {

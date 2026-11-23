@@ -1,16 +1,13 @@
-import { AlertBanner } from '../../design-system';
 import styles from './billing.module.css';
 
 /**
- * The shared popup owns submission and cross-provider locking. This tab explains the sandbox method and configuration;
- * it never declares an invoice paid. Return/IPN/query verification stays on the server.
+ * Instructions under the club's QR code in the MoMo tab. Like VietQR: the owner scans the code with the MoMo app
+ * ("Quét mọi QR"), pays from the MoMo wallet, then presses Thanh toán; the server records it as declared by the owner.
+ * The MoMo ATM sandbox gateway stays available as a secondary footer action.
  */
-export function MomoPayTab({ configured }: { configured: boolean }) {
-  return <div className={styles.form}>
-    <AlertBanner type="info" title="MoMo — thẻ ATM thử nghiệm">
-      Bạn sẽ được chuyển sang cổng MoMo test để nhập thẻ ATM thử nghiệm. Không dùng thẻ thật hoặc chuyển tiền thật.
-    </AlertBanner>
-    <p className={styles.hint}>Hóa đơn chỉ được ghi nhận đã thanh toán sau khi máy chủ xác minh kết quả với MoMo. Đóng popup không hủy giao dịch đang chờ trên cổng thanh toán.</p>
-    {!configured && <AlertBanner type="warning" title="MoMo test chưa được cấu hình trên máy chủ." />}
-  </div>;
+export function MomoPayTab({ gatewayConfigured }: { gatewayConfigured: boolean }) {
+  return <>
+    <p className={styles.hint}>Mở app MoMo, chọn &quot;Quét mọi QR&quot;, quét mã để chuyển đúng số tiền và nội dung từ ví MoMo, rồi bấm Thanh toán.</p>
+    {gatewayConfigured && <p className={styles.hint}>Hoặc bấm &quot;Cổng MoMo (thẻ ATM)&quot; để thanh toán qua cổng MoMo thử nghiệm; khi đó hóa đơn chỉ được ghi nhận sau khi MoMo xác nhận.</p>}
+  </>;
 }

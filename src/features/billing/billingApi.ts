@@ -132,6 +132,8 @@ export function createQrApi(token: string, onError: (cause: unknown) => boolean)
     updatePaymentAccount: (body: Omit<PaymentAccount, 'updatedAt' | 'updatedBy'>) => call<PaymentAccount>('/api/billing/payment-account', 'PUT', body),
     qrTransfer: (invoiceId: number) => call<QrTransfer>(`/api/owner/invoices/${invoiceId}/qr-transfer`),
     confirmQrTransfer: (invoiceId: number) => call<PaymentResult>(`/api/owner/invoices/${invoiceId}/qr-transfer`, 'POST', {}),
+    /** MoMo tab: the owner paid the same club QR code from the MoMo app; recorded like VietQR (declared by the owner). */
+    confirmMomoTransfer: (invoiceId: number) => call<PaymentResult>(`/api/owner/invoices/${invoiceId}/momo-transfer`, 'POST', {}),
   };
 }
 export type QrApi = ReturnType<typeof createQrApi>;
