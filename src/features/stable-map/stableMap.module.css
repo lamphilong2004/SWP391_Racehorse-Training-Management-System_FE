@@ -115,3 +115,91 @@ button.cell:focus-visible { outline: 2px solid var(--color-primary-600); outline
 .siteYard strong { font-size: 14px; }
 .siteYard span { font-size: 12px; }
 .moveAction { display: flex; align-items: flex-end; }
+
+/* ---------- Stable map: finder (search + quick filters), legends, hover card, health colours ---------- */
+.finder { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
+.search { display: inline-flex; align-items: center; gap: 8px; flex: 1 1 320px; max-width: 440px; min-height: 40px; padding: 0 12px;
+  border: 1px solid var(--color-border-default); border-radius: var(--radius-md); background: var(--color-bg-surface); color: var(--color-text-secondary); }
+.search:focus-within { border-color: var(--color-primary-600); box-shadow: 0 0 0 3px rgba(31, 138, 76, .12); }
+.search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 14px; color: var(--color-text-primary); }
+.chips { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.chips button { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid var(--color-border-default); border-radius: 999px;
+  background: var(--color-bg-surface); font: inherit; font-size: 13px; font-weight: 600; color: var(--color-text-secondary); cursor: pointer; }
+.chips button span { min-width: 20px; padding: 0 6px; border-radius: 999px; background: var(--color-bg-subtle); font-size: 12px; text-align: center; }
+.chips button:hover { border-color: var(--color-primary-600); color: var(--color-text-primary); }
+.chips button[aria-pressed='true'] { background: var(--color-primary-600); border-color: var(--color-primary-600); color: #fff; }
+.chips button[aria-pressed='true'] span { background: rgba(255, 255, 255, .22); }
+.chips button[data-filter='attention'][aria-pressed='false'] { color: #b42318; }
+.findResult { display: inline-flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; color: var(--color-text-secondary); }
+.clearFind { padding: 0; border: 0; background: none; font: inherit; font-size: 13px; font-weight: 600; color: var(--color-primary-600); cursor: pointer; text-decoration: underline; }
+.legends { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 24px; }
+.healthLegend { display: flex; flex-wrap: wrap; gap: 14px; margin: 0; padding: 0 0 0 24px; list-style: none; font-size: 13px; color: var(--color-text-secondary);
+  border-left: 1px solid var(--color-border-default); }
+.healthLegend li { display: inline-flex; align-items: center; gap: 6px; }
+.healthLegend li::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: #c3c8cf; }
+.healthLegend li[data-health='FIT']::before { background: #2f9e63; }
+.healthLegend li[data-health='MONITORING']::before { background: #e0a21b; }
+.healthLegend li[data-health='INJURED']::before { background: #d92d20; }
+.healthLegend li[data-health='QUARANTINED']::before { background: #7a5af8; }
+
+/* floor plan wrapper: the hover card is positioned in % of the drawing */
+.planWrap { position: relative; width: 100%; }
+.tip { position: absolute; z-index: 5; transform: translate(-50%, calc(-100% - 6px)); min-width: 190px; max-width: 240px; padding: 10px 12px;
+  display: grid; gap: 4px; border-radius: 10px; background: #1f2933; color: #f5f7fa; font-size: 12px; line-height: 1.35;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, .28); pointer-events: none; animation: tipIn .12s ease-out; }
+.tip::after { content: ''; position: absolute; left: 50%; bottom: -5px; width: 10px; height: 10px; background: #1f2933; transform: translateX(-50%) rotate(45deg); }
+.tipHead { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.tipHead strong { font-size: 13px; }
+.tipHead span { color: #aab4c0; font-size: 11px; }
+.tipHorse { display: flex; align-items: baseline; gap: 6px; }
+.tipHorse strong { font-size: 14px; }
+.tipHorse span { color: #aab4c0; }
+.tipHealth, .tipState { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.tipHealth::before, .tipState::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #9aa1ad; }
+.tipHealth[data-health='FIT']::before { background: #3ccb7f; }
+.tipHealth[data-health='MONITORING']::before { background: #fdb022; }
+.tipHealth[data-health='INJURED']::before { background: #f97066; }
+.tipHealth[data-health='QUARANTINED']::before { background: #9b8afb; }
+.tip[data-state='maintenance'] .tipState::before { background: #fdb022; }
+.tipHint { margin-top: 2px; padding-top: 6px; border-top: 1px solid rgba(255, 255, 255, .12); color: #cbd2d9; font-size: 11px; }
+@keyframes tipIn { from { opacity: 0; transform: translate(-50%, calc(-100% + 2px)); } to { opacity: 1; transform: translate(-50%, calc(-100% - 6px)); } }
+
+/* search / filter: other stalls step back */
+.stall[data-dim] { opacity: .28; filter: grayscale(.6); transition: opacity .2s; }
+.cell[data-dim] { opacity: .3; filter: grayscale(.6); }
+
+/* the stall that just received a horse pulses twice */
+.stall[data-pulse] .stallFloor { animation: stallPulse 1.2s ease-out 2; }
+@keyframes stallPulse { 0% { stroke: #1f8a4c; stroke-width: 6; } 100% { stroke-width: 1; } }
+
+/* health: avatar ring and status dot of an occupied stall */
+.avatar[data-health='FIT'] .avatarRing { fill: #d8ecdf; stroke: #2f9e63; stroke-width: 2.5; }
+.avatar[data-health='MONITORING'] .avatarRing { fill: #fdf0d2; stroke: #e0a21b; stroke-width: 2.5; }
+.avatar[data-health='MONITORING'] .horseHead { fill: #8a5a00; }
+.avatar[data-health='INJURED'] .avatarRing { fill: #fde4e2; stroke: #d92d20; stroke-width: 2.5; }
+.avatar[data-health='INJURED'] .horseHead { fill: #912018; }
+.avatar[data-health='QUARANTINED'] .avatarRing { fill: #ece9fe; stroke: #7a5af8; stroke-width: 2.5; }
+.avatar[data-health='QUARANTINED'] .horseHead { fill: #4a2fbd; }
+.avatar[data-health='MONITORING'] .horseEye { fill: #fdf0d2; }
+.avatar[data-health='INJURED'] .horseEye { fill: #fde4e2; }
+.avatar[data-health='QUARANTINED'] .horseEye { fill: #ece9fe; }
+.avatar[data-health='MONITORING'] .horseMane { stroke: #5c3d00; }
+.avatar[data-health='INJURED'] .horseMane { stroke: #5f150f; }
+.avatar[data-health='QUARANTINED'] .horseMane { stroke: #2f1d80; }
+.stall[data-health='MONITORING'] .statusDot { fill: #e0a21b; }
+.stall[data-health='INJURED'] .statusDot { fill: #d92d20; }
+.stall[data-health='QUARANTINED'] .statusDot { fill: #7a5af8; }
+.stall[data-health='UNKNOWN'] .statusDot { fill: #9aa1ad; }
+.stall[data-health='INJURED'] .stallFloor { fill: #fff5f4; stroke: #f4b9b4; }
+.stall[data-health='MONITORING'] .stallFloor { fill: #fffaf0; stroke: #f0d293; }
+.stall[data-health='QUARANTINED'] .stallFloor { fill: #f7f5ff; stroke: #cbbffd; }
+
+/* grid view health tag */
+.cellHealth { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; color: #2f7a52; }
+.cellHealth::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.cellHealth[data-health='MONITORING'] { color: #a86a08; }
+.cellHealth[data-health='INJURED'] { color: #b42318; }
+.cellHealth[data-health='QUARANTINED'] { color: #5b3fd1; }
+.cellHealth[data-health='UNKNOWN'] { color: var(--color-text-secondary); }
+
+@media (prefers-reduced-motion: reduce) { .tip, .stall[data-pulse] .stallFloor { animation: none; } }

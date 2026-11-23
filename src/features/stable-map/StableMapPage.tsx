@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { AlertBanner, Button, Card, EmptyState, ErrorState, LoadingState, MetricCard, Modal, SelectField, TextAreaField, TextField } from '../../design-system';
+import { AlertBanner, Button, Card, EmptyState, ErrorState, Icon, LoadingState, MetricCard, Modal, SelectField, TextAreaField, TextField } from '../../design-system';
 import { AppShell } from '../../layout/AppShell';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { authSession } from '../../shared/auth/authSession';
 import type { RoleCode } from '../../shared/auth/roles';
 import { useSupportingLoad } from '../training/assigned/supportingHooks';
-import { createStableMapApi, toGridBox, type MapBox, type MapYard, type StableMap, type StableMapApi } from './stableMapApi';
+import { createStableMapApi, HEALTH_LABEL, matchesFilter, matchesQuery, toGridBox, type HorseHealth, type MapBox, type MapFilter, type MapYard, type StableMap, type StableMapApi } from './stableMapApi';
 import { GridLegend, StableYardGrid } from './StableYardGrid';
 import { StableFloorPlan } from './StableFloorPlan';
 import styles from './stableMap.module.css';
@@ -18,6 +18,11 @@ function initialView(): '2d' | 'grid' {
   try { return localStorage.getItem(VIEW_KEY) === 'grid' ? 'grid' : '2d'; } catch { return '2d'; }
 }
 type Located = { yard: MapYard; box: MapBox };
+const FILTERS: { value: MapFilter; label: string }[] = [
+  { value: 'all', label: 'Tất cả' }, { value: 'occupied', label: 'Có ngựa' }, { value: 'free', label: 'Còn trống' },
+  { value: 'maintenance', label: 'Bảo trì' }, { value: 'attention', label: 'Cần chú ý' },
+];
+const HEALTH_KEYS: HorseHealth[] = ['FIT', 'MONITORING', 'INJURED', 'QUARANTINED'];
 
 /**
  * DEC-016 "Sơ đồ chuồng": every yard as its real grid with the horse in each box. Capacity = sum of the yard grids.
@@ -45,6 +50,26 @@ function MapContent({ api, manager, canOpenHorse }: { api: StableMapApi; manager
   const [notice, setNotice] = useState('');
   const [view, setView] = useState<'2d' | 'grid'>(initialView);
   const [moving, setMoving] = useState<{ from: Located; to: Located }>();
+  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState<MapFilter>('all');
+  const [pulse, setPulse] = useState<string | null>(null);
+  const allBoxes = current?.yards.flatMap((yard) => yard.boxes) ?? [];
+  const filtering = filter !== 'all' || query.trim() !== '';
+  const matchIds = filtering ? new Set(allBoxes.filter((box) => matchesFilter(box, filter) && matchesQuery(box, query)).map((box) => box.id)) : null;
+  const firstMatchCode = query.trim() && matchIds ? allBoxes.find((box) => matchIds.has(box.id))?.boxCode : undefined;
+  const showFirstMatch = () => { if (firstMatchCode) document.getElementById(`box-${firstMatchCode}`)?.scrollIntoView?.({ block: 'center' }); };
+  useEffect(() => {
+    if (!firstMatchCode) return undefined;
+    // Typing a name brings the first matching stall into view once typing pauses: while keys are still arriving the
+    // browser keeps the focused input in view and cancels a smooth scroll, so the scroll is instant. The timer restarts on every keystroke.
+    const timer = setTimeout(() => document.getElementById(`box-${firstMatchCode}`)?.scrollIntoView?.({ block: 'center' }), 400);
+    return () => clearTimeout(timer);
+  }, [firstMatchCode, query]);
+  useEffect(() => {
+    if (!pulse) return undefined;
+    const timer = setTimeout(() => setPulse(null), 2600);
+    return () => clearTimeout(timer);
+  }, [pulse]);
   const chooseView = (next: '2d' | 'grid') => { setView(next); try { localStorage.setItem(VIEW_KEY, next); } catch { /* per-viewer convenience only */ } };
 
   const focusBox = focus && current ? current.yards.flatMap((yard) => yard.boxes.map((box) => ({ yard, box }))).find(({ box }) => box.boxCode === focus) : undefined;
@@ -80,8 +105,30 @@ function MapContent({ api, manager, canOpenHorse }: { api: StableMapApi; manager
       <MetricCard label="Còn trống" value={String(current.free)} caption={current.free === 0 ? 'Chuồng đã đầy — không nhận thêm ngựa' : 'Có thể xếp ngựa mới'} />
       <MetricCard label="Đang bảo trì" value={String(current.maintenance)} caption="Không xếp ngựa vào ô bảo trì" />
     </div>
+    <div className={styles.finder}>
+      <label className={styles.search}>
+        <Icon name="search" size={16} />
+        <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Tìm ngựa hoặc ô"
+          onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); showFirstMatch(); } }}
+          placeholder="Tìm ngựa hoặc ô: Hoàng Kim, RH-002, A-06…" />
+      </label>
+      <div className={styles.chips} role="group" aria-label="Lọc ô chuồng">
+        {FILTERS.map((item) => <button key={item.value} type="button" aria-pressed={filter === item.value} data-filter={item.value}
+          onClick={() => setFilter(item.value)}>{item.label}<span>{allBoxes.filter((box) => matchesFilter(box, item.value)).length}</span></button>)}
+      </div>
+      {matchIds && <span className={styles.findResult} role="status">
+        {matchIds.size ? `${matchIds.size} ô phù hợp` : 'Không có ô nào phù hợp'}
+        <button type="button" className={styles.clearFind} onClick={() => { setQuery(''); setFilter('all'); }}>Xóa lọc</button>
+      </span>}
+    </div>
     <div className={styles.toolbar}>
-      <GridLegend />
+      <div className={styles.legends}>
+        <GridLegend />
+        <ul className={styles.healthLegend} aria-label="Tình trạng sức khỏe của ngựa">
+          {HEALTH_KEYS.map((key) => <li key={key} data-health={key}>{HEALTH_LABEL[key]}</li>)}
+          <li data-health="UNKNOWN">Chưa đánh giá</li>
+        </ul>
+      </div>
       <div className={styles.viewSwitch} role="group" aria-label="Kiểu hiển thị">
         <button type="button" aria-pressed={view === '2d'} onClick={() => chooseView('2d')}>Mặt bằng 2D</button>
         <button type="button" aria-pressed={view === 'grid'} onClick={() => chooseView('grid')}>Dạng lưới</button>
@@ -110,10 +157,10 @@ function MapContent({ api, manager, canOpenHorse }: { api: StableMapApi; manager
         <span>{`${yard.rowCount} hàng × ${yard.columnCount} cột = ${yard.rowCount * yard.columnCount} ô · ${yard.occupied} có ngựa · ${yard.free} trống · ${yard.maintenance} bảo trì`}</span>
       </div>
       {view === '2d'
-        ? <StableFloorPlan yard={yard} highlight={focus} selectable={(box) => !!box.horse || manager}
+        ? <StableFloorPlan yard={yard} highlight={focus} selectable={(box) => !!box.horse || manager} matchIds={matchIds} pulse={pulse}
           onSelect={(box) => setBoxAction({ yard, box })} onMove={manager ? askMove : undefined} />
         : <div className={styles.scroll}>
-        <StableYardGrid name={yard.name} rowCount={yard.rowCount} columnCount={yard.columnCount} boxes={yard.boxes.map(toGridBox)} highlight={focus}
+        <StableYardGrid name={yard.name} rowCount={yard.rowCount} columnCount={yard.columnCount} boxes={yard.boxes.map(toGridBox)} highlight={focus} matchIds={matchIds}
           onSelect={(cell) => {
             const box = yard.boxes.find((item) => item.id === cell.id);
             if (box) setBoxAction({ yard, box });
@@ -125,7 +172,7 @@ function MapContent({ api, manager, canOpenHorse }: { api: StableMapApi; manager
       onRequestMove={(to) => { setMoving({ from: boxAction, to }); setBoxAction(undefined); }} yard={boxAction.yard} box={boxAction.box} onClose={() => setBoxAction(undefined)}
       onSaved={(next, text) => { setMap(next); setBoxAction(undefined); setNotice(text); }} />}
     {moving && <MoveModal api={api} moving={moving} onClose={() => setMoving(undefined)}
-      onSaved={(next, text) => { setMap(next); setMoving(undefined); setNotice(text); }} />}
+      onSaved={(next, text) => { setMap(next); setPulse(moving.to.box.boxCode); setMoving(undefined); setNotice(text); }} />}
     {addYard && <AddYardModal api={api} map={current} onClose={() => setAddYard(false)}
       onSaved={(next, code) => { setMap(next); setAddYard(false); setNotice(`Đã thêm khu chuồng ${code}.`); }} />}
   </section>;

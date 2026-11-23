@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { currentMonth, invoiceDisplayStatus, monthLabel, paymentDisplayStatus, viDate, vietQrImageUrl, vnd } from '../billing/billingApi';
-import { gridCells, toGridBox, type MapBox } from './stableMapApi';
+import { gridCells, matchesFilter, matchesQuery, normalizeSearch, toGridBox, type MapBox } from './stableMapApi';
 import { StableYardGrid } from './StableYardGrid';
 
 const box = (id: number, rowNo: number, columnNo: number, extra: Partial<MapBox> = {}): MapBox =>
@@ -63,5 +63,35 @@ describe('DEC-016 VietQR transfer', () => {
   it('builds the VietQR quick link with the club account, the exact total and the invoice code', () => {
     const url = vietQrImageUrl({ bankBin: '970436', bankName: 'Vietcombank', accountNo: '0123456789', accountName: 'CLB DUA NGUA G2', amount: 750000, content: 'HD2026110018' });
     expect(url).toBe('https://img.vietqr.io/image/970436-0123456789-compact2.png?amount=750000&addInfo=HD2026110018&accountName=CLB%20DUA%20NGUA%20G2');
+  });
+});
+
+describe('DEC-016 stable map search and quick filters', () => {
+  const horse = (healthStatus?: 'FIT' | 'MONITORING' | 'INJURED' | 'QUARANTINED' | null) =>
+    ({ id: 2, horseCode: 'RH-002', name: 'Hoàng Kim', lifecycle: 'ACTIVE', healthStatus });
+
+  it('finds a horse or a stall without diacritics, case or separators', () => {
+    expect(normalizeSearch('Hoàng Kim Đức')).toBe('hoangkimduc');
+    const occupied = box(6, 1, 6, { horse: horse('FIT') });
+    for (const query of ['hoang kim', 'HOÀNG', 'rh002', 'RH-002', 'a06', 'A-06', '']) expect(matchesQuery(occupied, query)).toBe(true);
+    expect(matchesQuery(occupied, 'Phong Vân')).toBe(false);
+  });
+
+  it('filters by occupancy, maintenance and horses that need attention', () => {
+    const free = box(1, 1, 1);
+    const maintenance = box(2, 1, 2, { boxStatus: 'MAINTENANCE' });
+    const fit = box(3, 1, 3, { horse: horse('FIT') });
+    const injured = box(4, 1, 4, { horse: horse('INJURED') });
+    const unknown = box(5, 1, 5, { horse: horse() });
+    const all = [free, maintenance, fit, injured, unknown];
+    const ids = (filter: Parameters<typeof matchesFilter>[1]) => all.filter((b) => matchesFilter(b, filter)).map((b) => b.id);
+    expect(ids('all')).toEqual([1, 2, 3, 4, 5]);
+    expect(ids('occupied')).toEqual([3, 4, 5]);
+    expect(ids('free')).toEqual([1]);
+    expect(ids('maintenance')).toEqual([2]);
+    expect(ids('attention')).toEqual([4]);
+    expect(toGridBox(injured).health).toBe('INJURED');
+    expect(toGridBox(unknown).health).toBe('UNKNOWN');
+    expect(toGridBox(free).health).toBeUndefined();
   });
 });

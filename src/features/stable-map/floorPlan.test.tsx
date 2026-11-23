@@ -104,3 +104,50 @@ describe('DEC-016 2D floor plan', () => {
     expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 3 }));
   });
 });
+
+describe('DEC-016 floor plan: health, hover card, search and pulse', () => {
+  const injured = { id: 9, horseCode: 'RH-009', name: 'Lam Kiếm', lifecycle: 'ACTIVE', healthStatus: 'INJURED' as const };
+  const fit = { id: 10, horseCode: 'RH-010', name: 'Ánh Dương', lifecycle: 'ACTIVE', healthStatus: 'FIT' as const };
+
+  it('colours each horse by its health and treats a missing status as not assessed', () => {
+    const { container } = render(<StableFloorPlan yard={yard([box(1, 1, 1, { horse: injured }), box(2, 1, 2, { horse: fit }),
+      box(3, 2, 1, { horse: { id: 11, horseCode: 'RH-011', name: 'Cũ', lifecycle: 'ACTIVE' } }), box(4, 2, 2)])}
+      onSelect={vi.fn()} selectable={() => true} />);
+    expect(container.querySelector('#box-A-01')?.getAttribute('data-health')).toBe('INJURED');
+    expect(container.querySelector('#box-A-02')?.getAttribute('data-health')).toBe('FIT');
+    expect(container.querySelector('#box-A-03')?.getAttribute('data-health')).toBe('UNKNOWN');
+    expect(container.querySelector('#box-A-04')?.hasAttribute('data-health')).toBe(false);
+  });
+
+  it('shows a hover card with the horse, its health and what the user can do', () => {
+    render(<StableFloorPlan yard={yard([box(1, 1, 1, { horse: injured }), box(2, 1, 2), box(3, 2, 1), box(4, 2, 2)])}
+      onSelect={vi.fn()} selectable={() => true} onMove={vi.fn()} />);
+    fireEvent.pointerEnter(screen.getByRole('button', { name: 'A-01: Có ngựa — Lam Kiếm' }));
+    expect(screen.getByText('Khu chuồng A · dãy A, cột 1')).toBeInTheDocument();
+    expect(screen.getByText('Chấn thương')).toBeInTheDocument();
+    expect(screen.getByText('Bấm để xem chi tiết · Kéo sang ô trống để chuyển chuồng')).toBeInTheDocument();
+    fireEvent.pointerLeave(screen.getByRole('button', { name: 'A-01: Có ngựa — Lam Kiếm' }));
+    expect(screen.queryByText('Chấn thương')).not.toBeInTheDocument();
+  });
+
+  it('offers no drag hint to a role that cannot move horses, and opens the card on keyboard focus', () => {
+    render(<StableFloorPlan yard={yard([box(1, 1, 1, { horse: fit }), box(2, 1, 2), box(3, 2, 1), box(4, 2, 2)])}
+      onSelect={vi.fn()} selectable={(b) => !!b.horse} />);
+    fireEvent.focus(screen.getByRole('button', { name: 'A-01: Có ngựa — Ánh Dương' }));
+    expect(screen.getByText('Khỏe mạnh')).toBeInTheDocument();
+    expect(screen.getByText('Bấm để xem chi tiết')).toBeInTheDocument();
+    expect(screen.queryByText(/Kéo sang ô trống/)).not.toBeInTheDocument();
+  });
+
+  it('dims stalls outside the search result and pulses the stall that just received a horse', () => {
+    const { container } = render(<StableFloorPlan yard={yard([box(1, 1, 1, { horse: injured }), box(2, 1, 2), box(3, 2, 1), box(4, 2, 2)])}
+      onSelect={vi.fn()} selectable={() => true} matchIds={new Set([1])} pulse="A-01" />);
+    expect(container.querySelector('#box-A-01')?.hasAttribute('data-dim')).toBe(false);
+    expect(container.querySelector('#box-A-02')?.hasAttribute('data-dim')).toBe(true);
+    expect(container.querySelector('#box-A-01')?.hasAttribute('data-pulse')).toBe(true);
+    fireEvent.pointerEnter(screen.getByRole('button', { name: 'A-02: Còn trống' }));
+    expect(screen.queryByText('Còn trống', { selector: 'div' })).not.toBeInTheDocument();
+    fireEvent.pointerEnter(screen.getByRole('button', { name: 'A-01: Có ngựa — Lam Kiếm' }));
+    expect(screen.getByText('Chấn thương')).toBeInTheDocument();
+  });
+});
