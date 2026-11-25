@@ -71,10 +71,10 @@ describe('DEC-016 owner invoice detail: details only, payment in the popup', () 
     expect(screen.queryByRole('button', { name: 'Thanh toán hóa đơn HD-2026-11-0001' })).not.toBeInTheDocument();
   });
 
-  it('opens the same popup as the list, VNPay first with the ATM card as its only method', async () => {
+  it('opens the same popup as the list (VNPay and VietQR), VNPay first with the ATM card as its only method', async () => {
     const { pay } = setup();
     const dialog = await openPopup();
-    expect(within(dialog).getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['VNPay', 'MoMo', 'VietQR']);
+    expect(within(dialog).getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['VNPay', 'VietQR']);
     await within(dialog).findByRole('button', { name: 'Thanh toán qua VNPay' });
     expect(within(dialog).getByText('Thẻ ATM / tài khoản ngân hàng')).toBeInTheDocument();
     expect(within(dialog).queryByRole('radio')).not.toBeInTheDocument();
