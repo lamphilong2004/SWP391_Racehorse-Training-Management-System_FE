@@ -47,7 +47,7 @@ export function OwnerList({ api, qrApi }: { api: BillingApi; qrApi: QrApi }) {
       <div>
         <p className={styles.eyebrow}>Cổng thông tin Horse Owner</p>
         <h1>Hóa đơn & thanh toán</h1>
-        <p>Phí lưu chuồng, chăm sóc và huấn luyện ngựa của bạn, tính theo tháng. Bấm Thanh toán ở cuối mỗi hóa đơn để trả qua VNPay, MoMo hoặc mã VietQR.</p>
+        <p>Phí lưu chuồng, chăm sóc và huấn luyện ngựa của bạn, tính theo tháng. Bấm Thanh toán ở cuối mỗi hóa đơn để trả qua VNPay hoặc mã VietQR.</p>
       </div>
     </header>
     {paid && <AlertBanner feedback type="success" title={`Đã thanh toán hóa đơn ${paid.invoiceCode}.`}>{paid.message}</AlertBanner>}

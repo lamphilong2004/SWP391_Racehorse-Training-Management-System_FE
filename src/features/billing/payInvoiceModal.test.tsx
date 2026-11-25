@@ -69,10 +69,10 @@ describe('DEC-016 owner invoice list: pay popup', () => {
     expect(screen.getByText('Đã thanh toán')).toBeInTheDocument();
   });
 
-  it('opens a popup with VNPay, MoMo and VietQR tabs, VNPay first with the ATM card as its only method', async () => {
+  it('opens a popup with VNPay and VietQR tabs only, VNPay first with the ATM card as its only method', async () => {
     const { pay } = setup();
     const dialog = await openPopup();
-    expect(within(dialog).getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['VNPay', 'MoMo', 'VietQR']);
+    expect(within(dialog).getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['VNPay', 'VietQR']);
     await within(dialog).findByRole('button', { name: 'Thanh toán qua VNPay' });
     expect(within(dialog).getByText('Thẻ ATM / tài khoản ngân hàng')).toBeInTheDocument();
     expect(within(dialog).queryByRole('radio')).not.toBeInTheDocument();
@@ -80,8 +80,6 @@ describe('DEC-016 owner invoice list: pay popup', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Thanh toán qua VNPay' }));
     expect(pay).toHaveBeenCalledWith(11, 'VNBANK');
 
-    fireEvent.click(within(dialog).getByRole('tab', { name: 'MoMo' }));
-    expect(within(dialog).getByText('MoMo — thẻ ATM thử nghiệm')).toBeInTheDocument();
   });
 
   it('pays by VietQR from the popup: the popup closes and the row turns paid', async () => {
