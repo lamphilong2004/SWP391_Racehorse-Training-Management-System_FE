@@ -148,6 +148,13 @@ button.cell:focus-visible { outline: 2px solid var(--color-primary-600); outline
   display: grid; gap: 4px; border-radius: 10px; background: #1f2933; color: #f5f7fa; font-size: 12px; line-height: 1.35;
   box-shadow: 0 8px 24px rgba(15, 23, 42, .28); pointer-events: none; animation: tipIn .12s ease-out; }
 .tip::after { content: ''; position: absolute; left: 50%; bottom: -5px; width: 10px; height: 10px; background: #1f2933; transform: translateX(-50%) rotate(45deg); }
+/* first / last column: align the card to the stall's outer edge so it stays inside the plan */
+.tip[data-align='start'] { transform: translate(0, calc(-100% - 6px)); animation-name: tipInStart; }
+.tip[data-align='start']::after { left: 40px; }
+.tip[data-align='end'] { transform: translate(-100%, calc(-100% - 6px)); animation-name: tipInEnd; }
+.tip[data-align='end']::after { left: auto; right: 35px; }
+@keyframes tipInStart { from { opacity: 0; transform: translate(0, calc(-100% + 2px)); } to { opacity: 1; transform: translate(0, calc(-100% - 6px)); } }
+@keyframes tipInEnd { from { opacity: 0; transform: translate(-100%, calc(-100% + 2px)); } to { opacity: 1; transform: translate(-100%, calc(-100% - 6px)); } }
 .tipHead { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .tipHead strong { font-size: 13px; }
 .tipHead span { color: #aab4c0; font-size: 11px; }

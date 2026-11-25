@@ -117,15 +117,19 @@ export function StableFloorPlan({ yard, highlight, onSelect, selectable, onMove,
     // Content sits away from the door edge: code row near the back wall, details towards the door.
     const top = doorAtBottom ? y : y + 8;
     const leave = () => setHover((current) => current === box.id ? null : current);
+    // Health is announced as the stall's description (the name stays "A-01: Có ngựa — Tên"), so a screen reader hears
+    // it on focus even though the avatar colours and the hover card are visual only.
+    const healthId = box.horse ? `${uid}-health-${box.id}` : undefined;
     return <g key={box.id} id={`box-${box.boxCode}`} data-box-id={box.id} data-state={state}
       data-health={box.horse ? healthOf(box.horse) : undefined} data-dim={(matchIds && !matchIds.has(box.id)) || undefined}
       data-pulse={pulse === box.boxCode || undefined}
       data-highlight={highlight === box.boxCode || undefined} data-drop={dropTarget === box.id || undefined}
-      className={styles.stall} role={clickable ? 'button' : 'img'} tabIndex={clickable ? 0 : undefined} aria-label={label}
+      className={styles.stall} role={clickable ? 'button' : 'img'} tabIndex={clickable ? 0 : undefined} aria-label={label} aria-describedby={healthId}
       onClick={() => activate(box)} onKeyDown={key(box)} onPointerDown={start(box)}
       onPointerEnter={() => setHover(box.id)} onPointerLeave={leave} onFocus={() => setHover(box.id)} onBlur={leave}
       style={{ cursor: onMove && box.horse ? 'grab' : clickable ? 'pointer' : 'default' }}>
       <title>{label}</title>
+      {box.horse && <desc id={healthId}>{`Sức khỏe: ${healthLabel(healthOf(box.horse))}`}</desc>}
       <rect className={styles.stallFloor} x={x + 4} y={y + 4} width={STALL_W - 8} height={STALL_H - 8} rx={8}
         style={state === 'maintenance' ? { fill: `url(#${patternId})` } : undefined} />
       <rect className={styles.dropOverlay} x={x + 4} y={y + 4} width={STALL_W - 8} height={STALL_H - 8} rx={8} />
@@ -160,9 +164,14 @@ export function StableFloorPlan({ yard, highlight, onSelect, selectable, onMove,
     if (selectable(hovered)) hints.push(state === 'occupied' ? 'Bấm để xem chi tiết' : state === 'maintenance' ? 'Bấm để mở lại ô' : 'Bấm để đặt ô vào bảo trì');
     if (onMove && hovered.horse) hints.push('Kéo sang ô trống để chuyển chuồng');
     const health = healthOf(hovered.horse);
-    // Decorative: the same facts are in the stall's accessible name; aria-hidden keeps screen readers from reading twice.
-    return <div className={styles.tip} aria-hidden="true" data-state={state}
-      style={{ left: `${(hoveredRect.x + STALL_W / 2) / plan.width * 100}%`, top: `${(hoveredRect.y + 2) / plan.height * 100}%` }}>
+    // Centred over the stall, except at the ends of the plan: there the card is aligned to the stall's outer edge so it
+    // never leaves the drawing (the first / last column of a narrow yard or viewport).
+    const centre = hoveredRect.x + STALL_W / 2;
+    const align = centre < 130 ? 'start' : centre > plan.width - 130 ? 'end' : 'center';
+    const anchor = align === 'start' ? hoveredRect.x : align === 'end' ? hoveredRect.x + STALL_W : centre;
+    // Visual only: the stall's accessible name and description (code, state, horse, health) already carry these facts.
+    return <div className={styles.tip} aria-hidden="true" data-state={state} data-align={align}
+      style={{ left: `${anchor / plan.width * 100}%`, top: `${(hoveredRect.y + 2) / plan.height * 100}%` }}>
       <div className={styles.tipHead}><strong>{hovered.boxCode}</strong><span>{`${yard.name} · dãy ${rowLetter(hovered.rowNo)}, cột ${hovered.columnNo}`}</span></div>
       {hovered.horse
         ? <>

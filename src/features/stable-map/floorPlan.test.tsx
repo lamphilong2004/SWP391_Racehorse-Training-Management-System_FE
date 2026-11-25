@@ -151,3 +151,28 @@ describe('DEC-016 floor plan: health, hover card, search and pulse', () => {
     expect(screen.getByText('Chấn thương')).toBeInTheDocument();
   });
 });
+
+describe('DEC-016 floor plan: review fixes (accessible health, card at the edges)', () => {
+  const injured = { id: 9, horseCode: 'RH-009', name: 'Lam Kiếm', lifecycle: 'ACTIVE', healthStatus: 'INJURED' as const };
+  const unassessed = { id: 10, horseCode: 'RH-010', name: 'Ánh Dương', lifecycle: 'ACTIVE' };
+
+  it('announces each horse\'s health as the stall description, also when it was never assessed', () => {
+    render(<StableFloorPlan yard={yard([box(1, 1, 1, { horse: injured }), box(2, 1, 2, { horse: unassessed }), box(3, 2, 1), box(4, 2, 2)])}
+      onSelect={vi.fn()} selectable={() => true} />);
+    expect(screen.getByRole('button', { name: 'A-01: Có ngựa — Lam Kiếm' })).toHaveAccessibleDescription('Sức khỏe: Chấn thương');
+    expect(screen.getByRole('button', { name: 'A-02: Có ngựa — Ánh Dương' })).toHaveAccessibleDescription('Sức khỏe: Chưa đánh giá sức khỏe');
+    expect(screen.getByRole('button', { name: 'A-03: Còn trống' })).not.toHaveAttribute('aria-describedby');
+  });
+
+  it('keeps the hover card inside the plan for the first and last column', () => {
+    const boxes = Array.from({ length: 10 }, (_, index) => box(index + 1, 1, index + 1, { horse: { ...injured, id: 100 + index } }));
+    const { container } = render(<StableFloorPlan yard={yard(boxes, 1, 10)} onSelect={vi.fn()} selectable={() => true} />);
+    const tip = () => container.querySelector('[data-align]');
+    fireEvent.focus(container.querySelector('#box-A-01')!);
+    expect(tip()?.getAttribute('data-align')).toBe('start');
+    fireEvent.focus(container.querySelector('#box-A-05')!);
+    expect(tip()?.getAttribute('data-align')).toBe('center');
+    fireEvent.focus(container.querySelector('#box-A-10')!);
+    expect(tip()?.getAttribute('data-align')).toBe('end');
+  });
+});
