@@ -18,7 +18,7 @@ import { PageHeader } from '../../layout/PageHeader';
 import { useAuth } from '../../shared/auth/AuthProvider';
 import { authSession } from '../../shared/auth/authSession';
 import type { RoleCode } from '../../shared/auth/roles';
-import { IncidentReportModal, IncidentReportReceipt, type IncidentCreateRequest } from '../../shared/incidents';
+import { createIncidentPhotoApi, IncidentPhotoGallery, IncidentReportModal, IncidentReportReceipt, type IncidentCreateRequest, type IncidentPhotoApi } from '../../shared/incidents';
 import { MEDICAL_ROUTES } from './paths';
 import { createIncidentService, type IncidentService, type OpenCase } from './incidentService';
 import { readHorseIdentity } from './horseRead';
@@ -42,6 +42,7 @@ export function IncidentAccess({ detail = false }: { detail?: boolean }) {
   const role = actor?.roles.find((r) => allowed.includes(r));
   const service = useMemo(() => token && actor ? createIncidentService(token, actor, auth.handleApiError) : null, [token, actor, auth.handleApiError]);
   const horse = useMemo(() => token ? (id: number) => readHorseIdentity(token, id, auth.handleApiError) : undefined, [token, auth.handleApiError]);
+  const photos = useMemo(() => createIncidentPhotoApi({ handleApiError: auth.handleApiError }), [auth.handleApiError]);
   // BR-35 cho Groom báo quan sát tại chuồng; bộ chọn hiện chỉ lấy trang đầu,
   // tối đa 100 ngựa ACTIVE rồi lọc currentBoxCode có giá trị. Không phải mọi ngựa
   // đủ điều kiện đều chắc chắn có trong bộ chọn; BE vẫn kiểm quyền khi gửi báo cáo.
@@ -64,7 +65,7 @@ export function IncidentAccess({ detail = false }: { detail?: boolean }) {
   return <AppShell user={{ fullName: actor.fullName, role }} breadcrumb={[{ label: 'Sự cố', to: MEDICAL_ROUTES.incidents }]}>
     <UiPreviewNotice />
     <div className="medical-stack" key={`${actor.id}:${auth.expiresAt}`}>
-      {detail ? <IncidentDetailPage service={service} role={role} actorId={actor.id} horse={horse} reporter={reporter} /> : <IncidentListPage service={service} role={role} actorId={actor.id} horse={horse} reporter={reporter} stableHorses={stableHorses} />}
+      {detail ? <IncidentDetailPage service={service} role={role} actorId={actor.id} horse={horse} reporter={reporter} photos={photos} /> : <IncidentListPage service={service} role={role} actorId={actor.id} horse={horse} reporter={reporter} stableHorses={stableHorses} />}
     </div>
   </AppShell>;
 }
@@ -115,7 +116,7 @@ export function IncidentListPage({ service, role, actorId, horse, reporter, stab
   const matchesFocus = (item: Incident) => !focus || (focus === 'HIGH_OPEN' ? item.observedSeverity === 'HIGH' && item.status !== 'RESOLVED' : item.status === focus);
   const rows = items.filter((item) => matchesFocus(item) && (!horseFilter || String(item.horseId) === horseFilter) && [item.incidentCode, item.description, item.reportedByName, labelType(item.incidentType)].join(' ').toLowerCase().includes(query.toLowerCase()))
     .sort((a, b) => triage ? STATUS_ORDER[a.status] - STATUS_ORDER[b.status] || SEVERITY_ORDER[a.observedSeverity] - SEVERITY_ORDER[b.observedSeverity] || Date.parse(b.reportedAt) - Date.parse(a.reportedAt) : 0);
-  async function submit(input: IncidentCreateRequest) { try { const created = await service.report(input); setSuccess(created); state.reload(); } catch (error) { throw new Error(safeError(error), { cause: error }); } }
+  async function submit(input: IncidentCreateRequest) { try { const created = await service.report(input); setSuccess(created); state.reload(); return created; } catch (error) { throw new Error(safeError(error), { cause: error }); } }
   const description = role === 'VETERINARIAN' ? 'Tiếp nhận báo cáo của Groom, Work Rider và Trainer: mở ca y tế, gắn vào ca đang mở hoặc đóng sự cố.'
     : triage ? 'Theo dõi báo cáo sự cố của đàn ngựa. Veterinarian tiếp nhận và xử lý.' : 'Sự cố bạn đã báo và tiến trình xử lý của Veterinarian.';
   const tiles: { key: 'REPORTED' | 'UNDER_REVIEW' | 'HIGH_OPEN'; label: string; hint: string }[] = [
@@ -165,12 +166,12 @@ function IncidentHorseStatus({ horseId, read }: { horseId: number; read?: HorseR
     : <LoadingState label="Đang tải tình trạng ngựa…" />}</Card>;
   return <Card title="Tình trạng ngựa hiện tại">{state.data ? <div className="medical-stack"><KeyValue label="Tình trạng sức khỏe" value={state.data.healthStatus ? <StatusBadge family="health" status={state.data.healthStatus} /> : 'Chưa đánh giá'} /><KeyValue label="Khả năng tập luyện" value={<StatusBadge family="availability" status={state.data.trainingAvailability} />} /><p className="text-caption">Báo cáo sự cố không thay đổi các trạng thái này. Chỉ đội thú y được cập nhật.</p></div> : <p>Không tải được tình trạng ngựa.</p>}</Card>;
 }
-export function IncidentDetailPage({ service, role, actorId, horse, reporter }: { service: IncidentService; role: RoleCode; actorId?: number; horse?: HorseReader; reporter?: UserReader }) {
+export function IncidentDetailPage({ service, role, actorId, horse, reporter, photos }: { service: IncidentService; role: RoleCode; actorId?: number; horse?: HorseReader; reporter?: UserReader; photos?: IncidentPhotoApi }) {
   const { incidentId = '' } = useParams(); const id = Number(incidentId);
   if (!/^\d+$/.test(incidentId) || !Number.isSafeInteger(id) || id < 1) return <div className="medical-stack"><ButtonLink variant="tertiary" to={MEDICAL_ROUTES.incidents}>← Quay lại danh sách sự cố</ButtonLink><EmptyState title="Không tìm thấy sự cố" /></div>;
-  return <IncidentDetail key={id} id={id} service={service} role={role} actorId={actorId} horse={horse} reporter={reporter} />;
+  return <IncidentDetail key={id} id={id} service={service} role={role} actorId={actorId} horse={horse} reporter={reporter} photos={photos} />;
 }
-function IncidentDetail({ id, service, role, actorId, horse, reporter }: { id: number; service: IncidentService; role: RoleCode; actorId?: number; horse?: HorseReader; reporter?: UserReader }) {
+function IncidentDetail({ id, service, role, actorId, horse, reporter, photos }: { id: number; service: IncidentService; role: RoleCode; actorId?: number; horse?: HorseReader; reporter?: UserReader; photos?: IncidentPhotoApi }) {
   const load = useCallback(() => service.get(id), [service, id]), state = useIncidentRead(load);
   const [busy, setBusy] = useState(false), [caseId, setCaseId] = useState(''), [error, setError] = useState(''), [confirmResolve, setConfirmResolve] = useState(false);
   const [openCases, setOpenCases] = useState<OpenCase[]>();
@@ -223,6 +224,7 @@ function IncidentDetail({ id, service, role, actorId, horse, reporter }: { id: n
           <div className="medical-incident-details"><KeyValue label="Ngựa" value={<IncidentHorse horseId={item.horseId} read={horse} />} /><KeyValue label="Vấn đề" value={<span className="medical-incident-problem">{labelType(item.incidentType)}<Severity value={item.observedSeverity} /></span>} /></div>
           <blockquote className="medical-incident-quote">{item.description || 'Người báo không ghi mô tả.'}</blockquote>
         </div></Card>
+        {photos && <Card title="Ảnh hiện trường"><IncidentPhotoGallery api={photos} incidentId={item.id} canAdd={item.reportedByUserId === actorId && item.status !== 'RESOLVED'} /></Card>}
       </div><aside className="medical-stack">
         {role === 'VETERINARIAN' ? <Card title={item.status === 'RESOLVED' ? 'Đã xử lý' : 'Quyết định xử lý'}>
           {error && <AlertBanner feedback type="danger" title={error} />}

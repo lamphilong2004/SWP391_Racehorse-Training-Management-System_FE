@@ -123,7 +123,7 @@ function DayTasks({ api, role, date, onEditing }: { api: StableCareApi; role: Ro
     ]} />}
     {/* careTaskId giữ nguồn công việc cho báo cáo. Kết quả id/incidentCode chỉ là
         biên nhận sự cố, không phải xác nhận đã mở/đóng ca, hoàn thành việc hay ghi kho. */}
-    {report && <IncidentReportModal open source={{ kind: 'groom', horseId: report.horseId, horseLabel: report.horseName, careTaskId: report.id, contextLabel: `${labels[report.taskType]} · ${report.taskDate}` }} onClose={() => setReport(null)} onSubmit={async body => { const result = await api.reportIncident(body); if (!Number.isSafeInteger(result.id) || result.id < 1 || !result.incidentCode) throw new Error('Chưa xác nhận được báo cáo. Hãy xem danh sách sự cố trước khi thử lại.'); setReported(result); setReport(null); }} />}
+    {report && <IncidentReportModal open source={{ kind: 'groom', horseId: report.horseId, horseLabel: report.horseName, careTaskId: report.id, contextLabel: `${labels[report.taskType]} · ${report.taskDate}` }} onClose={() => setReport(null)} onSubmit={async body => { const result = await api.reportIncident(body); if (!Number.isSafeInteger(result.id) || result.id < 1 || !result.incidentCode) throw new Error('Chưa xác nhận được báo cáo. Hãy xem danh sách sự cố trước khi thử lại.'); setReported(result); return result; }} />}
     {edit && <TaskEditor api={api} task={edit.task} mode={edit.mode} onClose={() => setEdit(null)} onSaved={() => { setNotice(edit.mode === 'cancel' ? 'Đã hủy công việc. Lịch sử được giữ nguyên.' : 'Đã đổi Groom phụ trách và gửi thông báo cho Groom mới.'); setEdit(null); data.retry(); }} />}
     {history && <TaskHistory api={api} task={history} onClose={() => setHistory(null)} />}
   </>;
