@@ -79,3 +79,32 @@ describe('Flow 3 step 3.1: incident scene photos', () => {
     expect(screen.queryByRole('button', { name: 'Thêm ảnh' })).not.toBeInTheDocument();
   });
 });
+
+describe('incident photo gallery: a failed refresh is never silent (review #80)', () => {
+  const pick = (files: File[]) => fireEvent.change(screen.getByLabelText('Chọn ảnh hiện trường'), { target: { files } });
+  const png = (name: string) => new File([new Uint8Array(10)], name, { type: 'image/png' });
+  const api = (first: { id: number; uploadedAt: string }[]): IncidentPhotoApi => ({
+    list: vi.fn().mockResolvedValueOnce(first).mockRejectedValueOnce(new Error('offline')).mockResolvedValue([...first, { id: 41, uploadedAt: '2026-11-26T03:00:00Z' }]),
+    upload: vi.fn().mockResolvedValue({ id: 41, uploadedAt: '2026-11-26T03:00:00Z' }),
+    image: vi.fn().mockResolvedValue(new Blob(['x'], { type: 'image/png' })),
+  });
+
+  it.each([
+    ['an empty gallery', []],
+    ['a gallery that already has photos', [{ id: 40, uploadedAt: '2026-11-26T02:00:00Z' }]],
+  ])('keeps the confirmed upload, shows the refresh failure and retries the list without uploading again (%s)', async (_, first) => {
+    const gallery = api(first);
+    render(<IncidentPhotoGallery api={gallery} incidentId={9} canAdd />);
+    await screen.findByText(/Còn thêm được/);
+    pick([png('d.png')]);
+    expect(await screen.findByText('Không tải lại được danh sách ảnh.')).toBeInTheDocument();
+    expect(document.querySelector('[data-photo-id="41"]')).not.toBeNull();
+    expect(screen.queryByText('Chưa có ảnh nào.')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Thêm ảnh' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Thử lại' }));
+    await waitFor(() => expect(screen.queryByText('Không tải lại được danh sách ảnh.')).not.toBeInTheDocument());
+    expect(screen.getByText(`Còn thêm được ${5 - first.length - 1} ảnh · JPEG, PNG, WebP ≤ 5 MB`)).toBeInTheDocument();
+    expect(gallery.upload).toHaveBeenCalledOnce();
+    expect(gallery.list).toHaveBeenCalledTimes(3);
+  });
+});

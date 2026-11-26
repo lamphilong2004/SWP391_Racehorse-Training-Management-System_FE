@@ -79,19 +79,25 @@ export function IncidentPhotoGallery({ api, incidentId, canAdd }: { api: Inciden
   }, [api, incidentId]);
   useEffect(load, [load]);
   const room = MAX_INCIDENT_PHOTOS - (photos?.length ?? MAX_INCIDENT_PHOTOS);
+  // After the first load, a failed refresh keeps the last known photos but must be visible: the count may be stale,
+  // so adding is paused until the list is read again (never ask the user to upload the same evidence twice).
+  const refreshFailed = photos !== undefined && loadError;
   async function add(list: FileList | null) {
     const result = accept([...(list ?? [])], room);
     if (input.current) input.current.value = '';
     setError(result.error);
     if (!result.files.length) return;
     let failed = 0;
+    const saved: IncidentPhoto[] = [];
     for (const [index, file] of result.files.entries()) {
       if (!mounted.current) return;
       setBusy(`Đang tải ảnh ${index + 1}/${result.files.length}…`);
-      try { await api.upload(incidentId, file); } catch { failed += 1; }
+      try { saved.push(await api.upload(incidentId, file)); } catch { failed += 1; }
     }
     if (!mounted.current) return;
     setBusy('');
+    // The server confirmed these photos: show them now, even if the read-back below fails.
+    if (saved.length) setPhotos((current) => [...(current ?? []), ...saved.filter((photo) => !current?.some((item) => item.id === photo.id))]);
     if (failed) setError(`${failed} ảnh chưa tải lên được. Hãy thử lại.`);
     load();
   }
@@ -102,7 +108,10 @@ export function IncidentPhotoGallery({ api, incidentId, canAdd }: { api: Inciden
       : <>
         {photos.length ? <div className={styles.thumbs}>{photos.map((photo, index) => <PhotoThumb key={photo.id} api={api} incidentId={incidentId} photo={photo} index={index} onOpen={setLarge} />)}</div>
           : <p className={styles.hint}>Chưa có ảnh nào.</p>}
-        {canAdd && room > 0 && <div className={styles.addRow}>
+        {refreshFailed && <AlertBanner type="warning" title="Không tải lại được danh sách ảnh.">
+          <p>Ảnh đã tải lên vẫn được lưu. Bấm Thử lại để xem danh sách mới nhất, không cần tải ảnh lại.</p>
+          <Button size="sm" variant="secondary" onClick={load}>Thử lại</Button></AlertBanner>}
+        {canAdd && room > 0 && !refreshFailed && <div className={styles.addRow}>
           <Button size="sm" variant="secondary" disabled={Boolean(busy)} onClick={() => input.current?.click()}><Icon name="image" size={16} />{busy || 'Thêm ảnh'}</Button>
           <span className={styles.hint}>Còn thêm được {room} ảnh · JPEG, PNG, WebP ≤ 5 MB</span>
           <input ref={input} type="file" accept={ACCEPT} multiple hidden aria-label="Chọn ảnh hiện trường" onChange={(event) => void add(event.target.files)} />
