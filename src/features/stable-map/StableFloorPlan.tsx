@@ -1,7 +1,8 @@
-import { useId, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import { AISLE_H, floorPlan, rowLetter, STALL_H, STALL_W, WALL, type StallRect } from './floorPlanGeometry';
 import { healthLabel, healthOf, type HealthKey, type MapBox, type MapYard } from './stableMapApi';
 import styles from './stableMap.module.css';
+import { clampTip } from './floorPlanTip';
 
 type StallState = 'free' | 'occupied' | 'maintenance';
 const stateOf = (box: MapBox): StallState => box.horse ? 'occupied' : box.boxStatus === 'MAINTENANCE' ? 'maintenance' : 'free';
@@ -58,6 +59,7 @@ export function StableFloorPlan({ yard, highlight, onSelect, selectable, onMove,
   const [ghost, setGhost] = useState<{ x: number; y: number; name: string; health: HealthKey } | null>(null);
   const [hover, setHover] = useState<number | null>(null);
   const [dropTarget, setDropTarget] = useState<number | null>(null);
+  const wrapRef = useRef<HTMLDivElement>(null), tipRef = useRef<HTMLDivElement>(null);
   const byPosition = new Map(yard.boxes.map((box) => [`${box.rowNo}:${box.columnNo}`, box]));
   const byId = new Map(yard.boxes.map((box) => [box.id, box]));
   const canDrop = (box?: MapBox) => !!box && !box.horse && box.boxStatus === 'ACTIVE';
@@ -164,14 +166,10 @@ export function StableFloorPlan({ yard, highlight, onSelect, selectable, onMove,
     if (selectable(hovered)) hints.push(state === 'occupied' ? 'Bấm để xem chi tiết' : state === 'maintenance' ? 'Bấm để mở lại ô' : 'Bấm để đặt ô vào bảo trì');
     if (onMove && hovered.horse) hints.push('Kéo sang ô trống để chuyển chuồng');
     const health = healthOf(hovered.horse);
-    // Centred over the stall, except at the ends of the plan: there the card is aligned to the stall's outer edge so it
-    // never leaves the drawing (the first / last column of a narrow yard or viewport).
-    const centre = hoveredRect.x + STALL_W / 2;
-    const align = centre < 130 ? 'start' : centre > plan.width - 130 ? 'end' : 'center';
-    const anchor = align === 'start' ? hoveredRect.x : align === 'end' ? hoveredRect.x + STALL_W : centre;
+    // Centred over the stall; clampTip then keeps it inside the plan and the viewport for every column.
     // Visual only: the stall's accessible name and description (code, state, horse, health) already carry these facts.
-    return <div className={styles.tip} aria-hidden="true" data-state={state} data-align={align}
-      style={{ left: `${anchor / plan.width * 100}%`, top: `${(hoveredRect.y + 2) / plan.height * 100}%` }}>
+    return <div ref={tipRef} className={styles.tip} aria-hidden="true" data-state={state}
+      style={{ left: `${(hoveredRect.x + STALL_W / 2) / plan.width * 100}%`, top: `${(hoveredRect.y + 2) / plan.height * 100}%` }}>
       <div className={styles.tipHead}><strong>{hovered.boxCode}</strong><span>{`${yard.name} · dãy ${rowLetter(hovered.rowNo)}, cột ${hovered.columnNo}`}</span></div>
       {hovered.horse
         ? <>
@@ -183,7 +181,18 @@ export function StableFloorPlan({ yard, highlight, onSelect, selectable, onMove,
     </div>;
   })();
 
-  return <div className={styles.planWrap} style={{ maxWidth: plan.width }}>
+  const tipKey = tip ? hovered!.id : null;
+  useLayoutEffect(() => {
+    if (tipKey !== null && tipRef.current && wrapRef.current) clampTip(tipRef.current, wrapRef.current);
+  }, [tipKey]);
+  useEffect(() => {
+    if (tipKey === null) return;
+    const again = () => { if (tipRef.current && wrapRef.current) clampTip(tipRef.current, wrapRef.current); };
+    window.addEventListener('resize', again);
+    return () => window.removeEventListener('resize', again);
+  }, [tipKey]);
+
+  return <div ref={wrapRef} className={styles.planWrap} style={{ maxWidth: plan.width }}>
   <svg ref={svgRef} className={styles.floorPlan} viewBox={`0 0 ${plan.width} ${plan.height}`} width="100%"
     role="group" aria-label={`Mặt bằng ${yard.name}: ${yard.rowCount} dãy × ${yard.columnCount} ô`}
     onPointerMove={move} onPointerUp={end} onPointerCancel={() => { drag.current = null; setGhost(null); setDropTarget(null); }}>

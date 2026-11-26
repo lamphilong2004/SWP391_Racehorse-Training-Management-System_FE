@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { AISLE_H, floorPlan, STALL_H } from './floorPlanGeometry';
 import { StableFloorPlan } from './StableFloorPlan';
+import { clampTip } from './floorPlanTip';
 import type { MapBox, MapYard } from './stableMapApi';
 
 const box = (id: number, rowNo: number, columnNo: number, extra: Partial<MapBox> = {}): MapBox =>
@@ -164,15 +165,39 @@ describe('DEC-016 floor plan: review fixes (accessible health, card at the edges
     expect(screen.getByRole('button', { name: 'A-03: Còn trống' })).not.toHaveAttribute('aria-describedby');
   });
 
-  it('keeps the hover card inside the plan for the first and last column', () => {
+  // Rendered geometry from Duc's re-review at 375 px: plan 0..360, card 219 px wide.
+  const rect = (left: number, width: number) => ({ left, right: left + width, width, top: 0, bottom: 80, height: 80, x: left, y: 0, toJSON: () => ({}) }) as DOMRect;
+  const element = (box: DOMRect) => ({ style: { marginLeft: '', setProperty: vi.fn() }, getBoundingClientRect: () => box }) as unknown as HTMLElement;
+
+  it.each([
+    ['A-02, cut on the left', -11.807, 4 - -11.807],
+    ['A-09, past the right edge', 372.917 - 219.094, 356 - 372.917],
+    ['a middle column that already fits', 70, 0],
+  ])('shifts the card by its rendered size so every column stays inside the plan (%s)', (_, left, shift) => {
+    const tip = element(rect(left, 219.094));
+    clampTip(tip, element(rect(0, 360)));
+    expect(parseFloat(tip.style.marginLeft)).toBeCloseTo(shift, 3);
+    // the arrow moves back by the same amount, so it still points at the stall
+    expect(tip.style.setProperty).toHaveBeenCalledWith('--arrow-x', `${Math.min(Math.max(219.094 / 2 - shift, 14), 219.094 - 14)}px`);
+  });
+
+  it('also respects the viewport when the plan is wider than the window', () => {
+    const viewport = vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(375);
+    const tip = element(rect(300, 190));
+    clampTip(tip, element(rect(0, 640)));
+    expect(parseFloat(tip.style.marginLeft)).toBeCloseTo(371 - 490, 3);
+    viewport.mockRestore();
+  });
+
+  it('positions the card for the focused stall and re-measures it on resize', () => {
     const boxes = Array.from({ length: 10 }, (_, index) => box(index + 1, 1, index + 1, { horse: { ...injured, id: 100 + index } }));
     const { container } = render(<StableFloorPlan yard={yard(boxes, 1, 10)} onSelect={vi.fn()} selectable={() => true} />);
-    const tip = () => container.querySelector('[data-align]');
-    fireEvent.focus(container.querySelector('#box-A-01')!);
-    expect(tip()?.getAttribute('data-align')).toBe('start');
-    fireEvent.focus(container.querySelector('#box-A-05')!);
-    expect(tip()?.getAttribute('data-align')).toBe('center');
     fireEvent.focus(container.querySelector('#box-A-10')!);
-    expect(tip()?.getAttribute('data-align')).toBe('end');
+    const tip = container.querySelector<HTMLElement>('[data-state]:not(g)')!;
+    expect(tip.style.marginLeft).toMatch(/px$/); // measured once when the card appears
+    const spy = vi.spyOn(tip, 'getBoundingClientRect').mockReturnValue(rect(900, 219));
+    fireEvent(window, new Event('resize'));
+    expect(parseFloat(tip.style.marginLeft)).toBeLessThan(0);
+    spy.mockRestore();
   });
 });
