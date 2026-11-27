@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { AISLE_H, floorPlan, STALL_H } from './floorPlanGeometry';
 import { StableFloorPlan } from './StableFloorPlan';
+import { clampTip } from './floorPlanTip';
 import type { MapBox, MapYard } from './stableMapApi';
 
 const box = (id: number, rowNo: number, columnNo: number, extra: Partial<MapBox> = {}): MapBox =>
@@ -102,5 +103,101 @@ describe('DEC-016 2D floor plan', () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     fireEvent.click(screen.getByRole('button', { name: 'A-03: Còn trống' }));
     expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 3 }));
+  });
+});
+
+describe('DEC-016 floor plan: health, hover card, search and pulse', () => {
+  const injured = { id: 9, horseCode: 'RH-009', name: 'Lam Kiếm', lifecycle: 'ACTIVE', healthStatus: 'INJURED' as const };
+  const fit = { id: 10, horseCode: 'RH-010', name: 'Ánh Dương', lifecycle: 'ACTIVE', healthStatus: 'FIT' as const };
+
+  it('colours each horse by its health and treats a missing status as not assessed', () => {
+    const { container } = render(<StableFloorPlan yard={yard([box(1, 1, 1, { horse: injured }), box(2, 1, 2, { horse: fit }),
+      box(3, 2, 1, { horse: { id: 11, horseCode: 'RH-011', name: 'Cũ', lifecycle: 'ACTIVE' } }), box(4, 2, 2)])}
+      onSelect={vi.fn()} selectable={() => true} />);
+    expect(container.querySelector('#box-A-01')?.getAttribute('data-health')).toBe('INJURED');
+    expect(container.querySelector('#box-A-02')?.getAttribute('data-health')).toBe('FIT');
+    expect(container.querySelector('#box-A-03')?.getAttribute('data-health')).toBe('UNKNOWN');
+    expect(container.querySelector('#box-A-04')?.hasAttribute('data-health')).toBe(false);
+  });
+
+  it('shows a hover card with the horse, its health and what the user can do', () => {
+    render(<StableFloorPlan yard={yard([box(1, 1, 1, { horse: injured }), box(2, 1, 2), box(3, 2, 1), box(4, 2, 2)])}
+      onSelect={vi.fn()} selectable={() => true} onMove={vi.fn()} />);
+    fireEvent.pointerEnter(screen.getByRole('button', { name: 'A-01: Có ngựa — Lam Kiếm' }));
+    expect(screen.getByText('Khu chuồng A · dãy A, cột 1')).toBeInTheDocument();
+    expect(screen.getByText('Chấn thương')).toBeInTheDocument();
+    expect(screen.getByText('Bấm để xem chi tiết · Kéo sang ô trống để chuyển chuồng')).toBeInTheDocument();
+    fireEvent.pointerLeave(screen.getByRole('button', { name: 'A-01: Có ngựa — Lam Kiếm' }));
+    expect(screen.queryByText('Chấn thương')).not.toBeInTheDocument();
+  });
+
+  it('offers no drag hint to a role that cannot move horses, and opens the card on keyboard focus', () => {
+    render(<StableFloorPlan yard={yard([box(1, 1, 1, { horse: fit }), box(2, 1, 2), box(3, 2, 1), box(4, 2, 2)])}
+      onSelect={vi.fn()} selectable={(b) => !!b.horse} />);
+    fireEvent.focus(screen.getByRole('button', { name: 'A-01: Có ngựa — Ánh Dương' }));
+    expect(screen.getByText('Khỏe mạnh')).toBeInTheDocument();
+    expect(screen.getByText('Bấm để xem chi tiết')).toBeInTheDocument();
+    expect(screen.queryByText(/Kéo sang ô trống/)).not.toBeInTheDocument();
+  });
+
+  it('dims stalls outside the search result and pulses the stall that just received a horse', () => {
+    const { container } = render(<StableFloorPlan yard={yard([box(1, 1, 1, { horse: injured }), box(2, 1, 2), box(3, 2, 1), box(4, 2, 2)])}
+      onSelect={vi.fn()} selectable={() => true} matchIds={new Set([1])} pulse="A-01" />);
+    expect(container.querySelector('#box-A-01')?.hasAttribute('data-dim')).toBe(false);
+    expect(container.querySelector('#box-A-02')?.hasAttribute('data-dim')).toBe(true);
+    expect(container.querySelector('#box-A-01')?.hasAttribute('data-pulse')).toBe(true);
+    fireEvent.pointerEnter(screen.getByRole('button', { name: 'A-02: Còn trống' }));
+    expect(screen.queryByText('Còn trống', { selector: 'div' })).not.toBeInTheDocument();
+    fireEvent.pointerEnter(screen.getByRole('button', { name: 'A-01: Có ngựa — Lam Kiếm' }));
+    expect(screen.getByText('Chấn thương')).toBeInTheDocument();
+  });
+});
+
+describe('DEC-016 floor plan: review fixes (accessible health, card at the edges)', () => {
+  const injured = { id: 9, horseCode: 'RH-009', name: 'Lam Kiếm', lifecycle: 'ACTIVE', healthStatus: 'INJURED' as const };
+  const unassessed = { id: 10, horseCode: 'RH-010', name: 'Ánh Dương', lifecycle: 'ACTIVE' };
+
+  it('announces each horse\'s health as the stall description, also when it was never assessed', () => {
+    render(<StableFloorPlan yard={yard([box(1, 1, 1, { horse: injured }), box(2, 1, 2, { horse: unassessed }), box(3, 2, 1), box(4, 2, 2)])}
+      onSelect={vi.fn()} selectable={() => true} />);
+    expect(screen.getByRole('button', { name: 'A-01: Có ngựa — Lam Kiếm' })).toHaveAccessibleDescription('Sức khỏe: Chấn thương');
+    expect(screen.getByRole('button', { name: 'A-02: Có ngựa — Ánh Dương' })).toHaveAccessibleDescription('Sức khỏe: Chưa đánh giá sức khỏe');
+    expect(screen.getByRole('button', { name: 'A-03: Còn trống' })).not.toHaveAttribute('aria-describedby');
+  });
+
+  // Rendered geometry from Duc's re-review at 375 px: plan 0..360, card 219 px wide.
+  const rect = (left: number, width: number) => ({ left, right: left + width, width, top: 0, bottom: 80, height: 80, x: left, y: 0, toJSON: () => ({}) }) as DOMRect;
+  const element = (box: DOMRect) => ({ style: { marginLeft: '', setProperty: vi.fn() }, getBoundingClientRect: () => box }) as unknown as HTMLElement;
+
+  it.each([
+    ['A-02, cut on the left', -11.807, 4 - -11.807],
+    ['A-09, past the right edge', 372.917 - 219.094, 356 - 372.917],
+    ['a middle column that already fits', 70, 0],
+  ])('shifts the card by its rendered size so every column stays inside the plan (%s)', (_, left, shift) => {
+    const tip = element(rect(left, 219.094));
+    clampTip(tip, element(rect(0, 360)));
+    expect(parseFloat(tip.style.marginLeft)).toBeCloseTo(shift, 3);
+    // the arrow moves back by the same amount, so it still points at the stall
+    expect(tip.style.setProperty).toHaveBeenCalledWith('--arrow-x', `${Math.min(Math.max(219.094 / 2 - shift, 14), 219.094 - 14)}px`);
+  });
+
+  it('also respects the viewport when the plan is wider than the window', () => {
+    const viewport = vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(375);
+    const tip = element(rect(300, 190));
+    clampTip(tip, element(rect(0, 640)));
+    expect(parseFloat(tip.style.marginLeft)).toBeCloseTo(371 - 490, 3);
+    viewport.mockRestore();
+  });
+
+  it('positions the card for the focused stall and re-measures it on resize', () => {
+    const boxes = Array.from({ length: 10 }, (_, index) => box(index + 1, 1, index + 1, { horse: { ...injured, id: 100 + index } }));
+    const { container } = render(<StableFloorPlan yard={yard(boxes, 1, 10)} onSelect={vi.fn()} selectable={() => true} />);
+    fireEvent.focus(container.querySelector('#box-A-10')!);
+    const tip = container.querySelector<HTMLElement>('[data-state]:not(g)')!;
+    expect(tip.style.marginLeft).toMatch(/px$/); // measured once when the card appears
+    const spy = vi.spyOn(tip, 'getBoundingClientRect').mockReturnValue(rect(900, 219));
+    fireEvent(window, new Event('resize'));
+    expect(parseFloat(tip.style.marginLeft)).toBeLessThan(0);
+    spy.mockRestore();
   });
 });

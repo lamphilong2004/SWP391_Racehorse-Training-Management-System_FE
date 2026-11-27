@@ -1,23 +1,30 @@
-import { useId, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import { AISLE_H, floorPlan, rowLetter, STALL_H, STALL_W, WALL, type StallRect } from './floorPlanGeometry';
-import type { MapBox, MapYard } from './stableMapApi';
+import { healthLabel, healthOf, type HealthKey, type MapBox, type MapYard } from './stableMapApi';
 import styles from './stableMap.module.css';
+import { clampTip } from './floorPlanTip';
 
 type StallState = 'free' | 'occupied' | 'maintenance';
 const stateOf = (box: MapBox): StallState => box.horse ? 'occupied' : box.boxStatus === 'MAINTENANCE' ? 'maintenance' : 'free';
 const STATE_LABEL: Record<StallState, string> = { free: 'Còn trống', occupied: 'Có ngựa', maintenance: 'Đang bảo trì' };
-const short = (name: string, max = 11) => name.length > max ? `${name.slice(0, max - 1)}…` : name;
+const short = (name: string, max = 12) => name.length > max ? `${name.slice(0, max - 1)}…` : name;
 
-/** Top-down horse: body, neck and head towards the stall door, tail towards the back wall. */
-function Horse({ cx, cy, facing }: { cx: number; cy: number; facing: 'top' | 'bottom' }) {
-  const dir = facing === 'bottom' ? 1 : -1;
-  return <g className={styles.horse} aria-hidden="true">
-    <path className={styles.horseTail} d={`M ${cx} ${cy - dir * 22} q ${-4} ${-dir * 8} ${2} ${-dir * 16}`} />
-    <ellipse cx={cx} cy={cy} rx={11} ry={21} />
-    <ellipse cx={cx} cy={cy + dir * 22} rx={5.5} ry={9} />
-    <ellipse cx={cx} cy={cy + dir * 32} rx={6} ry={7} />
-    <ellipse className={styles.horseEar} cx={cx - 3.5} cy={cy + dir * 26} rx={1.6} ry={2.6} />
-    <ellipse className={styles.horseEar} cx={cx + 3.5} cy={cy + dir * 26} rx={1.6} ry={2.6} />
+/** Horse head in profile (facing left) on a 24 × 24 grid; drawn inside a round avatar. */
+const HORSE_HEAD = 'M 3.2 16.8 C 2.2 16.4 1.9 15.2 2.4 14.2 L 6.6 7.4 C 7.1 6.5 7.6 5.6 8 4.8 L 8.3 2 L 9.6 4.2 '
+  + 'L 10.6 1.8 L 11.2 4.6 C 15.2 5.4 19 8.6 20.4 13.2 C 21.1 15.6 21.3 18.6 21.3 22 L 13.2 22 '
+  + 'C 13 19.4 12.2 17.4 10.9 15.9 C 10.2 16.9 8.8 17.6 7.2 17.6 C 5.7 17.6 4.3 17.3 3.2 16.8 Z';
+
+/** The horse avatar: tinted circle, head silhouette (long face, muzzle, two ears, arched neck), eye, nostril, mane. */
+function HorseAvatar({ cx, cy, health }: { cx: number; cy: number; health: HealthKey }) {
+  const scale = 1.3;
+  return <g className={styles.avatar} data-health={health} aria-hidden="true">
+    <circle className={styles.avatarRing} cx={cx} cy={cy} r={18} />
+    <g transform={`translate(${cx - 11.6 * scale} ${cy - 12 * scale}) scale(${scale})`}>
+      <path className={styles.horseHead} d={HORSE_HEAD} />
+      <circle className={styles.horseEye} cx={8.7} cy={8.7} r={0.95} />
+      <circle className={styles.horseEye} cx={3.5} cy={14.7} r={0.65} />
+      <path className={styles.horseMane} d="M 11.2 4.6 C 14.6 5.6 17.6 8.2 19 11.8" />
+    </g>
   </g>;
 }
 
@@ -29,21 +36,30 @@ export interface StableFloorPlanProps {
   selectable: (box: MapBox) => boolean;
   /** Club Manager only: drag a horse onto a free stall to move it there. */
   onMove?: (from: MapBox, to: MapBox) => void;
+  /** Search / quick filter: boxes outside this set are dimmed. null or absent = no filtering. */
+  matchIds?: ReadonlySet<number> | null;
+  /** Box code that just received a horse: it pulses once. */
+  pulse?: string | null;
 }
 
 /**
- * DEC-016 2D floor plan of one yard, drawn as a shed-row barn seen from above: stalls face a shared aisle, each stall
- * has a door on the aisle side and a feeder on the back wall, the horse in it is drawn facing the door. A Club Manager
- * can drag a horse onto a free stall; the page confirms the move before calling the API.
+ * DEC-016 2D floor plan of one yard in an architectural style: a shed-row barn seen from above with thin walls, a
+ * shared aisle with sliding doors at both ends, and stalls whose sliding door opens onto the aisle. Each stall is a
+ * card: code and status at the top, the horse (avatar, name, code) or the free / maintenance state in the middle.
+ * A Club Manager can drag a horse onto a free stall; the page confirms the move before calling the API.
  */
-export function StableFloorPlan({ yard, highlight, onSelect, selectable, onMove }: StableFloorPlanProps) {
+export function StableFloorPlan({ yard, highlight, onSelect, selectable, onMove, matchIds, pulse }: StableFloorPlanProps) {
   const plan = floorPlan(yard.rowCount, yard.columnCount);
-  const patternId = `hatch-${useId().replace(/[^a-zA-Z0-9-]/g, '')}`;
+  const uid = useId().replace(/[^a-zA-Z0-9-]/g, '');
+  const patternId = `hatch-${uid}`;
+  const shadowId = `shadow-${uid}`;
   const svgRef = useRef<SVGSVGElement>(null);
   const drag = useRef<{ from: MapBox; x: number; y: number; moved: boolean } | null>(null);
   const suppressClick = useRef(false);
-  const [ghost, setGhost] = useState<{ x: number; y: number; name: string } | null>(null);
+  const [ghost, setGhost] = useState<{ x: number; y: number; name: string; health: HealthKey } | null>(null);
+  const [hover, setHover] = useState<number | null>(null);
   const [dropTarget, setDropTarget] = useState<number | null>(null);
+  const wrapRef = useRef<HTMLDivElement>(null), tipRef = useRef<HTMLDivElement>(null);
   const byPosition = new Map(yard.boxes.map((box) => [`${box.rowNo}:${box.columnNo}`, box]));
   const byId = new Map(yard.boxes.map((box) => [box.id, box]));
   const canDrop = (box?: MapBox) => !!box && !box.horse && box.boxStatus === 'ACTIVE';
@@ -68,7 +84,7 @@ export function StableFloorPlan({ yard, highlight, onSelect, selectable, onMove 
     // Capture only once it is a real drag: capturing on press would retarget a plain click to the svg.
     if (!current.moved) svgRef.current?.setPointerCapture?.(event.pointerId);
     current.moved = true;
-    setGhost({ ...toSvg(event.clientX, event.clientY), name: current.from.horse?.name ?? '' });
+    setGhost({ ...toSvg(event.clientX, event.clientY), name: current.from.horse?.name ?? '', health: healthOf(current.from.horse) });
     const target = boxUnder(event.clientX, event.clientY);
     setDropTarget(canDrop(target) ? target!.id : null);
   };
@@ -92,55 +108,124 @@ export function StableFloorPlan({ yard, highlight, onSelect, selectable, onMove 
 
   const stall = (rect: StallRect) => {
     const box = byPosition.get(`${rect.rowNo}:${rect.columnNo}`);
-    const x = rect.x; const y = rect.y; const doorY = rect.doorSide === 'bottom' ? y + STALL_H : y;
-    const feederY = rect.doorSide === 'bottom' ? y + 6 : y + STALL_H - 14;
-    if (!box) return <g key={`${rect.rowNo}-${rect.columnNo}`}><rect className={styles.stallEmpty} x={x + 2} y={y + 2} width={STALL_W - 4} height={STALL_H - 4} rx={4} /></g>;
+    const { x, y } = rect;
+    const doorAtBottom = rect.doorSide === 'bottom';
+    const doorY = doorAtBottom ? y + STALL_H : y;
+    if (!box) return <g key={`${rect.rowNo}-${rect.columnNo}`}><rect className={styles.stallEmpty} x={x + 4} y={y + 4} width={STALL_W - 8} height={STALL_H - 8} rx={8} /></g>;
     const state = stateOf(box);
     const clickable = selectable(box);
     const label = `${box.boxCode}: ${STATE_LABEL[state]}${box.horse ? ` — ${box.horse.name}` : ''}`;
-    const textY = rect.doorSide === 'bottom' ? y + 32 : y + 20;
+    const midX = x + STALL_W / 2;
+    // Content sits away from the door edge: code row near the back wall, details towards the door.
+    const top = doorAtBottom ? y : y + 8;
+    const leave = () => setHover((current) => current === box.id ? null : current);
+    // Health is announced as the stall's description (the name stays "A-01: Có ngựa — Tên"), so a screen reader hears
+    // it on focus even though the avatar colours and the hover card are visual only.
+    const healthId = box.horse ? `${uid}-health-${box.id}` : undefined;
     return <g key={box.id} id={`box-${box.boxCode}`} data-box-id={box.id} data-state={state}
+      data-health={box.horse ? healthOf(box.horse) : undefined} data-dim={(matchIds && !matchIds.has(box.id)) || undefined}
+      data-pulse={pulse === box.boxCode || undefined}
       data-highlight={highlight === box.boxCode || undefined} data-drop={dropTarget === box.id || undefined}
-      className={styles.stall} role={clickable ? 'button' : 'img'} tabIndex={clickable ? 0 : undefined} aria-label={label}
+      className={styles.stall} role={clickable ? 'button' : 'img'} tabIndex={clickable ? 0 : undefined} aria-label={label} aria-describedby={healthId}
       onClick={() => activate(box)} onKeyDown={key(box)} onPointerDown={start(box)}
+      onPointerEnter={() => setHover(box.id)} onPointerLeave={leave} onFocus={() => setHover(box.id)} onBlur={leave}
       style={{ cursor: onMove && box.horse ? 'grab' : clickable ? 'pointer' : 'default' }}>
       <title>{label}</title>
-      <rect className={styles.stallFloor} x={x + 2} y={y + 2} width={STALL_W - 4} height={STALL_H - 4} rx={3}
+      {box.horse && <desc id={healthId}>{`Sức khỏe: ${healthLabel(healthOf(box.horse))}`}</desc>}
+      <rect className={styles.stallFloor} x={x + 4} y={y + 4} width={STALL_W - 8} height={STALL_H - 8} rx={8}
         style={state === 'maintenance' ? { fill: `url(#${patternId})` } : undefined} />
-      <rect className={styles.feeder} x={x + STALL_W - 26} y={feederY} width={18} height={8} rx={2} />
-      <line className={styles.door} x1={x + 22} x2={x + STALL_W - 22} y1={doorY} y2={doorY} />
-      <text className={styles.stallCode} x={x + 8} y={rect.doorSide === 'bottom' ? y + 18 : y + STALL_H - 8}>{box.boxCode}</text>
-      {box.horse
-        ? <><Horse cx={x + STALL_W / 2} cy={y + STALL_H / 2 + (rect.doorSide === 'bottom' ? 4 : -4)} facing={rect.doorSide} />
-          <text className={styles.stallName} x={x + STALL_W / 2} y={rect.doorSide === 'bottom' ? y + STALL_H - 6 : y + 14} textAnchor="middle">{short(box.horse.name)}</text></>
-        : <text className={styles.stallState} x={x + STALL_W / 2} y={textY + 26} textAnchor="middle">{state === 'maintenance' ? 'Bảo trì' : 'Trống'}</text>}
+      <rect className={styles.dropOverlay} x={x + 4} y={y + 4} width={STALL_W - 8} height={STALL_H - 8} rx={8} />
+      {/* sliding stall door: an opening in the aisle wall with the door leaf drawn beside it */}
+      <line className={styles.doorOpening} x1={x + 18} x2={x + STALL_W - 18} y1={doorY} y2={doorY} />
+      <line className={styles.doorLeaf} x1={x + 14} x2={x + STALL_W / 2 + 4} y1={doorY + (doorAtBottom ? -3 : 3)} y2={doorY + (doorAtBottom ? -3 : 3)} />
+      <text className={styles.stallCode} x={x + 11} y={top + 20}>{box.boxCode}</text>
+      <circle className={styles.statusDot} cx={x + STALL_W - 15} cy={top + 16} r={4} />
+      {state === 'occupied' && box.horse && <>
+        <HorseAvatar cx={midX} cy={top + 46} health={healthOf(box.horse)} />
+        <text className={styles.stallName} x={midX} y={top + 78} textAnchor="middle">{short(box.horse.name)}</text>
+        <text className={styles.stallSub} x={midX} y={top + 90} textAnchor="middle">{box.horse.horseCode}</text>
+      </>}
+      {state === 'free' && <>
+        <circle className={styles.emptyRing} cx={midX} cy={top + 46} r={18} />
+        <text className={styles.stallState} x={midX} y={top + 82} textAnchor="middle">Còn trống</text>
+      </>}
+      {state === 'maintenance' && <>
+        <circle className={styles.maintRing} cx={midX} cy={top + 46} r={18} />
+        <path className={styles.maintIcon} d={`M ${midX - 7} ${top + 53} L ${midX + 3} ${top + 43} M ${midX + 1} ${top + 39} a 5 5 0 1 0 6 6`} />
+        <text className={styles.stallState} x={midX} y={top + 82} textAnchor="middle">Bảo trì</text>
+      </>}
     </g>;
   };
 
-  return <svg ref={svgRef} className={styles.floorPlan} viewBox={`0 0 ${plan.width} ${plan.height}`} width="100%"
-    style={{ maxWidth: plan.width }} role="group" aria-label={`Mặt bằng ${yard.name}: ${yard.rowCount} dãy × ${yard.columnCount} ô`}
+  // No card while dragging, nor for a stall dimmed by the search / filter (keeps the eye on the result).
+  const hovered = hover !== null && !ghost && (!matchIds || matchIds.has(hover)) ? byId.get(hover) : undefined;
+  const hoveredRect = hovered && plan.stalls.find((rect) => rect.rowNo === hovered.rowNo && rect.columnNo === hovered.columnNo);
+  const tip = hovered && hoveredRect && (() => {
+    const state = stateOf(hovered);
+    const hints: string[] = [];
+    if (selectable(hovered)) hints.push(state === 'occupied' ? 'Bấm để xem chi tiết' : state === 'maintenance' ? 'Bấm để mở lại ô' : 'Bấm để đặt ô vào bảo trì');
+    if (onMove && hovered.horse) hints.push('Kéo sang ô trống để chuyển chuồng');
+    const health = healthOf(hovered.horse);
+    // Centred over the stall; clampTip then keeps it inside the plan and the viewport for every column.
+    // Visual only: the stall's accessible name and description (code, state, horse, health) already carry these facts.
+    return <div ref={tipRef} className={styles.tip} aria-hidden="true" data-state={state}
+      style={{ left: `${(hoveredRect.x + STALL_W / 2) / plan.width * 100}%`, top: `${(hoveredRect.y + 2) / plan.height * 100}%` }}>
+      <div className={styles.tipHead}><strong>{hovered.boxCode}</strong><span>{`${yard.name} · dãy ${rowLetter(hovered.rowNo)}, cột ${hovered.columnNo}`}</span></div>
+      {hovered.horse
+        ? <>
+          <div className={styles.tipHorse}><strong>{hovered.horse.name}</strong><span>{hovered.horse.horseCode}</span></div>
+          <div className={styles.tipHealth} data-health={health}>{healthLabel(health)}</div>
+        </>
+        : <div className={styles.tipState}>{STATE_LABEL[state]}</div>}
+      {hints.length > 0 && <div className={styles.tipHint}>{hints.join(' · ')}</div>}
+    </div>;
+  })();
+
+  const tipKey = tip ? hovered!.id : null;
+  useLayoutEffect(() => {
+    if (tipKey !== null && tipRef.current && wrapRef.current) clampTip(tipRef.current, wrapRef.current);
+  }, [tipKey]);
+  useEffect(() => {
+    if (tipKey === null) return;
+    const again = () => { if (tipRef.current && wrapRef.current) clampTip(tipRef.current, wrapRef.current); };
+    window.addEventListener('resize', again);
+    return () => window.removeEventListener('resize', again);
+  }, [tipKey]);
+
+  return <div ref={wrapRef} className={styles.planWrap} style={{ maxWidth: plan.width }}>
+  <svg ref={svgRef} className={styles.floorPlan} viewBox={`0 0 ${plan.width} ${plan.height}`} width="100%"
+    role="group" aria-label={`Mặt bằng ${yard.name}: ${yard.rowCount} dãy × ${yard.columnCount} ô`}
     onPointerMove={move} onPointerUp={end} onPointerCancel={() => { drag.current = null; setGhost(null); setDropTarget(null); }}>
     <defs>
-      <pattern id={patternId} width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-        <rect width="8" height="8" className={styles.hatchBase} /><line x1="0" y1="0" x2="0" y2="8" className={styles.hatchLine} />
+      <pattern id={patternId} width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="10" height="10" className={styles.hatchBase} /><rect width="3" height="10" className={styles.hatchLine} />
       </pattern>
+      <filter id={shadowId} x="-3%" y="-6%" width="106%" height="116%">
+        <feDropShadow dx="0" dy="2" stdDeviation="5" floodOpacity="0.10" />
+      </filter>
     </defs>
-    <rect className={styles.barnWall} x={WALL / 2} y={WALL / 2} width={plan.width - WALL} height={plan.height - WALL} rx={6} />
-    <rect className={styles.barnInside} x={plan.inner.x} y={plan.inner.y} width={plan.inner.width} height={plan.inner.height} />
+    <rect className={styles.barnWall} x={WALL / 2} y={WALL / 2} width={plan.width - WALL} height={plan.height - WALL} rx={10} filter={`url(#${shadowId})`} />
+    <rect className={styles.barnInside} x={plan.inner.x} y={plan.inner.y} width={plan.inner.width} height={plan.inner.height} rx={4} />
     {plan.aisles.map((aisle, index) => <g key={index}>
       <rect className={styles.aisle} x={aisle.x} y={aisle.y} width={aisle.width} height={aisle.height} />
-      <line className={styles.aisleLine} x1={aisle.x + 8} x2={aisle.x + aisle.width - 8} y1={aisle.y + AISLE_H / 2} y2={aisle.y + AISLE_H / 2} />
-      <text className={styles.aisleText} x={aisle.x + aisle.width / 2} y={aisle.y + AISLE_H / 2 - 6} textAnchor="middle">Lối đi</text>
-      <rect className={styles.gate} x={0} y={aisle.y + 8} width={WALL + 2} height={AISLE_H - 16} />
-      <rect className={styles.gate} x={plan.width - WALL - 2} y={aisle.y + 8} width={WALL + 2} height={AISLE_H - 16} />
-      <text className={styles.gateText} x={WALL + 4} y={aisle.y + AISLE_H / 2 + 14}>Cửa</text>
+      <line className={styles.aisleLine} x1={aisle.x + 70} x2={aisle.x + aisle.width - 40} y1={aisle.y + AISLE_H / 2} y2={aisle.y + AISLE_H / 2} />
+      <rect className={styles.aisle} x={aisle.x + aisle.width / 2 - 34} y={aisle.y + AISLE_H / 2 - 9} width={68} height={18} />
+      <text className={styles.aisleText} x={aisle.x + aisle.width / 2} y={aisle.y + AISLE_H / 2 + 4} textAnchor="middle">Lối đi</text>
+      {/* sliding barn doors at both aisle ends */}
+      {[1.5, plan.width - 1.5].map((gateX) => <g key={gateX} className={styles.gate}>
+        <line x1={gateX} x2={gateX} y1={aisle.y + 6} y2={aisle.y + AISLE_H - 6} />
+      </g>)}
+      <text className={styles.gateText} x={WALL + 6} y={aisle.y + AISLE_H / 2 + 4}>Cửa</text>
     </g>)}
-    {plan.stalls.filter((rect) => rect.columnNo === 1).map((rect) =>
-      <text key={`row-${rect.rowNo}`} className={styles.rowText} x={WALL + 8} y={rect.y + STALL_H / 2 + 4}>{`Dãy ${rowLetter(rect.rowNo)}`}</text>)}
+    {plan.stalls.filter((rect) => rect.columnNo === 1).map((rect) => <text key={`row-${rect.rowNo}`} className={styles.rowText}
+      x={WALL + 28} y={rect.y + STALL_H / 2 + 4} textAnchor="middle">{`Dãy ${rowLetter(rect.rowNo)}`}</text>)}
     {plan.stalls.map(stall)}
     {ghost && <g className={styles.ghost} pointerEvents="none">
-      <circle cx={ghost.x} cy={ghost.y} r={18} />
-      <text x={ghost.x} y={ghost.y - 24} textAnchor="middle">{ghost.name}</text>
+      <HorseAvatar cx={ghost.x} cy={ghost.y} health={ghost.health} />
+      <rect className={styles.ghostPill} x={ghost.x - (ghost.name.length * 3.4 + 10)} y={ghost.y + 21} width={ghost.name.length * 6.8 + 20} height={18} rx={9} />
+      <text x={ghost.x} y={ghost.y + 34} textAnchor="middle">{ghost.name}</text>
     </g>}
-  </svg>;
+  </svg>
+  {tip}
+  </div>;
 }
