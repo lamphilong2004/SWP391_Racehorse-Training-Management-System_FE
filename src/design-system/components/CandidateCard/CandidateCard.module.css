@@ -1,9 +1,10 @@
-/* Figma Candidate Card 75:418 */
+/* Figma Candidate Card 75:418. Fills its grid cell (no fixed 320px cap), so a 3-column list has no dead space. */
 .card {
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
-  width: min(100%, 320px);
+  width: 100%;
+  min-width: 0;
   padding: 20px;
   background: var(--color-bg-surface);
   border: 1px solid var(--color-border-default);
@@ -77,12 +78,15 @@
   margin: 0;
 }
 
+/* Label column + value column: short labels never wrap ("Lý do"), long reasons read left to right. */
 .fact {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  align-items: baseline;
   gap: var(--space-md);
 }
+
+.factLabel { white-space: nowrap; }
 
 .factValue {
   margin: 0;
@@ -90,11 +94,13 @@
   line-height: 20px;
   font-weight: 500;
   color: var(--color-text-primary);
-  text-align: right;
+  overflow-wrap: anywhere;
 }
 
+/* Buttons sit on the card's bottom edge, so cards of one row line up even when their facts differ in length. */
 .actions {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-top: auto;
 }
