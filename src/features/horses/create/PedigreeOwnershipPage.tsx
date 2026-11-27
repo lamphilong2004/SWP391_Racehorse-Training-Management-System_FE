@@ -4,7 +4,7 @@ import { flushSync } from 'react-dom';
 import { useLocation, useNavigate, useParams } from 'react-router';
 import { ButtonLink,
   AlertBanner, Button, Card, ErrorState, StatusBadge, Icon, LoadingState, SelectField, TextField,
- DesignSystemScope, UnsavedChangesGuard, focusFirstInvalid } from '../../../design-system';
+ DesignSystemScope, UnsavedChangesGuard } from '../../../design-system';
 import { ApiRequestError } from '../api/horsesApi';
 import { useHorsesApi } from '../api/HorsesApiContext';
 import type { ActivationStatus, HorseDetail, StableAssignment, UserSummary } from '../api/types';
@@ -23,10 +23,9 @@ interface Loaded {
   unavailable: string[];
 }
 
-type Field = 'sire' | 'dam';
-
 /**
- * SCR-HORSE-004 Pedigree & Ownership (Figma 283:2487) — Flow 1 step 1.2, BR-04. Declares sire/dam (sent as names:
+ * SCR-HORSE-004 Pedigree & Ownership (Figma 283:2487) — Flow 1 step 1.2, BR-04. Declares sire/dam, each optional
+ * (unknown origin, or only one parent known; an empty parent is sent as null and still passes activation). Names are sent as names:
  * the contract's ref-XOR-name rule is satisfied by never sending both), links the owner and opens the Assign Stable Box
  * modal. Completing these items can activate the horse automatically (DEC-009 §1); there is no approve action.
  */
@@ -53,7 +52,6 @@ function PedigreeOwnershipPageContent() {
   const [parentPicker, setParentPicker] = useState<'sire' | 'dam'>();
   const [ownerId, setOwnerId] = useState('');
   const pending = useRef(false);
-  const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const [formError, setFormError] = useState<string>();
   const [saving, setSaving] = useState(false);
   const [boxModalOpen, setBoxModalOpen] = useState(false);
@@ -133,18 +131,14 @@ function PedigreeOwnershipPageContent() {
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (pending.current || refreshing || !canSave) return;
-    const missing: Partial<Record<Field, string>> = {};
-    if (!sire.trim()) missing.sire = 'Nhập ngựa cha.';
-    if (!dam.trim()) missing.dam = 'Nhập ngựa mẹ.';
-    setErrors(missing);
     setFormError(undefined);
-    if (Object.keys(missing).length > 0) { focusFirstInvalid(form.current); return; }
 
     pending.current = true; setSaving(true);
     try {
       // A parent that exactly matches one registered horse (name or code) is linked by record; otherwise kept as a name.
       const parent = async (name: string, existing: HorseDetail['pedigree']['sire'], selected?: HorseDetail) => {
         const value = name.trim();
+        if (!value) return { horseId: null, name: null };
         if (selected && value === selected.name) return { horseId: selected.id, name: null };
         if (existing.horseId && value === (existing.name || existing.horseCode || '')) return { horseId: existing.horseId, name: null };
         const found = (await api.listHorses({ q: value, page: 0, size: 20 })).items
@@ -199,13 +193,13 @@ function PedigreeOwnershipPageContent() {
             <div className={styles.cardBody}>
               <h2 className={styles.cardTitle}>Phả hệ</h2>
               <div className={styles.row}>
-                <div className={styles.parentField}><TextField label="Ngựa cha *" value={sire} maxLength={150} error={errors.sire} disabled={saving}
-                  helperText={sireChoice ? `Đã chọn hồ sơ ${sireChoice.horseCode}. Sửa tên sẽ bỏ lựa chọn này.` : 'Nhập tên ngựa ngoài hệ thống hoặc chọn hồ sơ đã có.'}
-                  onChange={(e) => { setSire(e.target.value); setSireChoice(undefined); setErrors((x) => ({ ...x, sire: undefined })); }} />
+                <div className={styles.parentField}><TextField label="Ngựa cha" value={sire} maxLength={150} disabled={saving}
+                  helperText={sireChoice ? `Đã chọn hồ sơ ${sireChoice.horseCode}. Sửa tên sẽ bỏ lựa chọn này.` : 'Không bắt buộc: để trống nếu không rõ nguồn gốc. Nhập tên ngựa ngoài hệ thống hoặc chọn hồ sơ đã có.'}
+                  onChange={(e) => { setSire(e.target.value); setSireChoice(undefined); }} />
                   <Button variant="secondary" size="sm" disabled={saving} onClick={() => setParentPicker('sire')}>Chọn ngựa cha có hồ sơ</Button></div>
-                <div className={styles.parentField}><TextField label="Ngựa mẹ *" value={dam} maxLength={150} error={errors.dam} disabled={saving}
-                  helperText={damChoice ? `Đã chọn hồ sơ ${damChoice.horseCode}. Sửa tên sẽ bỏ lựa chọn này.` : 'Nhập tên ngựa ngoài hệ thống hoặc chọn hồ sơ đã có.'}
-                  onChange={(e) => { setDam(e.target.value); setDamChoice(undefined); setErrors((x) => ({ ...x, dam: undefined })); }} />
+                <div className={styles.parentField}><TextField label="Ngựa mẹ" value={dam} maxLength={150} disabled={saving}
+                  helperText={damChoice ? `Đã chọn hồ sơ ${damChoice.horseCode}. Sửa tên sẽ bỏ lựa chọn này.` : 'Không bắt buộc: để trống nếu không rõ nguồn gốc. Nhập tên ngựa ngoài hệ thống hoặc chọn hồ sơ đã có.'}
+                  onChange={(e) => { setDam(e.target.value); setDamChoice(undefined); }} />
                   <Button variant="secondary" size="sm" disabled={saving} onClick={() => setParentPicker('dam')}>Chọn ngựa mẹ có hồ sơ</Button></div>
               </div>
             </div>
@@ -267,7 +261,7 @@ function PedigreeOwnershipPageContent() {
         onSelected={selected => {
           if (parentPicker === 'sire') { setSire(selected.name); setSireChoice(selected); }
           else { setDam(selected.name); setDamChoice(selected); }
-          setErrors(current => ({ ...current, [parentPicker]: undefined })); setParentPicker(undefined);
+          setParentPicker(undefined);
         }} />}
       <div className={styles.footer}>
         <Button variant="secondary" onClick={() => navigate('/horses')} disabled={saving}>Hủy</Button>
