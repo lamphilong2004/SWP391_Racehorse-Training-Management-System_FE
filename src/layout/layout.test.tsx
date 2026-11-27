@@ -96,7 +96,7 @@ describe('role navigation', () => {
 
   it('gives the Horse Owner the read-only portal entries and the own invoices only (DEC-016)', () => {
     const labels = NAVIGATION.HORSE_OWNER.sections.flatMap((section) => section.items.map((item) => item.label));
-    expect(labels).toEqual(['Ngựa của tôi', 'Hóa đơn & thanh toán', 'Thông báo']);
+    expect(labels).toEqual(['Ngựa của tôi', 'Bảng giá dịch vụ', 'Hóa đơn & thanh toán', 'Thông báo']);
   });
 });
 

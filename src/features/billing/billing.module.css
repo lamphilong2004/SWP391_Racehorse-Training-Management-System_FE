@@ -49,21 +49,9 @@
 .payModal footer { height: auto; min-height: 72px; padding-block: var(--space-md); flex-wrap: wrap; }
 .payCell { display: inline-flex; align-items: center; gap: 8px; }
 
-/* Owner price transparency (DEC-016 update): price list + estimator beside this month's running cost. */
-/* Price card on one row (list | estimator), running-cost table full width under it so every column fits. */
-.costGrid { display: grid; gap: 20px; min-width: 0; }
-.priceCard { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: start; }
-@media (max-width: 1100px) { .priceCard { grid-template-columns: minmax(0, 1fr); } }
-.horseCell { display: grid; gap: 2px; }
-.horseCell small { color: var(--color-text-secondary); font-size: 12px; }
-.priceList { display: grid; gap: 8px; margin: 0; }
-.priceList > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; padding: 10px 12px; border-radius: var(--radius-md); background: var(--color-bg-subtle); }
-.priceList dt { color: var(--color-text-secondary); }
-.priceList dd { margin: 0; font-variant-numeric: tabular-nums; }
-.estimator { display: grid; gap: 12px; padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--color-border-default); }
-.estimatorTitle { margin: 0; font-size: 15px; font-weight: 600; }
-.estimatorFields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.estimateResult { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; margin: 0; color: var(--color-text-secondary); }
-.estimateResult strong { font-size: 20px; color: var(--color-text-primary); }
-.costTotal { display: flex; justify-content: flex-end; align-items: baseline; gap: 12px; margin: 0; font-size: 15px; }
-.costTotal strong { font-size: 18px; }
+/* Owner invoice list filter */
+.filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.filter { padding: 8px 14px; border-radius: 999px; border: 1px solid var(--color-border-default); background: var(--color-bg-surface); color: var(--color-text-primary); font: inherit; font-size: 14px; cursor: pointer; }
+.filter:hover { border-color: var(--color-primary-600); }
+.filter[aria-pressed='true'] { border-color: var(--color-primary-600); background: var(--color-primary-50); color: var(--color-primary-700); font-weight: 600; }
+.filter:focus-visible { outline: 2px solid var(--color-primary-600); outline-offset: 2px; }

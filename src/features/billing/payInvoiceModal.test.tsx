@@ -47,8 +47,7 @@ function setup(payments: Payment[] = [], options: { detail?: 'pending' | 'error'
     return Promise.resolve({ invoiceId: 11, invoiceCode: 'HD-202611-0011', invoiceStatus: 'PAID', paymentStatus: 'SUCCESS', responseCode: null,
       message: 'Đã ghi nhận thanh toán chuyển khoản QR. Hóa đơn đã được thanh toán.' });
   });
-  const myEstimate = vi.fn(() => Promise.resolve({ billingMonth: '2026-11', asOf: '2026-11-21', prices: [], horses: [], total: null }));
-  const api = { myInvoices, myInvoice, myEstimate, pay, cancelPayment, ownerCheck: vi.fn() } as unknown as BillingApi;
+  const api = { myInvoices, myInvoice, pay, cancelPayment, ownerCheck: vi.fn() } as unknown as BillingApi;
   const qrApi = {
     qrTransfer: vi.fn().mockResolvedValue({ bankBin: '970422', bankName: 'MBBank', accountNo: '9999888877', accountName: 'CLB', amount: 500000, content: 'HD2026110011' }),
     confirmQrTransfer,
@@ -68,6 +67,19 @@ describe('DEC-016 owner invoice list: pay popup', () => {
     expect(await screen.findByRole('button', { name: 'Thanh toán hóa đơn HD-202611-0011' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Thanh toán hóa đơn HD-202611-0012' })).not.toBeInTheDocument();
     expect(screen.getByText('Đã thanh toán')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Xem chi tiết hóa đơn HD-202611-0011' })).toHaveAttribute('href', '/owner/invoices/11');
+  });
+
+  it('filters unpaid and paid invoices and links to the price page instead of showing prices', async () => {
+    setup();
+    fireEvent.click(await screen.findByRole('button', { name: 'Chưa thanh toán (1)' }));
+    expect(screen.getByRole('button', { name: 'Thanh toán hóa đơn HD-202611-0011' })).toBeInTheDocument();
+    expect(screen.queryByText('Đã thanh toán')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Đã thanh toán (1)' }));
+    expect(screen.queryByRole('button', { name: 'Thanh toán hóa đơn HD-202611-0011' })).not.toBeInTheDocument();
+    expect(screen.getByText('Đã thanh toán')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Xem bảng giá dịch vụ/ })).toHaveAttribute('href', '/owner/prices');
+    expect(screen.queryByText('Ước tính chi phí 1 tháng')).not.toBeInTheDocument();
   });
 
   it('opens a popup with VNPay and VietQR tabs only, VNPay first with the ATM card as its only method', async () => {
