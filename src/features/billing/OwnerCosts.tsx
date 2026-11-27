@@ -22,13 +22,15 @@ export function OwnerCosts({ api }: { api: Pick<BillingApi, 'myEstimate'> }) {
   const priced = boarding != null && training != null;
   return <div className={styles.costGrid}>
     <Card title="Bảng giá dịch vụ của CLB">
-      <div className={styles.form}>
+      <div className={styles.priceCard}>
+        <div className={styles.form}>
         {priced
           ? <dl className={styles.priceList}>
             {prices.map((price) => <div key={price.serviceCode}><dt>{price.label}</dt><dd><strong>{vnd(price.unitPrice)}</strong>{` / ${price.unit}`}</dd></div>)}
           </dl>
           : <AlertBanner type="info" title="Club Manager chưa công bố đủ bảng giá." />}
         <p className={styles.hint}>Lưu chuồng & chăm sóc gồm chỗ ở, thức ăn và chăm sóc hằng ngày, tính theo số ngày ngựa ở ô chuồng. Huấn luyện chỉ tính buổi đã hoàn thành; buổi bị hủy hoặc gián đoạn không tính. Đổi giá chỉ áp dụng cho hóa đơn phát hành sau đó.</p>
+        </div>
         {priced && <Estimator boarding={boarding} training={training} />}
       </div>
     </Card>
@@ -38,8 +40,8 @@ export function OwnerCosts({ api }: { api: Pick<BillingApi, 'myEstimate'> }) {
         <DataTable caption="Phí tạm tính theo ngựa" rowKey={(row) => row.horseId} rows={horses}
           empty={<EmptyState title="Chưa có ngựa nào ở chuồng tháng này" description="Khi ngựa của bạn được xếp ô chuồng, phí tạm tính sẽ hiện ở đây." />}
           columns={[
-            { key: 'horse', header: 'Ngựa', render: (row) => `${row.horseName} (${row.horseCode})` },
-            { key: 'period', header: 'Kỳ tạm tính', render: period },
+            { key: 'horse', header: 'Ngựa', render: (row) => <span className={styles.horseCell}><strong>{row.horseName}</strong><small>{row.horseCode}</small></span> },
+            { key: 'period', header: 'Kỳ tạm tính', nowrap: true, render: period },
             { key: 'boarding', header: 'Lưu chuồng & chăm sóc', align: 'right', render: (row) => usage(row.boardingDays, 'ngày', boarding, row.boardingAmount) },
             { key: 'training', header: 'Huấn luyện', align: 'right', render: (row) => usage(row.completedSessions, 'buổi', training, row.trainingAmount) },
             { key: 'total', header: 'Tạm tính', align: 'right', nowrap: true, render: (row) => <span className={styles.amount}>{vnd(row.total)}</span> },
@@ -52,8 +54,8 @@ export function OwnerCosts({ api }: { api: Pick<BillingApi, 'myEstimate'> }) {
 
 function period(row: HorseEstimate) {
   if (row.from > row.to) return `Đã có hóa đơn đến ${viDate(row.invoicedUntil)}`;
-  const range = `${viDate(row.from)} – ${viDate(row.to)}`;
-  return row.invoicedUntil ? `${range} (đã có hóa đơn đến ${viDate(row.invoicedUntil)})` : range;
+  return <span className={styles.horseCell}>{`${viDate(row.from)} – ${viDate(row.to)}`}
+    {row.invoicedUntil && <small>{`Đã có hóa đơn đến ${viDate(row.invoicedUntil)}`}</small>}</span>;
 }
 
 function usage(count: number, unit: string, price: number | null, amount: number | null) {
