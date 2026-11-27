@@ -148,6 +148,11 @@ export async function requestHorsePhoto(path: string, token: string, signal: Abo
   return scheduleHorsePhoto(() => fetchHorsePhoto(path, token, signal), signal);
 }
 
+/** Same checks as {@link requestHorsePhoto} without the horse-photo queue; used for incident photos. */
+export function requestProtectedImage(path: string, token: string, signal: AbortSignal): Promise<Blob | null> {
+  return fetchHorsePhoto(path, token, signal);
+}
+
 async function fetchHorsePhoto(path: string, token: string, signal: AbortSignal): Promise<Blob | null> {
   const response = await sendRequest(path, { method: 'GET', signal, cache: 'no-store', redirect: 'error' }, { token });
   if (response.status === 204) return null;

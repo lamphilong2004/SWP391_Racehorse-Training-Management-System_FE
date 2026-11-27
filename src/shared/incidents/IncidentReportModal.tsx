@@ -1,13 +1,15 @@
 import { viLabel } from '../viLabels';
-import { useId, useRef, useState, type FormEvent } from 'react';
+import { useId, useMemo, useRef, useState, type FormEvent } from 'react';
 import { AlertBanner, Button, Icon, Modal, SelectField, StatusBadge, TextField } from '../../design-system';
 import styles from './IncidentReportModal.module.css';
+import { IncidentPhotoPicker } from './IncidentPhotos';
+import { createIncidentPhotoApi, type IncidentPhotoApi } from './incidentPhotoApi';
 
 import type { IncidentType } from './incidentTypes';
 export type { IncidentType };
 export type ObservedSeverity = 'LOW' | 'MEDIUM' | 'HIGH';
 
-/** Matches CORE-006 IncidentCreateRequest. No reporter, status, photo, or session-state fields are client supplied. */
+/** Matches CORE-006 IncidentCreateRequest. No reporter, status or session-state fields are client supplied; photos are uploaded after creation. */
 export interface IncidentCreateRequest {
   horseId: number;
   incidentType: IncidentType;
@@ -35,8 +37,13 @@ export interface IncidentReportModalProps {
   onClose: () => void;
   source: IncidentSource;
   horses?: { id: number; label: string }[];
-  /** The host owns HTTP and authorization. */
-  onSubmit: (request: IncidentCreateRequest) => Promise<void>;
+  /**
+   * The host owns HTTP and authorization for the report. It returns the created incident so the modal can attach the
+   * chosen photos to it; the modal closes itself afterwards, so the host should not close it inside onSubmit.
+   */
+  onSubmit: (request: IncidentCreateRequest) => Promise<{ id: number } | void>;
+  /** Scene photos (Flow 3 step 3.1). Defaults to the session-backed API; tests inject their own. */
+  photoApi?: IncidentPhotoApi;
 }
 
 const groomTypes: { value: IncidentType; label: string }[] = [
@@ -92,7 +99,7 @@ export function IncidentReportModal(props: IncidentReportModalProps) {
   return <IncidentReportModalForm key={`${props.source.kind}:${props.source.horseId ?? ''}:${contextId}:${props.source.observedAt ?? ''}`} {...props} />;
 }
 
-function IncidentReportModalForm({ open, onClose, source, horses = [], onSubmit }: IncidentReportModalProps) {
+function IncidentReportModalForm({ open, onClose, source, horses = [], onSubmit, photoApi }: IncidentReportModalProps) {
   const formId = useId();
   const descriptionId = `${formId}-description`;
   const [horseId, setHorseId] = useState(source.horseId ? String(source.horseId) : '');
@@ -103,6 +110,11 @@ function IncidentReportModalForm({ open, onClose, source, horses = [], onSubmit 
   const [description, setDescription] = useState(source.initialDescription?.slice(0, 2000) ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [progress, setProgress] = useState('');
+  // Set once the incident exists but some photos did not upload: the form must not be sent again (duplicate report).
+  const [sent, setSent] = useState<{ failed: number; total: number } | null>(null);
+  const photosApi = useMemo(() => photoApi ?? createIncidentPhotoApi(), [photoApi]);
   const submitting = useRef(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -141,25 +153,47 @@ function IncidentReportModalForm({ open, onClose, source, horses = [], onSubmit 
     submitting.current = true;
     setBusy(true);
     setError('');
+    let created: { id: number } | void;
     try {
-      await onSubmit(request);
-      onClose();
+      created = await onSubmit(request);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Không gửi được sự cố.');
-    } finally {
       submitting.current = false;
       setBusy(false);
+      return;
     }
+    // The incident is saved from here on. A photo failure never turns into "not sent".
+    let failed = 0;
+    if (photos.length) {
+      if (!created || !Number.isSafeInteger(created.id) || created.id < 1) failed = photos.length;
+      else for (const [index, file] of photos.entries()) {
+        setProgress(`Đang tải ảnh ${index + 1}/${photos.length}…`);
+        try { await photosApi.upload(created.id, file); } catch { failed += 1; }
+      }
+    }
+    setProgress('');
+    setBusy(false);
+    if (failed) { setSent({ failed, total: photos.length }); return; }
+    submitting.current = false;
+    onClose();
   }
 
-  const dirty = Boolean(incidentType || severity || description.trim());
+  const dirty = Boolean(incidentType || severity || description.trim() || photos.length);
+  if (sent) return (
+    <Modal open={open} onClose={onClose} title="Đã gửi sự cố" size="md" className={styles.groomModal}
+      footer={<Button onClick={onClose}>Đóng</Button>}>
+      <AlertBanner type="warning" title={`Sự cố đã được gửi, nhưng ${sent.failed}/${sent.total} ảnh chưa tải lên được.`}>
+        Không gửi lại báo cáo. Mở sự cố trong Theo dõi báo cáo và bấm Thêm ảnh để tải lại ảnh.
+      </AlertBanner>
+    </Modal>
+  );
   const options = source.horseId
     ? [{ value: String(source.horseId), label: source.horseLabel || `Ngựa #${source.horseId}` }]
     : [...horses.map((horse) => ({ value: String(horse.id), label: horse.label })), { value: 'manual', label: 'Mã ngựa khác…' }];
 
   return (
     <Modal open={open} dismissible={!busy && !dirty} onClose={busy ? () => undefined : onClose} title="Báo cáo sự cố" size="md" className={styles.groomModal}
-      footer={<><Button variant="secondary" onClick={onClose} disabled={busy}>Hủy</Button><Button type="submit" form={formId} disabled={busy}>{busy ? 'Đang gửi…' : 'Gửi sự cố'}</Button></>}>
+      footer={<><Button variant="secondary" onClick={onClose} disabled={busy}>Hủy</Button><Button type="submit" form={formId} disabled={busy}>{progress || (busy ? 'Đang gửi…' : 'Gửi sự cố')}</Button></>}>
       <form id={formId} className={styles.form} onSubmit={submit} aria-busy={busy}>
         <p className={styles.subtitle}>Ghi điều đã quan sát để Veterinarian tiếp nhận và xử lý</p>
         {source.contextLabel && <div className={styles.context}><Icon name="clipboard-list" size={16} /><span>{source.contextLabel}</span></div>}
@@ -178,6 +212,7 @@ function IncidentReportModalForm({ open, onClose, source, horses = [], onSubmit 
           {(['LOW', 'MEDIUM', 'HIGH'] as const).map((value) => <button key={value} type="button" disabled={busy} className={severity === value ? styles.selectedSeverity : ''} aria-pressed={severity === value} onClick={() => setSeverity(value)}>{viLabel(value)}</button>)}
         </div></div>
         <div className={styles.field}><label className={styles.label} htmlFor={descriptionId}>Mô tả *</label><textarea id={descriptionId} className={styles.textarea} maxLength={2000} value={description} onChange={(event) => setDescription(event.target.value)} required disabled={busy} /></div>
+        <IncidentPhotoPicker files={photos} onChange={setPhotos} disabled={busy} />
         <div className={styles.lifecycle}><Icon name="info" size={16} /><div><div className={styles.statusLine}>Sự cố mới gửi có trạng thái <StatusBadge family="incident" status="REPORTED" /></div><p>Sau khi gửi, mở Theo dõi báo cáo để xem thú y đã tiếp nhận hay chưa. Veterinarian quyết định việc khám và hạn chế tập luyện.</p></div></div>
         {error && <AlertBanner type="danger" title="Không gửi được">{error}</AlertBanner>}
       </form>
