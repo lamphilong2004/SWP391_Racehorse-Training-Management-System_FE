@@ -7,6 +7,7 @@ import { authSession } from '../../shared/auth/authSession';
 import { useSupportingLoad } from '../training/assigned/supportingHooks';
 import { createBillingApi, createQrApi, invoiceDisplayStatus, monthLabel, viDate, vnd, type BillingApi, type InvoiceSummary, type PaymentResult, type QrApi } from './billingApi';
 import { InvoiceView, StatusPill } from './InvoiceView';
+import { OwnerCosts } from './OwnerCosts';
 import { PayInvoiceModal } from './PayInvoiceModal';
 import styles from './billing.module.css';
 
@@ -47,7 +48,7 @@ export function OwnerList({ api, qrApi }: { api: BillingApi; qrApi: QrApi }) {
       <div>
         <p className={styles.eyebrow}>Cổng thông tin Horse Owner</p>
         <h1>Hóa đơn & thanh toán</h1>
-        <p>Phí lưu chuồng, chăm sóc và huấn luyện ngựa của bạn, tính theo tháng. Bấm Thanh toán ở cuối mỗi hóa đơn để trả qua VNPay hoặc mã VietQR.</p>
+        <p>Phí lưu chuồng, chăm sóc và huấn luyện ngựa của bạn, tính theo tháng. Xem bảng giá và phí tạm tính trước khi có hóa đơn. Bấm Thanh toán ở cuối mỗi hóa đơn để trả qua VNPay hoặc mã VietQR.</p>
       </div>
     </header>
     {paid && <AlertBanner feedback type="success" title={`Đã thanh toán hóa đơn ${paid.invoiceCode}.`}>{paid.message}</AlertBanner>}
@@ -57,6 +58,7 @@ export function OwnerList({ api, qrApi }: { api: BillingApi; qrApi: QrApi }) {
       <MetricCard label="Cần thanh toán" value={vnd(unpaid.reduce((sum, row) => sum + row.totalAmount, 0))} caption={`${unpaid.length} hóa đơn`} />
       <MetricCard label="Tổng hóa đơn" value={String(load.data.length)} />
     </div>
+    <OwnerCosts api={api} />
     <DataTable caption="Hóa đơn của tôi" rowKey={(row) => row.id} rows={load.data}
       empty={<EmptyState title="Chưa có hóa đơn" description="Club Manager chưa phát hành hóa đơn cho ngựa của bạn." />}
       columns={[

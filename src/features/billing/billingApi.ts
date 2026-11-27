@@ -19,6 +19,9 @@ export interface InvoiceDetail { invoice: InvoiceSummary; lines: InvoiceLine[]; 
 export interface GenerateResult { billingMonth: string; periodStart: string; periodEnd: string; created: InvoiceSummary[]; skipped: { horseId: number; horseCode: string; horseName: string; reason: string }[] }
 export interface PaymentLink { paymentUrl: string; txnRef: string; amount: number; expiresAt: string }
 export interface MomoPaymentLink { payUrl: string; txnRef: string; amount: number; expiresAt: string }
+/** Running cost of one own horse this month, not yet invoiced (server computes it like the invoice). */
+export interface HorseEstimate { horseId: number; horseCode: string; horseName: string; from: string; to: string; invoicedUntil: string | null; boardingDays: number; completedSessions: number; boardingAmount: number | null; trainingAmount: number | null; total: number | null }
+export interface OwnerEstimate { billingMonth: string; asOf: string; prices: Price[]; horses: HorseEstimate[]; total: number | null }
 export interface PaymentResult { invoiceId: number; invoiceCode: string; invoiceStatus: InvoiceStatus; paymentStatus: string; responseCode: string | null; message: string }
 
 export function createBillingApi(token: string, onError: (cause: unknown) => boolean) {
@@ -42,6 +45,8 @@ export function createBillingApi(token: string, onError: (cause: unknown) => boo
     cancel: (id: number, reason: string) => call<InvoiceDetail>(`/api/billing/invoices/${id}/cancel`, 'POST', { reason }),
     managerCheck: (id: number) => call<PaymentResult>(`/api/billing/invoices/${id}/payment-check`, 'POST', {}),
     myInvoices: () => call<InvoiceSummary[]>('/api/owner/invoices'),
+    /** Club price list + running cost of the owner's horses this month (price transparency). */
+    myEstimate: () => call<OwnerEstimate>('/api/owner/service-estimate'),
     myInvoice: (id: number) => call<InvoiceDetail>(`/api/owner/invoices/${id}`),
     pay: (id: number, bankCode: string) => call<PaymentLink>(`/api/owner/invoices/${id}/vnpay-payment`, 'POST', bankCode ? { bankCode } : {}),
     ownerCheck: (id: number) => call<PaymentResult>(`/api/owner/invoices/${id}/payment-check`, 'POST', {}),

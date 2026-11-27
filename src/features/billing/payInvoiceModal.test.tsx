@@ -47,7 +47,8 @@ function setup(payments: Payment[] = [], options: { detail?: 'pending' | 'error'
     return Promise.resolve({ invoiceId: 11, invoiceCode: 'HD-202611-0011', invoiceStatus: 'PAID', paymentStatus: 'SUCCESS', responseCode: null,
       message: 'Đã ghi nhận thanh toán chuyển khoản QR. Hóa đơn đã được thanh toán.' });
   });
-  const api = { myInvoices, myInvoice, pay, cancelPayment, ownerCheck: vi.fn() } as unknown as BillingApi;
+  const myEstimate = vi.fn(() => Promise.resolve({ billingMonth: '2026-11', asOf: '2026-11-21', prices: [], horses: [], total: null }));
+  const api = { myInvoices, myInvoice, myEstimate, pay, cancelPayment, ownerCheck: vi.fn() } as unknown as BillingApi;
   const qrApi = {
     qrTransfer: vi.fn().mockResolvedValue({ bankBin: '970422', bankName: 'MBBank', accountNo: '9999888877', accountName: 'CLB', amount: 500000, content: 'HD2026110011' }),
     confirmQrTransfer,
