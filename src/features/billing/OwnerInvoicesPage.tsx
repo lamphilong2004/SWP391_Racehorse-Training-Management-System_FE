@@ -39,15 +39,19 @@ export function OwnerList({ api, qrApi }: { api: BillingApi; qrApi: QrApi }) {
   const load = useSupportingLoad(() => api.myInvoices(), [api, version]);
   const [paying, setPaying] = useState<InvoiceSummary>();
   const [paid, setPaid] = useState<PaymentResult>();
+  const [filter, setFilter] = useState<'ALL' | 'ISSUED' | 'PAID'>('ALL');
   if (load.error) return <ErrorState title="Không tải được hóa đơn" description={message(load.error)} onRetry={load.retry} />;
   if (!load.data) return <LoadingState label="Đang tải hóa đơn…" />;
   const unpaid = load.data.filter((row) => row.status === 'ISSUED');
+  const paidRows = load.data.filter((row) => row.status === 'PAID');
+  const rows = filter === 'ALL' ? load.data : filter === 'ISSUED' ? unpaid : paidRows;
   return <>
     <header data-page-banner className={styles.header}>
       <div>
         <p className={styles.eyebrow}>Cổng thông tin Horse Owner</p>
         <h1>Hóa đơn & thanh toán</h1>
-        <p>Phí lưu chuồng, chăm sóc và huấn luyện ngựa của bạn, tính theo tháng. Bấm Thanh toán ở cuối mỗi hóa đơn để trả qua VNPay hoặc mã VietQR.</p>
+        <p>Hóa đơn tháng của ngựa bạn. Bấm mã hóa đơn hoặc Xem chi tiết để thấy từng khoản phí; bấm Thanh toán để trả qua VNPay hoặc mã VietQR.</p>
+        <p><Link className={styles.link} to="/owner/prices">Xem bảng giá dịch vụ và phí tạm tính tháng này →</Link></p>
       </div>
     </header>
     {paid && <AlertBanner feedback type="success" title={`Đã thanh toán hóa đơn ${paid.invoiceCode}.`}>{paid.message}</AlertBanner>}
@@ -57,7 +61,11 @@ export function OwnerList({ api, qrApi }: { api: BillingApi; qrApi: QrApi }) {
       <MetricCard label="Cần thanh toán" value={vnd(unpaid.reduce((sum, row) => sum + row.totalAmount, 0))} caption={`${unpaid.length} hóa đơn`} />
       <MetricCard label="Tổng hóa đơn" value={String(load.data.length)} />
     </div>
-    <DataTable caption="Hóa đơn của tôi" rowKey={(row) => row.id} rows={load.data}
+    <div className={styles.filters} role="group" aria-label="Lọc hóa đơn">
+      {([['ALL', `Tất cả (${load.data.length})`], ['ISSUED', `Chưa thanh toán (${unpaid.length})`], ['PAID', `Đã thanh toán (${paidRows.length})`]] as const).map(([value, label]) =>
+        <button key={value} type="button" className={styles.filter} aria-pressed={filter === value} onClick={() => setFilter(value)}>{label}</button>)}
+    </div>
+    <DataTable caption="Hóa đơn của tôi" rowKey={(row) => row.id} rows={rows}
       empty={<EmptyState title="Chưa có hóa đơn" description="Club Manager chưa phát hành hóa đơn cho ngựa của bạn." />}
       columns={[
         { key: 'code', header: 'Mã hóa đơn', nowrap: true, render: (row) => <Link className={styles.link} to={`/owner/invoices/${row.id}`}>{row.invoiceCode}</Link> },
@@ -65,6 +73,7 @@ export function OwnerList({ api, qrApi }: { api: BillingApi; qrApi: QrApi }) {
         { key: 'horse', header: 'Ngựa', render: (row) => `${row.horse.name} (${row.horse.horseCode})` },
         { key: 'total', header: 'Số tiền', align: 'right', nowrap: true, render: (row) => <span className={styles.amount}>{vnd(row.totalAmount)}</span> },
         { key: 'due', header: 'Hạn', nowrap: true, render: (row) => viDate(row.dueDate) },
+        { key: 'detail', header: 'Chi tiết', nowrap: true, render: (row) => <Link className={styles.link} to={`/owner/invoices/${row.id}`} aria-label={`Xem chi tiết hóa đơn ${row.invoiceCode}`}>Xem chi tiết</Link> },
         { key: 'pay', header: 'Thanh toán', align: 'right', nowrap: true, render: (row) => row.status === 'ISSUED'
           ? <span className={styles.payCell}>
             {invoiceDisplayStatus(row) === 'OVERDUE' && <StatusPill status="OVERDUE" />}

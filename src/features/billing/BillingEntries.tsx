@@ -3,6 +3,7 @@ import { lazy, Suspense } from 'react';
 const StableMapPage = lazy(() => import('../stable-map/StableMapPage').then((module) => ({ default: module.StableMapPage })));
 const BillingPage = lazy(() => import('./BillingPage').then((module) => ({ default: module.BillingPage })));
 const OwnerInvoicesPage = lazy(() => import('./OwnerInvoicesPage').then((module) => ({ default: module.OwnerInvoicesPage })));
+const OwnerPricesPage = lazy(() => import('./OwnerPricesPage').then((module) => ({ default: module.OwnerPricesPage })));
 const VnpayReturnPage = lazy(() => import('./OwnerInvoicesPage').then((module) => ({ default: module.VnpayReturnPage })));
 
 const loading = (text: string) => <p role="status">{text}</p>;
@@ -16,6 +17,9 @@ export function BillingEntry() {
 }
 export function OwnerInvoicesEntry() {
   return <Suspense fallback={loading('Đang tải hóa đơn…')}><OwnerInvoicesPage /></Suspense>;
+}
+export function OwnerPricesEntry() {
+  return <Suspense fallback={loading('Đang tải bảng giá…')}><OwnerPricesPage /></Suspense>;
 }
 export function VnpayReturnEntry() {
   return <Suspense fallback={loading('Đang xác nhận thanh toán…')}><VnpayReturnPage /></Suspense>;

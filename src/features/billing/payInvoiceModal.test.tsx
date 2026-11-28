@@ -67,6 +67,19 @@ describe('DEC-016 owner invoice list: pay popup', () => {
     expect(await screen.findByRole('button', { name: 'Thanh toán hóa đơn HD-202611-0011' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Thanh toán hóa đơn HD-202611-0012' })).not.toBeInTheDocument();
     expect(screen.getByText('Đã thanh toán')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Xem chi tiết hóa đơn HD-202611-0011' })).toHaveAttribute('href', '/owner/invoices/11');
+  });
+
+  it('filters unpaid and paid invoices and links to the price page instead of showing prices', async () => {
+    setup();
+    fireEvent.click(await screen.findByRole('button', { name: 'Chưa thanh toán (1)' }));
+    expect(screen.getByRole('button', { name: 'Thanh toán hóa đơn HD-202611-0011' })).toBeInTheDocument();
+    expect(screen.queryByText('Đã thanh toán')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Đã thanh toán (1)' }));
+    expect(screen.queryByRole('button', { name: 'Thanh toán hóa đơn HD-202611-0011' })).not.toBeInTheDocument();
+    expect(screen.getByText('Đã thanh toán')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Xem bảng giá dịch vụ/ })).toHaveAttribute('href', '/owner/prices');
+    expect(screen.queryByText('Ước tính chi phí 1 tháng')).not.toBeInTheDocument();
   });
 
   it('opens a popup with VNPay and VietQR tabs only, VNPay first with the ATM card as its only method', async () => {

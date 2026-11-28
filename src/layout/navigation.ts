@@ -193,6 +193,7 @@ export const NAVIGATION: Record<RoleCode, RoleNavigation> = {
       {
         items: [
           { label: 'Ngựa của tôi', icon: 'horseshoe', to: ROUTES.myHorses },
+          { label: 'Bảng giá dịch vụ', icon: 'clipboard-list', to: ROUTES.myPrices },
           { label: 'Hóa đơn & thanh toán', icon: 'file-text', to: ROUTES.myInvoices },
           { label: 'Thông báo', icon: 'bell', to: ROUTES.notifications },
         ],
