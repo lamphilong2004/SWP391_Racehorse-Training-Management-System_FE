@@ -39,8 +39,8 @@ it('registers, declares ownership, assigns a FREE box and shows pending baseline
   await user.click(screen.getByRole('button', { name: 'Lưu nháp & tiếp tục' }));
   await screen.findByRole('heading', { name: 'Phả hệ & quyền sở hữu · River Dance' });
   const id = Number(router.state.location.pathname.split('/')[2]);
-  await user.type(screen.getByLabelText('Ngựa cha *'), 'Northern Crest');
-  await user.type(screen.getByLabelText('Ngựa mẹ *'), 'Silver Lining');
+  await user.type(screen.getByLabelText('Ngựa cha'), 'Northern Crest');
+  await user.type(screen.getByLabelText('Ngựa mẹ'), 'Silver Lining');
   await user.selectOptions(screen.getByLabelText('Chủ ngựa'), '17');
   expect(screen.queryByLabelText('Tỷ lệ sở hữu (%)')).not.toBeInTheDocument();
   expect(screen.queryByLabelText('Sở hữu có hiệu lực từ')).not.toBeInTheDocument();
@@ -308,7 +308,7 @@ it.each(['owners', 'assignments', 'activation'] as const)('keeps the form visibl
   vi.stubGlobal('fetch', fetcher);
   open('/horses/7/edit');
   await screen.findByRole('heading', { name: 'Phả hệ & quyền sở hữu · Thunder Bolt' });
-  expect(screen.getByLabelText('Ngựa cha *')).toBeEnabled();
+  expect(screen.getByLabelText('Ngựa cha')).toBeEnabled();
   expect(screen.getByRole('button', { name: 'Lưu & tiếp tục' })).toBeDisabled();
   expect(screen.getByLabelText('Chủ ngựa')).toHaveProperty('disabled', missing === 'owners');
   if (missing === 'assignments') {
@@ -339,24 +339,20 @@ it('retains typed and deliberately cleared fields across setup retry, then sends
   vi.stubGlobal('fetch', fetcher);
   open('/horses/7/edit');
   await screen.findByRole('heading', { name: 'Phả hệ & quyền sở hữu · Thunder Bolt' });
-  fireEvent.change(screen.getByLabelText('Ngựa cha *'), { target: { value: '' } });
-  fireEvent.change(screen.getByLabelText('Ngựa mẹ *'), { target: { value: 'Edited Dam' } });
+  fireEvent.change(screen.getByLabelText('Ngựa cha'), { target: { value: '' } });
+  fireEvent.change(screen.getByLabelText('Ngựa mẹ'), { target: { value: 'Edited Dam' } });
   fireEvent.change(screen.getByLabelText('Chủ ngựa'), { target: { value: '17' } });
   available = true;
   fireEvent.click(screen.getByRole('button', { name: 'Thử lại' }));
   await waitFor(() => expect(screen.getByRole('button', { name: 'Lưu & tiếp tục' })).toBeEnabled());
-  expect(screen.getByLabelText('Ngựa cha *')).toHaveValue('');
-  expect(screen.getByLabelText('Ngựa mẹ *')).toHaveValue('Edited Dam');
+  expect(screen.getByLabelText('Ngựa cha')).toHaveValue('');
+  expect(screen.getByLabelText('Ngựa mẹ')).toHaveValue('Edited Dam');
   expect(screen.getByLabelText('Chủ ngựa')).toHaveValue('17');
-  fireEvent.click(screen.getByRole('button', { name: 'Lưu & tiếp tục' }));
-  expect(await screen.findByText('Nhập ngựa cha.')).toBeInTheDocument();
-  expect(fetcher.mock.calls.filter(([, init]) => init?.method === 'PUT' || init?.method === 'POST')).toHaveLength(0);
-  fireEvent.change(screen.getByLabelText('Ngựa cha *'), { target: { value: 'Edited Sire' } });
   fireEvent.click(screen.getByRole('button', { name: 'Lưu & tiếp tục' }));
   await screen.findByRole('heading', { name: 'Chờ kích hoạt' });
   const writes = fetcher.mock.calls.filter(([, init]) => init?.method === 'PUT' || init?.method === 'POST');
   expect(writes).toHaveLength(2);
-  expect(JSON.parse(String(writes[0][1]?.body))).toEqual({ sire: { horseId: null, name: 'Edited Sire' }, dam: { horseId: null, name: 'Edited Dam' } });
+  expect(JSON.parse(String(writes[0][1]?.body))).toEqual({ sire: { horseId: null, name: null }, dam: { horseId: null, name: 'Edited Dam' } });
   expect(JSON.parse(String(writes[1][1]?.body))).toEqual({ ownerUserId: 17, sharePercentage: 100, effectiveFrom: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/), isManagingOwner: true });
 });
 it('preserves existing parent references and ownership when saving unchanged pedigree', async () => {

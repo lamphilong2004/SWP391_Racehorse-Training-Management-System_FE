@@ -369,8 +369,8 @@ it('wires a selected pedigree record by ID even when two candidates share a name
   await userEvent.click(screen.getByRole('button', { name: 'Chọn ngựa cha có hồ sơ' }));
   await userEvent.click(await screen.findByRole('radio', { name: 'Same parent · P-92' }));
   await userEvent.click(screen.getByRole('button', { name: 'Dùng hồ sơ đã chọn' }));
-  expect(screen.getByLabelText('Ngựa cha *')).toHaveValue('Same parent');
-  fireEvent.change(screen.getByLabelText('Ngựa mẹ *'), { target: { value: 'External dam' } });
+  expect(screen.getByLabelText('Ngựa cha')).toHaveValue('Same parent');
+  fireEvent.change(screen.getByLabelText('Ngựa mẹ'), { target: { value: 'External dam' } });
   await userEvent.click(screen.getByRole('button', { name: 'Lưu & tiếp tục' }));
   await waitFor(() => expect(state.requests.find(r => r.method === 'PUT')).toMatchObject({ path: '/api/horses/81/pedigree', body: { sire: { horseId: 92, name: null }, dam: { horseId: null, name: 'External dam' } } }));
 });
@@ -435,13 +435,13 @@ it('sends only one pending create request despite repeated submit', async () => 
 it('preserves deliberately edited/cleared setup fields when supporting APIs recover', async () => {
   const state = mount('/horses/81/edit');
   await screen.findByText('Không tải được dữ liệu thiết lập ngựa');
-  fireEvent.change(screen.getByLabelText('Ngựa cha *'), { target: { value: 'Draft sire' } });
-  fireEvent.change(screen.getByLabelText('Ngựa mẹ *'), { target: { value: '' } });
+  fireEvent.change(screen.getByLabelText('Ngựa cha'), { target: { value: 'Draft sire' } });
+  fireEvent.change(screen.getByLabelText('Ngựa mẹ'), { target: { value: '' } });
   expect(screen.getByRole('button', { name: 'Lưu & tiếp tục' })).toBeDisabled();
   expect(screen.getByText('Không tải được lịch sử ô chuồng')).toBeInTheDocument();
   state.restoreSetup(); await userEvent.click(screen.getByRole('button', { name: 'Thử lại' }));
   await waitFor(() => expect(screen.queryByText('Không tải được dữ liệu thiết lập ngựa')).not.toBeInTheDocument());
-  expect(screen.getByLabelText('Ngựa cha *')).toHaveValue('Draft sire'); expect(screen.getByLabelText('Ngựa mẹ *')).toHaveValue('');
+  expect(screen.getByLabelText('Ngựa cha')).toHaveValue('Draft sire'); expect(screen.getByLabelText('Ngựa mẹ')).toHaveValue('');
   expect(screen.queryByLabelText('Tỷ lệ sở hữu (%)')).not.toBeInTheDocument();
   expect(state.requests.every((r) => r.method === 'GET')).toBe(true);
 });
